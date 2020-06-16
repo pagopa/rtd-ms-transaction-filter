@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/hpan/list"
+  },
+  "response": {
+    "status": "200",
+    "bodyFileName": "list/test.csv"
+  }
+}

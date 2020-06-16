@@ -1,0 +1,2 @@
+CALL mvnw clean org.jacoco:jacoco-maven-plugin:prepare-agent install -Dmaven.test.failure.ignore=true -Dmaven.source.skip=true -Dmaven.javadoc.skip=true -Dmaven.jar.skip=true
+CALL mvnw sonar:sonar -Dsonar.projectKey=SIAPS-transaction-filter

@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: "rtd-ms-transaction-filter-app"
