@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>it.gov.pagopa.bpd.ms</groupId>
+        <version>1.0-SNAPSHOT</version>
+        <artifactId>bpd-ms-starter-parent</artifactId>
+    </parent>
+
+    <groupId>it.gov.pagopa.rtd.ms</groupId>
+    <artifactId>rtd-ms-transaction-filter</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
+                <artifactId>rtd-ms-transaction_filter-integration-jpa</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
+                <artifactId>rtd-ms-transaction_filter-integration-rest</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
+                <artifactId>rtd-ms-transaction_filter-integration-sftp</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
+                <artifactId>rtd-ms-transaction_filter-core</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
+                <artifactId>rtd-ms-transaction_filter-api-batch</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.gov.pagopa.bpd.commons.api</groupId>
+                <artifactId>bpd-commons-api-rest</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.gov.pagopa.bpd.commons</groupId>
+                <artifactId>bpd-commons-core</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.gov.pagopa.bpd.commons.integration</groupId>
+                <artifactId>bpd-commons-integration-jpa</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.gov.pagopa.bpd.commons.integration</groupId>
+                <artifactId>bpd-commons-integration-rest</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>it.gov.pagopa.bpd.commons.integration</groupId>
+                <artifactId>bpd-commons-integration-jpa</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <type>test-jar</type>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <modules>
+        <module>app</module>
+        <module>core</module>
+        <module>integration</module>
+        <module>api</module>
+    </modules>
+</project>

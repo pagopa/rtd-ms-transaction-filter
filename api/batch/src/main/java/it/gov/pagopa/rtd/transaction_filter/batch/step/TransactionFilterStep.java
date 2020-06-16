@@ -1,0 +1,291 @@
+package it.gov.pagopa.rtd.transaction_filter.batch.step;
+
+import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
+import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionFieldSetMapper;
+import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
+import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.annotation.JobScope;
+import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
+import org.springframework.batch.core.partition.support.Partitioner;
+import org.springframework.batch.item.file.FlatFileItemReader;
+import org.springframework.batch.item.file.LineMapper;
+import org.springframework.batch.item.file.mapping.DefaultLineMapper;
+import org.springframework.batch.item.file.mapping.FieldSetMapper;
+import org.springframework.batch.item.file.transform.*;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+
+import java.io.FileNotFoundException;
+
+@Configuration
+@DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
+@RequiredArgsConstructor
+@Data
+@PropertySource("classpath:config/transactionFilterStep.properties")
+public class TransactionFilterStep {
+
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize}")
+    private Integer partitionerSize;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize}")
+    private Integer chunkSize;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.skipLimit}")
+    private Integer skipLimit;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath}")
+    private String transactionDirectoryPath;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath}")
+    private String outputDirectoryPath;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath}")
+    private String publicKeyPath;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.linesToSkip}")
+    private Integer linesToSkip;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern}")
+    private String timestampPattern;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing}")
+    private Boolean applyTrxHashing;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing}")
+    private Boolean saveTrxHashing;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt}")
+    private Boolean applyEncrypt;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory}")
+    private String localdirectory;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSender.enabled}")
+    private Boolean transactionSenderEnabled;
+
+    private final BatchConfig batchConfig;
+    private final StepBuilderFactory stepBuilderFactory;
+
+    /**
+     *
+     * @return instance of the LineTokenizer to be used in the itemReader configured for the job
+     */
+    @Bean
+    public LineTokenizer transactionLineTokenizer() {
+        DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
+        delimitedLineTokenizer.setDelimiter(";");
+        delimitedLineTokenizer.setNames(
+                "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
+                "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "MCC");
+        return delimitedLineTokenizer;
+    }
+
+    /**
+     *
+     * @return instance of the FieldSetMapper to be used in the itemReader configured for the job
+     */
+    @Bean
+    public FieldSetMapper<InboundTransaction> transactionFieldSetMapper() {
+        return new InboundTransactionFieldSetMapper(timestampPattern);
+    }
+
+    /**
+     *
+     * @return instance of the LineMapper to be used in the itemReader configured for the job
+     */
+    @Bean
+    public LineMapper<InboundTransaction> transactionLineMapper() {
+        DefaultLineMapper<InboundTransaction> lineMapper = new DefaultLineMapper<>();
+        lineMapper.setLineTokenizer(transactionLineTokenizer());
+        lineMapper.setFieldSetMapper(transactionFieldSetMapper());
+        return lineMapper;
+    }
+
+    /**
+     *
+     * @param file
+     *          Late-Binding parameter to be used as the resource for the reader instance
+     * @return instance of the itemReader to be used in the first step of the configured job
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public FlatFileItemReader<InboundTransaction> transactionItemReader(
+            @Value("#{stepExecutionContext['fileName']}") String file) {
+        FlatFileItemReader<InboundTransaction> flatFileItemReader = new FlatFileItemReader<>();
+        flatFileItemReader.setResource(new UrlResource(file));
+        flatFileItemReader.setLineMapper(transactionLineMapper());
+        flatFileItemReader.setLinesToSkip(linesToSkip);
+        return flatFileItemReader;
+    }
+
+    /**
+     *
+     * @return instance of the LineTokenizer to be used in the itemReader configured for the job
+     */
+    @Bean
+    public BeanWrapperFieldExtractor transactionWriterFieldExtractor() {
+        BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
+        extractor.setNames(new String[] {
+                "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
+                "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId", "mcc"});
+        return extractor;
+    }
+
+    /**
+     *
+     * @return instance of the LineTokenizer to be used in the itemReader configured for the job
+     */
+    @Bean
+    public LineAggregator transactionWriterAggregator() {
+        DelimitedLineAggregator<InboundTransaction> delimitedLineTokenizer = new DelimitedLineAggregator<>();
+        delimitedLineTokenizer.setDelimiter(";");
+        delimitedLineTokenizer.setFieldExtractor(transactionWriterFieldExtractor());
+        return delimitedLineTokenizer;
+    }
+
+    /**
+     *
+     * @param file
+     *          Late-Binding parameter to be used as the resource for the reader instance
+     * @return instance of the itemReader to be used in the first step of the configured job
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public PGPFlatFileItemWriter transactionItemWriter(
+            @Value("#{stepExecutionContext['fileName']}") String file) {
+        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKeyPath, applyEncrypt);
+        flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
+        file = file.replaceAll("\\\\", "/");
+        String[] filename = file.split("/");
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        flatFileItemWriter.setResource(
+                resolver.getResource(outputDirectoryPath.concat("/".concat(filename[filename.length-1]))));
+        return flatFileItemWriter;
+    }
+
+
+    /**
+     *
+     * @return instance of the itemProcessor to be used in the first step of the configured job
+     */
+    @Bean
+    @StepScope
+    public InboundTransactionItemProcessor transactionItemProcessor(
+            HpanStoreService hpanStoreService) {
+        return new InboundTransactionItemProcessor(hpanStoreService, this.applyTrxHashing, this.saveTrxHashing);
+    }
+
+    /**
+     *
+     * @return instance of a partitioner to be used for processing multiple files from a single directory
+     * @throws Exception
+     */
+    @Bean
+    @JobScope
+    public Partitioner transactionFilterPartitioner() throws Exception {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        partitioner.setResources(resolver.getResources(transactionDirectoryPath));
+        partitioner.partition(partitionerSize);
+        return partitioner;
+    }
+
+    /**
+     *
+     * @return master step to be used as the formal main step in the reading phase of the job,
+     * partitioned for scalability on multiple file reading
+     * @throws Exception
+     */
+    @Bean
+    public Step transactionFilterMasterStep(HpanStoreService hpanStoreService) throws Exception {
+        return stepBuilderFactory.get("transaction-filter-master-step").partitioner(
+                transactionFilterWorkerStep(hpanStoreService))
+                .partitioner("partition", transactionFilterPartitioner())
+                .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     *
+     * @return worker step, defined as a standard reader/processor/writer process,
+     * using chunk processing for scalability
+     * @throws Exception
+     */
+    @Bean
+    public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService) throws Exception {
+        return stepBuilderFactory.get("transaction-filter-worker-step")
+                .<InboundTransaction, InboundTransaction>chunk(chunkSize)
+                .reader(transactionItemReader(null))
+                .processor(transactionItemProcessor(hpanStoreService))
+                .writer(transactionItemWriter(null))
+                .faultTolerant()
+                .skipLimit(skipLimit)
+                .noSkip(FileNotFoundException.class)
+                .skip(Exception.class)
+                .taskExecutor(batchConfig.readerTaskExecutor())
+                .build();
+    }
+
+
+    /**
+     *
+     * @return instance of a partitioner to be used for processing multiple files from a single directory
+     * @throws Exception
+     */
+    @Bean
+    @JobScope
+    public Partitioner transactionSenderPartitioner() throws Exception {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        Resource[] emptyList = {};
+        partitioner.setResources(transactionSenderEnabled ? resolver.getResources(localdirectory)  : emptyList);
+        partitioner.partition(partitionerSize);
+        return partitioner;
+    }
+
+    /**
+     *
+     * @return master step to be used as the formal main step in the reading phase of the job,
+     * partitioned for scalability on multiple file reading
+     * @throws Exception
+     */
+    @Bean
+    public Step transactionSenderMasterStep(SftpConnectorService sftpConnectorService) throws Exception {
+        return stepBuilderFactory.get("transaction-sender-master-step").partitioner(
+                transactionSenderWorkerStep(sftpConnectorService))
+                .partitioner("partition", transactionSenderPartitioner())
+                .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     *
+     * @return step instance based on the tasklet to be used for file archival at the end of the reading process
+     */
+    @SneakyThrows
+    @Bean
+    public Step transactionSenderWorkerStep(SftpConnectorService sftpConnectorService) {
+
+        return stepBuilderFactory.get("transaction-filter-send-step").tasklet(
+                transactionSenderTasklet(null, sftpConnectorService)).build();
+    }
+
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public TransactionSenderTasklet transactionSenderTasklet(
+            @Value("#{stepExecutionContext['fileName']}") String file,
+            SftpConnectorService sftpConnectorService
+    ) {
+        TransactionSenderTasklet transactionSenderTasklet = new TransactionSenderTasklet();
+        transactionSenderTasklet.setResource(new UrlResource(file));
+        transactionSenderTasklet.setSftpConnectorService(sftpConnectorService);
+        transactionSenderTasklet.setTaskletEnabled(transactionSenderEnabled);
+        return transactionSenderTasklet;
+    }
+
+}

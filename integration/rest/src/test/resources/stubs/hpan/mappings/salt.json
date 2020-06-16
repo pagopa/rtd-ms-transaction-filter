@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/hpan/salt"
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": "salt",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

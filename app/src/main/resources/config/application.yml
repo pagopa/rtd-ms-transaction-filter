@@ -1,0 +1,41 @@
+server:
+  port: ${RTD_TRANSACTION_FILTER_PORT:8443}
+  ssl:
+    key-store: classpath:server-keystore.jks
+    key-store-password: secret
+    key-alias: secure-server
+    trust-store: classpath:server-truststore.jks
+    trust-store-password: secret
+    enabled: true
+    client-auth: need
+
+spring:
+  application:
+    name: "@project.parent.artifactId@"
+    version: "@project.version@"
+  batch:
+    job:
+      enabled: false
+    initialize-schema: ${RTD_BATCH_INITIALIZE_SCHEMA:always}
+  main:
+    allow-bean-definition-overriding: true
+
+info:
+  build:
+    artifact: "@project.parent.artifactId@"
+    name: "@project.parent.artifactId@"
+    description: "@project.description@"
+    version: "@project.version@"
+
+
+error-manager:
+  enabled: true
+
+meda:
+  core:
+    sessioncontext:
+      enabled: false
+
+logging:
+  level:
+    it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:DEBUG}
