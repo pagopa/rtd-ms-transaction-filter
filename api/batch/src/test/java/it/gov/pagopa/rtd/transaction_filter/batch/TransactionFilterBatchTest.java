@@ -1,6 +1,5 @@
 package it.gov.pagopa.rtd.transaction_filter.batch;
 
-import eu.sia.meda.core.properties.PropertiesManager;
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
@@ -25,7 +24,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.openfeign.FeignAutoConfiguration;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
@@ -52,8 +50,6 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
 @ContextConfiguration(classes = {
         TestConfig.class,
         JacksonAutoConfiguration.class,
-        AuthenticationConfiguration.class,
-        PropertiesManager.class,
         TransactionFilterBatch.class,
         FeignAutoConfiguration.class
 })
