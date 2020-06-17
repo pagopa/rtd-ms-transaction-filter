@@ -1,16 +1,16 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.writer;
 
-import eu.sia.meda.BaseTest;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.MockitoAnnotations;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
@@ -27,7 +27,18 @@ import java.nio.file.Files;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 
-public class PGPFlatFileItemWriterTest extends BaseTest {
+public class PGPFlatFileItemWriterTest {
+
+    public PGPFlatFileItemWriterTest(){
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @BeforeClass
+    public static void configTest() {
+        Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        root.setLevel(Level.INFO);
+        ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
+    }
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
@@ -186,11 +197,6 @@ public class PGPFlatFileItemWriterTest extends BaseTest {
 
     }
 
-    @After
-    public void tearDown() {
-        tempFolder.delete();
-    }
-
     protected InboundTransaction getInboundTransaction() {
         return InboundTransaction.builder()
                 .idTrxAcquirer("1")
@@ -207,6 +213,11 @@ public class PGPFlatFileItemWriterTest extends BaseTest {
                 .correlationId("1")
                 .acquirerId("0")
                 .build();
+    }
+
+    @After
+    public void tearDown() {
+        tempFolder.delete();
     }
 
 }

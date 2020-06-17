@@ -1,14 +1,3 @@
-server:
-  port: ${RTD_TRANSACTION_FILTER_PORT:8443}
-  ssl:
-    key-store: classpath:server-keystore.jks
-    key-store-password: secret
-    key-alias: secure-server
-    trust-store: classpath:server-truststore.jks
-    trust-store-password: secret
-    enabled: true
-    client-auth: need
-
 spring:
   application:
     name: "@project.parent.artifactId@"
@@ -18,6 +7,7 @@ spring:
       enabled: false
     initialize-schema: ${RTD_BATCH_INITIALIZE_SCHEMA:always}
   main:
+    web-application-type: none
     allow-bean-definition-overriding: true
 
 info:

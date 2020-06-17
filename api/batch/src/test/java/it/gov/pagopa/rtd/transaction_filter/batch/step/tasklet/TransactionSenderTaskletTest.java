@@ -1,16 +1,17 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
-import eu.sia.meda.BaseTest;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
 import lombok.SneakyThrows;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -20,7 +21,18 @@ import org.springframework.core.io.UrlResource;
 
 import java.io.File;
 
-public class TransactionSenderTaskletTest extends BaseTest {
+public class TransactionSenderTaskletTest {
+
+    public TransactionSenderTaskletTest(){
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @BeforeClass
+    public static void configTest() {
+        Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        root.setLevel(Level.INFO);
+        ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
+    }
 
     @Mock
     private SftpConnectorService sftpConnectorServiceMock;
@@ -70,6 +82,11 @@ public class TransactionSenderTaskletTest extends BaseTest {
         expectedException.expect(Exception.class);
         transactionSenderTasklet.execute(new StepContribution(execution),chunkContext);
         BDDMockito.verify(sftpConnectorServiceMock).transferFile(Mockito.eq(fileToSend));
+    }
+
+    @After
+    public void tearDown() {
+        tempFolder.delete();
     }
 
 }

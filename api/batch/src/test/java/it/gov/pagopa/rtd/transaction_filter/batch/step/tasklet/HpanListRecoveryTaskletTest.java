@@ -1,19 +1,19 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
-import eu.sia.meda.BaseTest;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.sshd.common.util.io.IoUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -27,7 +27,18 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 
-public class HpanListRecoveryTaskletTest extends BaseTest {
+public class HpanListRecoveryTaskletTest {
+
+    public HpanListRecoveryTaskletTest(){
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @BeforeClass
+    public static void configTest() {
+        Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        root.setLevel(Level.INFO);
+        ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
+    }
 
     @Mock
     private HpanConnectorService hpanConnectorServiceMock;
@@ -322,6 +333,11 @@ public class HpanListRecoveryTaskletTest extends BaseTest {
         hpanListRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
         BDDMockito.verify(hpanConnectorServiceMock).getHpanList();
 
+    }
+
+    @After
+    public void tearDown() {
+        tempFolder.delete();
     }
 
 }

@@ -1,16 +1,20 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import it.gov.pagopa.bpd.common.connector.BaseFeignRestClientTest;
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
 import lombok.SneakyThrows;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.openfeign.FeignAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 
 import java.io.File;
@@ -18,6 +22,8 @@ import java.io.File;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.Assert.assertNotNull;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @TestPropertySource(
         locations = "classpath:config/rest-client.properties",
         properties = {
@@ -33,10 +39,12 @@ import static org.junit.Assert.assertNotNull;
         classes = {
             HpanRestConnectorConfig.class,
             HpanRestClientImpl.class,
-            HpanRestConnector.class
+            HpanRestConnector.class,
+            FeignAutoConfiguration.class,
+            HttpMessageConvertersAutoConfiguration.class
         }
 )
-public class HpanRestClientTest extends BaseFeignRestClientTest {
+public class HpanRestClientTest {
 
     @Autowired
     private HpanRestClient hpanRestClient;
