@@ -6,10 +6,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
@@ -63,11 +60,11 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
 @TestPropertySource(
         properties = {
                 "spring.main.allow-bean-definition-overriding=true",
-                "batchConfiguration.TransactionFilterBatch.secretKeyPath=classpath:/test-encrypt/secretKey.asc",
-                "batchConfiguration.TransactionFilterBatch.passphrase=test",
-                "batchConfiguration.TransactionFilterBatch.skipLimit=0",
+                "batchConfiguration.TransactionFilterBatch.panList.secretKeyPath=classpath:/test-encrypt/secretKey.asc",
+                "batchConfiguration.TransactionFilterBatch.panList.passphrase=test",
+                "batchConfiguration.TransactionFilterBatch.panList.skipLimit=0",
                 "batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath=classpath:/test-encrypt/**/hpan/*pan*.pgp",
-                "batchConfiguration.TransactionFilterBatch.linesToSkip=0",
+                "batchConfiguration.TransactionFilterBatch.panList.linesToSkip=0",
                 "batchConfiguration.TransactionFilterBatch.panList.applyDecrypt=true",
                 "batchConfiguration.TransactionFilterBatch.panList.applyHashing=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath=classpath:/test-encrypt/**/transactions/*trx*.csv",
@@ -171,6 +168,11 @@ public class TransactionFilterBatchTest {
         jobLauncherTestUtils.launchStep("hpan-recovery-master-step");
         BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(0)).store(Mockito.any());
 
+    }
+
+    @After
+    public void tearDown() {
+        tempFolder.delete();
     }
 
 }

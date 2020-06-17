@@ -1,22 +1,33 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.writer;
 
-import eu.sia.meda.BaseTest;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.MetaDataInstanceFactory;
 
 import java.util.Collections;
 
-public class HpanWriterTest extends BaseTest {
+public class HpanWriterTest {
+
+    public HpanWriterTest(){
+        MockitoAnnotations.initMocks(this);
+    }
+
+    @BeforeClass
+    public static void configTest() {
+        Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        root.setLevel(Level.INFO);
+        ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
+    }
 
     @Mock
     private HpanStoreService hpanStoreServiceMock;
