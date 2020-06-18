@@ -225,7 +225,7 @@ __batchConfiguration.TransactionFilterBatch.panList.chunkSize__ | Dimensione dei
 __batchConfiguration.TransactionFilterBatch.panList.skipLimit__ | Numero massimo di record scartati prima che venga bloccata l’esecuzione | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
 __batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag che indica se applicare o meno la descrittazione al file degli hpan | ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:true} | SI | TRUE FALSE
 
-#### 3. Proprietà Batch - Lettura lista transazioni
+#### 4. Proprietà Batch - Lettura lista transazioni
 
 Key |  Description | Default | Obbligatorio | Valori
 --- | ------------ | ------- | ------------ | ------
@@ -241,13 +241,53 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt__ | F
 __batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing__ | Flag per definire se salvare l’han del pan nel file prodotto | ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:false} | SI | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.linesToSkip__ | Numero di linee da saltare a partire dall’inizio del file (ad es. per evitare l'header) | ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0} | NO
 
-#### 4. Proprietà Batch - SFTP
+#### 5. Proprietà Batch - SFTP
 
 Key |  Description | Default | Obbligatorio | Valori
 --- | ------------ | ------- | ------------ | ------
+__batchConfiguration.TransactionFilterBatch.transactionSender.enabled__ | Indica se l’invio verso canale sftp sia o meno attivo | ${ACQ_BATCH_TRX_SENDER_ENABLED:true} | SI | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory__ | Directory locale da cui prendere il file da inviare su SFTP remoto | ${SFTP_LOCAL_DIR:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.remotedirectory__ | Directory remota dell’sftp in cui copiare il file | ${SFTP_REMOTE_DIR:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filenamepattern__ | Nome/pattern del file da spostare su SFTP remoto | ${SFTP_FILE_PATTERN:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filextension__ | Estensione del file da copiare su sftp remoto | ${SFTP_FILE_EXTENSION:} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.host__ | Host SFTP | ${SFTP_HOST:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.port__ | Porta SFTP | ${SFTP_PORT:22} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.user__ | Utenza per accesso ad SFTP | ${SFTP_USER:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.password__ | Password per accesso a SFTP | ${SFTP_PASSWORD:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.timeout__ | Timeout relativo alla connessione con SFTP | ${SFTP_SOCKET_TIMEOUT:0:} | SI
+__connectors.sftpConfigurations.connection.privateKey__ | Indica il file per l’autenticazione su canale avverrà tramite chiave privata | file:/${SFTP_PRIVATE_KEY:} | NO
+__connectors.sftpConfigurations.connection.passphrase__ | Indica la passphrase associata alla chiave privata | ${SFTP_PASSPHRASE:} | NO
+
+#### 6. Proprietà Batch - Servizi REST
+
+Key |  Description | Default | Obbligatorio | Valori
+--- | ------------ | ------- | ------------ | ------
+__batchConfiguration.TransactionFilterBatch.saltRecovery.enabled__ | Abilitazione del servizio di recupero per il salt | ${ACQ_BATCH_SALT_RECOVERY_ENABLED:false} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled__ | Abilitazione del servizio di recupero per la lista di pan | ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath__ | Locazione dove sarà salvato il file contente la lista di file | ${ACQ_BATCH_HPAN_INPUT_PATH:} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Nome assegnato al file prodotto | ${CSV_TRX_BATCH_HPAN_LIST_FILENAME:} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.attemptExtract__ | Indicazione se il file recuperato sarà nella forma di un file compresso con checksum | ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:false} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.checksumFilePattern__ | Pattern per il file di checksum | ${ACQ_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*checksum.* } | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.listFilePattern__ | Pattern per la lista contenente la lista di pan | ${CSV_TRX_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*\\.csv } | NO
+__rest-client.hpan.base-url__ | Base url per i servizi REST | ${HPAN_SERVICE_URL} | NO
+__rest-client.hpan.list.url__ | Endpoint per recupero lista pan | /list | NO
+__rest-client.hpan.salt.url__ | Endpoint per recupero salt | /salt | NO
+__rest-client.hpan.mtls.enabled__ | Abilitazione MTLS per chiamate ai servizi per salt e lista pan | ${HPAN_SERVICE_MTLS_ENABLED:true} | NO
+__rest-client.hpan.key-store.file__ | Riferimento a file per key-store | file:/${HPAN_SERVICE_KEY_STORE_FILE:} | NO
+__rest-client.hpan.key-store.type__ | Tipo di key-store utilizzato. | ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}} | NO
+__rest-client.hpan.key-store.algorithm__ | Tipo di algoritmo utilizzato | ${HPAN_SERVICE_KEY_STORE_ALGORITHM:#{null}} | NO
+__rest-client.hpan.trust-store.file__ | Riferimento a file per trust-store | file:/${HPAN_SERVICE_TRUST_STORE_FILE:} | NO
+__rest-client.hpan.trust-store.type__ | Tipo di trust-store utilizzato. | ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}} | NO
+__rest-client.hpan.trust-store.algorithm__ | Tipo di algoritmo utilizzato | ${HPAN_SERVICE_TRUST_STORE_ALGORITHM:#{null}} | NO
 
 
-#### 5. Proprietà Batch - Repository
+#### 7. Proprietà Batch - Gestione File
+
+Key |  Description | Default | Obbligatorio | Valori
+--- | ------------ | ------- | ------------ | ------
+__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles__ | Flag per pilotare la cancellazione dei file generati in locale (tutti i file relativi alla computazione del batch) | ${FLAG_DELETE_LOCAL_FILE:true} | SI | TRUE FALSE
+
+#### 8. Proprietà Batch - Repository
 
 Key |  Description | Default | Obbligatorio | Valori
 --- | ------------ | ------- | ------------ | ------
