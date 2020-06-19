@@ -60,6 +60,9 @@ eseguire il comando nella forma seguente:
 >mvn clean package -DskipTests
 	
 L’artefatto prodotto sarà recuperabile dalla cartella target, visibile dalla folder di root.
+Il file di riferimento avrà il suffisso –FATJAR. Per poter configurare opportunamente l’esecuzione dell’artefatto,
+preparare il file application.yaml, ed opzionalmente file .properties o .yaml,
+contenenti le proprietà di configurazione da applicare.
 
 ### Connessione al database
 
