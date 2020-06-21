@@ -239,7 +239,7 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.timeout__ | T
 __connectors.sftpConfigurations.connection.privateKey__ | Indicates the file for channel authentication will take place via a private key | file:/${SFTP_PRIVATE_KEY:} | NO
 __connectors.sftpConfigurations.connection.passphrase__ | Indicates the passphrase associated with the private key | ${SFTP_PASSPHRASE:} | NO
 
-#### 6. Batch properties - Servizi REST
+#### 6. Batch properties - REST services
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
@@ -261,7 +261,7 @@ __rest-client.hpan.trust-store.file__ | Path to trust-store | file:/${HPAN_SERVI
 __rest-client.hpan.trust-store.type__ | Trust-store type | ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}} | NO
 __rest-client.hpan.trust-store.algorithm__ | Trust-store algorithm | ${HPAN_SERVICE_TRUST_STORE_ALGORITHM:#{null}} | NO
 
-#### 7. Batch properties - Handling File
+#### 7. Batch properties - File handling
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
