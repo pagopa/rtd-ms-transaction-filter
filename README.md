@@ -246,7 +246,7 @@ Key |  Description | Default | Mandatory | Values
 __batchConfiguration.TransactionFilterBatch.saltRecovery.enabled__ | Enable the recovery service for the salt | ${ACQ_BATCH_SALT_RECOVERY_ENABLED:false} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled__ | Enable the recovery service for the pan list | ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath__ | Location where the file containing the list of files will be saved | ${ACQ_BATCH_HPAN_INPUT_PATH:} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Name assigned to the product file | ${CSV_TRX_BATCH_HPAN_LIST_FILENAME:} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Name assigned to the recovered file | ${CSV_TRX_BATCH_HPAN_LIST_FILENAME:} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.attemptExtract__ | Indication if the recovered file will be in the form of a compressed file with checksum | ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:false} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.checksumFilePattern__ | Pattern for the checksum file | ${ACQ_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*checksum.* } | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.listFilePattern__ | Pattern for the list containing the pan list | ${CSV_TRX_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*\\.csv } | NO
@@ -265,7 +265,7 @@ __rest-client.hpan.trust-store.algorithm__ | Trust-store algorithm | ${HPAN_SERV
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles__ | Flag to drive the deletion of locally generated files (all files related to batch computation) | ${FLAG_DELETE_LOCAL_FILE:true} | SI | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles__ | Enable deletion of locally generated files (all files related to batch computation) | ${FLAG_DELETE_LOCAL_FILE:true} | SI | TRUE FALSE
 
 #### 8. Batch properties - Repository
 
