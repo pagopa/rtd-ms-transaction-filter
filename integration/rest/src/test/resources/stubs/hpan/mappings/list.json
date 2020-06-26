@@ -5,6 +5,9 @@
   },
   "response": {
     "status": "200",
-    "bodyFileName": "list/test.csv"
+    "bodyFileName": "list/test.zip",
+    "headers": {
+      "checksum": "1672ef63d803d0ba3544e4c1f23022ce440abb2251ec3dc3e4d9aad67af02160"
+    }
   }
 }
