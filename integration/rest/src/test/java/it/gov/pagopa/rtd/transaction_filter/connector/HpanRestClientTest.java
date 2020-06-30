@@ -27,7 +27,10 @@ import static org.junit.Assert.assertNotNull;
 @TestPropertySource(
         locations = "classpath:config/rest-client.properties",
         properties = {
+                "rest-client.hpan.list.url=/list",
+                "rest-client.hpan.salt.url=/salt",
                 "rest-client.hpan.mtls.enabled=true",
+                "rest-client.hpan.list.checksumHeaderName=checksum",
                 "rest-client.hpan.key-store.file=classpath:certs/client-keystore.jks",
                 "rest-client.hpan.key-store.password=secret",
                 "rest-client.hpan.trust-store.file=classpath:certs/client-truststore.jks",

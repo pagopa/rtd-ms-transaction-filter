@@ -4,10 +4,9 @@
     "urlPath": "/hpan/list"
   },
   "response": {
-    "status": "200",
-    "bodyFileName": "list/test.zip",
+    "status": "302",
     "headers": {
-      "checksum": "1672ef63d803d0ba3544e4c1f23022ce440abb2251ec3dc3e4d9aad67af02160"
+      "Location": "/hpan/download"
     }
   }
 }
