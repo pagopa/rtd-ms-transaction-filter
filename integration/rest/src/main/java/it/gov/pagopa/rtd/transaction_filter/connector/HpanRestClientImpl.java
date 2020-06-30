@@ -65,9 +65,6 @@ class HpanRestClientImpl implements HpanRestClient {
             ZipFile zipFile = new ZipFile(tempFile);
             Path tempDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
 
-            File checksumFile = null;
-            File listFile = null;
-
             Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
 
             while (enumeration.hasMoreElements()) {
@@ -85,7 +82,7 @@ class HpanRestClientImpl implements HpanRestClient {
                     IOUtils.copy(zipEntryIS, tempFileFOS);
 
                     if (zipEntry.getName().matches(listFilePattern)) {
-                        listFile = newFile;
+                        tempFile = newFile;
                     }
 
                 } finally {
