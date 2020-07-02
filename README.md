@@ -1,370 +1,346 @@
 # Acquirer Transaction Filter Batch
 
-Component defining the batch process for filtering the input transaction records, based on a list of pan, recovered from a local directory or through a remote service. 
+Component defining the batch process for filtering the input transaction records, based on a list of pan,
+recovered from a local directory or through a remote service. 
 
-### Requisiti per l’esecuzione
+### Execution requirements
 
-L’artefatto consiste in un jar eseguibile prodotto con spring-boot, pertanto tutte le dipendenze del progetto sono
-contenute all’interno del jar insieme alle classi che ne contengono la business logic. In questo modo
-l’artefatto è completamente autonomo e utilizzabile su un qualsiasi dispositivo che disponga di una JVM.
+The artifact consists of an executable jar produced with _spring-boot_, therefore all the project dependencies are contained within the jar, together with the classes that contains the business logic.
+The artifact is completely autonomous and usable on any device that has a JVM
 
-Per l’installazione ed esecuzione del batch sono necessari:
+To install and run the batch, it's required:
 - _Java 1.8+_
-- _Artefatto batch-transaction-filter.jar_
+- _batch-transaction-filter.jar_ artifact
 
-Per l’applicazione della criptazione PGP al file prodotto in uscita al servizio batch, se abilitata,
-sarà necessario che sia inoltre presente un file contenente un file contenente la chiave pubblica da impiegare, 
-riportata in __Appendice 1 - Chiave pubblica PGP__. Per l’applicazione della decriptazione del file dei pan PGP,
-se abilitata, dovrà prevedere la presenza di un file contenente la chiave segreta da applicare per l’operazione.
-Nel caso si voglia produrre l’artefatto dal sorgente sarà necessario avere un’installazione locale di Maven.
+For the application of PGP encryption to the result file, produced by the batch, there will also need a file containing the public key to be used, reported in __Appendix 1 - PGP public key__.
+For the application of decryption of the PGP pan file, it must provided a file containing the secret key to be applied for the operation.
+To produce the artifact from the source code it will be necessary to have an installation of Maven and a java compiler (jdk1.8+).
 
-### Distribuzione Bundle
+### Bundle Distribution
 
-L’artefatto _batch-transaction-filter.jar_ sarà fornito in un bundle contenente una folder contenente le configurazioni
-e struttura delle cartelle, in modo da permettere l’esecuzione immediata su configurazione di default, con puntamento 
-alle cartelle riportate nel bundle. Il servizio di default eseguirà un polling per verificare la presenza di file
-da processare ogni minuto.
+The batch-transaction-filter.jar artifact will be provided in a bundle containing a folder with the configurations and the structures of the files, in order to allow an immediate execution with the default configuration, which point to path/folders listed in the bundle. The default service will poll to check for files to be processed every minute.
 
-All’interno del bundle sono inoltre presenti il file relativo alla chiave pubblica riportata in appendice,
-e dei file sample per una prima esecuzione di test.
+Inside the bundle there are also the public key file shown in the _appendix_, and some sample for a first test run.
  
-__Nota:__ Il bundle contiene una versione potenzialmente non allineata alle implementazioni del batch.
-La configurazione di default è tale da disabilitare i tentativi di connessione ai servizi REST,
-ed il servizio per l’invio dei file prodotti su canale SFTP.
+__Nota:__ The bundle contains a version potentially out of alignment with the implementation. In the default configuration attempts to connect to the REST services and the sftp comunication are disabled.
 
-La struttura del bundle, ed i file presenti, è la seguente:
+The bundle structure and the files is contains are described below:
 
-- _batch-transaction-filter.jar_, l’artefatto contenente il servizio batch
-- _/config_, cartella contenente i file di configurazione
-- _/config/application.yml_, file contenente le proprietà di configurazione per il servizio
-- _/resources_, cartella contenente le risorse e folder per l’esecuzione del bundle sotto una configurazione di default
-- _/hpans_, folder dove inserire i file contenenti la lista di pan
-- _/keys_, folder contenente le chiavi per l’applicazione del pgp ai file in lettura/scrittura
-- _/transactions_, folder dove inserire i file contenenti le transazioni da processare
-- _/output_, folder dove saranno inseriti i file prodotti dal servizio
-- _/sample-files_, folder contenente file di prova per l’esecuzione
+- _batch-transaction-filter.jar_, the artifact containing the batch service
+- _/config_, folder containing the configuration files
+- _/config/application.yml_, file containing the configuration properties for the service
+- _/resources_, folder containing the resources and folder for running the bundle under a default configuration
+- _/hpans_, folder where to insert the files containing the pan list
+- _/keys_, folder containing the keys for pgp encryption
+- _/transactions_, folder where to insert the files containing the transactions to be processed
+- _/output_, folder where the files produced by the service will be inserted
+- _/sample-files_, folder containing test files for execution
 
-### Generazione artefatto da sorgente
+### Generating artifact from source
 
-Per ottenere una versione dell’artefatto prodotta direttamente sulla base del sorgente, è necessario che sulla macchina 
-sia opportunamente configurata un’istanza Maven. Una volta scaricato il sorgente, portarsi nella directory radice
-di quest’ultima tramite riga di comando, e lanciare il comando:
+To obtain a version of the artifact produced directly from the source code, a Maven instance must be appropriately configured on the
+machine to use via the command line. Once the source has been downloaded, run the following command from the root directory:
 
-> mvn clean package __<opzioni_esecuzione>__
+> mvn clean package __<execution_options>__
 	
-Nel caso si richiami il comando senza altre opzioni, l’artefatto sarà prodotto una volta eseguiti i test unitari 
-dichiarati nel modulo, solo nel caso di una corretta risoluzione. Nel caso si voglia, per eventuali
-motivi di tempistiche, eseguire l’operazione senza attendere l’esecuzione e validazione dei test,
-eseguire il comando nella forma seguente:
+If the command is executed without other options, the artifact will be produced once the unit tests (declared in the module) have been
+performed. To perform the operation without waiting for the execution and validation of the tests, run the command in the following
+form:
 
 >mvn clean package -DskipTests
 	
-L’artefatto prodotto sarà recuperabile dalla cartella target, visibile dalla folder di root.
-Il file di riferimento avrà il suffisso –FATJAR. Per poter configurare opportunamente l’esecuzione dell’artefatto,
-preparare il file application.yaml, e opzionalmente file .properties o .yaml,
-contenenti le proprietà di configurazione da applicare.
+The artifact will be created into the target folder at root level
 
-### Connessione al database
+### Database connection
 
-Spring Batch utilizza un repository su cui tenere traccia delle esecuzione effettuate dal servizio, nel caso in cui
-non ci sia una particolare configurazione un’istanza in-memory sarà eseguita per permettere l’esecuzione del batch.
-La configurazione del bundle utilizza questa modalità per maggior immediatezza di utilizzo. 
-Se si vuole configurare altrimenti fare riferimento alle proprietà in __Appendice 2 - Proprietà di configurazione__.
+Spring Batch uses a repository on which you can track the executions performed by the service. 
+If there is no particular configuration: an in- memory instance will be executed to allow the batch to be executed. The configuration of
+the bundle uses this mode for greater immediacy of use. If you want to set it please refer to the properties in __Appendix 2 -
+Configuration properties__.
 
-### Connessione a Servizi REST
+### REST Services Connection
 
-Il Batch Acquirer è configurabile per contattare i servizi per il recupero del salt da applicare per l’hashing dei PAN,
-e della lista di questi ultimi, da utilizzare per la procedura di filtro dei record delle transazioni.
-Per l'abilitazione di questi servizi, devono essere rispettivamente abilitate tramite le configurazioni
-_batchConfiguration.TransactionFilterBatch.saltRecovery.enabled_ e 
-_batchConfiguration.TransactionFilterBatch.hpanList.enabled_. 
+The Batch Acquirer is configurabile for contacting the salt recovery service, to be applied for the PAN hashing,
+and the pan list recovery service, to be used for filtering the transaction records. To enabled this services,
+the following configuration properties must be enabled: _batchConfiguration.TransactionFilterBatch.saltRecovery.enabled_ 
+and _batchConfiguration.TransactionFilterBatch.hpanList.enabled_. 
 
-La configurazione per gli endpoint da utilizzare è data dalle proprietà _rest-client.hpan.base-url_,
-per configurare il puntamento di base, e la componente degli endpoint dei due servizi, rispettivamente
-_rest-client.hpan.list.url_ e _rest-client.hpan.salt.url_.
+Endpoint configurations are through the properties _rest-client.hpan.base-url_, for the base configuration
+, and the endpoint properties for the two services respectively _rest-client.hpan.list.url_ and _rest-client.hpan.salt.url_.
 
-Nel caso si voglia configurare il Client per l’utilizzo del protocollo TLS/SSL, andrà abilitata la configurazione 
-tramite proprietà _rest-client.hpan.mtls.enabled_, e andranno indicati i file per il keystore e trust-store del client,
-da applicare nello scambio di certificati, rispettivamente tramite le proprietà _rest-client.hpan.key-store.file_ e
-_rest-client.hpan.trust-store.file_. 
+If the client is to be configured for TLS/SSL protocol usage, the configuration property 
+_rest-client.hpan.mtls.enabled_ is to be used, and the keystore and trust-store files for the client, to be applied
+in the certificate exchange, respectively through the _rest-client.hpan.key-store.file_ and
+_rest-client.hpan.trust-store.file_ properties. 
 
-Ulteriori configurazioni applicabili sono quelle relative alle password da applicare per i certificati,
-identificati dalle configurazioni _rest-client.hpan.key-store.password_ e _rest-client.hpan.trust-store.password_.
-Può essere inoltre definito la tipologia utilizzata per i file contenenti i certificati,
-e l’algoritmo utilizzato per la criptazione. Sotto configurazione di default i file sono nel formato JKS di Java,
-utilizzando l’implementazione standard dell’algoritmo X509. Per le configurazioni dedicate fare riferimento alle
-proprietà riportate in __Appendice 2 - Proprietà di configurazione__.
+Other applicable configurations are those related to passwords to be applied for certificates,
+identified by the _rest-client.hpan.key-store.password_ and _rest-client.hpan.trust-store.password_ configurations.
+The type used for files containing certificates can also be defined,
+and the algorithm used for the encryption. By default the files are in Java's JKS format,
+using the standard implementation of the X509 algorithm. For dedicated configurations refer to
+properties listed in __Appendix 2 - Configuration properties__.
 
-Per riferimenti ai servizi esposti tramite servizio API di Azure, sono riportati i link corrispondenti in 
-__Appendice 3 - Autenticazione Servizi Acquirer__.
+For references to the services displayed through Azure's API service, you can find the corresponding links in 
+__Appendix 3 - Authentication Services Acquirer__.
 
-### Linee guida per l’ esecuzione
+### Execution guidelines
 
-- Installare e configurare l’ambiente perché sia disponibile la versione Java 1.8, come da indicazione nei prerequisiti
+- Install and configure the environment so that the Java 1.8+ version is available, as indicated in the prerequisites         
 
-- Nel caso di esecuzione della versione bundled, estrarre artefatto e folder risorse nella posizione scelta,
-  se non necessaria alcuna configurazione aggiuntiva fare riferimento al comando riportato al termine di questo paragrafo.
+- In case of execution of bundled version, extract artifact and resource in a position of your choice, if no additional   
+  configuration is required, refer to the execution step at the end of the paragraph. 
+  Consider whether to use the sample files contained in the _transactions_ and _hpan_ folders.         
 
-- Nel caso non si stia utilizzando la versione bundled, produrre l’artefatto tramite codice sorgente,
-  come indicato nel paragrafo corrispondente del manuale. Preparare un file application.yml di configurazione,
-  ed eventuali altri file .yml o .properties da utilizzare per le proprietà coinvolte.
+- If you are not using the bundled version, please produce a version of the artifact via source code, as indicated in the corresponding
+  paragraph of the manual. Prepare a configuration application.yml file and, if needed, other files .yml or .properties to be used for
+  the configuration properties.
 
-- Posizionare sulla macchina, in una locazione a scelta, l’artefatto batch-transaction-filter.jar
+- Place the _batch-transaction-filter.jar_ artifact in a location of your choice
 
-- Posizionare sulla macchina, in una locazione a scelta, i file di configurazione,
-  forniti assieme all’artefatto nel bundle, o prodotti direttamente.
+- Place in a location of your choice, the configuration files, supplied together with the artifact in the bundle, or
+  your own.
 
-- Posizionare sulla macchina, in una locazione a scelta, i file relativi alla chiave pubblica e/o privata per pgp,
-  se una delle funzionalità di criptazione/de-criptazione dei file sia attiva.
+- Place on the machine, the files of the public and/or private key for pgp, if one of the file encryption/decryption function is active. 
 
-- Configurare il puntamento al file contenente la chiave pubblica, attraverso la proprietà 
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath_,
-   oppure tramite la variabile d’ambiente _ACQ_BATCH_INPUT_PUBLIC_KEYPATH_. 
+- Configure the path to the file containing the public key, through the
+  batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath property, or through the environment variable
+  _ACQ_BATCH_INPUT_PUBLIC_KEYPATH_.         
    
-   __Nota:__ La configurazione è strettamente necessaria solo nel caso si utilizzi la funzione di
-    criptazione dei file prodotti. Nel caso di configurazione su file, il percorso dovrà essere preceduto
-    dal prefisso _file:/_. Ad esempio:
-
+   __Note:__ The configuration is strictly needed only if the encryption function of the produced files is enabled. In the case of
+   configuration on file, the path must be preceded by the prefix _file:/_. for example:
+   
     >batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath = file:/C/:Development/keys/public.asc
 
-- Configurare il puntamento al file contenente la chiave privata, attraverso la proprietà 
-  _batchConfiguration.TransactionFilterBatch.panList.secretKeyPath_,
-   oppure tramite la variabile d’ambiente _ACQ_BATCH_INPUT_SECRET_KEYPATH_.
+- Configure the pointing to the file containing the private key, through the property
+  _batchConfiguration.TransactionFilterBatch.panList.secretKeyPath_, or through the environment variable
+  _ACQ_BATCH_INPUT_SECRET_KEYPATH_. 
 
-  __Nota:__ La configurazione è strettamente necessaria solo nel caso si utilizzi la
-   funzione di decriptazione dei file contenenti la lista di pan.
-   Nel caso di configurazione su file, il percorso dovrà essere preceduto dal prefisso “file:/”. Ad esempio:
+  __Note:__ The configuration is strictly necessary only if the decryption function of the files containing the pan list is enabled. 
+  In the case of configuration on file, the path must be preceded by prefix _file:/_. for example::
 
     >batchConfiguration.TransactionFilterBatch.panList.secretKeyPath = file:/C:/Development/keys/secret.asc
 	
-- Configurare la passphrase da applicare in caso di utilizzo della chiave segreta,
-  tramite proprietà _batchConfiguration.TransactionFilterBatch.panList.passphrase_,
-  o tramite variabile d’ambiente _ACQ_BATCH_INPUT_SECRET_PASSPHRASE_. 
+- Configure the passphrase to be applied if the secret key is enabled, through the
+  _batchConfiguration.TransactionFilterBatch.panList.passphrase_ property , or via the _ACQ_BATCH_INPUT_SECRET_PASSPHRASE_ environment
+  variable.         
 
-- Definire una folder dove saranno posizionati i file di tracciato da processare
+- Define a folder where the path files, to be processed, will be placed
 
-- Configurare il puntamento ai file di tracciato da processare, attraverso la proprietà
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath_,
-  oppure tramite le variabili d’ambiente _ACQ_BATCH_TRX_INPUT_PATH_, per la folder, e 
-  _ACQ_BATCH_INPUT_FILE_PATTERN_, per il pattern da rispettare da leggere all’interno della folder. 
+- Configure the path to the transaction files to be processed, through the
+  _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath_ property, or through the environment variables
+  _ACQ_BATCH_TRX_INPUT_PATH_ for the folder, and _ACQ_BATCH_INPUT_FILE_PATTERN_, for the pattern of files to read. 
 
-  __Nota:__  Nel caso di configurazione su file, il percorso dovrà essere preceduto dal prefisso “file:/”. Ad esempio:
+  __Note:__  In the case of file configuration, the path must be preceded by the prefix _file:/_. for example: 
 
   >batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath = file:/C:/Development/transactions/*.csv
 
-- Definire una folder dove saranno posizionati i file contenenti la lista di pan
+- Define a folder for the files containing the PAN list 
 
-- Configurare il puntamento ai file contenenti la lista di pan, attraverso la proprietà
-  batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath,
-  oppure tramite le variabili d’ambiente _ACQ_BATCH_HPAN_INPUT_PATH_, per la folder, e 
-  _ACQ_BATCH_HPAN_INPUT_FILE_PATTERN_, per il pattern da rispettare da leggere all’interno della folder. 
-
-  __Nota:__  Nel caso di configurazione su file, il percorso dovrà essere preceduto dal prefisso “file:/”. Ad esempio:
+- Configure the path to the files containing the pan list, through the
+ _batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath_ property , or through the environment variables
+ _ACQ_BATCH_HPAN_INPUT_PATH_ for the folder, and  _ACQ_BATCH_HPAN_INPUT_FILE_PATTERN_, for the pattern of files to read.
+ 
+  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example: 
 
   >batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath = file:/C:/Development/hpan/*.pgp
 
-- Definire una folder dove saranno prodotti localmente i file in output
+- Define a folder for the output files
 
-- Configurare il puntamento ai file di tracciato da processare,
-  attraverso la proprietà _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_,
-  oppure tramite la variabile d’ambiente _ACQ_BATCH_OUTPUT_PATH_
+- Configure the pointing to the trace files to be processed, through the property
+  _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_, or through the environment variable
+  _ACQ_BATCH_OUTPUT_PATH_      
 
-  __Nota:__  Nel caso di configurazione su file, il percorso dovrà essere preceduto dal prefisso “file:/”. Ad esempio:
+  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
   >batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath = file:/C:/Development/output
 
-- Configurare l’applicazione dell’hashing per la lista di pan,
-  attraverso la proprietà _batchConfiguration.TransactionFilterBatch.panList.applyHashing_,
-  oppure attraverso la variabile d’ambiente _ACQ_BATCH_PAN_LIST_APPLY_HASHING_
+- Configure the hashing application for the pan list, through the _batchConfiguration.TransactionFilterBatch.panList.applyHashing_
+  property, or through the environment variable _ACQ_BATCH_PAN_LIST_APPLY_HASHING_        
 
-- Configurare per decriptazione del file contenente la lista di pan,
-  attraverso la proprietà _batchConfiguration.TransactionFilterBatch.panList.applyDecrypt_,
-  oppure attraverso la variabile d’ambiente _ACQ_BATCH_PAN_LIST_APPLY_DECRYPT_
+- Configure for decryption of the file containing the pan list, through the
+  _batchConfiguration.TransactionFilterBatch.panList.applyDecrypt_ property, or through the environment variable
+  _ACQ_BATCH_PAN_LIST_APPLY_DECRYPT_         
 
-- Configurare l’applicazione dell’hash per le transazioni,
-  attraverso la proprietà _batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing_,
-  oppure attraverso la variabile d’ambiente _ACQ_BATCH_TRX_LIST_APPLY_HASHING_
+- Configure the hash application for transactions, through the batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing
+  property, or through the environment variable ACQ_BATCH_TRX_LIST_APPLY_HASHING
 
-- Configurare per criptazione dei prodotti,
-  attraverso la proprietà _batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt_,
-  oppure attraverso la variabile d’ambiente _ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT_
+- Configure for product encryption, through the batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt property, or
+  through the environment variable ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT
 
-- Configurare per l’applicazione dell’hash nelle transazioni riportate nel file prodotto,
-  attraverso la proprietà _batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing_,
-  oppure attraverso la variabile d’ambiente _ACQ_BATCH_TRX_LIST_HASHING_SAVE_
-   
-- Per inviare il file prodotto su canale SFTP dev’essere abilitata la funzionalità tramite proprietà
-  _batchConfiguration.TransactionFilterBatch.transactionSender.enabled_, dovranno essere riportate quindi le
-  configurazioni relative all’host, lo user utilizzato e il metodo di autenticazione, password-based,
-  o attraverso certificato. Le configurazioni per sftp sono riportate sotto la radice
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.sftp_, 
-  riportate nell’appendice relativa alle proprietà di configurazione.
+- Configure for the hash application in the transactions reported in the product file, through the
+  _batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing_ property, or through the environment variable
+  _ACQ_BATCH_TRX_LIST_HASHING_SAVE_         
   
-- Per abilitare i passaggi relativi ai servizi di recupero del salt, o della lista dei pan tramite servizi REST,
-  configurare le proprietà seguendo le definizioni riportate nel paragrafo __Connessione a Servizi REST__.  
+- To send the product file on SFTP channel, the functionality must be enabled through 
+  _batchConfiguration.TransactionFilterBatch.transactionSender.enabled_ properties,
+  then the configurations related to the host, the user used and the authentication method,
+  password-based, or through certificate must be reported. Configurations for sftp are listed under the 
+  _batchConfiguration.TransactionFilterBatch.transactionFilter.sftp_ root in the configuration properties appendix.
+  
+- To enable the passages related to the jump recovery services, or the pan list through REST services,
+  configure the properties following the definitions in the section __Connecting to REST Services__.    
 
-- Configurare la configurazione di schedulazione del processo, tramite una regola cron,
-  attraverso la proprietà _batchConfiguration.TransactionFilterBatch.cron_,
-  oppure attraverso la variabile d’ambiente _ACQ_BATCH_INPUT_CRON_
+- Configure the scheduling configuration of the process, through a cron rule, through the
+  _batchConfiguration.TransactionFilterBatch.cron_ property, or through the environment variable _ACQ_BATCH_INPUT_CRON_
 
-- Applicare eventuali altre modifiche ai parametri di configurazione,
-  descritti in __Appendice 2 - Proprietà di configurazione__
+- Apply any other changes to the configuration parameters, the full list of properties is described in __Appendix 2 - Configuration
+  properties__
 
-- Eseguire il batch. Il batch può essere avviato tramite il comando java:
+- Run the batch. The batch can be started via the java command:
 
   >java -jar <nome-jar> --spring.config.location=<location batch files>
 
-  __Nota:__ sostituire quanto evidenziato in rosso con le opportune configurazioni. ad esempio:
+  __Note:__ replace with the path to the proper configuration directory
 
   >java -jar batch-transaction-filter.jar --spring.config.location=C:\Development\batch-transaction-file\property\
   
-  Nel caso di esecuzione su artefatto contenuto nel bundle,
-  secondo la struttura delle risorse contenute in quest’ultimo, eseguire:
+  For the bundle execution, referring to the structure already present, execute:
   	
   >java -jar batch-transaction-filter.jar --spring.config.location=file:config/
 
-### Appendice 1 - Public PGP Key
+### Appendix 1 - Public PGP Key
 
-Per qualsiasi problema relativo all’utilizzo della chiave pubblica e per il rilascio delle specifiche e/o aggiornamento
-relativi alla chiave pubblica da utilizzare per cifrare il file è necessario contattare la struttura delegata da PagoPa
-di competenza (rif. SIA OPE Innovative Payments - [sistemisti_bigdata@sia.eu](mailto:sistemisti_bigdata@sia.eu)). 
+For any problem relating to the use of the public key and for the release of the specifications and / or updates relating to the public
+key to be used to encrypt the file, it is mandatory to contact the structure delegated by PagoPA  (ref. SIA OPE Innovative Payments -
+[sistemisti_bigdata@sia.eu](mailto:sistemisti_bigdata@sia.eu)). 
 
-__Nota:__ Il file contenente la chiave viene incluso nel bundle contenente l’artefatto per l’esecuzione del batch.
+__Nota:__ The file filled with the key is included in the bundle containing the artifact for executing the batch.
 
-### Appendice 2 - Proprietà di configurazione
+### Appendix 2 - Configuration properties
 
-#### 1. Proprietà Logging
+#### 1. Logging properties
 
-Key |  Description | Default | Obbligatorio | Valori
+Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------ 
-__logging.file__ | Percorso in cui scrivere il file di log || NO
-__logging.level.root__ | Livello di log | INFO | NO | TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF
+__logging.file__ | Location where the log files will be written || NO
+__logging.level.root__ | Log level | INFO | NO | TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF
 
-#### 2. Proprietà Batch - Generali
+#### 2. Batch properties - General
 
-Key |  Description | Default | Obbligatorio | Valori
+Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------ 
-__batchConfiguration.TransactionFilterBatch.successArchivePath__ | Sposta csv iniziale sul path success | file:/${ACQ_BATCH_SUCCESS_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/success} | SI
-__batchConfiguration.TransactionFilterBatch.errorArchivePath__ | Path in cui vengono spostati i file la cui elaborazione vanno in errore | file:/${ACQ_BATCH_ERROR_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/error} | SI
-__batchConfiguration.TransactionFilterBatch.cron__ | Schedulazione batch | ${ACQ_BATCH_INPUT_CRON:0 0/1 * 1/1 * ?} | SI
-__batchConfiguration.TransactionFilterBatch.partitionerMaxPoolSize__ | Impostazione max partitioner del batch | ${ACQ_BATCH_INPUT_PART_MAX_POOL_SIZE:5} | NO
-__batchConfiguration.TransactionFilterBatch.partitionerCorePoolSize__ | Impostazione pool di partitioner del batch | ${ACQ_BATCH_INPUT_PART_CORE_POOL_SIZE:5} | NO
-__batchConfiguration.TransactionFilterBatch.readerMaxPoolSize__ | Numero massimo di reader del file csv delle transazioni | ${ACQ_BATCH_INPUT_PART_READ_MAX_POOL_SIZE:5} | NO
-__batchConfiguration.TransactionFilterBatch.readerCorePoolSize__ | Numero massimo di reader del file csv delle transazioni | ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5} | NO
-__batchConfiguration.TransactionFilterBatch.tablePrefix__ | Prefisso tabelle contenente i metadati relativi all’esecuzione del batch, se attiva | ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_} | NO
+__batchConfiguration.TransactionFilterBatch.successArchivePath__ | Move initial csv to success path| file:/${ACQ_BATCH_SUCCESS_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/success} | YES
+__batchConfiguration.TransactionFilterBatch.errorArchivePath__ | Path where the files whose processing goes wrong are moved | file:/${ACQ_BATCH_ERROR_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/error} | YES
+__batchConfiguration.TransactionFilterBatch.cron__ | Batch scheduling | ${ACQ_BATCH_INPUT_CRON:0 0/1 * 1/1 * ?} | YES
+__batchConfiguration.TransactionFilterBatch.partitionerMaxPoolSize__ | Batch max partitioner setting | ${ACQ_BATCH_INPUT_PART_MAX_POOL_SIZE:5} | NO
+__batchConfiguration.TransactionFilterBatch.partitionerCorePoolSize__ | Batch partitioner pool setup | ${ACQ_BATCH_INPUT_PART_CORE_POOL_SIZE:5} | NO
+__batchConfiguration.TransactionFilterBatch.readerMaxPoolSize__ | Maximum number of transaction csv file readers | ${ACQ_BATCH_INPUT_PART_READ_MAX_POOL_SIZE:5} | NO
+__batchConfiguration.TransactionFilterBatch.readerCorePoolSize__ | Maximum number of transaction csv file readers | ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5} | NO
+__batchConfiguration.TransactionFilterBatch.tablePrefix__ | Table prefix containing the metadata related to the execution of the batch, if active | ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_} | NO
 
-#### 3. Proprietà Batch - Lettura lista PAN
+#### 3. Batch properties - PAN List reading
 
-Key |  Description | Default | Obbligatorio | Valori
+Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------ 
-__batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath__ | Percorso in cui è salvato il file pgp contenente gli HPAN | file:/${ACQ_BATCH_HPAN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | SI
-__batchConfiguration.TransactionFilterBatch.panList.secretKeyPath__ | Percorso in cui è salvata la chiave privata | file:/${ACQ_BATCH_INPUT_SECRET_KEYPATH:} | SI
-__batchConfiguration.TransactionFilterBatch.panList.passphrase__ | Passphrase per la chiave privata | ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:} | SI
-__batchConfiguration.TransactionFilterBatch.panList.partitionerSize__ | Size dei partitioner utilizzati per la lettura del file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
-__batchConfiguration.TransactionFilterBatch.panList.chunkSize__ | Dimensione dei chunk utilizzati per la lettura del file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
-__batchConfiguration.TransactionFilterBatch.panList.skipLimit__ | Numero massimo di record scartati prima che venga bloccata l’esecuzione | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
-__batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag che indica se applicare o meno la descrittazione al file degli hpan | ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:true} | SI | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath__ | The path where you saved the file pgp containing HPAN | file:/${ACQ_BATCH_HPAN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
+__batchConfiguration.TransactionFilterBatch.panList.secretKeyPath__ | Path where the private key is saved | file:/${ACQ_BATCH_INPUT_SECRET_KEYPATH:} | YES
+__batchConfiguration.TransactionFilterBatch.panList.passphrase__ | Passphrase for the private key | ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:} | YES
+__batchConfiguration.TransactionFilterBatch.panList.partitionerSize__ | Size of the partitioner used to read the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TransactionFilterBatch.panList.chunkSize__ | Size of the chunks used for reading the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TransactionFilterBatch.panList.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
+__batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the hpan file | ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE	
 
-#### 4. Proprietà Batch - Lettura lista transazioni
+#### 4. Batch properties - Transaction list reading
 
-Key |  Description | Default | Obbligatorio | Valori
+Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath__ | Path in cui viene letto il file delle transazioni da processare | file:/${ACQ_BATCH_TRX_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath__ | dove viene scritto il file finale | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/output} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath__ | Percorso che contiene la chiave pubblica con cui cifrare il file finale | file:/${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize__ | Dimensione partitiner per file transazioni | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize__ | Dimensione chunck per lettura file transazioni | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.skipLimit__ | Numero massimo di record scartati prima che venga bloccata l’esecuzione | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern__ | Pattern relativo alla data di transazione | ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:MM/dd/yyyy HH:mm:ss} | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing__ | Flag che pilota l’applicazione dell’hashing al pan presente nel file transazioni | ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:false} | SI | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt__ | Flag per definire se applicare la crittazione del file prodotto | ${ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT:true} | SI | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing__ | Flag per definire se salvare l’han del pan nel file prodotto | ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:false} | SI | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.linesToSkip__ | Numero di linee da saltare a partire dall’inizio del file (ad es. per evitare l'header) | ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath__ | Path where the transaction file to be processed is read | file:/${ACQ_BATCH_TRX_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath__ | Path where the final file is writtene | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/output} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath__ | Path containing the public key with which to encrypt the result file | file:/${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize__ | Partitiner size for transaction files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize__ | Chunck size for reading transaction files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern__ | Pattern relating to the transaction date | ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:MM/dd/yyyy HH:mm:ss} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing__ | Flag that drives the hashing to the pan present in the transaction file | ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:false} | SI | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt__ | Flag to define whether to encrypt the result file | ${ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing__ | Flag to define whether to save the hashing of the pan in the result file | ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:false} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.linesToSkip__ |Number of lines to skip from the beginning of the file (e.g. to avoid the header ) | ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0} | NO
 
-#### 5. Proprietà Batch - SFTP
+#### 5. Batch properties - SFTP
 
-Key |  Description | Default | Obbligatorio | Valori
+Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionSender.enabled__ | Indica se l’invio verso canale sftp sia o meno attivo | ${ACQ_BATCH_TRX_SENDER_ENABLED:true} | SI | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory__ | Directory locale da cui prendere il file da inviare su SFTP remoto | ${SFTP_LOCAL_DIR:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.remotedirectory__ | Directory remota dell’sftp in cui copiare il file | ${SFTP_REMOTE_DIR:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filenamepattern__ | Nome/pattern del file da spostare su SFTP remoto | ${SFTP_FILE_PATTERN:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filextension__ | Estensione del file da copiare su sftp remoto | ${SFTP_FILE_EXTENSION:} | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.host__ | Host SFTP | ${SFTP_HOST:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.port__ | Porta SFTP | ${SFTP_PORT:22} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.user__ | Utenza per accesso ad SFTP | ${SFTP_USER:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.password__ | Password per accesso a SFTP | ${SFTP_PASSWORD:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.timeout__ | Timeout relativo alla connessione con SFTP | ${SFTP_SOCKET_TIMEOUT:0:} | SI
-__connectors.sftpConfigurations.connection.privateKey__ | Indica il file per l’autenticazione su canale avverrà tramite chiave privata | file:/${SFTP_PRIVATE_KEY:} | NO
-__connectors.sftpConfigurations.connection.passphrase__ | Indica la passphrase associata alla chiave privata | ${SFTP_PASSPHRASE:} | NO
+__batchConfiguration.TransactionFilterBatch.transactionSender.enabled__ | Indicates whether the sending to the sftp channel is active or not | ${ACQ_BATCH_TRX_SENDER_ENABLED:true} | SI | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory__ |Local directory from which to get the file to be sent on remote SFTP | ${SFTP_LOCAL_DIR:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.remotedirectory__ | Remote SFTP directory to copy the file to | ${SFTP_REMOTE_DIR:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filenamepattern__ | Name / pattern of the file to be moved to remote SFTP | ${SFTP_FILE_PATTERN:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filextension__ | File extension to copy to remote SFTP | ${SFTP_FILE_EXTENSION:} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.host__ | SFTP Host | ${SFTP_HOST:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.port__ | SFTP Port | ${SFTP_PORT:22} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.user__ | User for access to SFTP | ${SFTP_USER:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.password__ | Password for access to SFTP | ${SFTP_PASSWORD:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.timeout__ | Timeout related to connection with SFTP | ${SFTP_SOCKET_TIMEOUT:0:} | SI
+__connectors.sftpConfigurations.connection.privateKey__ | Indicates the file for channel authentication will take place via a private key | file:/${SFTP_PRIVATE_KEY:} | NO
+__connectors.sftpConfigurations.connection.passphrase__ | Indicates the passphrase associated with the private key | ${SFTP_PASSPHRASE:} | NO
 
-#### 6. Proprietà Batch - Servizi REST
+#### 6. Batch properties - REST services
 
-Key |  Description | Default | Obbligatorio | Valori
+Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.saltRecovery.enabled__ | Abilitazione del servizio di recupero per il salt | ${ACQ_BATCH_SALT_RECOVERY_ENABLED:false} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled__ | Abilitazione del servizio di recupero per la lista di pan | ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath__ | Locazione dove sarà salvato il file contente la lista di file | ${ACQ_BATCH_HPAN_INPUT_PATH:} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Nome assegnato al file prodotto | ${CSV_TRX_BATCH_HPAN_LIST_FILENAME:} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.attemptExtract__ | Indicazione se il file recuperato sarà nella forma di un file compresso con checksum | ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:false} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.checksumFilePattern__ | Pattern per il file di checksum | ${ACQ_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*checksum.* } | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.listFilePattern__ | Pattern per la lista contenente la lista di pan | ${CSV_TRX_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*\\.csv } | NO
-__rest-client.hpan.base-url__ | Base url per i servizi REST | ${HPAN_SERVICE_URL}/rtd/payment-instrument-manager | NO
-__rest-client.hpan.list.url__ | Endpoint per recupero lista pan | /list | NO
-__rest-client.hpan.salt.url__ | Endpoint per recupero salt | /salt | NO
-__rest-client.hpan.mtls.enabled__ | Abilitazione MTLS per chiamate ai servizi per salt e lista pan | ${HPAN_SERVICE_MTLS_ENABLED:true} | NO
-__rest-client.hpan.key-store.file__ | Riferimento a file per key-store | file:/${HPAN_SERVICE_KEY_STORE_FILE:} | NO
-__rest-client.hpan.key-store.type__ | Tipo di key-store utilizzato. | ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}} | NO
-__rest-client.hpan.key-store.algorithm__ | Tipo di algoritmo utilizzato | ${HPAN_SERVICE_KEY_STORE_ALGORITHM:#{null}} | NO
-__rest-client.hpan.trust-store.file__ | Riferimento a file per trust-store | file:/${HPAN_SERVICE_TRUST_STORE_FILE:} | NO
-__rest-client.hpan.trust-store.type__ | Tipo di trust-store utilizzato. | ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}} | NO
-__rest-client.hpan.trust-store.algorithm__ | Tipo di algoritmo utilizzato | ${HPAN_SERVICE_TRUST_STORE_ALGORITHM:#{null}} | NO
+__batchConfiguration.TransactionFilterBatch.saltRecovery.enabled__ | Enable the recovery service for the salt | ${ACQ_BATCH_SALT_RECOVERY_ENABLED:false} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled__ | Enable the recovery service for the pan list | ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath__ | Location where the file containing the list of files will be saved | ${ACQ_BATCH_HPAN_INPUT_PATH:} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Name assigned to the recovered file | ${CSV_TRX_BATCH_HPAN_LIST_FILENAME:} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.attemptExtract__ | Indication if the recovered file will be in the form of a compressed file with checksum | ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:false} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.checksumFilePattern__ | Pattern for the checksum file | ${ACQ_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*checksum.* } | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.listFilePattern__ | Pattern for the list containing the pan list | ${CSV_TRX_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*\\.csv } | NO
+__rest-client.hpan.base-url__ | Base url for REST services | ${HPAN_SERVICE_URL} | NO
+__rest-client.hpan.list.url__ | Endpoint pan list service | /list | NO
+__rest-client.hpan.salt.url__ | Endpoint salt service | /salt | NO
+__rest-client.hpan.mtls.enabled__ | Enable MTLS for salt and pan list services | ${HPAN_SERVICE_MTLS_ENABLED:true} | NO
+__rest-client.hpan.key-store.file__ | Path to key-store | file:/${HPAN_SERVICE_KEY_STORE_FILE:} | NO
+__rest-client.hpan.key-store.type__ | Key-store type | ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}} | NO
+__rest-client.hpan.key-store.algorithm__ | Key-store algorithm | ${HPAN_SERVICE_KEY_STORE_ALGORITHM:#{null}} | NO
+__rest-client.hpan.key-store.password__ | Key-store password | ${HPAN_SERVICE_KEY_STORE_PASSWORD:} | NO
+__rest-client.hpan.trust-store.file__ | Path to trust-store | file:/${HPAN_SERVICE_TRUST_STORE_FILE:} | NO
+__rest-client.hpan.trust-store.type__ | Trust-store type | ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}} | NO
+__rest-client.hpan.trust-store.password__ | Trust-store password | ${HPAN_SERVICE_TRUST_STORE_PASSWORD:} | NO
 
 
-#### 7. Proprietà Batch - Gestione File
+#### 7. Batch properties - File handling
 
-Key |  Description | Default | Obbligatorio | Valori
+Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles__ | Flag per pilotare la cancellazione dei file generati in locale (tutti i file relativi alla computazione del batch) | ${FLAG_DELETE_LOCAL_FILE:true} | SI | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles__ | Enable deletion of locally generated files (all files related to batch computation) | ${FLAG_DELETE_LOCAL_FILE:true} | SI | TRUE FALSE
 
-#### 8. Proprietà Batch - Repository
+#### 8. Batch properties - Repository
 
-Key |  Description | Default | Obbligatorio | Valori
+Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__spring.datasource.driver-class-name__ | Classname per il driver relativo al db da utilizzare | ${BATCH_DB_CLASS_NAME:} | SI
-__spring.datasource.url__ | Url per la connessione al db da utilizzare | ${BATCH_DB_CONN_URL:} | SI
-__spring.datasource.username__ | Username per la connessione a db | ${BATCH_DB_USERNAME:} | SI
-__spring.datasource.password__ | Password per la connessione a db | ${BATCH_DB_USERNAME:} | SI
-__spring.datasource.hikari.schema__ | Schema a cui connettersi per il database | ${BATCH_DB_SCHEMA:} | SI
-__spring.jpa.database-platform__ | Indicazione del dialetto da utilizzare per il database di riferimento | ${BATCH_DB_DIALECT:} | SI
+__spring.datasource.driver-class-name__ | Classname for the driver to user | ${BATCH_DB_CLASS_NAME:} | SI
+__spring.datasource.url__ | Database connection url | ${BATCH_DB_CONN_URL:} | SI
+__spring.datasource.username__ | Database username for login | ${BATCH_DB_USERNAME:} | SI
+__spring.datasource.password__ | Database password for user login | ${BATCH_DB_USERNAME:} | SI
+__spring.datasource.hikari.schema__ | Database schema | ${BATCH_DB_SCHEMA:} | SI
+__spring.jpa.database-platform__ | Database dialect | ${BATCH_DB_DIALECT:} | SI
 
-#### Appendice 3 - Autenticazione Servizi Acquirer
+### Appendix 3 - Acquirer Services Authentication
 
-Le interazioni per i servizi del batch Acquirer utilizzano un meccanismo di mutua autenticazione su protocollo TLS/SSL,
-mediante lo scambio di certificati pubblici, rilasciati da una CA (l’autorità certificante), utilizzati per la verifica
-da parte di entrambi gli attori rispetto alle chiavi in proprio possesso.
-Perché questo meccanismo sia applicabile sarà quindi necessario che:
+The interactions for the Acquirer batch services use a mutual authentication mechanism over TLS/SSL protocol,
+through the exchange of public certificates, issued by a CA (the certifying authority), used for the verification
+by both actors compared to the keys in their possession.
+For this mechanism to be applicable it will therefore be necessary that:
 
-Il Client dovrà essere configurato per l’invio di richieste su protocollo TLS/SSL, indicando un file contenente il
-certificato pubblico rilasciato per la macchina che recepirà le richieste,
-ed inoltre dovrà essere configurato per recepire una collezione di chiavi da utilizzare per la verifica dei
-certificati riportati dalla macchina contattata. 
+The Client will have to be configured to send requests on TLS/SSL protocol, indicating a file containing the
+public certificate issued for the machine that will implement the requests,
+and will also need to be configured to receive a collection of keys to be used for verification of the
+certificates reported by the car contacted. 
 
-l’API dovrà essere configurata per accettare richieste su protocollo TLS/SSL, dovrà essere configurato per utilizzare
-una collezione di chiavi su cui applicare la verifica dei certificati, dovrà essere configurata per fornire un 
-certificato pubblico, utilizzato dal Client per l’autenticazione della macchina a cui è diretta la richiesta.
+the API must be configured to accept requests on TLS/SSL protocol, it must be configured to use
+a collection of keys on which to apply the certificate verification, must be configured to provide an 
+public certificate, used by the Client for authentication of the machine to which the request is directed.
 
-Utilizzando i servizi predisposti su Azure, per abilitare il processo di autenticazione, dovranno essere inseriti
-i certificati relativi alle CA (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-ca-certificates).
-Il formato dei certificati sarà in questo caso “.cer”
+Using the services provided on Azure, to enable the authentication process, the following must be entered
+certificates relating to the SOs (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-ca-certificates).
+The format of the certificates will in this case be ".cer".
 
-I certificati utilizzati nel caso di servizi esposti tramite Azure, dovranno essere inserite nella sezione dedicata, 
-questi ultimi dovranno nel formato “.pfx”.  (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates). 
+The certificates used in the case of services displayed through Azure, must be included in the dedicated section, 
+these must be in the ".pfx" format.  (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates). 
 
-I servizi esposti su Azure permetteranno la configurazione dei servizi di backend esposti in modo da abilitare il
-processo di mutua autenticazione sulla base di un determinato certificato. Nel caso dei servizi utilizzati dagli
-Acquirer viene introdotta una policy dedicata per permettere il processo di autenticazione tramite multipli certificati,
-per permettere l’utilizzo di certificati per gli Acquirer 
+The services displayed on Azure will allow the configuration of the backend services displayed so as to enable the
+mutual authentication process based on a given certificate. In the case of services used by
+Acquirer introduces a dedicated policy to allow the authentication process through multiple certificates,
+to allow the use of certificates for Acquirers 
 (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates-for-clients).
 
 
