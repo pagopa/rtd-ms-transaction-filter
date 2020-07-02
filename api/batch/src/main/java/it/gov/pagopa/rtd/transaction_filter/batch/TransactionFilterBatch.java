@@ -75,12 +75,6 @@ public class TransactionFilterBatch {
     private String hpanListDirectory;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename}")
     private String hpanListFilename;
-    @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.attemptExtract}")
-    private Boolean attemptExtract;
-    @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.checksumFilePattern}")
-    private String checksumFilePattern;
-    @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.listFilePattern}")
-    private String hpanListPattern;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles}")
     private Boolean deleteLocalFiles;
     @Value("${batchConfiguration.TransactionFilterBatch.saltRecovery.enabled}")
@@ -219,9 +213,6 @@ public class TransactionFilterBatch {
         hpanListRecoveryTasklet.setHpanListDirectory(hpanListDirectory);
         hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
         hpanListRecoveryTasklet.setFileName(hpanListFilename);
-        hpanListRecoveryTasklet.setChecksumFilePattern(checksumFilePattern);
-        hpanListRecoveryTasklet.setExtractFile(attemptExtract);
-        hpanListRecoveryTasklet.setListFilePattern(hpanListPattern);
         hpanListRecoveryTasklet.setTaskletEnabled(hpanListRecoveryEnabled);
         return stepBuilderFactory
                 .get("transaction-filter-salt-hpan-list-recovery-step")

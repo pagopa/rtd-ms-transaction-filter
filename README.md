@@ -1,6 +1,7 @@
 # Acquirer Transaction Filter Batch
 
-Component defining the batch process for filtering the input transaction records, based on a list of pan, recovered from a local directory or through a remote service. 
+Component defining the batch process for filtering the input transaction records, based on a list of pan,
+recovered from a local directory or through a remote service. 
 
 ### Execution requirements
 
@@ -54,8 +55,33 @@ The artifact will be created into the target folder at root level
 
 Spring Batch uses a repository on which you can track the executions performed by the service. 
 If there is no particular configuration: an in- memory instance will be executed to allow the batch to be executed. The configuration of
-the bundle uses this mode for greater immediacy of use. If you want to set it please refer to the properties in Appendix 2 -
-Configuration properties.
+the bundle uses this mode for greater immediacy of use. If you want to set it please refer to the properties in __Appendix 2 -
+Configuration properties__.
+
+### REST Services Connection
+
+The Batch Acquirer is configurabile for contacting the salt recovery service, to be applied for the PAN hashing,
+and the pan list recovery service, to be used for filtering the transaction records. To enabled this services,
+the following configuration properties must be enabled: _batchConfiguration.TransactionFilterBatch.saltRecovery.enabled_ 
+and _batchConfiguration.TransactionFilterBatch.hpanList.enabled_. 
+
+Endpoint configurations are through the properties _rest-client.hpan.base-url_, for the base configuration
+, and the endpoint properties for the two services respectively _rest-client.hpan.list.url_ and _rest-client.hpan.salt.url_.
+
+If the client is to be configured for TLS/SSL protocol usage, the configuration property 
+_rest-client.hpan.mtls.enabled_ is to be used, and the keystore and trust-store files for the client, to be applied
+in the certificate exchange, respectively through the _rest-client.hpan.key-store.file_ and
+_rest-client.hpan.trust-store.file_ properties. 
+
+Other applicable configurations are those related to passwords to be applied for certificates,
+identified by the _rest-client.hpan.key-store.password_ and _rest-client.hpan.trust-store.password_ configurations.
+The type used for files containing certificates can also be defined,
+and the algorithm used for the encryption. By default the files are in Java's JKS format,
+using the standard implementation of the X509 algorithm. For dedicated configurations refer to
+properties listed in __Appendix 2 - Configuration properties__.
+
+For references to the services displayed through Azure's API service, you can find the corresponding links in 
+__Appendix 3 - Authentication Services Acquirer__.
 
 ### Execution guidelines
 
@@ -80,7 +106,7 @@ Configuration properties.
   batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath property, or through the environment variable
   _ACQ_BATCH_INPUT_PUBLIC_KEYPATH_.         
    
-   __Nota:__ The configuration is strictly needed only if the encryption function of the produced files is enabled. In the case of
+   __Note:__ The configuration is strictly needed only if the encryption function of the produced files is enabled. In the case of
    configuration on file, the path must be preceded by the prefix _file:/_. for example:
    
     >batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath = file:/C/:Development/keys/public.asc
@@ -89,7 +115,7 @@ Configuration properties.
   _batchConfiguration.TransactionFilterBatch.panList.secretKeyPath_, or through the environment variable
   _ACQ_BATCH_INPUT_SECRET_KEYPATH_. 
 
-  __Nota:__ The configuration is strictly necessary only if the decryption function of the files containing the pan list is enabled. 
+  __Note:__ The configuration is strictly necessary only if the decryption function of the files containing the pan list is enabled. 
   In the case of configuration on file, the path must be preceded by prefix _file:/_. for example::
 
     >batchConfiguration.TransactionFilterBatch.panList.secretKeyPath = file:/C:/Development/keys/secret.asc
@@ -104,7 +130,7 @@ Configuration properties.
   _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath_ property, or through the environment variables
   _ACQ_BATCH_TRX_INPUT_PATH_ for the folder, and _ACQ_BATCH_INPUT_FILE_PATTERN_, for the pattern of files to read. 
 
-  __Nota:__  In the case of file configuration, the path must be preceded by the prefix _file:/_. for example: 
+  __Note:__  In the case of file configuration, the path must be preceded by the prefix _file:/_. for example: 
 
   >batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath = file:/C:/Development/transactions/*.csv
 
@@ -114,7 +140,7 @@ Configuration properties.
  _batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath_ property , or through the environment variables
  _ACQ_BATCH_HPAN_INPUT_PATH_ for the folder, and  _ACQ_BATCH_HPAN_INPUT_FILE_PATTERN_, for the pattern of files to read.
  
-  __Nota:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example: 
+  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example: 
 
   >batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath = file:/C:/Development/hpan/*.pgp
 
@@ -124,7 +150,7 @@ Configuration properties.
   _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_, or through the environment variable
   _ACQ_BATCH_OUTPUT_PATH_      
 
-  __Nota:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
+  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
   >batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath = file:/C:/Development/output
 
@@ -144,6 +170,15 @@ Configuration properties.
 - Configure for the hash application in the transactions reported in the product file, through the
   _batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing_ property, or through the environment variable
   _ACQ_BATCH_TRX_LIST_HASHING_SAVE_         
+  
+- To send the product file on SFTP channel, the functionality must be enabled through 
+  _batchConfiguration.TransactionFilterBatch.transactionSender.enabled_ properties,
+  then the configurations related to the host, the user used and the authentication method,
+  password-based, or through certificate must be reported. Configurations for sftp are listed under the 
+  _batchConfiguration.TransactionFilterBatch.transactionFilter.sftp_ root in the configuration properties appendix.
+  
+- To enable the passages related to the jump recovery services, or the pan list through REST services,
+  configure the properties following the definitions in the section __Connecting to REST Services__.    
 
 - Configure the scheduling configuration of the process, through a cron rule, through the
   _batchConfiguration.TransactionFilterBatch.cron_ property, or through the environment variable _ACQ_BATCH_INPUT_CRON_
@@ -155,7 +190,7 @@ Configuration properties.
 
   >java -jar <nome-jar> --spring.config.location=<location batch files>
 
-  __Nota:__ replace with the path to the proper configuration directory
+  __Note:__ replace with the path to the proper configuration directory
 
   >java -jar batch-transaction-filter.jar --spring.config.location=C:\Development\batch-transaction-file\property\
   
@@ -163,7 +198,7 @@ Configuration properties.
   	
   >java -jar batch-transaction-filter.jar --spring.config.location=file:config/
 
-### Appendice 1 - Public PGP Key
+### Appendix 1 - Public PGP Key
 
 For any problem relating to the use of the public key and for the release of the specifications and / or updates relating to the public
 key to be used to encrypt the file, it is mandatory to contact the structure delegated by PagoPA  (ref. SIA OPE Innovative Payments -
@@ -171,7 +206,7 @@ key to be used to encrypt the file, it is mandatory to contact the structure del
 
 __Nota:__ The file filled with the key is included in the bundle containing the artifact for executing the batch.
 
-### Appendice 2 - Configuration properties
+### Appendix 2 - Configuration properties
 
 #### 1. Logging properties
 
@@ -204,7 +239,6 @@ __batchConfiguration.TransactionFilterBatch.panList.partitionerSize__ | Size of 
 __batchConfiguration.TransactionFilterBatch.panList.chunkSize__ | Size of the chunks used for reading the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
 __batchConfiguration.TransactionFilterBatch.panList.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
 __batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the hpan file | ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE	
-
 
 #### 4. Batch properties - Transaction list reading
 
@@ -257,9 +291,11 @@ __rest-client.hpan.mtls.enabled__ | Enable MTLS for salt and pan list services |
 __rest-client.hpan.key-store.file__ | Path to key-store | file:/${HPAN_SERVICE_KEY_STORE_FILE:} | NO
 __rest-client.hpan.key-store.type__ | Key-store type | ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}} | NO
 __rest-client.hpan.key-store.algorithm__ | Key-store algorithm | ${HPAN_SERVICE_KEY_STORE_ALGORITHM:#{null}} | NO
+__rest-client.hpan.key-store.password__ | Key-store password | ${HPAN_SERVICE_KEY_STORE_PASSWORD:} | NO
 __rest-client.hpan.trust-store.file__ | Path to trust-store | file:/${HPAN_SERVICE_TRUST_STORE_FILE:} | NO
 __rest-client.hpan.trust-store.type__ | Trust-store type | ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}} | NO
-__rest-client.hpan.trust-store.algorithm__ | Trust-store algorithm | ${HPAN_SERVICE_TRUST_STORE_ALGORITHM:#{null}} | NO
+__rest-client.hpan.trust-store.password__ | Trust-store password | ${HPAN_SERVICE_TRUST_STORE_PASSWORD:} | NO
+
 
 #### 7. Batch properties - File handling
 
@@ -277,3 +313,35 @@ __spring.datasource.username__ | Database username for login | ${BATCH_DB_USERNA
 __spring.datasource.password__ | Database password for user login | ${BATCH_DB_USERNAME:} | SI
 __spring.datasource.hikari.schema__ | Database schema | ${BATCH_DB_SCHEMA:} | SI
 __spring.jpa.database-platform__ | Database dialect | ${BATCH_DB_DIALECT:} | SI
+
+### Appendix 3 - Acquirer Services Authentication
+
+The interactions for the Acquirer batch services use a mutual authentication mechanism over TLS/SSL protocol,
+through the exchange of public certificates, issued by a CA (the certifying authority), used for the verification
+by both actors compared to the keys in their possession.
+For this mechanism to be applicable it will therefore be necessary that:
+
+The Client will have to be configured to send requests on TLS/SSL protocol, indicating a file containing the
+public certificate issued for the machine that will implement the requests,
+and will also need to be configured to receive a collection of keys to be used for verification of the
+certificates reported by the car contacted. 
+
+the API must be configured to accept requests on TLS/SSL protocol, it must be configured to use
+a collection of keys on which to apply the certificate verification, must be configured to provide an 
+public certificate, used by the Client for authentication of the machine to which the request is directed.
+
+Using the services provided on Azure, to enable the authentication process, the following must be entered
+certificates relating to the SOs (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-ca-certificates).
+The format of the certificates will in this case be ".cer".
+
+The certificates used in the case of services displayed through Azure, must be included in the dedicated section, 
+these must be in the ".pfx" format.  (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates). 
+
+The services displayed on Azure will allow the configuration of the backend services displayed so as to enable the
+mutual authentication process based on a given certificate. In the case of services used by
+Acquirer introduces a dedicated policy to allow the authentication process through multiple certificates,
+to allow the use of certificates for Acquirers 
+(https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates-for-clients).
+
+
+

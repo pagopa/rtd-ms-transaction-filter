@@ -4,7 +4,9 @@
     "urlPath": "/hpan/list"
   },
   "response": {
-    "status": "200",
-    "bodyFileName": "list/test.csv"
+    "status": "302",
+    "headers": {
+      "Location": "/hpan/download"
+    }
   }
 }
