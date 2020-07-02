@@ -14,7 +14,7 @@ Per l’installazione ed esecuzione del batch sono necessari:
 
 Per l’applicazione della criptazione PGP al file prodotto in uscita al servizio batch, se abilitata,
 sarà necessario che sia inoltre presente un file contenente un file contenente la chiave pubblica da impiegare, 
-riportata in Appendice 1 - Chiave pubblica PGP. Per l’applicazione della decriptazione del file dei pan PGP,
+riportata in __Appendice 1 - Chiave pubblica PGP__. Per l’applicazione della decriptazione del file dei pan PGP,
 se abilitata, dovrà prevedere la presenza di un file contenente la chiave segreta da applicare per l’operazione.
 Nel caso si voglia produrre l’artefatto dal sorgente sarà necessario avere un’installazione locale di Maven.
 
@@ -61,7 +61,7 @@ eseguire il comando nella forma seguente:
 	
 L’artefatto prodotto sarà recuperabile dalla cartella target, visibile dalla folder di root.
 Il file di riferimento avrà il suffisso –FATJAR. Per poter configurare opportunamente l’esecuzione dell’artefatto,
-preparare il file application.yaml, ed opzionalmente file .properties o .yaml,
+preparare il file application.yaml, e opzionalmente file .properties o .yaml,
 contenenti le proprietà di configurazione da applicare.
 
 ### Connessione al database
@@ -69,7 +69,34 @@ contenenti le proprietà di configurazione da applicare.
 Spring Batch utilizza un repository su cui tenere traccia delle esecuzione effettuate dal servizio, nel caso in cui
 non ci sia una particolare configurazione un’istanza in-memory sarà eseguita per permettere l’esecuzione del batch.
 La configurazione del bundle utilizza questa modalità per maggior immediatezza di utilizzo. 
-Se si vuole configurare altrimenti fare riferimento alle proprietà in Appendice 2 - Proprietà di configurazione.
+Se si vuole configurare altrimenti fare riferimento alle proprietà in __Appendice 2 - Proprietà di configurazione__.
+
+### Connessione a Servizi REST
+
+Il Batch Acquirer è configurabile per contattare i servizi per il recupero del salt da applicare per l’hashing dei PAN,
+e della lista di questi ultimi, da utilizzare per la procedura di filtro dei record delle transazioni.
+Per l'abilitazione di questi servizi, devono essere rispettivamente abilitate tramite le configurazioni
+_batchConfiguration.TransactionFilterBatch.saltRecovery.enabled_ e 
+_batchConfiguration.TransactionFilterBatch.hpanList.enabled_. 
+
+La configurazione per gli endpoint da utilizzare è data dalle proprietà _rest-client.hpan.base-url_,
+per configurare il puntamento di base, e la componente degli endpoint dei due servizi, rispettivamente
+_rest-client.hpan.list.url_ e _rest-client.hpan.salt.url_.
+
+Nel caso si voglia configurare il Client per l’utilizzo del protocollo TLS/SSL, andrà abilitata la configurazione 
+tramite proprietà _rest-client.hpan.mtls.enabled_, e andranno indicati i file per il keystore e trust-store del client,
+da applicare nello scambio di certificati, rispettivamente tramite le proprietà _rest-client.hpan.key-store.file_ e
+_rest-client.hpan.trust-store.file_. 
+
+Ulteriori configurazioni applicabili sono quelle relative alle password da applicare per i certificati,
+identificati dalle configurazioni _rest-client.hpan.key-store.password_ e _rest-client.hpan.trust-store.password_.
+Può essere inoltre definito la tipologia utilizzata per i file contenenti i certificati,
+e l’algoritmo utilizzato per la criptazione. Sotto configurazione di default i file sono nel formato JKS di Java,
+utilizzando l’implementazione standard dell’algoritmo X509. Per le configurazioni dedicate fare riferimento alle
+proprietà riportate in __Appendice 2 - Proprietà di configurazione__.
+
+Per riferimenti ai servizi esposti tramite servizio API di Azure, sono riportati i link corrispondenti in 
+__Appendice 3 - Autenticazione Servizi Acquirer__.
 
 ### Linee guida per l’ esecuzione
 
@@ -165,6 +192,16 @@ Se si vuole configurare altrimenti fare riferimento alle proprietà in Appendice
 - Configurare per l’applicazione dell’hash nelle transazioni riportate nel file prodotto,
   attraverso la proprietà _batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing_,
   oppure attraverso la variabile d’ambiente _ACQ_BATCH_TRX_LIST_HASHING_SAVE_
+   
+- Per inviare il file prodotto su canale SFTP dev’essere abilitata la funzionalità tramite proprietà
+  _batchConfiguration.TransactionFilterBatch.transactionSender.enabled_, dovranno essere riportate quindi le
+  configurazioni relative all’host, lo user utilizzato e il metodo di autenticazione, password-based,
+  o attraverso certificato. Le configurazioni per sftp sono riportate sotto la radice
+  _batchConfiguration.TransactionFilterBatch.transactionFilter.sftp_, 
+  riportate nell’appendice relativa alle proprietà di configurazione.
+  
+- Per abilitare i passaggi relativi ai servizi di recupero del salt, o della lista dei pan tramite servizi REST,
+  configurare le proprietà seguendo le definizioni riportate nel paragrafo __Connessione a Servizi REST__.  
 
 - Configurare la configurazione di schedulazione del processo, tramite una regola cron,
   attraverso la proprietà _batchConfiguration.TransactionFilterBatch.cron_,
@@ -272,7 +309,7 @@ __batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Nome a
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.attemptExtract__ | Indicazione se il file recuperato sarà nella forma di un file compresso con checksum | ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:false} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.checksumFilePattern__ | Pattern per il file di checksum | ${ACQ_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*checksum.* } | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.listFilePattern__ | Pattern per la lista contenente la lista di pan | ${CSV_TRX_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*\\.csv } | NO
-__rest-client.hpan.base-url__ | Base url per i servizi REST | ${HPAN_SERVICE_URL} | NO
+__rest-client.hpan.base-url__ | Base url per i servizi REST | ${HPAN_SERVICE_URL}/rtd/payment-instrument-manager | NO
 __rest-client.hpan.list.url__ | Endpoint per recupero lista pan | /list | NO
 __rest-client.hpan.salt.url__ | Endpoint per recupero salt | /salt | NO
 __rest-client.hpan.mtls.enabled__ | Abilitazione MTLS per chiamate ai servizi per salt e lista pan | ${HPAN_SERVICE_MTLS_ENABLED:true} | NO
@@ -301,6 +338,34 @@ __spring.datasource.password__ | Password per la connessione a db | ${BATCH_DB_U
 __spring.datasource.hikari.schema__ | Schema a cui connettersi per il database | ${BATCH_DB_SCHEMA:} | SI
 __spring.jpa.database-platform__ | Indicazione del dialetto da utilizzare per il database di riferimento | ${BATCH_DB_DIALECT:} | SI
 
+#### Appendice 3 - Autenticazione Servizi Acquirer
+
+Le interazioni per i servizi del batch Acquirer utilizzano un meccanismo di mutua autenticazione su protocollo TLS/SSL,
+mediante lo scambio di certificati pubblici, rilasciati da una CA (l’autorità certificante), utilizzati per la verifica
+da parte di entrambi gli attori rispetto alle chiavi in proprio possesso.
+Perché questo meccanismo sia applicabile sarà quindi necessario che:
+
+Il Client dovrà essere configurato per l’invio di richieste su protocollo TLS/SSL, indicando un file contenente il
+certificato pubblico rilasciato per la macchina che recepirà le richieste,
+ed inoltre dovrà essere configurato per recepire una collezione di chiavi da utilizzare per la verifica dei
+certificati riportati dalla macchina contattata. 
+
+l’API dovrà essere configurata per accettare richieste su protocollo TLS/SSL, dovrà essere configurato per utilizzare
+una collezione di chiavi su cui applicare la verifica dei certificati, dovrà essere configurata per fornire un 
+certificato pubblico, utilizzato dal Client per l’autenticazione della macchina a cui è diretta la richiesta.
+
+Utilizzando i servizi predisposti su Azure, per abilitare il processo di autenticazione, dovranno essere inseriti
+i certificati relativi alle CA (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-ca-certificates).
+Il formato dei certificati sarà in questo caso “.cer”
+
+I certificati utilizzati nel caso di servizi esposti tramite Azure, dovranno essere inserite nella sezione dedicata, 
+questi ultimi dovranno nel formato “.pfx”.  (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates). 
+
+I servizi esposti su Azure permetteranno la configurazione dei servizi di backend esposti in modo da abilitare il
+processo di mutua autenticazione sulla base di un determinato certificato. Nel caso dei servizi utilizzati dagli
+Acquirer viene introdotta una policy dedicata per permettere il processo di autenticazione tramite multipli certificati,
+per permettere l’utilizzo di certificati per gli Acquirer 
+(https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates-for-clients).
 
 
 
