@@ -180,8 +180,12 @@ __Appendix 3 - Authentication Services Acquirer__.
 - To enable the passages related to the jump recovery services, or the pan list through REST services,
   configure the properties following the definitions in the section __Connecting to REST Services__.    
 
-- Configure the scheduling configuration of the process, through a cron rule, through the
+- Configure the process scheduling, through a cron rule, through the
   _batchConfiguration.TransactionFilterBatch.cron_ property, or through the environment variable _ACQ_BATCH_INPUT_CRON_
+
+- To configure the batch process for the usage of a persisted database, define the configuration parameters under the
+  path prefix _spring.datasource_, refer to the command later defined to add the appropriate driver .jar to the process
+  classpath, in order to use the chosen database.
 
 - Apply any other changes to the configuration parameters, the full list of properties is described in __Appendix 2 - Configuration
   properties__
@@ -196,8 +200,12 @@ __Appendix 3 - Authentication Services Acquirer__.
   
   For the bundle execution, referring to the structure already present, execute:
   	
-  >java -jar batch-transaction-filter.jar --spring.config.location=file:config/
-
+  >java -jar batch-transaction-filter.jar --spring.config.location=file:config\
+                
+  For a batch process that does not use the default in-memory database, execute the following command:
+  
+  >java -jar batch-transaction-filter.jar --spring.config.location=file:config -cp <VENDOR_SPECIFIC_JDBC_DRIVER.jar>
+                                                                                                                                                                                                                                                                                                                                                                                                                              
 ### Appendix 1 - Public PGP Key
 
 For any problem relating to the use of the public key and for the release of the specifications and / or updates relating to the public
