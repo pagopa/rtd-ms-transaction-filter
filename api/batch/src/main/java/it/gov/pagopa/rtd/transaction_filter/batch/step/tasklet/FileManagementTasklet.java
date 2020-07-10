@@ -71,9 +71,10 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                 .getStepExecutions();
         for (StepExecution stepExecution : stepExecutions) {
             if (stepExecution.getExecutionContext().containsKey("fileName")) {
-                String file = stepExecution.getExecutionContext().getString("fileName");
 
+                String file = stepExecution.getExecutionContext().getString("fileName");
                 String path = null;
+
                 try {
                     path = resolver.getResource(file).getFile().getAbsolutePath();
                 } catch (Exception e) {
@@ -97,6 +98,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         log.error(e.getMessage(), e);
                     }
                 }
+
             }
         }
         if (deleteLocalFiles) {
