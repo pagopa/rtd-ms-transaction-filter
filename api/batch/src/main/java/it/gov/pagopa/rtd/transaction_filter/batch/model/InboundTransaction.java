@@ -5,6 +5,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -38,12 +39,14 @@ public class InboundTransaction {
 
     @NotNull
     @NotBlank
-    @Size(max = 2)
+    @Size(min = 2, max = 2)
+    @Pattern(regexp = "[0-9]{2}")
     String operationType;
 
     @NotNull
     @NotBlank
-    @Size(max = 2)
+    @Size(min = 2, max = 2)
+    @Pattern(regexp = "[0-9]{2}")
     String circuitType;
 
     @NotNull
@@ -66,5 +69,14 @@ public class InboundTransaction {
     @NotNull
     @NotBlank
     String merchantId;
+
+    @NotNull
+    @NotBlank
+    String terminalId;
+
+    @NotNull
+    @Size(min = 6, max = 6)
+    @Pattern(regexp = "[0-9]{6}")
+    String bin;
 
 }

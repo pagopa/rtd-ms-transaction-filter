@@ -85,7 +85,8 @@ public class TransactionFilterStep {
         delimitedLineTokenizer.setDelimiter(";");
         delimitedLineTokenizer.setNames(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
-                "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "MCC");
+                "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
+                "bank_identification_number", "MCC");
         return delimitedLineTokenizer;
     }
 
@@ -137,7 +138,8 @@ public class TransactionFilterStep {
         BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
         extractor.setNames(new String[] {
                 "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
-                "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId", "mcc"});
+                "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
+                "terminalId", "bin", "mcc"});
         return extractor;
     }
 

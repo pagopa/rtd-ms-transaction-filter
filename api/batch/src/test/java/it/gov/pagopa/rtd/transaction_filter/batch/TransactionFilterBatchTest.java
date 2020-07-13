@@ -23,6 +23,7 @@ import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.openfeign.FeignAutoConfiguration;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -166,8 +167,15 @@ public class TransactionFilterBatchTest {
 
     }
 
+    @SneakyThrows
     @After
     public void tearDown() {
+        Resource[] resources = resolver.getResources("classpath:/test-encrypt/output/*.pgp");
+        if (resources.length > 1) {
+            for (Resource resource : resources) {
+                resource.getFile().delete();
+            }
+        }
         tempFolder.delete();
     }
 

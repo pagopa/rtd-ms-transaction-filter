@@ -59,7 +59,6 @@ public class TransactionsSkipListener implements SkipListener<InboundTransaction
 
     }
 
-
     @Override
     public void onSkipInWrite(InboundTransaction inboundTransaction, Throwable throwable) {
 

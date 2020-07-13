@@ -4,26 +4,24 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.sshd.common.util.io.IoUtils;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.util.Assert;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Data
@@ -31,17 +29,58 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
 
     private HpanConnectorService hpanConnectorService;
     private String hpanListDirectory;
+    private String hpanFilePattern;
     private String fileName;
-    private Boolean taskletEnabled = false;
+    private Boolean dailyRemovalTaskletEnabled = false;
+    private Boolean recoveryTaskletEnabled = false;
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-        if (taskletEnabled) {
+
+        Resource[] resources = resolver.getResources("file:/"
+                .concat(hpanListDirectory)
+                .concat("\\")
+                .concat(hpanFilePattern));
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String currentDate = OffsetDateTime.now().format(fmt);
+
+
+        if (dailyRemovalTaskletEnabled) {
+
+            try {
+
+                for (Resource resource : resources) {
+                    BasicFileAttributes fileAttributes = Files.readAttributes(
+                            resource.getFile().toPath(), BasicFileAttributes.class);
+                    Long fileLastModTime = fileAttributes.lastModifiedTime().toMillis();
+                    Instant instant = Instant.ofEpochMilli(fileLastModTime);
+                    LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+                    String fileLastModifiedDate = localDateTime.format(fmt);
+                    if (!fileLastModifiedDate.equals(currentDate)) {
+                        resource.getFile().delete();
+                    }
+
+                }
+
+            } catch (Exception e) {
+                if (log.isErrorEnabled()) {
+                    log.error(e.getMessage(), e);
+                }
+            }
+
+        }
+
+        if (recoveryTaskletEnabled) {
+            resources = resolver.getResources("file:/"
+                    .concat(hpanListDirectory)
+                    .concat("\\")
+                    .concat(hpanFilePattern));
             File outputFile = FileUtils.getFile(hpanListDirectory
-                    .concat("/".concat(fileName != null ? fileName : "hpanList")));
-            if (!outputFile.exists()) {
+                    .concat("/".concat(OffsetDateTime.now().format(fmt).concat("_")
+                            .concat(fileName != null ? fileName : "hpanList"))));
+            if (resources.length == 0 || !outputFile.exists()) {
                 File hpanListTempFile = hpanConnectorService.getHpanList();
                 FileUtils.moveFile(
                         hpanListTempFile,
