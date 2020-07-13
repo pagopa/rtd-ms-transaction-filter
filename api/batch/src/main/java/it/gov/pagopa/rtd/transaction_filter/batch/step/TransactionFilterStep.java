@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
+import it.gov.pagopa.rtd.transaction_filter.batch.listener.TransactionsSkipListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionFieldSetMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
@@ -32,6 +33,8 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.FileNotFoundException;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -66,6 +69,8 @@ public class TransactionFilterStep {
     private String localdirectory;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSender.enabled}")
     private Boolean transactionSenderEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath}")
+    private String transactionLogsPath;
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
@@ -80,7 +85,8 @@ public class TransactionFilterStep {
         delimitedLineTokenizer.setDelimiter(";");
         delimitedLineTokenizer.setNames(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
-                "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "MCC");
+                "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
+                "bank_identification_number", "MCC");
         return delimitedLineTokenizer;
     }
 
@@ -132,7 +138,8 @@ public class TransactionFilterStep {
         BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
         extractor.setNames(new String[] {
                 "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
-                "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId", "mcc"});
+                "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
+                "terminalId", "bin", "mcc"});
         return extractor;
     }
 
@@ -227,8 +234,18 @@ public class TransactionFilterStep {
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
                 .skip(Exception.class)
+                .listener(transactionsSkipListener())
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
+    }
+
+    @Bean
+    public TransactionsSkipListener transactionsSkipListener() {
+        TransactionsSkipListener transactionsSkipListener = new TransactionsSkipListener();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        transactionsSkipListener.setExecutionDate(OffsetDateTime.now().format(fmt));
+        transactionsSkipListener.setTransactionLogsPath(transactionLogsPath);
+        return transactionsSkipListener;
     }
 
 

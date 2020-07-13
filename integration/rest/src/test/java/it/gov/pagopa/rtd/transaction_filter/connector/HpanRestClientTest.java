@@ -55,6 +55,7 @@ public class HpanRestClientTest {
     @ClassRule
     public static WireMockClassRule wireMockRule = new WireMockClassRule(wireMockConfig()
             .dynamicHttpsPort()
+            .dynamicPort()
             .needClientAuth(true)
             .keystorePath("src/test/resources/certs/server-keystore.jks")
             .keystorePassword("secret")

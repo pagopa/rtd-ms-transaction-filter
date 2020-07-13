@@ -165,6 +165,8 @@ public class InboundTransactionItemProcessorTest  {
                 .amountCurrency("833")
                 .correlationId("1")
                 .acquirerId("0")
+                .terminalId("0")
+                .bin("000001")
                 .build();
     }
 }

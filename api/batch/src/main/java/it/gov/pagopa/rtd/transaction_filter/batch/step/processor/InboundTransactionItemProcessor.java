@@ -11,7 +11,8 @@ import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 
-import javax.validation.ConstraintViolationException;
+import javax.validation.*;
+import java.util.Set;
 
 /**
  * Implementation of the ItemProcessor interface, used to process instances of InboundTransaction,
@@ -27,7 +28,6 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
     private final Boolean saveHashing;
     private String salt = "";
 
-
     /**
      * Validates the input {@link InboundTransaction}, and maps it to an instance of Transaction
      * @param inboundTransaction
@@ -37,6 +37,14 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
      */
     @Override
     public InboundTransaction process(InboundTransaction inboundTransaction) {
+
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        Validator validator = factory.getValidator();
+
+        Set<ConstraintViolation<InboundTransaction>> constraintViolations = validator.validate(inboundTransaction);
+        if (constraintViolations.size() > 0) {
+            throw new ConstraintViolationException(constraintViolations);
+        }
 
         String hpan = applyHashing ?
                 DigestUtils.sha256Hex(inboundTransaction.getPan()+salt) :

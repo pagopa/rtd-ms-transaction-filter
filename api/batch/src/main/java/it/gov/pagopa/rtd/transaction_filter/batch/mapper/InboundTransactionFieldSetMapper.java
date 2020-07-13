@@ -54,6 +54,8 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .amountCurrency(fieldSet.readString("currency"))
                         .acquirerId(fieldSet.readString("acquirerID"))
                         .merchantId(fieldSet.readString("merchantID"))
+                        .terminalId(fieldSet.readString("terminal_id"))
+                        .bin(fieldSet.readString("bank_identification_number"))
                         .mcc(fieldSet.readString("MCC"))
                         .build();
 

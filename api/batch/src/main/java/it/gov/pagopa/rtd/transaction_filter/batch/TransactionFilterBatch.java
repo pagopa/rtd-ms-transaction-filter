@@ -73,6 +73,8 @@ public class TransactionFilterBatch {
     private String tablePrefix;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath}")
     private String hpanListDirectory;
+    @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.filePattern}")
+    private String hpanListRecoveryFilePattern;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename}")
     private String hpanListFilename;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles}")
@@ -81,6 +83,9 @@ public class TransactionFilterBatch {
     private Boolean saltRecoveryEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled}")
     private Boolean hpanListRecoveryEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled}")
+    private Boolean hpanListDailyRemovalEnabled;
+
 
     private DataSource dataSource;
     private HpanStoreService hpanStoreService;
@@ -213,7 +218,9 @@ public class TransactionFilterBatch {
         hpanListRecoveryTasklet.setHpanListDirectory(hpanListDirectory);
         hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
         hpanListRecoveryTasklet.setFileName(hpanListFilename);
-        hpanListRecoveryTasklet.setTaskletEnabled(hpanListRecoveryEnabled);
+        hpanListRecoveryTasklet.setHpanFilePattern(hpanListRecoveryFilePattern);
+        hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(hpanListDailyRemovalEnabled);
+        hpanListRecoveryTasklet.setRecoveryTaskletEnabled(hpanListRecoveryEnabled);
         return stepBuilderFactory
                 .get("transaction-filter-salt-hpan-list-recovery-step")
                 .tasklet(hpanListRecoveryTasklet).build();

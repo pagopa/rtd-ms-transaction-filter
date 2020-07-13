@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.apache.sshd.common.util.io.IoUtils;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
@@ -21,11 +20,8 @@ import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.test.MetaDataInstanceFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipException;
-import java.util.zip.ZipOutputStream;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class HpanListRecoveryTaskletTest {
 
@@ -62,10 +58,13 @@ public class HpanListRecoveryTaskletTest {
         File hpanFolder = tempFolder.newFolder("hpanDir");
         BDDMockito.doReturn(tempFolder.newFile("tempFile")).when(hpanConnectorServiceMock).getHpanList();
         HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
-        hpanListRecoveryTasklet.setFileName("hpanlist.pgp");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+        hpanListRecoveryTasklet.setFileName(OffsetDateTime.now().format(fmt).concat("_hpanlist.pgp"));
         hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
         hpanListRecoveryTasklet.setHpanListDirectory(hpanFolder.getAbsolutePath());
-        hpanListRecoveryTasklet.setTaskletEnabled(true);
+        hpanListRecoveryTasklet.setHpanFilePattern("*.pgp");
+        hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(true);
+        hpanListRecoveryTasklet.setRecoveryTaskletEnabled(true);
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
@@ -80,10 +79,13 @@ public class HpanListRecoveryTaskletTest {
         File hpanFolder = tempFolder.newFolder("hpanDir");
         tempFolder.newFile("hpanDir/hpanlist.pgp");
         HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
-        hpanListRecoveryTasklet.setFileName("hpanlist.pgp");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+        hpanListRecoveryTasklet.setFileName(OffsetDateTime.now().format(fmt).concat("_hpanlist.pgp"));
         hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
         hpanListRecoveryTasklet.setHpanListDirectory(hpanFolder.getAbsolutePath());
-        hpanListRecoveryTasklet.setTaskletEnabled(true);
+        hpanListRecoveryTasklet.setHpanFilePattern("*.pgp");
+        hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(true);
+        hpanListRecoveryTasklet.setRecoveryTaskletEnabled(false);
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
@@ -100,10 +102,12 @@ public class HpanListRecoveryTaskletTest {
             throw new Exception();
         }).when(hpanConnectorServiceMock).getHpanList();
         HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
-        hpanListRecoveryTasklet.setFileName("hpanlist.pgp");
-        hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+        hpanListRecoveryTasklet.setFileName(OffsetDateTime.now().format(fmt).concat("_hpanlist.pgp"));        hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
         hpanListRecoveryTasklet.setHpanListDirectory(hpanFolder.getAbsolutePath());
-        hpanListRecoveryTasklet.setTaskletEnabled(true);
+        hpanListRecoveryTasklet.setHpanFilePattern("*.pgp");
+        hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(true);
+        hpanListRecoveryTasklet.setRecoveryTaskletEnabled(true);
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
