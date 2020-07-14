@@ -1,10 +1,14 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
-import it.gov.pagopa.rtd.transaction_filter.batch.listener.TransactionsSkipListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.listener.TransactionItemProcessListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.listener.TransactionItemReaderListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.listener.TransactionItemWriterListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionFieldSetMapper;
+import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
@@ -20,7 +24,6 @@ import org.springframework.batch.core.partition.support.MultiResourcePartitioner
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
-import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -103,11 +106,11 @@ public class TransactionFilterStep {
      *
      * @return instance of the LineMapper to be used in the itemReader configured for the job
      */
-    @Bean
-    public LineMapper<InboundTransaction> transactionLineMapper() {
-        DefaultLineMapper<InboundTransaction> lineMapper = new DefaultLineMapper<>();
-        lineMapper.setLineTokenizer(transactionLineTokenizer());
+    public LineMapper<InboundTransaction> transactionLineMapper(String fileName) {
+        LineAwareMapper<InboundTransaction> lineMapper = new LineAwareMapper<>();
+        lineMapper.setTokenizer(transactionLineTokenizer());
         lineMapper.setFieldSetMapper(transactionFieldSetMapper());
+        lineMapper.setFilename(fileName);
         return lineMapper;
     }
 
@@ -120,11 +123,11 @@ public class TransactionFilterStep {
     @SneakyThrows
     @Bean
     @StepScope
-    public FlatFileItemReader<InboundTransaction> transactionItemReader(
+    public TransactionFlatFileItemReader transactionItemReader(
             @Value("#{stepExecutionContext['fileName']}") String file) {
-        FlatFileItemReader<InboundTransaction> flatFileItemReader = new FlatFileItemReader<>();
+        TransactionFlatFileItemReader flatFileItemReader = new TransactionFlatFileItemReader();
         flatFileItemReader.setResource(new UrlResource(file));
-        flatFileItemReader.setLineMapper(transactionLineMapper());
+        flatFileItemReader.setLineMapper(transactionLineMapper(file));
         flatFileItemReader.setLinesToSkip(linesToSkip);
         return flatFileItemReader;
     }
@@ -234,20 +237,39 @@ public class TransactionFilterStep {
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
                 .skip(Exception.class)
-                .listener(transactionsSkipListener())
+                .listener(transactionItemReaderListener())
+                .listener(transactionsItemProcessListener())
+                .listener(transactionsItemWriteListener())
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
     }
 
     @Bean
-    public TransactionsSkipListener transactionsSkipListener() {
-        TransactionsSkipListener transactionsSkipListener = new TransactionsSkipListener();
+    public TransactionItemReaderListener transactionItemReaderListener() {
+        TransactionItemReaderListener transactionsSkipListener = new TransactionItemReaderListener();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         transactionsSkipListener.setExecutionDate(OffsetDateTime.now().format(fmt));
-        transactionsSkipListener.setTransactionLogsPath(transactionLogsPath);
+        transactionsSkipListener.setErrorTransactionsLogsPath(transactionLogsPath);
         return transactionsSkipListener;
     }
 
+    @Bean
+    public TransactionItemWriterListener transactionsItemWriteListener() {
+        TransactionItemWriterListener transactionsItemWriteListener = new TransactionItemWriterListener();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        transactionsItemWriteListener.setExecutionDate(OffsetDateTime.now().format(fmt));
+        transactionsItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        return transactionsItemWriteListener;
+    }
+
+    @Bean
+    public TransactionItemProcessListener transactionsItemProcessListener() {
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        transactionItemProcessListener.setExecutionDate(OffsetDateTime.now().format(fmt));
+        transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        return transactionItemProcessListener;
+    }
 
     /**
      *

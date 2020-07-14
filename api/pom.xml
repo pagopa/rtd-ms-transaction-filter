@@ -7,7 +7,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
+    <groupId>t.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
     <artifactId>rtd-ms-transaction-filter-api</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
