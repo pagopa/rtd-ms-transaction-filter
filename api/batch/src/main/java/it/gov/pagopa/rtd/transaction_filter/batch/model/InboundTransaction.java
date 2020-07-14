@@ -79,4 +79,7 @@ public class InboundTransaction {
     @Pattern(regexp = "[0-9]{6}")
     String bin;
 
+    Integer lineNumber;
+    String filename;
+
 }
