@@ -368,7 +368,16 @@ unless an error outside the scope of the single steps outcomes occurs.
 
 
 To check for the information involving the reading of a file, the tables __batch_step_execution__ and
-__batch_step_execution_context__, the first one contains the informations regarding 
+__batch_step_execution_context__, the first one contains the information regarding the single steps of the procecess
+idenfified by a _job_execution_id_, the steps useful for debugging the file processing steps are the ones containing
+in the _step_name_ column, the values _"hpan-recovery"_ or _"transaction-fitler"_. The steps with the name containing 
+_"master-step"_ as a suffix define the general status of all the related files processed during the execution,
+while the ones with the _"worker-step_partion"_ suffix are related to a single file.
+
+The _status_ and _exit_code_ are usefull to determine the general outcome for a step, the first one simply refers to
+the general outcome, generally either referring to a __COMPLETED_ or _FAILED__ status, while the second property might
+indicate a more detailed code, as an example, if during the processing of a file the fault tolerance is configured, and
+some records are skipped, the exit status with reflect this condition with the __COMPLITED_WITH_SKIPS__ exit code.
 
 
 ![example of execution with skips in DB](/readme_screens/Skips_DB_Screen.PNG)
