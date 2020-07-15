@@ -358,10 +358,19 @@ for debugging or decision purposes. The first tool at disposal is to refer to th
 Spring Batch, through its internal repository tables, where a series of information regarding the executions are
 stored. 
 
+An execution can be identified through the table __batch_job_execution__,
+which defines an instance of execution of the whole batch, the _job_execution_id will_ be important to search the 
+related steps, and the properties _status_ and _exit_code_ defines if the job successfully completed.
+In this particular case the codes will generally be on __COMPLETED__ after a job execution is ended,
+unless an error outside the scope of the single steps outcomes occurs.
+
+![example of jo execution in DB](/readme_screens/JobExec_DB_Screen.PNG)
+
+
 To check for the information involving the reading of a file, the tables __batch_step_execution__ and
-__batch_step_execution_context__
+__batch_step_execution_context__, the first one contains the informations regarding 
 
 
-![example of execution with skips](/readme_screens/Skips_DB_Screen.PNG)
+![example of execution with skips in DB](/readme_screens/Skips_DB_Screen.PNG)
 
 
