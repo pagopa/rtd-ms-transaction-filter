@@ -351,7 +351,9 @@ Acquirer introduces a dedicated policy to allow the authentication process throu
 to allow the use of certificates for Acquirers 
 (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates-for-clients).
 
-#### 9. Process Debugging - Batch Tables
+### Appendix 3 - Process Debugging
+
+#### 1. Batch Tables
 
 The process provides varied information to refer to in case of the need to check the results of an execution, 
 for debugging or decision purposes. The first tool at disposal is to refer to the data automatically provided from
@@ -366,20 +368,36 @@ unless an error outside the scope of the single steps outcomes occurs.
 
 ![example of jo execution in DB](/readme_screens/JobExec_DB_Screen.PNG)
 
-
-To check for the information involving the reading of a file, the tables __batch_step_execution__ and
-__batch_step_execution_context__, the first one contains the information regarding the single steps of the procecess
-idenfified by a _job_execution_id_, the steps useful for debugging the file processing steps are the ones containing
-in the _step_name_ column, the values _"hpan-recovery"_ or _"transaction-fitler"_. The steps with the name containing 
+To check for the information involving the reading of a file, the table __batch_step_execution__ contains 
+the information regarding the single steps of the processes identified by a _job_execution_id_, the steps useful for debugging the file processing steps are the ones containing
+in the _step_name_ column, the values _"hpan-recovery"_ or _"transaction-filter"_. The steps with the name containing 
 _"master-step"_ as a suffix define the general status of all the related files processed during the execution,
 while the ones with the _"worker-step_partion"_ suffix are related to a single file.
 
-The _status_ and _exit_code_ are usefull to determine the general outcome for a step, the first one simply refers to
-the general outcome, generally either referring to a __COMPLETED_ or _FAILED__ status, while the second property might
+The _status_ and _exit_code_ are useful to determine the general outcome for a step, the first one simply refers to
+the general outcome, generally either referring to a __COMPLETED__ or __FAILED__ status, while the second property might
 indicate a more detailed code, as an example, if during the processing of a file the fault tolerance is configured, and
-some records are skipped, the exit status with reflect this condition with the __COMPLITED_WITH_SKIPS__ exit code.
+some records are skipped, the exit status with reflect this condition with the __COMPLETED_WITH_SKIPS__ exit code.
 
+The table contains a series of columns containing useful information on the processed records: the _read_count_ value
+details the number of successfully read lines, while the _read_skip_count_ define the records that are skipped under the
+selected fault-tolerance policy. Similarly, the _write_count_, _write_skip_count_ and _process_skip_count_ all retain
+a similar purpose in the filtering process and writing phases for the record. All the records that are in an error state,
+are included in the value for the _rollback_count_.
+
+For the transaction filtering, the _filter_count_ record is useful to keep track of how many transactions have 
+been filtered, due to not matching the stored PAN records. Filtered records are by default not included in the rollback 
+count, as it's part of the business logic.
 
 ![example of execution with skips in DB](/readme_screens/Skips_DB_Screen.PNG)
 
+With the _step_execution_id_ value, we can match the information for the related step in the
+__batch_step_execution_context__ table, that contains the execution parameters in the _shor_context_
+column. The workers steps context contains the processed file inside the JSON structure, under the 
+_"filename"_ property.
+
+![example of execution context_in_DB](/readme_screens/Step_Exec_Context_Screen.PNG)
+
+Further information about the Spring Batch repository entities, can be found in the
+[Reference Manual](https://docs.spring.io/spring-batch/docs/current/reference/html/schema-appendix.html#metaDataBatchStepExecutionContext)
 
