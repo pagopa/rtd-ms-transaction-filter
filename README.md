@@ -351,5 +351,17 @@ Acquirer introduces a dedicated policy to allow the authentication process throu
 to allow the use of certificates for Acquirers 
 (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates-for-clients).
 
+#### 9. Process Debugging - Batch Tables
+
+The process provides varied information to refer to in case of the need to check the results of an execution, 
+for debugging or decision purposes. The first tool at disposal is to refer to the data automatically provided from
+Spring Batch, through its internal repository tables, where a series of information regarding the executions are
+stored. 
+
+To check for the information involving the reading of a file, the tables __batch_step_execution__ and
+__batch_step_execution_context__
+
+
+![example of execution with skips](/readme_screens/Skips_DB_Screen.PNG)
 
 

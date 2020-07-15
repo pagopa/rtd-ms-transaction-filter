@@ -18,11 +18,19 @@ public class TransactionReaderStepListener implements StepExecutionListener {
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
+        ExitStatus exitStatus = stepExecution.getExitStatus();
+
+        if (!exitStatus.equals(ExitStatus.FAILED) &&
+                stepExecution.getSkipCount() > 0) {
+            exitStatus = new ExitStatus("COMPLETED WITH SKIPS");
+        }
+
         if (log.isInfoEnabled()) {
             log.info("Processing for file: " + stepExecution.getExecutionContext().get("fileName") +
-                    " ended with status: " + stepExecution.getExitStatus() );
+                    " ended with status: " + exitStatus.getExitCode());
         }
-        return stepExecution.getExitStatus();
+
+        return exitStatus;
     }
 
 }
