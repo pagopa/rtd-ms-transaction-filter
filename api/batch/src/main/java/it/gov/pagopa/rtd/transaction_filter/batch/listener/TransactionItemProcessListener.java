@@ -33,8 +33,14 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
         if (result == null) {
 
             if (log.isInfoEnabled()) {
-                log.info("Filtered transaction record on filename: " + item.getFilename() + " ,line: " +
-                        item.getLineNumber());
+                synchronized (this) {
+                    log.info("\n");
+                    log.info("####");
+                    log.info("Filtered transaction record on filename: "
+                            + item.getFilename() + " ,line: " +
+                            item.getLineNumber());
+                    log.info("####\n");
+                }
             }
 
             try {
@@ -60,23 +66,26 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     public void onProcessError(InboundTransaction item, Exception throwable) {
 
         if (log.isInfoEnabled()) {
-            log.info("### Error during during transaction processing:");
-            log.info("message: "+ throwable.getMessage());
-            log.info("filename: " + item.getFilename());
-            log.info("line: " + item.getLineNumber());
+            synchronized (this) {
+                log.info("\n");
+                log.info("#### Error during during transaction processing ####");
+                log.info(throwable.getMessage());
+                log.info("filename: " + item.getFilename());
+                log.info("line: " + item.getLineNumber());
+                log.info("####\n");
+            }
         }
 
         try {
             File file = new File(
                     resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
-                            .concat(executionDate) + "_transactionsErrorRecords.csv");
+                            .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
             FileUtils.writeStringToFile(file,buildCsv(item) , Charset.defaultCharset(), true);
         } catch (Exception e) {
             log.error(e.getMessage(),e);
         }
 
     }
-
 
 
     private String buildCsv(InboundTransaction inboundTransaction) {
@@ -94,6 +103,6 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 .concat(inboundTransaction.getMerchantId()).concat(";")
                 .concat(inboundTransaction.getTerminalId()).concat(";")
                 .concat(inboundTransaction.getBin()).concat(";")
-                .concat(inboundTransaction.getMcc());
+                .concat(inboundTransaction.getMcc()).concat("\n");
     }
 }

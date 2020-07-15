@@ -4,6 +4,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.listener.TransactionItemProcessListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.listener.TransactionItemReaderListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.listener.TransactionItemWriterListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.listener.TransactionReaderStepListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionFieldSetMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
@@ -22,7 +23,6 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.Partitioner;
-import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.*;
@@ -228,6 +228,8 @@ public class TransactionFilterStep {
      */
     @Bean
     public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService) throws Exception {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        String executionDate = OffsetDateTime.now().format(fmt);
         return stepBuilderFactory.get("transaction-filter-worker-step")
                 .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                 .reader(transactionItemReader(null))
@@ -237,36 +239,39 @@ public class TransactionFilterStep {
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
                 .skip(Exception.class)
-                .listener(transactionItemReaderListener())
-                .listener(transactionsItemProcessListener())
-                .listener(transactionsItemWriteListener())
+                .listener(transactionStepListener())
+                .listener(transactionItemReaderListener(executionDate))
+                .listener(transactionsItemProcessListener(executionDate))
+                .listener(transactionsItemWriteListener(executionDate))
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
     }
 
     @Bean
-    public TransactionItemReaderListener transactionItemReaderListener() {
+    public TransactionReaderStepListener transactionStepListener() {
+        return new TransactionReaderStepListener();
+    }
+
+    @Bean
+    public TransactionItemReaderListener transactionItemReaderListener(String executionDate) {
         TransactionItemReaderListener transactionsSkipListener = new TransactionItemReaderListener();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-        transactionsSkipListener.setExecutionDate(OffsetDateTime.now().format(fmt));
+        transactionsSkipListener.setExecutionDate(executionDate);
         transactionsSkipListener.setErrorTransactionsLogsPath(transactionLogsPath);
         return transactionsSkipListener;
     }
 
     @Bean
-    public TransactionItemWriterListener transactionsItemWriteListener() {
+    public TransactionItemWriterListener transactionsItemWriteListener(String executionDate) {
         TransactionItemWriterListener transactionsItemWriteListener = new TransactionItemWriterListener();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-        transactionsItemWriteListener.setExecutionDate(OffsetDateTime.now().format(fmt));
+        transactionsItemWriteListener.setExecutionDate(executionDate);
         transactionsItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
         return transactionsItemWriteListener;
     }
 
     @Bean
-    public TransactionItemProcessListener transactionsItemProcessListener() {
+    public TransactionItemProcessListener transactionsItemProcessListener(String executionDate) {
         TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-        transactionItemProcessListener.setExecutionDate(OffsetDateTime.now().format(fmt));
+        transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
         return transactionItemProcessListener;
     }
