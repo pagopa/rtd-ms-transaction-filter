@@ -26,7 +26,7 @@ public class LineAwareMapper<T> implements LineMapper<InboundTransaction>, Initi
             return inboundTransaction;
         }
         catch(Exception ex){
-            throw new FlatFileParseException("Parsing error at line: " + lineNumber, null, null, lineNumber);
+            throw new FlatFileParseException("Parsing error at line: " + lineNumber, ex, line, lineNumber);
         }
     }
 

@@ -5,14 +5,11 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.batch.core.ItemReadListener;
-import org.springframework.batch.core.listener.ItemListenerSupport;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.List;
 
 @Slf4j
 @Data
@@ -30,17 +27,24 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     public void afterRead(InboundTransaction item) {
 
         if (log.isDebugEnabled()) {
+            log.debug("\n");
+            log.debug("####");
             log.debug("Read transaction record on filename :" + item.getFilename() + " ,line: "
                     + item.getLineNumber());
+            log.debug("####\n");
         }
 
     }
 
-    public synchronized void onReadError(Exception throwable) {
+    public void onReadError(Exception throwable) {
 
         if (log.isInfoEnabled()) {
-            log.info("### Error while reading a transaction record ####");
-            log.info(throwable.getMessage());
+            synchronized (this) {
+                log.info("\n");
+                log.info("#### Error while reading a transaction record ####");
+                log.info(throwable.getMessage());
+                log.info("####\n");
+            }
         }
 
         if (throwable instanceof FlatFileParseException) {
@@ -50,7 +54,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
                 File file = new File(
                 resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                                  .concat("/".concat(executionDate))+ "_transactionsErrorRecords.csv");
-                FileUtils.writeStringToFile(file, flatFileParseException.getInput(), Charset.defaultCharset(), true);
+                FileUtils.writeStringToFile(file, flatFileParseException.getInput().concat("\n"), Charset.defaultCharset(), true);
             } catch (Exception e) {
                 log.error(e.getMessage(),e);
             }

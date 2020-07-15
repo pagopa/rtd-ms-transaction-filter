@@ -37,9 +37,12 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
     public void onWriteError(Exception throwable, List<? extends InboundTransaction> inboundTransactions) {
 
         if (log.isInfoEnabled()) {
-            log.info("### Transaction skipped during processing:");
-            log.info("message: "+ throwable.getMessage());
-            log.info("filename: " + inboundTransactions.get(0).getFilename());
+            synchronized (this) {
+                log.info("\n");
+                log.info("#### Transaction error during during writing ####");
+                log.info(throwable.getMessage());
+                log.info("filename: " + inboundTransactions.get(0).getFilename());
+            }
         }
 
         inboundTransactions.forEach(inboundTransaction -> {
@@ -52,7 +55,8 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                 File file = new File(
                         resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                                 .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
-                FileUtils.writeStringToFile(file, buildCsv(inboundTransaction), Charset.defaultCharset(), true);
+                FileUtils.writeStringToFile(
+                        file, buildCsv(inboundTransaction), Charset.defaultCharset(), true);
 
             } catch (Exception e) {
                 if (log.isErrorEnabled()) {
@@ -61,6 +65,10 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
             }
 
         });
+
+        if (log.isInfoEnabled()) {
+            log.info("####\n");
+        }
 
 
     }
@@ -80,7 +88,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                 .concat(inboundTransaction.getMerchantId()).concat(";")
                 .concat(inboundTransaction.getTerminalId()).concat(";")
                 .concat(inboundTransaction.getBin()).concat(";")
-                .concat(inboundTransaction.getMcc());
+                .concat(inboundTransaction.getMcc()).concat("\n");
     }
 
 
