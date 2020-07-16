@@ -417,9 +417,11 @@ the related filename.
 
 During the file processing, logs regarding the single records are produced to keep track of any errors,
 or filtering occurred. Every log comes with the file name, and line of the record that produced the log entry,
-with any additional information.
+with any additional information. 
 
 ![example of console_log_trx_process_error_screen](/readme_screens/ConLog_ProcessError_Screen.PNG)
+
+
 
 
 
