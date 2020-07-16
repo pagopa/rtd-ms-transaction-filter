@@ -401,3 +401,30 @@ _"filename"_ property.
 Further information about the Spring Batch repository entities, can be found in the
 [Reference Manual](https://docs.spring.io/spring-batch/docs/current/reference/html/schema-appendix.html#metaDataBatchStepExecutionContext)
 
+#### 2. Console Log
+
+To have a more detailed view for the state of the executions, a series of log entries are provided to trace the execution
+instances, defined either by the standard batch logs, or by custom entries to provide some extra details. A general log
+regarding the execution of the scheduled polling check can be found as of the provided example, eventually reporting 
+the lack of a proper execution, due to missing files in the provided source directory.
+
+![example of console_log_no_file_screen](/readme_screens/ConLog_NoFile_Screen.PNG)
+
+Whenever a file is about to get processed, a log trace can be found, regarding the start of the processing step, and
+the related filename.
+
+![example of console_log_start_file_read_screen](/readme_screens/ConLog_StartFile_Screen.PNG)
+
+During the file processing, logs regarding the single records are produced to keep track of any errors,
+or filtering occurred. Every log comes with the file name, and line of the record that produced the log entry,
+with any additional information.
+
+![example of console_log_trx_process_error_screen](/readme_screens/ConLog_ProcessError_Screen.PNG)
+
+
+
+ 
+
+
+
+

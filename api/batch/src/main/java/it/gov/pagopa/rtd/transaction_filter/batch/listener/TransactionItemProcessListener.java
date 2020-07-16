@@ -18,7 +18,6 @@ import java.util.List;
 @Data
 public class TransactionItemProcessListener implements ItemProcessListener<InboundTransaction,InboundTransaction> {
 
-
     private String errorTransactionsLogsPath;
     private String executionDate;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -87,7 +86,6 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     }
 
-
     private String buildCsv(InboundTransaction inboundTransaction) {
         return inboundTransaction.getAcquirerCode().concat(";")
                 .concat(inboundTransaction.getOperationType()).concat(";")
@@ -105,4 +103,5 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 .concat(inboundTransaction.getBin()).concat(";")
                 .concat(inboundTransaction.getMcc()).concat("\n");
     }
+
 }
