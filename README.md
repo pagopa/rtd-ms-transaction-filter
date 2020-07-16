@@ -421,6 +421,12 @@ with any additional information.
 
 ![example of console_log_trx_process_error_screen](/readme_screens/ConLog_ProcessError_Screen.PNG)
 
+![example of console_log_trx_filter_screen](/readme_screens/ConLog_FilteredTrx_Screen.PNG)
+
+Other logs can be used to obtain the general flow for every step of the process and their status, describing the eventual
+status and time of completion, this particular information is also reported within the Spring Batch tables, detailed above.
+
+![example of console_log_batch_flow_screen](/readme_screens/ConLog_BatchFlow_Screen.PNG)
 
 
 
