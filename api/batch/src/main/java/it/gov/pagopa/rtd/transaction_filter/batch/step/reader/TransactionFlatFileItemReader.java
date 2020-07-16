@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 
 public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTransaction> {
     private static final Log logger = LogFactory.getLog(FlatFileItemReader.class);
@@ -34,6 +35,7 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
     private LineCallbackHandler skippedLinesCallback;
     private boolean strict;
     private BufferedReaderFactory bufferedReaderFactory;
+    private HashMap<String,Integer> lineToRecordCount;
 
     public TransactionFlatFileItemReader() {
         this.comments = DEFAULT_COMMENT_PREFIXES;
@@ -43,6 +45,7 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
         this.strict = true;
         this.bufferedReaderFactory = new DefaultBufferedReaderFactory();
         this.setName(ClassUtils.getShortName(FlatFileItemReader.class));
+        this.lineToRecordCount = new HashMap<>();
     }
 
     public void setStrict(boolean strict) {
@@ -91,11 +94,15 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
             if (line == null) {
                 return null;
             } else {
-                Integer innerCount = this.lineCount;
+                Integer innerCount = Integer.parseInt(line.split("_",2)[0]);
                 try {
-                    return this.lineMapper.mapLine(line, innerCount);
+
+                    return this.lineMapper.mapLine(
+                            line.split("_",2)[1],
+                            innerCount);
+
                 } catch (Exception var3) {
-                    throw new FlatFileParseException("Parsing error at line: " + innerCount + " in resource=[" + this.resource.getDescription() + "], input=[" , var3, line, this.lineCount);
+                    throw new FlatFileParseException("Parsing error at line: " + innerCount + " in resource=[" + this.resource.getDescription() + "]" , var3, line, innerCount);
                 }
             }
         }
@@ -107,25 +114,30 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
             throw new ReaderNotOpenException("Reader must be open before it can be read.");
         } else {
             String line = null;
+            Integer count = 0;
 
             try {
                 line = this.reader.readLine();
                 if (line == null) {
                     return null;
                 } else {
-                    ++this.lineCount;
 
-                    while(this.isComment(line)) {
-                        line = this.reader.readLine();
-                        if (line == null) {
-                            return null;
-                        }
-
+                    synchronized (this) {
                         ++this.lineCount;
+
+                        while (this.isComment(line)) {
+                            line = this.reader.readLine();
+                            if (line == null) {
+                                return null;
+                            }
+
+                            ++this.lineCount;
+                        }
+                        count = this.lineCount;
                     }
 
                     line = this.applyRecordSeparatorPolicy(line);
-                    return line;
+                    return count+"_"+line;
                 }
             } catch (IOException var3) {
                 this.noInput = true;

@@ -36,19 +36,11 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
 
     public void onWriteError(Exception throwable, List<? extends InboundTransaction> inboundTransactions) {
 
-        if (log.isInfoEnabled()) {
-            synchronized (this) {
-                log.info("\n");
-                log.info("#### Error during during transaction record writing ####");
-                log.info(throwable.getMessage());
-                log.info("filename: " + inboundTransactions.get(0).getFilename());
-            }
-        }
-
         inboundTransactions.forEach(inboundTransaction -> {
 
             if (log.isInfoEnabled()) {
-                log.info("line: " + inboundTransaction.getLineNumber());
+                log.info("Error during during transaction record writing - " + throwable.getMessage() + ", filename: "
+                        + inboundTransaction.getFilename() + ",line: " + inboundTransaction.getLineNumber());
             }
 
             try {
@@ -65,10 +57,6 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
             }
 
         });
-
-        if (log.isInfoEnabled()) {
-            log.info("####\n");
-        }
 
 
     }

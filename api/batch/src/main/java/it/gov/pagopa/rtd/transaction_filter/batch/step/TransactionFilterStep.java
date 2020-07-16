@@ -239,10 +239,10 @@ public class TransactionFilterStep {
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
                 .skip(Exception.class)
-                .listener(transactionStepListener())
                 .listener(transactionItemReaderListener(executionDate))
                 .listener(transactionsItemProcessListener(executionDate))
                 .listener(transactionsItemWriteListener(executionDate))
+                .listener(transactionStepListener())
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
     }
