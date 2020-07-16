@@ -443,6 +443,20 @@ by inserting a simple configuration within the _application.yaml_ file, using th
 This simple configuration will ensure that all the produced logs, under a general pattern, will be produced on the
 configured logfile, instead of being produced withing the console.
 
+If another configuration is required, it is possible to provide a custom configuration, with another set of appenders
+defined. As an example, a configuration can be set to write the log records within a defined database schema,
+referencing the table structures defined in the [Logback Appenders Documentation](http://dev.cs.ovgu.de/java/logback/manual/appenders.html#DBAppender).
+
+To set a logback configuration we have to provide a _spring-logback.xml_, similar to the following, defined for
+a simple configuration for the DBAppender
+
+![Logback_Screen](readme_screens/Logback_DB_Screen.PNG)
+
+To use this configuration in spring, this property must be used within the application.yaml file:
+
+> logging.config=<path_to_config_file>
+
+In order to use this appender, the tables reported in the documentation must be present beforehand
 
  
 
