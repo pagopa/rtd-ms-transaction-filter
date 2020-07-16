@@ -419,8 +419,6 @@ During the file processing, logs regarding the single records are produced to ke
 or filtering occurred. Every log comes with the file name, and line of the record that produced the log entry,
 with any additional information. 
 
-![example of console_log_trx_process_error_screen](/readme_screens/ConLog_ProcessError_Screen.PNG)
-
 ![example of console_log_trx_filter_screen](/readme_screens/ConLog_FilteredTrx_Screen.PNG)
 
 Other logs can be used to obtain the general flow for every step of the process and their status, describing the eventual
@@ -428,7 +426,17 @@ status and time of completion, this particular information is also reported with
 
 ![example of console_log_batch_flow_screen](/readme_screens/ConLog_BatchFlow_Screen.PNG)
 
+##### 2.1 Routing logs to file - simple application.yaml config
 
+A simple way to route all the produced logs from the console to a specific file, can be easly done 
+by inserting a simple configuration within the application.yaml file, using the following configuration properties
+
+>logging.file="<path_to_log>/application.log"
+>logging.pattern=
+>logging.console=
+
+This simple configuration will ensure that all the produced logs, under a general pattern, will be produced on the
+configured logfile, instead of being produced withing the console.
 
 
  
