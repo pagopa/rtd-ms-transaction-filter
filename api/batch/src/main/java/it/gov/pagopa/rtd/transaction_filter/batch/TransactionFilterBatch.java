@@ -65,6 +65,8 @@ public class TransactionFilterBatch {
     private final HpanConnectorService hpanConnectorService;
     private final SftpConnectorService sftpConnectorService;
 
+    @Value("${batchConfiguration.TransactionFilterBatch.isolationForCreate}")
+    private String isolationForCreate;
     @Value("${batchConfiguration.TransactionFilterBatch.successArchivePath}")
     private String successArchivePath;
     @Value("${batchConfiguration.TransactionFilterBatch.errorArchivePath}")
@@ -162,6 +164,9 @@ public class TransactionFilterBatch {
             jobRepositoryFactoryBean.setTablePrefix(tablePrefix);
             jobRepositoryFactoryBean.setDataSource(dataSource);
             jobRepositoryFactoryBean.afterPropertiesSet();
+            if (isolationForCreate != null) {
+                jobRepositoryFactoryBean.setIsolationLevelForCreate(isolationForCreate);
+            }
             return jobRepositoryFactoryBean.getObject();
     }
 
