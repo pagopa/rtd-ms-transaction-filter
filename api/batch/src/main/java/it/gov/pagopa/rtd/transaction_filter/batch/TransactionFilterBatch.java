@@ -105,9 +105,18 @@ public class TransactionFilterBatch {
             log.info("CsvTransactionReader scheduled job started at " + startDate);
         }
 
-        Resource[] transactionResources = resolver.getResources(transactionFilterStep.getTransactionDirectoryPath());
+        String path = transactionFilterStep.getTransactionDirectoryPath();
+        Resource[] transactionResources = resolver.getResources(path);
 
         if (transactionResources.length > 0) {
+
+            if (log.isInfoEnabled()) {
+                log.info("Found " + transactionResources.length +
+                         (transactionResources.length > 1 ? "resources" : "resource") +
+                         ". Starting filtering process"
+                        );
+            }
+
             hpanStoreService = batchHpanStoreService();
             jobLauncher().run(
                     job(),
@@ -115,6 +124,11 @@ public class TransactionFilterBatch {
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
             hpanStoreService.clearAll();
+
+        } else {
+            if (log.isInfoEnabled()) {
+                log.info("No transaction file has been found on configured path: " + path);
+            }
         }
 
         Date endDate = new Date();

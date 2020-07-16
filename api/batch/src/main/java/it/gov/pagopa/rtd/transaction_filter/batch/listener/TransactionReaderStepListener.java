@@ -8,7 +8,6 @@ import org.springframework.batch.core.StepExecutionListener;
 @Slf4j
 public class TransactionReaderStepListener implements StepExecutionListener {
 
-
     @Override
     public void beforeStep(StepExecution stepExecution) {
         if (log.isInfoEnabled()) {

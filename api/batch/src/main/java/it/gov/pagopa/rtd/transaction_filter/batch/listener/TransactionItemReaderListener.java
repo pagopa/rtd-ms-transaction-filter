@@ -63,6 +63,4 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
 
     }
 
-
-
 }

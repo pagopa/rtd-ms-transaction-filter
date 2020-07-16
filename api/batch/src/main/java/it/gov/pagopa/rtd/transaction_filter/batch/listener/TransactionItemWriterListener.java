@@ -27,9 +27,9 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
     public void afterWrite(List<? extends InboundTransaction> inboundTransactions) {
         if (log.isDebugEnabled()) {
             inboundTransactions.forEach(inboundTransaction -> {
-                log.debug("Processed transaction record on filename: "
+                log.debug("Transaction record from filename: "
                         + inboundTransaction.getFilename() + " ,line: "
-                        + inboundTransaction.getLineNumber());
+                        + inboundTransaction.getLineNumber() +" written");
             });
         }
     }
@@ -39,7 +39,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
         if (log.isInfoEnabled()) {
             synchronized (this) {
                 log.info("\n");
-                log.info("#### Transaction error during during writing ####");
+                log.info("#### Error during during transaction record writing ####");
                 log.info(throwable.getMessage());
                 log.info("filename: " + inboundTransactions.get(0).getFilename());
             }
@@ -90,6 +90,5 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                 .concat(inboundTransaction.getBin()).concat(";")
                 .concat(inboundTransaction.getMcc()).concat("\n");
     }
-
 
 }
