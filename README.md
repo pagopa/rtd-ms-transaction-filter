@@ -426,10 +426,15 @@ status and time of completion, this particular information is also reported with
 
 ![example of console_log_batch_flow_screen](/readme_screens/ConLog_BatchFlow_Screen.PNG)
 
-##### 2.1 Routing logs to file - simple application.yaml config
+#### 3. Logback Configurations
 
-A simple way to route all the produced logs from the console to a specific file, can be easly done 
-by inserting a simple configuration within the application.yaml file, using the following configuration properties
+Spring uses default configurations to produce its logs, either using __Log4J2__ or __Logback__, through internal 
+configurations it can provide the functionality to use the appenders to produce logs on the stdout channel, or on
+a file. This can be achieved using the configuration properties exposed for this purpose, the details of which can
+be found in the [Reference Documentation](https://docs.spring.io/spring-boot/docs/2.1.9.RELEASE/reference/html/boot-features-logging.html).
+
+As an example, a simple way to route all the produced logs from the console to a specific file, can be easly done 
+by inserting a simple configuration within the _application.yaml_ file, using the following configuration properties
 
 >logging.file="<path_to_log>/application.log"
 >logging.pattern=
