@@ -27,11 +27,8 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     public void afterRead(InboundTransaction item) {
 
         if (log.isDebugEnabled()) {
-            log.debug("\n");
-            log.debug("####");
             log.debug("Read transaction record on filename :" + item.getFilename() + " ,line: "
                     + item.getLineNumber());
-            log.debug("####\n");
         }
 
     }
@@ -39,12 +36,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     public void onReadError(Exception throwable) {
 
         if (log.isInfoEnabled()) {
-            synchronized (this) {
-                log.info("\n");
-                log.info("#### Error while reading a transaction record ####");
-                log.info(throwable.getMessage());
-                log.info("####\n");
-            }
+                log.info("#### Error while reading a transaction record - " + throwable.getMessage());
         }
 
         if (throwable instanceof FlatFileParseException) {
