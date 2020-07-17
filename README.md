@@ -16,26 +16,6 @@ For the application of PGP encryption to the result file, produced by the batch,
 For the application of decryption of the PGP pan file, it must provided a file containing the secret key to be applied for the operation.
 To produce the artifact from the source code it will be necessary to have an installation of Maven and a java compiler (jdk1.8+).
 
-### Bundle Distribution
-
-The batch-transaction-filter.jar artifact will be provided in a bundle containing a folder with the configurations and the structures of the files, in order to allow an immediate execution with the default configuration, which point to path/folders listed in the bundle. The default service will poll to check for files to be processed every minute.
-
-Inside the bundle there are also the public key file shown in the _appendix_, and some sample for a first test run.
- 
-__Nota:__ The bundle contains a version potentially out of alignment with the implementation. In the default configuration attempts to connect to the REST services and the sftp comunication are disabled.
-
-The bundle structure and the files is contains are described below:
-
-- _batch-transaction-filter.jar_, the artifact containing the batch service
-- _/config_, folder containing the configuration files
-- _/config/application.yml_, file containing the configuration properties for the service
-- _/resources_, folder containing the resources and folder for running the bundle under a default configuration
-- _/hpans_, folder where to insert the files containing the pan list
-- _/keys_, folder containing the keys for pgp encryption
-- _/transactions_, folder where to insert the files containing the transactions to be processed
-- _/output_, folder where the files produced by the service will be inserted
-- _/sample-files_, folder containing test files for execution
-
 ### Generating artifact from source
 
 To obtain a version of the artifact produced directly from the source code, a Maven instance must be appropriately configured on the
@@ -54,9 +34,8 @@ The artifact will be created into the target folder at root level
 ### Database connection
 
 Spring Batch uses a repository on which you can track the executions performed by the service. 
-If there is no particular configuration: an in- memory instance will be executed to allow the batch to be executed. The configuration of
-the bundle uses this mode for greater immediacy of use. If you want to set it please refer to the properties in __Appendix 2 -
-Configuration properties__.
+If there is no particular configuration: an in- memory instance will be executed to allow the batch to be executed. 
+Please refer to the properties in __Appendix 2 - Configuration properties__ to define the usage of a persistent database.
 
 ### REST Services Connection
 
@@ -85,20 +64,15 @@ __Appendix 3 - Authentication Services Acquirer__.
 
 ### Execution guidelines
 
-- Install and configure the environment so that the Java 1.8+ version is available, as indicated in the prerequisites         
+- Install and configure the environment so that the Java 1.8+ version is available, as indicated in the prerequisites                
 
-- In case of execution of bundled version, extract artifact and resource in a position of your choice, if no additional   
-  configuration is required, refer to the execution step at the end of the paragraph. 
-  Consider whether to use the sample files contained in the _transactions_ and _hpan_ folders.         
-
-- If you are not using the bundled version, please produce a version of the artifact via source code, as indicated in the corresponding
+- Produce a version of the artifact via source code, as indicated in the corresponding
   paragraph of the manual. Prepare a configuration application.yml file and, if needed, other files .yml or .properties to be used for
   the configuration properties.
 
 - Place the _batch-transaction-filter.jar_ artifact in a location of your choice
 
-- Place in a location of your choice, the configuration files, supplied together with the artifact in the bundle, or
-  your own.
+- Place in a location of your choice, the configuration files
 
 - Place on the machine, the files of the public and/or private key for pgp, if one of the file encryption/decryption function is active. 
 
@@ -197,10 +171,6 @@ __Appendix 3 - Authentication Services Acquirer__.
   __Note:__ replace with the path to the proper configuration directory
 
   >java -jar batch-transaction-filter.jar --spring.config.location=C:\Development\batch-transaction-file\property\
-  
-  For the bundle execution, referring to the structure already present, execute:
-  	
-  >java -jar batch-transaction-filter.jar --spring.config.location=file:config\
                 
   For a batch process that does not use the default in-memory database, execute the following command:
   
@@ -211,8 +181,6 @@ __Appendix 3 - Authentication Services Acquirer__.
 For any problem relating to the use of the public key and for the release of the specifications and / or updates relating to the public
 key to be used to encrypt the file, it is mandatory to contact the structure delegated by PagoPA  (ref. SIA OPE Innovative Payments -
 [sistemisti_bigdata@sia.eu](mailto:sistemisti_bigdata@sia.eu)). 
-
-__Nota:__ The file filled with the key is included in the bundle containing the artifact for executing the batch.
 
 ### Appendix 2 - Configuration properties
 
@@ -452,11 +420,16 @@ a simple configuration for the DBAppender
 
 ![Logback_Screen](readme_screens/Logback_DB_Screen.PNG)
 
-To use this configuration in spring, this property must be used within the application.yaml file:
+To use this configuration in spring, this property must be used within the _application.yaml_ file:
 
 > logging.config=<path_to_config_file>
 
-In order to use this appender, the tables reported in the documentation must be present beforehand
+In order to use this appender, the tables reported in the documentation are required before any execution. The main table,
+where the log records are inserted is thhe __logging_event__ table.
+
+![Logback_Event_DB_Screen](readme_screens/Logback_DB_Table_Screen.PNG)
+
+
 
  
 
