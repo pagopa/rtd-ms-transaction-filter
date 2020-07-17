@@ -1,0 +1,24 @@
+<configuration debug="true" scan="true" scanPeriod="30 seconds">
+
+    <property resource="file:config/application.yml" />
+
+    <springProperty name="spring.datasource.driverClassName" source="spring.datasource.driver-class-name"/>
+    <springProperty name="spring.datasource.url" source="spring.datasource.url"/>
+    <springProperty name="spring.datasource.username" source="spring.datasource.username"/>
+    <springProperty name="spring.datasource.password" source="spring.datasource.password"/>
+
+
+    <appender name="SIMPLE_DB" class="ch.qos.logback.classic.db.DBAppender">
+        <connectionSource class="ch.qos.logback.core.db.DriverManagerConnectionSource">
+            <driverClass>${spring.datasource.driverClassName}</driverClass>
+            <url>${spring.datasource.url}</url>
+            <user>${spring.datasource.username}</user>
+            <password>${spring.datasource.password}</password>
+        </connectionSource>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="SIMPLE_DB"/>
+    </root>
+
+</configuration>
