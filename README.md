@@ -37,6 +37,12 @@ Spring Batch uses a repository on which you can track the executions performed b
 If there is no particular configuration: an in- memory instance will be executed to allow the batch to be executed. 
 Please refer to the properties in __Appendix 2 - Configuration properties__ to define the usage of a persistent database.
 
+__Note:__ As of today, Oracle RDBMS are subject to potential issues regarding the isolation level, as reported
+in the following [Issue Thread](https://github.com/spring-projects/spring-batch/issues/1127), the general approach to
+attempt to avoid similar problems, is to reduce the isolation level defined in the Spring Batch jobRepository 
+to either _ISOLAION_READ_COMMITTED_, or _ISOLAION_READ_UNCOMMITTED_. this is doable using the configuration property
+_batchConfiguration.TransactionFilterBatch.isolationForCreate_.
+
 ### REST Services Connection
 
 The Batch Acquirer is configurabile for contacting the salt recovery service, to be applied for the PAN hashing,
@@ -61,6 +67,13 @@ properties listed in __Appendix 2 - Configuration properties__.
 
 For references to the services displayed through Azure's API service, you can find the corresponding links in 
 __Appendix 3 - Authentication Services Acquirer__.
+
+### Minimal Configuration on Override
+
+When overriding the application.yaml file with an external configuration, the following minimal configuration has to be
+maintained, in order to have the correct setup for the batch execution.
+
+![Minimal_Config](readme_screens/Minimal_config.PNG)
 
 ### Execution guidelines
 
@@ -203,6 +216,7 @@ __batchConfiguration.TransactionFilterBatch.partitionerCorePoolSize__ | Batch pa
 __batchConfiguration.TransactionFilterBatch.readerMaxPoolSize__ | Maximum number of transaction csv file readers | ${ACQ_BATCH_INPUT_PART_READ_MAX_POOL_SIZE:5} | NO
 __batchConfiguration.TransactionFilterBatch.readerCorePoolSize__ | Maximum number of transaction csv file readers | ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5} | NO
 __batchConfiguration.TransactionFilterBatch.tablePrefix__ | Table prefix containing the metadata related to the execution of the batch, if active | ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_} | NO
+__batchConfiguration.TransactionFilterBatch.isolationForCreate_ | Define the isolation level used by the jobRepository on the batch tables | ${ACQ_BATCH_TRX_ISOLATION_FOR_CREATE:ISOLATION_SERIALIZABLE} | NO
 
 #### 3. Batch properties - PAN List reading
 
@@ -227,16 +241,17 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize__ 
 __batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize__ | Chunck size for reading transaction files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern__ | Pattern relating to the transaction date | ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:MM/dd/yyyy HH:mm:ss} | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing__ | Flag that drives the hashing to the pan present in the transaction file | ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:false} | SI | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing__ | Flag that drives the hashing to the pan present in the transaction file | ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:false} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt__ | Flag to define whether to encrypt the result file | ${ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT:true} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing__ | Flag to define whether to save the hashing of the pan in the result file | ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:false} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.linesToSkip__ |Number of lines to skip from the beginning of the file (e.g. to avoid the header ) | ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.linesToSkip__ | Number of lines to skip from the beginning of the file (e.g. to avoid the header ) | ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath__ | Path where the processed transaction records resulting in either an error, or getting filtered, are traced in .csv format |  file:/${ACQ_BATCH_TRX_LOGS_PATH:} | YES
 
 #### 5. Batch properties - SFTP
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionSender.enabled__ | Indicates whether the sending to the sftp channel is active or not | ${ACQ_BATCH_TRX_SENDER_ENABLED:true} | SI | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionSender.enabled__ | Indicates whether the sending to the sftp channel is active or not | ${ACQ_BATCH_TRX_SENDER_ENABLED:true} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory__ |Local directory from which to get the file to be sent on remote SFTP | ${SFTP_LOCAL_DIR:} | SI
 __batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.remotedirectory__ | Remote SFTP directory to copy the file to | ${SFTP_REMOTE_DIR:} | SI
 __batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filenamepattern__ | Name / pattern of the file to be moved to remote SFTP | ${SFTP_FILE_PATTERN:} | SI
@@ -273,11 +288,13 @@ __rest-client.hpan.trust-store.type__ | Trust-store type | ${HPAN_SERVICE_TRUST_
 __rest-client.hpan.trust-store.password__ | Trust-store password | ${HPAN_SERVICE_TRUST_STORE_PASSWORD:} | NO
 
 
-#### 7. Batch properties - File handling
+#### 7. Batch properties - File Handling
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles__ | Enable deletion of locally generated files (all files related to batch computation) | ${FLAG_DELETE_LOCAL_FILE:true} | SI | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles__ | Enable deletion of any processed file (all files related to a batch computation) | ${FLAG_DELETE_LOCAL_FILE:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles__ | Define output files management rule | ${ACQ_BATCH_DELETE_LOCAL_FILE:ERROR} | YES | ALWAYS ERROR KEEP
+__batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess__ | Define PAN files management rule on success | ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE} | YES | DELETE ARCHIVE KEEP
 
 #### 8. Batch properties - Repository
 
@@ -307,17 +324,16 @@ a collection of keys on which to apply the certificate verification, must be con
 public certificate, used by the Client for authentication of the machine to which the request is directed.
 
 Using the services provided on Azure, to enable the authentication process, the following must be entered
-certificates relating to the SOs (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-ca-certificates).
+certificates relating to the SOs [Azure CA Certificates](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-ca-certificates).
 The format of the certificates will in this case be ".cer".
 
 The certificates used in the case of services displayed through Azure, must be included in the dedicated section, 
-these must be in the ".pfx" format.  (https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates). 
+these must be in the _".pfx"_ format. [Azure Mutual Authentication](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates). 
 
 The services displayed on Azure will allow the configuration of the backend services displayed so as to enable the
 mutual authentication process based on a given certificate. In the case of services used by
 Acquirer introduces a dedicated policy to allow the authentication process through multiple certificates,
-to allow the use of certificates for Acquirers 
-(https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates-for-clients).
+to allow the use of dedicate certificates for the Acquirers. [Mutual Certificates for Clients](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates-for-clients).
 
 ### Appendix 3 - Process Debugging
 
