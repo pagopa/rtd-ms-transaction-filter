@@ -79,8 +79,12 @@ public class TransactionFilterBatch {
     private String hpanListRecoveryFilePattern;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename}")
     private String hpanListFilename;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles}")
-    private Boolean deleteLocalFiles;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles}")
+    private Boolean deleteProcessedFiles;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles}")
+    private String deleteOutputFiles;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess}")
+    private String manageHpanOnSuccess;
     @Value("${batchConfiguration.TransactionFilterBatch.saltRecovery.enabled}")
     private Boolean saltRecoveryEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled}")
@@ -107,10 +111,13 @@ public class TransactionFilterBatch {
             log.info("CsvTransactionReader scheduled job started at " + startDate);
         }
 
-        String path = transactionFilterStep.getTransactionDirectoryPath();
-        Resource[] transactionResources = resolver.getResources(path);
+        String transactionsPath = transactionFilterStep.getTransactionDirectoryPath();
+        Resource[] transactionResources = resolver.getResources(transactionsPath);
 
-        if (transactionResources.length > 0) {
+        String hpanPath = panReaderStep.getHpanDirectoryPath();
+        Resource[] hpanResources = resolver.getResources(hpanPath);
+
+        if (transactionResources.length > 0 && (!hpanListRecoveryEnabled || hpanResources.length>0)) {
 
             if (log.isInfoEnabled()) {
                 log.info("Found " + transactionResources.length +
@@ -129,7 +136,7 @@ public class TransactionFilterBatch {
 
         } else {
             if (log.isInfoEnabled()) {
-                log.info("No transaction file has been found on configured path: " + path);
+                log.info("No transaction file has been found on configured path: " + transactionsPath);
             }
         }
 
@@ -265,7 +272,9 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setErrorPath(errorArchivePath);
         fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanDirectoryPath());
         fileManagementTasklet.setOutputDirectory(transactionFilterStep.getOutputDirectoryPath());
-        fileManagementTasklet.setDeleteLocalFiles(deleteLocalFiles);
+        fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
+        fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
+        fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
         return stepBuilderFactory.get("transaction-filter-file-management-step")
                 .tasklet(fileManagementTasklet).build();
     }

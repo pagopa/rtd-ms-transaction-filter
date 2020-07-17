@@ -21,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -34,7 +35,9 @@ import java.util.List;
 @Slf4j
 public class FileManagementTasklet implements Tasklet, InitializingBean {
 
-    private Boolean deleteLocalFiles;
+    private Boolean deleteProcessedFiles;
+    private String deleteOutputFiles;
+    private String manageHpanOnSuccess;
     private String successPath;
     private String errorPath;
     private String hpanDirectory;
@@ -67,6 +70,9 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
+        Boolean executionWithErrors = false;
+        List<String> errorFilenames = new ArrayList<>();
+
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
                 .getStepExecutions();
         for (StepExecution stepExecution : stepExecutions) {
@@ -87,10 +93,21 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                 try {
                     boolean isComplete = BatchStatus.COMPLETED.equals(stepExecution.getStatus()) &&
                             stepExecution.getFailureExceptions().size() <= 0;
+                    executionWithErrors = executionWithErrors || !isComplete;
+                    if (!isComplete) {
+                        String[] filename = file.replaceAll("\\\\", "/").split("/");
+                        errorFilenames.add(filename[filename.length - 1].split("\\.",2)[0]);
+                    }
                     boolean isHpanFile = resolver.getPathMatcher().match(hpanDirectory, file);
-                    if (deleteLocalFiles || (isComplete && isHpanFile)) {
+                    if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
+                        if (log.isErrorEnabled()) {
+                            log.info("Removing processed file: " + file);
+                        }
                         FileUtils.forceDelete(FileUtils.getFile(path));
-                    } else {
+                    } else if (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
+                        if (log.isErrorEnabled()) {
+                            log.info("Archiving processed file: " + file);
+                        }
                         archiveFile(file, path, isComplete);
                     }
                 } catch (Exception e) {
@@ -101,18 +118,34 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
             }
         }
-        if (deleteLocalFiles) {
+
+        if (deleteOutputFiles.equals("ALWAYS") || (deleteOutputFiles.equals("ERROR") && executionWithErrors)) {
             List<Resource> outputDirectoryResources =
                     Arrays.asList(resolver.getResources(outputDirectory + "/*"));
             outputDirectoryResources.forEach(outputDirectoryResource ->
             {
-                try {
-                    FileUtils.forceDelete( outputDirectoryResource.getFile());
-                } catch (IOException e) {
-                    log.error(e.getMessage(), e);
+                if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
+                        errorFilename -> {
+                            try {
+                                return outputDirectoryResource.getFile().getAbsolutePath().contains(errorFilename);
+                            } catch (IOException e) {
+                                if (log.isErrorEnabled()) {
+                                    log.error(e.getMessage(),e);
+                                }
+                                return false;
+                            }
+                        }))
+                ) {
+                    try {
+                        log.info("Deleting output file: " + outputDirectoryResource.getFile());
+                        FileUtils.forceDelete(outputDirectoryResource.getFile());
+                    } catch (IOException e) {
+                        log.error(e.getMessage(), e);
+                    }
                 }
             });
         }
+
         return RepeatStatus.FINISHED;
     }
 

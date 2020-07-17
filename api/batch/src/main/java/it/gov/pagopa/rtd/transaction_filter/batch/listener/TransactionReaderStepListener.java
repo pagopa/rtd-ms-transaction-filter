@@ -19,7 +19,7 @@ public class TransactionReaderStepListener implements StepExecutionListener {
     public ExitStatus afterStep(StepExecution stepExecution) {
         ExitStatus exitStatus = stepExecution.getExitStatus();
 
-        if (!exitStatus.equals(ExitStatus.FAILED) &&
+        if (!exitStatus.getExitCode().equals(ExitStatus.FAILED.getExitCode()) &&
                 stepExecution.getSkipCount() > 0) {
             exitStatus = new ExitStatus("COMPLETED WITH SKIPS");
         }
