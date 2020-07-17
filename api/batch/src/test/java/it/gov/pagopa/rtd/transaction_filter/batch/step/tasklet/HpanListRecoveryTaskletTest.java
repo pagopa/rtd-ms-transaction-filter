@@ -20,8 +20,14 @@ import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.test.MetaDataInstanceFactory;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 
 public class HpanListRecoveryTaskletTest {
 
@@ -116,6 +122,35 @@ public class HpanListRecoveryTaskletTest {
         BDDMockito.verify(hpanConnectorServiceMock).getHpanList();
         Assert.assertEquals(0, FileUtils.listFiles(hpanFolder, new String[]{"pgp"},false).size());
     }
+
+    @SneakyThrows
+    @Test
+    public void testRecover_OK_RecoverAfterRemoval() {
+        File hpanFolder = tempFolder.newFolder("hpanDir");
+        File oldFile = tempFolder.newFile("hpanDir/hpanlist.pgp");
+        BDDMockito.doReturn(tempFolder.newFile("tempFile")).when(hpanConnectorServiceMock).getHpanList();
+        BasicFileAttributeView basicView = Files.getFileAttributeView(
+                oldFile.toPath(), BasicFileAttributeView.class);
+        BasicFileAttributes basicAttrs = basicView.readAttributes();
+        FileTime oldTime = FileTime.from(basicAttrs.lastModifiedTime().toInstant()
+                .minus(1, ChronoUnit.DAYS));
+        basicView.setTimes(oldTime, oldTime, oldTime);
+        HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+        hpanListRecoveryTasklet.setFileName(OffsetDateTime.now().format(fmt).concat("_hpanlist.pgp"));
+        hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
+        hpanListRecoveryTasklet.setHpanListDirectory(hpanFolder.getAbsolutePath());
+        hpanListRecoveryTasklet.setHpanFilePattern("*.pgp");
+        hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(true);
+        hpanListRecoveryTasklet.setRecoveryTaskletEnabled(true);
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        StepContext stepContext = new StepContext(execution);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+        hpanListRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
+        BDDMockito.verify(hpanConnectorServiceMock).getHpanList();
+        Assert.assertEquals(1, FileUtils.listFiles(hpanFolder, new String[]{"pgp"},false).size());
+    }
+
 
     @After
     public void tearDown() {

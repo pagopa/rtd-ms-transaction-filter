@@ -41,11 +41,10 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
 
         Resource[] resources = resolver.getResources("file:/"
                 .concat(hpanListDirectory)
-                .concat("\\")
+                .concat("/")
                 .concat(hpanFilePattern));
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
         String currentDate = OffsetDateTime.now().format(fmt);
-
 
         if (dailyRemovalTaskletEnabled) {
 
@@ -75,7 +74,7 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
         if (recoveryTaskletEnabled) {
             resources = resolver.getResources("file:/"
                     .concat(hpanListDirectory)
-                    .concat("\\")
+                    .concat("/")
                     .concat(hpanFilePattern));
             File outputFile = FileUtils.getFile(hpanListDirectory
                     .concat("/".concat(OffsetDateTime.now().format(fmt).concat("_")

@@ -41,7 +41,6 @@ spring:
 logging:
   level:
     it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:DEBUG}
-  config: file:config/logback-spring.xml
 
 batchConfiguration:
   TransactionFilterBatch:
@@ -68,12 +67,15 @@ batchConfiguration:
       publicKeyPath: file:${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:}
       partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
       chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000}
-      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:100000000}
+      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
       timestampPattern: ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX}
       applyHashing: ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:false}
       applyEncrypt: ${ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT:false}
       saveHashing: ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:true}
       linesToSkip: ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0}
+      deleteProcessedFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:false}
+      deleteOutputFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:ERROR}
+      manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:KEEP}
       transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
       sftp:
         localdirectory: file:${SFTP_LOCAL_DIR:resources/output}/${SFTP_FILE_PATTERN:*}
