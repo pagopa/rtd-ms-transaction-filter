@@ -72,6 +72,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
         Boolean executionWithErrors = false;
         List<String> errorFilenames = new ArrayList<>();
+        hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
 
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
                 .getStepExecutions();
@@ -106,7 +107,8 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         log.info("match: " + hpanDirectory);
                         log.info("resource to match: " + file);
                     }
-                    boolean isHpanFile = resolver.getPathMatcher().match(hpanDirectory, file);
+                    boolean isHpanFile = resolver.getPathMatcher().match(
+                            hpanDirectory, file.replaceAll("\\\\", "/"));
                     if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
                         if (log.isInfoEnabled()) {
                             log.info("Removing processed file: " + file);

@@ -55,7 +55,7 @@ public class FileManagementTaskletTest {
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
             archivalTasklet.setHpanDirectory(resolver.getResources(
-                    "classpath:/test-encrypt/**/test1/hpan")[0].getFile().getAbsolutePath()+"\\*.pgp");
+                    "classpath:/test-encrypt/**/test1/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("NEVER");
             archivalTasklet.setManageHpanOnSuccess("DELETE");
@@ -279,7 +279,7 @@ public class FileManagementTaskletTest {
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test3/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test3/output");
             archivalTasklet.setHpanDirectory(resolver.getResources(
-                    "classpath:/test-encrypt/**/test3/hpan")[0].getFile().getAbsolutePath()+"\\*.pgp");
+                    "classpath:/test-encrypt/**/test3/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("ERROR");
             archivalTasklet.setManageHpanOnSuccess("DELETE");
@@ -389,7 +389,7 @@ public class FileManagementTaskletTest {
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test4/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test4/output");
             archivalTasklet.setHpanDirectory(resolver.getResources(
-                    "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"\\*.pgp");
+                    "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("ERROR");
             archivalTasklet.setManageHpanOnSuccess("KEEP");
