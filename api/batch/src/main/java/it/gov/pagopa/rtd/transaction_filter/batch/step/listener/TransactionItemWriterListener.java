@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.transaction_filter.batch.listener;
+package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.Data;

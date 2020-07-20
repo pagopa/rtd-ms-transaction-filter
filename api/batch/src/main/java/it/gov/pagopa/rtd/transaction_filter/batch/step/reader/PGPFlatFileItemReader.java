@@ -60,6 +60,9 @@ public class PGPFlatFileItemReader extends FlatFileItemReader<String> {
                 super.setResource(new InputStreamResource(
                         new ByteArrayInputStream(decryptFileData)));
             } catch (Exception e) {
+                if (log.isErrorEnabled()) {
+                    log.error(e.getMessage(),e);
+                }
                 throw new PGPDecryptException();
             } finally {
                 fileToProcessIS.close();
