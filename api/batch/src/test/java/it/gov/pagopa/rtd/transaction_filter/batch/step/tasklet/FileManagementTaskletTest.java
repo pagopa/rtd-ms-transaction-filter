@@ -28,47 +28,45 @@ public class FileManagementTaskletTest {
     public TemporaryFolder tempFolder = new TemporaryFolder(
             new File(getClass().getResource("/test-encrypt").getFile()));
 
-    @SneakyThrows
-    @Before
-    public void setUp() {
-        tempFolder.newFolder("success");
-        tempFolder.newFolder("error");
-        tempFolder.newFolder("output");
-        tempFolder.newFolder("hpan");
-        tempFolder.newFolder("trxs");
-    }
-
     @Test
     public void testFileManagement_NoDeleteLocalFiles() {
+
         try {
 
-            successFile = tempFolder.newFile("trxs/success-trx.pgp");
-            errorFile =  tempFolder.newFile("trxs/error-trx.pgp");
-            hpanFile =  tempFolder.newFile("hpan/hpan.pgp");
-            errorHpanFile = tempFolder.newFile("hpan/error-hpan.pgp");
-            tempFolder.newFile("output/error-trx-output-file.pgp");
-            tempFolder.newFile("output/success-trx-output-file.pgp");
-            tempFolder.newFile("output/error-trx-output-file.csv");
+            tempFolder.newFolder("test1");
+            tempFolder.newFolder("test1","success");
+            tempFolder.newFolder("test1","error");
+            tempFolder.newFolder("test1","output");
+            tempFolder.newFolder("test1","hpan");
+            tempFolder.newFolder("test1","trxs");
+
+            successFile = tempFolder.newFile("test1/trxs/success-trx.pgp");
+            errorFile =  tempFolder.newFile("test1/trxs/error-trx.pgp");
+            hpanFile =  tempFolder.newFile("test1/hpan/hpan.pgp");
+            errorHpanFile = tempFolder.newFile("test1/hpan/error-hpan.pgp");
+            tempFolder.newFile("test1/output/error-trx-output-file.pgp");
+            tempFolder.newFile("test1/output/success-trx-output-file.pgp");
+            tempFolder.newFile("test1/output/error-trx-output-file.csv");
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/error");
-            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/success");
-            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/output");
+            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test1/error");
+            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
+            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
             archivalTasklet.setHpanDirectory(resolver.getResources(
-                    "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"\\*.pgp");
+                    "classpath:/test-encrypt/**/test1/hpan")[0].getFile().getAbsolutePath()+"\\*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("NEVER");
             archivalTasklet.setManageHpanOnSuccess("DELETE");
 
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test1/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/error")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test1/error")[0].getFile(),
                             new String[]{"pgp"},false).size());
             StepExecution execution = MetaDataInstanceFactory.createStepExecution();
 
@@ -102,11 +100,11 @@ public class FileManagementTaskletTest {
 
             Assert.assertEquals(1,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test1/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
             Assert.assertEquals(2,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/error")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test1/error")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
             successFile.createNewFile();
@@ -127,17 +125,17 @@ public class FileManagementTaskletTest {
 
             Assert.assertEquals(2,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test1/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
             Assert.assertEquals(2,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/output")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test1/output")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
             Assert.assertEquals(1,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/output")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test1/output")[0].getFile(),
                             new String[]{"csv"},false).size());
 
         } catch (Exception e) {
@@ -148,15 +146,23 @@ public class FileManagementTaskletTest {
 
     @Test
     public void testFileManagement_DeleteLocalFiles() {
+
         try {
 
-            successFile = tempFolder.newFile("trxs/success-trx.pgp");
-            errorFile =  tempFolder.newFile("trxs/error-trx.pgp");
-            hpanFile =  tempFolder.newFile("hpan/hpan.pgp");
-            errorHpanFile = tempFolder.newFile("hpan/error-hpan.pgp");
-            tempFolder.newFile("output/error-trx-output-file.pgp");
-            tempFolder.newFile("output/success-trx-output-file.pgp");
-            tempFolder.newFile("output/error-trx-output-file.csv");
+            tempFolder.newFolder("test2");
+            tempFolder.newFolder("test2","success");
+            tempFolder.newFolder("test2","error");
+            tempFolder.newFolder("test2","output");
+            tempFolder.newFolder("test2","hpan");
+            tempFolder.newFolder("test2","trxs");
+
+            successFile = tempFolder.newFile("test2/trxs/success-trx.pgp");
+            errorFile =  tempFolder.newFile("test2/trxs/error-trx.pgp");
+            hpanFile =  tempFolder.newFile("test2/hpan/hpan.pgp");
+            errorHpanFile = tempFolder.newFile("test2/hpan/error-hpan.pgp");
+            tempFolder.newFile("test2/output/error-trx-output-file.pgp");
+            tempFolder.newFile("test2/output/success-trx-output-file.pgp");
+            tempFolder.newFile("test2/output/error-trx-output-file.csv");
 
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/error");
@@ -170,11 +176,11 @@ public class FileManagementTaskletTest {
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test2/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/error")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test2/error")[0].getFile(),
                             new String[]{"pgp"},false).size());
             StepExecution execution = MetaDataInstanceFactory.createStepExecution();
 
@@ -208,11 +214,11 @@ public class FileManagementTaskletTest {
 
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test2/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/error")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test2/error")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
             successFile.createNewFile();
@@ -233,12 +239,12 @@ public class FileManagementTaskletTest {
 
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test2/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/output")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test2/output")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
         } catch (Exception e) {
@@ -252,32 +258,39 @@ public class FileManagementTaskletTest {
 
         try {
 
-            successFile = tempFolder.newFile("trxs/success-trx.pgp");
-            errorFile =  tempFolder.newFile("trxs/error-trx.pgp");
-            hpanFile =  tempFolder.newFile("hpan/hpan.pgp");
-            errorHpanFile = tempFolder.newFile("hpan/error-hpan.pgp");
-            tempFolder.newFile("output/error-trx-output-file.pgp");
-            tempFolder.newFile("output/success-trx-output-file.pgp");
-            tempFolder.newFile("output/error-trx-output-file.csv");
+            tempFolder.newFolder("test3");
+            tempFolder.newFolder("test3","success");
+            tempFolder.newFolder("test3","error");
+            tempFolder.newFolder("test3","output");
+            tempFolder.newFolder("test3","hpan");
+            tempFolder.newFolder("test3","trxs");
+
+            successFile = tempFolder.newFile("test3/trxs/success-trx.pgp");
+            errorFile =  tempFolder.newFile("test3/trxs/error-trx.pgp");
+            hpanFile =  tempFolder.newFile("test3/hpan/hpan.pgp");
+            errorHpanFile = tempFolder.newFile("test3/hpan/error-hpan.pgp");
+            tempFolder.newFile("test3/output/error-trx-output-file.pgp");
+            tempFolder.newFile("test3/output/success-trx-output-file.pgp");
+            tempFolder.newFile("test3/output/error-trx-output-file.csv");
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/error");
-            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/success");
-            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/output");
+            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test3/error");
+            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test3/success");
+            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test3/output");
             archivalTasklet.setHpanDirectory(resolver.getResources(
-                    "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"\\*.pgp");
+                    "classpath:/test-encrypt/**/test3/hpan")[0].getFile().getAbsolutePath()+"\\*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("ERROR");
             archivalTasklet.setManageHpanOnSuccess("DELETE");
 
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test3/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/error")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test3/error")[0].getFile(),
                             new String[]{"pgp"},false).size());
             StepExecution execution = MetaDataInstanceFactory.createStepExecution();
 
@@ -311,11 +324,11 @@ public class FileManagementTaskletTest {
 
             Assert.assertEquals(1,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test3/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
             Assert.assertEquals(2,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/error")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test3/error")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
             successFile.createNewFile();
@@ -336,12 +349,12 @@ public class FileManagementTaskletTest {
 
             Assert.assertEquals(2,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test3/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
             Assert.assertEquals(1,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/output")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test3/output")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
         } catch (Exception e) {
@@ -355,19 +368,26 @@ public class FileManagementTaskletTest {
 
         try {
 
-            successFile = tempFolder.newFile("trxs/success-trx.pgp");
-            errorFile =  tempFolder.newFile("trxs/error-trx.pgp");
-            hpanFile =  tempFolder.newFile("hpan/hpan.pgp");
-            errorHpanFile = tempFolder.newFile("hpan/error-hpan.pgp");
-            tempFolder.newFile("output/error-trx-output-file.pgp");
-            tempFolder.newFile("output/success-trx-output-file.pgp");
-            tempFolder.newFile("output/error-trx-output-file.csv");
+            tempFolder.newFolder("test4");
+            tempFolder.newFolder("test4","success");
+            tempFolder.newFolder("test4","error");
+            tempFolder.newFolder("test4","output");
+            tempFolder.newFolder("test4","hpan");
+            tempFolder.newFolder("test4","trxs");
+
+            successFile = tempFolder.newFile("test4/trxs/success-trx.pgp");
+            errorFile =  tempFolder.newFile("test4/trxs/error-trx.pgp");
+            hpanFile =  tempFolder.newFile("test4/hpan/hpan.pgp");
+            errorHpanFile = tempFolder.newFile("test4/hpan/error-hpan.pgp");
+            tempFolder.newFile("test4/output/error-trx-output-file.pgp");
+            tempFolder.newFile("test4/output/success-trx-output-file.pgp");
+            tempFolder.newFile("test4/output/error-trx-output-file.csv");
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/error");
-            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/success");
-            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/output");
+            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test4/error");
+            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test4/success");
+            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test4/output");
             archivalTasklet.setHpanDirectory(resolver.getResources(
                     "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"\\*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
@@ -376,11 +396,11 @@ public class FileManagementTaskletTest {
 
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test4/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
             Assert.assertEquals(0,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/error")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test4/error")[0].getFile(),
                             new String[]{"pgp"},false).size());
             StepExecution execution = MetaDataInstanceFactory.createStepExecution();
 
@@ -414,11 +434,11 @@ public class FileManagementTaskletTest {
 
             Assert.assertEquals(1,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test4/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
             Assert.assertEquals(2,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/error")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test4/error")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
             successFile.createNewFile();
@@ -439,17 +459,17 @@ public class FileManagementTaskletTest {
 
             Assert.assertEquals(1,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/hpan")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test4/hpan")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
             Assert.assertEquals(2,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/success")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test4/success")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
             Assert.assertEquals(1,
                     FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/output")[0].getFile(),
+                            resolver.getResources("classpath:/test-encrypt/**/test4/output")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
         } catch (Exception e) {
