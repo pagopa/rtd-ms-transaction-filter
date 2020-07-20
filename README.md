@@ -472,6 +472,11 @@ where the log records are inserted is thhe __logging_event__ table.
 
 ![Logback_Event_DB_Screen](readme_screens/Logback_DB_Table_Screen.PNG)
 
+### Appendix 4 - RTD Acquirer Interface
+
+The document containing the details regarding the interface agreement are available
+at [ops_resources/RTD_Acquirer_Interface_V2.docx](ops_resources/RTD_Acquirer_Interface_V2.docx).
+
 
 
  

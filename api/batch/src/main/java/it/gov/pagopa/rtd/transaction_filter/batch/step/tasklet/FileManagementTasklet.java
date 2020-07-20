@@ -72,6 +72,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
         Boolean executionWithErrors = false;
         List<String> errorFilenames = new ArrayList<>();
+        hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
 
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
                 .getStepExecutions();
@@ -90,6 +91,10 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                     path = file.replace("file:/", "");
                 }
 
+                if (log.isErrorEnabled()) {
+                    log.info("Resolved path file: " + path);
+                }
+
                 try {
                     boolean isComplete = BatchStatus.COMPLETED.equals(stepExecution.getStatus()) &&
                             stepExecution.getFailureExceptions().size() <= 0;
@@ -98,14 +103,15 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         String[] filename = file.replaceAll("\\\\", "/").split("/");
                         errorFilenames.add(filename[filename.length - 1].split("\\.",2)[0]);
                     }
-                    boolean isHpanFile = resolver.getPathMatcher().match(hpanDirectory, file);
+                    boolean isHpanFile = resolver.getPathMatcher().match(
+                            hpanDirectory, file.replaceAll("\\\\", "/"));
                     if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
-                        if (log.isErrorEnabled()) {
+                        if (log.isInfoEnabled()) {
                             log.info("Removing processed file: " + file);
                         }
                         FileUtils.forceDelete(FileUtils.getFile(path));
                     } else if (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
-                        if (log.isErrorEnabled()) {
+                        if (log.isInfoEnabled()) {
                             log.info("Archiving processed file: " + file);
                         }
                         archiveFile(file, path, isComplete);
@@ -137,10 +143,14 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         }))
                 ) {
                     try {
-                        log.info("Deleting output file: " + outputDirectoryResource.getFile());
+                        if (log.isInfoEnabled()) {
+                            log.info("Deleting output file: " + outputDirectoryResource.getFile());
+                        }
                         FileUtils.forceDelete(outputDirectoryResource.getFile());
                     } catch (IOException e) {
-                        log.error(e.getMessage(), e);
+                        if (log.isErrorEnabled()) {
+                            log.error(e.getMessage(), e);
+                        }
                     }
                 }
             });

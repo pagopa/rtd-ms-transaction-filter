@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.transaction_filter.batch.listener;
+package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.ExitStatus;
