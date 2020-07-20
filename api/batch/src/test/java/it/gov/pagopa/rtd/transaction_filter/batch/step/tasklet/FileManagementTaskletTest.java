@@ -35,19 +35,20 @@ public class FileManagementTaskletTest {
         tempFolder.newFolder("error");
         tempFolder.newFolder("output");
         tempFolder.newFolder("hpan");
-        successFile = tempFolder.newFile("success-trx.pgp");
-        errorFile =  tempFolder.newFile("error-trx.pgp");
-        hpanFile =  tempFolder.newFile("hpan/hpan.pgp");
-        errorHpanFile = tempFolder.newFile("hpan/error-hpan.pgp");
-        tempFolder.newFile("output/error-trx-output-file.pgp");
-        tempFolder.newFile("output/success-trx-output-file.pgp");
-        tempFolder.newFile("output/error-trx-output-file.csv");
-
+        tempFolder.newFolder("trxs");
     }
 
     @Test
     public void testFileManagement_NoDeleteLocalFiles() {
         try {
+
+            successFile = tempFolder.newFile("trxs/success-trx.pgp");
+            errorFile =  tempFolder.newFile("trxs/error-trx.pgp");
+            hpanFile =  tempFolder.newFile("hpan/hpan.pgp");
+            errorHpanFile = tempFolder.newFile("hpan/error-hpan.pgp");
+            tempFolder.newFile("output/error-trx-output-file.pgp");
+            tempFolder.newFile("output/success-trx-output-file.pgp");
+            tempFolder.newFile("output/error-trx-output-file.csv");
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -149,6 +150,14 @@ public class FileManagementTaskletTest {
     public void testFileManagement_DeleteLocalFiles() {
         try {
 
+            successFile = tempFolder.newFile("trxs/success-trx.pgp");
+            errorFile =  tempFolder.newFile("trxs/error-trx.pgp");
+            hpanFile =  tempFolder.newFile("hpan/hpan.pgp");
+            errorHpanFile = tempFolder.newFile("hpan/error-hpan.pgp");
+            tempFolder.newFile("output/error-trx-output-file.pgp");
+            tempFolder.newFile("output/success-trx-output-file.pgp");
+            tempFolder.newFile("output/error-trx-output-file.csv");
+
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/success");
@@ -243,8 +252,15 @@ public class FileManagementTaskletTest {
 
         try {
 
-            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            successFile = tempFolder.newFile("trxs/success-trx.pgp");
+            errorFile =  tempFolder.newFile("trxs/error-trx.pgp");
+            hpanFile =  tempFolder.newFile("hpan/hpan.pgp");
+            errorHpanFile = tempFolder.newFile("hpan/error-hpan.pgp");
+            tempFolder.newFile("output/error-trx-output-file.pgp");
+            tempFolder.newFile("output/success-trx-output-file.pgp");
+            tempFolder.newFile("output/error-trx-output-file.csv");
 
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/success");
@@ -339,8 +355,15 @@ public class FileManagementTaskletTest {
 
         try {
 
-            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            successFile = tempFolder.newFile("trxs/success-trx.pgp");
+            errorFile =  tempFolder.newFile("trxs/error-trx.pgp");
+            hpanFile =  tempFolder.newFile("hpan/hpan.pgp");
+            errorHpanFile = tempFolder.newFile("hpan/error-hpan.pgp");
+            tempFolder.newFile("output/error-trx-output-file.pgp");
+            tempFolder.newFile("output/success-trx-output-file.pgp");
+            tempFolder.newFile("output/error-trx-output-file.csv");
 
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/success");
