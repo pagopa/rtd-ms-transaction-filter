@@ -103,10 +103,6 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         String[] filename = file.replaceAll("\\\\", "/").split("/");
                         errorFilenames.add(filename[filename.length - 1].split("\\.",2)[0]);
                     }
-                    if (log.isInfoEnabled()) {
-                        log.info("match: " + hpanDirectory);
-                        log.info("resource to match: " + file);
-                    }
                     boolean isHpanFile = resolver.getPathMatcher().match(
                             hpanDirectory, file.replaceAll("\\\\", "/"));
                     if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {

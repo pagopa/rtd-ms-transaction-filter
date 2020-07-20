@@ -63,7 +63,7 @@ public class PGPFlatFileItemReader extends FlatFileItemReader<String> {
                 if (log.isErrorEnabled()) {
                     log.error(e.getMessage(),e);
                 }
-                throw new PGPDecryptException();
+                throw new PGPDecryptException(e.getMessage(),e);
             } finally {
                 fileToProcessIS.close();
                 secretFilePathIS.close();
