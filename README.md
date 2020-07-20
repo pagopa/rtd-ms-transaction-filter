@@ -39,7 +39,7 @@ Please refer to the properties in __Appendix 2 - Configuration properties__ to d
 
 __Note:__ As of today, Oracle RDBMS are subject to potential issues regarding the isolation level, as reported
 in the following [Issue Thread](https://github.com/spring-projects/spring-batch/issues/1127), the general approach to
-attempt to avoid similar problems, is to reduce the isolation level defined in the Spring Batch jobRepository 
+attempt to avoid YESmilar problems, is to reduce the isolation level defined in the Spring Batch jobRepository 
 to either _ISOLAION_READ_COMMITTED_, or _ISOLAION_READ_UNCOMMITTED_. this is doable using the configuration property
 _batchConfiguration.TransactionFilterBatch.isolationForCreate_.
 
@@ -113,6 +113,9 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Define a folder where the path files, to be processed, will be placed
 
+- Define _batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled_ parameter on _TRUE_ in case
+  of daily removal for stored PAN files
+
 - Configure the path to the transaction files to be processed, through the
   _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath_ property, or through the environment variables
   _ACQ_BATCH_TRX_INPUT_PATH_ for the folder, and _ACQ_BATCH_INPUT_FILE_PATTERN_, for the pattern of files to read. 
@@ -141,6 +144,16 @@ maintained, in order to have the correct setup for the batch execution.
 
   >batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath = file:/C:/Development/output
 
+- Define a folder for the output files
+
+- Configure the pointing to the directory where records that are either filtered, or that had an error, are stored,
+  through the property _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath_,
+  or through the environment variable _ACQ_BATCH_OUTPUT_PATH_      
+
+  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
+
+  >batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath = file:/C:/Development/errorLogs
+
 - Configure the hashing application for the pan list, through the _batchConfiguration.TransactionFilterBatch.panList.applyHashing_
   property, or through the environment variable _ACQ_BATCH_PAN_LIST_APPLY_HASHING_        
 
@@ -149,10 +162,10 @@ maintained, in order to have the correct setup for the batch execution.
   _ACQ_BATCH_PAN_LIST_APPLY_DECRYPT_         
 
 - Configure the hash application for transactions, through the batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing
-  property, or through the environment variable ACQ_BATCH_TRX_LIST_APPLY_HASHING
+  property, or through the environment variable _ACQ_BATCH_TRX_LIST_APPLY_HASHING_
 
 - Configure for product encryption, through the batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt property, or
-  through the environment variable ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT
+  through the environment variable _ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT_
 
 - Configure for the hash application in the transactions reported in the product file, through the
   _batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing_ property, or through the environment variable
@@ -164,6 +177,17 @@ maintained, in order to have the correct setup for the batch execution.
   password-based, or through certificate must be reported. Configurations for sftp are listed under the 
   _batchConfiguration.TransactionFilterBatch.transactionFilter.sftp_ root in the configuration properties appendix.
   
+- Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles_
+  on true/false value to either delete al processed files, or store on the archival directories.
+  
+- Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess_
+  on KEEP to always maintain the hpan files in the input directory, ARCHIVE to store them in the configured archive directory,
+  DELETE for removal in case of successful file processing.
+  
+- Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles_
+  on KEEP to always maintain the output files, ERROR to delete them in case of a FAILURE during the process phase, ALWAYS to 
+  delete the files at the end of the execution (option to be used in junction with the sftp internal sender task).  
+  
 - To enable the passages related to the jump recovery services, or the pan list through REST services,
   configure the properties following the definitions in the section __Connecting to REST Services__.    
 
@@ -172,7 +196,7 @@ maintained, in order to have the correct setup for the batch execution.
 
 - To configure the batch process for the usage of a persisted database, define the configuration parameters under the
   path prefix _spring.datasource_, refer to the command later defined to add the appropriate driver .jar to the process
-  classpath, in order to use the chosen database.
+  classpath, in order to use the chosen database.  
 
 - Apply any other changes to the configuration parameters, the full list of properties is described in __Appendix 2 - Configuration
   properties__
@@ -192,7 +216,7 @@ maintained, in order to have the correct setup for the batch execution.
 ### Appendix 1 - Public PGP Key
 
 For any problem relating to the use of the public key and for the release of the specifications and / or updates relating to the public
-key to be used to encrypt the file, it is mandatory to contact the structure delegated by PagoPA  (ref. SIA OPE Innovative Payments -
+key to be used to encrypt the file, it is mandatory to contact the structure delegated by PagoPA  (ref. YESA OPE Innovative Payments -
 [sistemisti_bigdata@sia.eu](mailto:sistemisti_bigdata@sia.eu)). 
 
 ### Appendix 2 - Configuration properties
@@ -225,8 +249,8 @@ Key |  Description | Default | Mandatory | Values
 __batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath__ | The path where you saved the file pgp containing HPAN | file:/${ACQ_BATCH_HPAN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
 __batchConfiguration.TransactionFilterBatch.panList.secretKeyPath__ | Path where the private key is saved | file:/${ACQ_BATCH_INPUT_SECRET_KEYPATH:} | YES
 __batchConfiguration.TransactionFilterBatch.panList.passphrase__ | Passphrase for the private key | ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:} | YES
-__batchConfiguration.TransactionFilterBatch.panList.partitionerSize__ | Size of the partitioner used to read the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
-__batchConfiguration.TransactionFilterBatch.panList.chunkSize__ | Size of the chunks used for reading the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TransactionFilterBatch.panList.partitionerSize__ | YESze of the partitioner used to read the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TransactionFilterBatch.panList.chunkSize__ | YESze of the chunks used for reading the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
 __batchConfiguration.TransactionFilterBatch.panList.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
 __batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the hpan file | ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE	
 
@@ -237,8 +261,8 @@ Key |  Description | Default | Mandatory | Values
 __batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath__ | Path where the transaction file to be processed is read | file:/${ACQ_BATCH_TRX_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath__ | Path where the final file is writtene | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/output} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath__ | Path containing the public key with which to encrypt the result file | file:/${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize__ | Partitiner size for transaction files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize__ | Chunck size for reading transaction files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize__ | Partitiner YESze for transaction files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize__ | Chunck YESze for reading transaction files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern__ | Pattern relating to the transaction date | ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:MM/dd/yyyy HH:mm:ss} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing__ | Flag that drives the hashing to the pan present in the transaction file | ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:false} | YES | TRUE FALSE
@@ -252,15 +276,15 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPat
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
 __batchConfiguration.TransactionFilterBatch.transactionSender.enabled__ | Indicates whether the sending to the sftp channel is active or not | ${ACQ_BATCH_TRX_SENDER_ENABLED:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory__ |Local directory from which to get the file to be sent on remote SFTP | ${SFTP_LOCAL_DIR:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.remotedirectory__ | Remote SFTP directory to copy the file to | ${SFTP_REMOTE_DIR:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filenamepattern__ | Name / pattern of the file to be moved to remote SFTP | ${SFTP_FILE_PATTERN:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory__ |Local directory from which to get the file to be sent on remote SFTP | ${SFTP_LOCAL_DIR:} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.remotedirectory__ | Remote SFTP directory to copy the file to | ${SFTP_REMOTE_DIR:} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filenamepattern__ | Name / pattern of the file to be moved to remote SFTP | ${SFTP_FILE_PATTERN:} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filextension__ | File extension to copy to remote SFTP | ${SFTP_FILE_EXTENSION:} | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.host__ | SFTP Host | ${SFTP_HOST:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.port__ | SFTP Port | ${SFTP_PORT:22} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.user__ | User for access to SFTP | ${SFTP_USER:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.password__ | Password for access to SFTP | ${SFTP_PASSWORD:} | SI
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.timeout__ | Timeout related to connection with SFTP | ${SFTP_SOCKET_TIMEOUT:0:} | SI
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.host__ | SFTP Host | ${SFTP_HOST:} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.port__ | SFTP Port | ${SFTP_PORT:22} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.user__ | User for access to SFTP | ${SFTP_USER:} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.password__ | Password for access to SFTP | ${SFTP_PASSWORD:} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.timeout__ | Timeout related to connection with SFTP | ${SFTP_SOCKET_TIMEOUT:0:} | YES
 __connectors.sftpConfigurations.connection.privateKey__ | Indicates the file for channel authentication will take place via a private key | file:/${SFTP_PRIVATE_KEY:} | NO
 __connectors.sftpConfigurations.connection.passphrase__ | Indicates the passphrase associated with the private key | ${SFTP_PASSPHRASE:} | NO
 
@@ -275,6 +299,9 @@ __batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Name a
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.attemptExtract__ | Indication if the recovered file will be in the form of a compressed file with checksum | ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:false} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.checksumFilePattern__ | Pattern for the checksum file | ${ACQ_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*checksum.* } | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.listFilePattern__ | Pattern for the list containing the pan list | ${CSV_TRX_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*\\.csv } | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved pan files | ${ACQ_BATCH_HPAN_RECOVERY_DAILY_REM_ENABLED:false} | NO | TRUE FALSE
+
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled: ${ACQ_BATCH_HPAN_RECOVERY_DAILY_REM_ENABLED:false}__
 __rest-client.hpan.base-url__ | Base url for REST services | ${HPAN_SERVICE_URL} | NO
 __rest-client.hpan.list.url__ | Endpoint pan list service | /list | NO
 __rest-client.hpan.salt.url__ | Endpoint salt service | /salt | NO
@@ -300,12 +327,12 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSucces
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__spring.datasource.driver-class-name__ | Classname for the driver to user | ${BATCH_DB_CLASS_NAME:} | SI
-__spring.datasource.url__ | Database connection url | ${BATCH_DB_CONN_URL:} | SI
-__spring.datasource.username__ | Database username for login | ${BATCH_DB_USERNAME:} | SI
-__spring.datasource.password__ | Database password for user login | ${BATCH_DB_USERNAME:} | SI
-__spring.datasource.hikari.schema__ | Database schema | ${BATCH_DB_SCHEMA:} | SI
-__spring.jpa.database-platform__ | Database dialect | ${BATCH_DB_DIALECT:} | SI
+__spring.datasource.driver-class-name__ | Classname for the driver to user | ${BATCH_DB_CLASS_NAME:} | YES
+__spring.datasource.url__ | Database connection url | ${BATCH_DB_CONN_URL:} | YES
+__spring.datasource.username__ | Database username for login | ${BATCH_DB_USERNAME:} | YES
+__spring.datasource.password__ | Database password for user login | ${BATCH_DB_USERNAME:} | YES
+__spring.datasource.hikari.schema__ | Database schema | ${BATCH_DB_SCHEMA:} | YES
+__spring.jpa.database-platform__ | Database dialect | ${BATCH_DB_DIALECT:} | YES
 
 ### Appendix 3 - Acquirer Services Authentication
 
@@ -348,25 +375,25 @@ An execution can be identified through the table __batch_job_execution__,
 which defines an instance of execution of the whole batch, the _job_execution_id will_ be important to search the 
 related steps, and the properties _status_ and _exit_code_ defines if the job successfully completed.
 In this particular case the codes will generally be on __COMPLETED__ after a job execution is ended,
-unless an error outside the scope of the single steps outcomes occurs.
+unless an error outside the scope of the YESngle steps outcomes occurs.
 
 ![example of jo execution in DB](/readme_screens/JobExec_DB_Screen.PNG)
 
 To check for the information involving the reading of a file, the table __batch_step_execution__ contains 
-the information regarding the single steps of the processes identified by a _job_execution_id_, the steps useful for debugging the file processing steps are the ones containing
+the information regarding the YESngle steps of the processes identified by a _job_execution_id_, the steps useful for debugging the file processing steps are the ones containing
 in the _step_name_ column, the values _"hpan-recovery"_ or _"transaction-filter"_. The steps with the name containing 
 _"master-step"_ as a suffix define the general status of all the related files processed during the execution,
-while the ones with the _"worker-step_partion"_ suffix are related to a single file.
+while the ones with the _"worker-step_partion"_ suffix are related to a YESngle file.
 
-The _status_ and _exit_code_ are useful to determine the general outcome for a step, the first one simply refers to
+The _status_ and _exit_code_ are useful to determine the general outcome for a step, the first one YESmply refers to
 the general outcome, generally either referring to a __COMPLETED__ or __FAILED__ status, while the second property might
 indicate a more detailed code, as an example, if during the processing of a file the fault tolerance is configured, and
 some records are skipped, the exit status with reflect this condition with the __COMPLETED_WITH_SKIPS__ exit code.
 
 The table contains a series of columns containing useful information on the processed records: the _read_count_ value
 details the number of successfully read lines, while the _read_skip_count_ define the records that are skipped under the
-selected fault-tolerance policy. Similarly, the _write_count_, _write_skip_count_ and _process_skip_count_ all retain
-a similar purpose in the filtering process and writing phases for the record. All the records that are in an error state,
+selected fault-tolerance policy. YESmilarly, the _write_count_, _write_skip_count_ and _process_skip_count_ all retain
+a YESmilar purpose in the filtering process and writing phases for the record. All the records that are in an error state,
 are included in the value for the _rollback_count_.
 
 For the transaction filtering, the _filter_count_ record is useful to keep track of how many transactions have 
@@ -399,7 +426,7 @@ the related filename.
 
 ![example of console_log_start_file_read_screen](/readme_screens/ConLog_StartFile_Screen.PNG)
 
-During the file processing, logs regarding the single records are produced to keep track of any errors,
+During the file processing, logs regarding the YESngle records are produced to keep track of any errors,
 or filtering occurred. Every log comes with the file name, and line of the record that produced the log entry,
 with any additional information. 
 
@@ -417,22 +444,22 @@ configurations it can provide the functionality to use the appenders to produce 
 a file. This can be achieved using the configuration properties exposed for this purpose, the details of which can
 be found in the [Reference Documentation](https://docs.spring.io/spring-boot/docs/2.1.9.RELEASE/reference/html/boot-features-logging.html).
 
-As an example, a simple way to route all the produced logs from the console to a specific file, can be easly done 
-by inserting a simple configuration within the _application.yaml_ file, using the following configuration properties
+As an example, a YESmple way to route all the produced logs from the console to a specific file, can be easly done 
+by inserting a YESmple configuration within the _application.yaml_ file, using the following configuration properties
 
 >logging.file="<path_to_log>/application.log"
 >logging.pattern=
 >logging.console=
 
-This simple configuration will ensure that all the produced logs, under a general pattern, will be produced on the
+This YESmple configuration will ensure that all the produced logs, under a general pattern, will be produced on the
 configured logfile, instead of being produced withing the console.
 
 If another configuration is required, it is possible to provide a custom configuration, with another set of appenders
 defined. As an example, a configuration can be set to write the log records within a defined database schema,
 referencing the table structures defined in the [Logback Appenders Documentation](http://dev.cs.ovgu.de/java/logback/manual/appenders.html#DBAppender).
 
-To set a logback configuration we have to provide a _spring-logback.xml_, similar to the following, defined for
-a simple configuration for the DBAppender
+To set a logback configuration we have to provide a _spring-logback.xml_, YESmilar to the following, defined for
+a YESmple configuration for the DBAppender
 
 ![Logback_Screen](readme_screens/Logback_DB_Screen.PNG)
 
