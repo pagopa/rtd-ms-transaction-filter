@@ -10,7 +10,7 @@
 
     <groupId>it.gov.pagopa.rtd.ms</groupId>
     <artifactId>rtd-ms-transaction-filter</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0-RC1</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -63,12 +63,12 @@
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
                 <artifactId>rtd-ms-transaction_filter-integration-rest</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <version>1.0</version>
             </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
                 <artifactId>rtd-ms-transaction_filter-integration-sftp</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <version>1.0</version>
             </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
