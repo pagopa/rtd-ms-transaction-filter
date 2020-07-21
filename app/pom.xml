@@ -16,7 +16,6 @@
             <groupId>it.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
             <artifactId>rtd-ms-transaction-filter-api-batch</artifactId>
             <version>1.0-RC1</version>
-            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>

@@ -9,6 +9,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTaskl
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +36,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -49,10 +48,10 @@ import java.util.Date;
  */
 
 @Configuration
+@Data
 @PropertySource("classpath:config/transactionFilterBatch.properties")
 @Import({TransactionFilterStep.class,PanReaderStep.class})
 @EnableBatchProcessing
-@EnableScheduling
 @RequiredArgsConstructor
 @Slf4j
 public class TransactionFilterBatch {
@@ -95,57 +94,49 @@ public class TransactionFilterBatch {
 
     private DataSource dataSource;
     private HpanStoreService hpanStoreService;
-
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-    /**
-     * Scheduled method used to launch the configured batch job for processing transaction from a defined directory.
-     * The scheduler is based on a cron execution, based on the provided configuration
-     * @throws Exception
-     */
-    @Scheduled(cron = "${batchConfiguration.TransactionFilterBatch.cron}")
-    public void launchJob() throws Exception {
+    public void createHpanStoreService() {
+        hpanStoreService = batchHpanStoreService();
+    }
 
-        Date startDate = new Date();
-        if (log.isInfoEnabled()) {
-            log.info("CsvTransactionReader scheduled job started at " + startDate);
-        }
+    public void clearHpanStoreService() {
+        hpanStoreService.clearAll();
+    }
 
+    @SneakyThrows
+    public void executeBatchJob(Date startDate) {
         String transactionsPath = transactionFilterStep.getTransactionDirectoryPath();
         Resource[] transactionResources = resolver.getResources(transactionsPath);
 
         String hpanPath = panReaderStep.getHpanDirectoryPath();
         Resource[] hpanResources = resolver.getResources(hpanPath);
 
-        if (transactionResources.length > 0 && (!hpanListRecoveryEnabled || hpanResources.length>0)) {
+        if (transactionResources.length > 0 &&
+                (!getHpanListRecoveryEnabled() || hpanResources.length>0)) {
 
             if (log.isInfoEnabled()) {
                 log.info("Found " + transactionResources.length +
-                         (transactionResources.length > 1 ? "resources" : "resource") +
-                         ". Starting filtering process"
-                        );
+                        (transactionResources.length > 1 ? "resources" : "resource") +
+                        ". Starting filtering process"
+                );
             }
 
-            hpanStoreService = batchHpanStoreService();
-            jobLauncher().run(
-                    job(),
+            createHpanStoreService();
+            jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
-            hpanStoreService.clearAll();
+            clearHpanStoreService();
 
         } else {
             if (log.isInfoEnabled()) {
                 log.info("No transaction file has been found on configured path: " + transactionsPath);
+                if (getHpanListRecoveryEnabled() && hpanResources.length==0) {
+                    log.info("No hpan file has been found on configured path: " + hpanPath);
+                }
             }
         }
-
-        Date endDate = new Date();
-        if (log.isInfoEnabled()) {
-            log.info("CsvTransactionReader scheduled job ended at " + endDate);
-            log.info("Completed in: " + (endDate.getTime() - startDate.getTime()) + " (ms)");
-        }
-
     }
 
     /**
