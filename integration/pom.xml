@@ -9,7 +9,7 @@
 
     <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
     <artifactId>rtd-ms-transaction-filter-integration</artifactId>
-    <version>1.0</version>
+    <version>1.0-RC1</version>
     <packaging>pom</packaging>
 
     <modules>

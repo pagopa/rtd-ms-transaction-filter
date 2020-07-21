@@ -9,14 +9,14 @@
 
     <groupId>it.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
     <artifactId>rtd-ms-transaction-filter-api</artifactId>
-    <version>1.0</version>
+    <version>1.0-RC1</version>
     <packaging>pom</packaging>
 
     <dependencies>
         <dependency>
             <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
             <artifactId>rtd-ms-transaction-filter-core</artifactId>
-            <version>1.0</version>
+            <version>1.0-RC1</version>
         </dependency>
     </dependencies>
 
