@@ -25,7 +25,7 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class RtdTransactionFilterApplication implements CommandLineRunner {
 
-	@Value("spring.batch.job.scheduled")
+	@Value("${spring.batch.job.scheduled}")
 	private String scheduledEnabled;
 
 	private final TransactionFilterStep transactionFilterStep;

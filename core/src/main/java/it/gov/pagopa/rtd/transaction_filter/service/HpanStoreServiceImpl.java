@@ -12,6 +12,12 @@ import java.util.TreeSet;
 class HpanStoreServiceImpl implements HpanStoreService {
 
     private final TreeSet<String> hpanSet;
+    private String salt = "";
+
+    @Override
+    public void storeSalt(String salt) {
+        this.salt = salt;
+    }
 
     @Override
     public synchronized void store(String hpan) {
@@ -26,7 +32,7 @@ class HpanStoreServiceImpl implements HpanStoreService {
     @Override
     public void clearAll() {
         hpanSet.clear();
+        this.salt = "";
     }
-
 
 }

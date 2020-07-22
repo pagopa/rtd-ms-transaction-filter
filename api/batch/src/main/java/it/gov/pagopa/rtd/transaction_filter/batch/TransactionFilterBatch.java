@@ -248,7 +248,7 @@ public class TransactionFilterBatch {
         saltRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
         saltRecoveryTasklet.setTaskletEnabled(saltRecoveryEnabled);
         return stepBuilderFactory.get("transaction-filter-salt-recovery-step")
-                .tasklet(saltRecoveryTasklet).listener(promotionListener()).build();
+                .tasklet(saltRecoveryTasklet).build();
     }
 
     /**
@@ -268,13 +268,6 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
         return stepBuilderFactory.get("transaction-filter-file-management-step")
                 .tasklet(fileManagementTasklet).build();
-    }
-
-    @Bean
-    public ExecutionContextPromotionListener promotionListener() {
-        ExecutionContextPromotionListener listener = new ExecutionContextPromotionListener();
-        listener.setKeys(new String[] {"salt"});
-        return listener;
     }
 
     public HpanStoreService batchHpanStoreService() {
