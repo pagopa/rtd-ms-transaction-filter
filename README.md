@@ -43,6 +43,16 @@ attempt to avoid YESmilar problems, is to reduce the isolation level defined in 
 to either _ISOLAION_READ_COMMITTED_, or _ISOLAION_READ_UNCOMMITTED_. this is doable using the configuration property
 _batchConfiguration.TransactionFilterBatch.isolationForCreate_.
 
+### Execution methods
+
+Available execution methods are either: single-execution, or scheduled execution. This configuration is defined through
+the property _spring.batch.job.scheduled_, a true/false property to define the execution mode, the default value is
+configured for a scheduled execution. In case of a scheduled execution, the process will restart when matching
+the cron expression defined in the property _batchConfiguration.TransactionFilterBatch.cron_.
+
+__Note__: The property _spring.batch.job.enabled_ must as to be configured to false, when overriding the default
+property configurations.
+
 ### REST Services Connection
 
 The Batch Acquirer is configurabile for contacting the salt recovery service, to be applied for the PAN hashing,
@@ -232,6 +242,8 @@ __logging.level.root__ | Log level | INFO | NO | TRACE, DEBUG, INFO, WARN, ERROR
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------ 
+__spring.batch.job.enabled__ | To avoid unmanaged executions, must be at false | FALSE | YES | FALSE
+__spring.batch.job.scheduled__ | To define if the process will remain active with scheduled executions | FALSE | YES | TRUE/FALSE
 __batchConfiguration.TransactionFilterBatch.successArchivePath__ | Move initial csv to success path| file:/${ACQ_BATCH_SUCCESS_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/success} | YES
 __batchConfiguration.TransactionFilterBatch.errorArchivePath__ | Path where the files whose processing goes wrong are moved | file:/${ACQ_BATCH_ERROR_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/error} | YES
 __batchConfiguration.TransactionFilterBatch.cron__ | Batch scheduling | ${ACQ_BATCH_INPUT_CRON:0 0/1 * 1/1 * ?} | YES

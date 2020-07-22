@@ -5,7 +5,7 @@ spring:
   batch:
     job:
       enabled: false
-      scheduled: false
+      scheduled: true
     initialize-schema: ${RTD_BATCH_INITIALIZE_SCHEMA:always}
   main:
     web-application-type: none

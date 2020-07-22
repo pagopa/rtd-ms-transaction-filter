@@ -97,7 +97,7 @@ public class TransactionFilterBatch {
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     public void createHpanStoreService() {
-        hpanStoreService = batchHpanStoreService();
+        this.hpanStoreService = batchHpanStoreService();
     }
 
     public void clearHpanStoreService() {
@@ -214,9 +214,9 @@ public class TransactionFilterBatch {
                 .repository(getJobRepository())
                 .start(hpanListRecoveryTask())
                 .on("FAILED").end()
-                .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask())
+                .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.hpanStoreService))
                 .on("FAILED").end()
-                .from(saltRecoveryTask()).on("*")
+                .from(saltRecoveryTask(this.hpanStoreService)).on("*")
                 .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
                 .on("FAILED").to(fileManagementTask())
                 .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
@@ -230,6 +230,7 @@ public class TransactionFilterBatch {
                 .build();
     }
 
+    @Bean
     public Step hpanListRecoveryTask() {
         HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
         hpanListRecoveryTasklet.setHpanListDirectory(hpanListDirectory);
@@ -243,9 +244,11 @@ public class TransactionFilterBatch {
                 .tasklet(hpanListRecoveryTasklet).build();
     }
 
-    public Step saltRecoveryTask() {
+    @Bean
+    public Step saltRecoveryTask(HpanStoreService hpanStoreService) {
         SaltRecoveryTasklet saltRecoveryTasklet = new SaltRecoveryTasklet();
         saltRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
+        saltRecoveryTasklet.setHpanStoreService(hpanStoreService);
         saltRecoveryTasklet.setTaskletEnabled(saltRecoveryEnabled);
         return stepBuilderFactory.get("transaction-filter-salt-recovery-step")
                 .tasklet(saltRecoveryTasklet).build();
