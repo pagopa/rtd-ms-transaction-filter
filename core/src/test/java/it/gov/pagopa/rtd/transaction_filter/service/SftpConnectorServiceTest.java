@@ -31,6 +31,8 @@ public class SftpConnectorServiceTest {
     @Mock
     TransactionSftpConnector transactionSftpConnectorMock;
 
+    SftpConnectorService sftpConnectorService;
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
             new File(getClass().getResource("/").getFile()));
@@ -41,13 +43,14 @@ public class SftpConnectorServiceTest {
     @Before
     public void setUp() {
         Mockito.reset(transactionSftpConnectorMock);
+        this.sftpConnectorService = new SftpConnectorServiceImpl(transactionSftpConnectorMock);
     }
 
     @SneakyThrows
     @Test
     public void sendFile_OK() {
         File file = tempFolder.newFile("testFile");
-        transactionSftpConnectorMock.sendFile(file);
+        sftpConnectorService.transferFile(file);
         BDDMockito.verify(transactionSftpConnectorMock).sendFile(Mockito.eq(file));
     }
 
@@ -58,7 +61,7 @@ public class SftpConnectorServiceTest {
             throw new Exception();
         }).when(transactionSftpConnectorMock).sendFile(Mockito.eq(null));
         expectedException.expect(Exception.class);
-        transactionSftpConnectorMock.sendFile(null);
+        sftpConnectorService.transferFile(null);
         BDDMockito.verify(transactionSftpConnectorMock).sendFile(Mockito.eq(null));
     }
 

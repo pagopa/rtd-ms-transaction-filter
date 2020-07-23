@@ -26,7 +26,6 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
     private final HpanStoreService hpanStoreService;
     private final Boolean applyHashing;
     private final Boolean saveHashing;
-    private String salt = "";
 
     /**
      * Validates the input {@link InboundTransaction}, and maps it to an instance of Transaction
@@ -47,24 +46,17 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
         }
 
         String hpan = applyHashing ?
-                DigestUtils.sha256Hex(inboundTransaction.getPan()+salt) :
+                DigestUtils.sha256Hex(inboundTransaction.getPan()+hpanStoreService.getSalt()) :
                 inboundTransaction.getPan();
 
         if (hpanStoreService.hasHpan(hpan)) {
             if (saveHashing) {
                 inboundTransaction.setPan(applyHashing ?
-                        hpan : DigestUtils.sha256Hex(inboundTransaction.getPan()+salt));
+                        hpan : DigestUtils.sha256Hex(inboundTransaction.getPan()+hpanStoreService.getSalt()));
             }
             return inboundTransaction;
         }
         return null;
-    }
-
-    @BeforeStep
-    public void recoverSalt(StepExecution stepExecution) {
-        JobExecution jobExecution = stepExecution.getJobExecution();
-        ExecutionContext jobContext = jobExecution.getExecutionContext();
-        this.salt = jobContext.containsKey("salt") ? String.valueOf(jobContext.get("salt")) : "";
     }
 
 }

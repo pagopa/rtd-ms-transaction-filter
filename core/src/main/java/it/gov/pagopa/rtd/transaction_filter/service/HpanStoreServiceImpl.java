@@ -20,6 +20,11 @@ class HpanStoreServiceImpl implements HpanStoreService {
     }
 
     @Override
+    public String getSalt() {
+        return this.salt;
+    }
+
+    @Override
     public synchronized void store(String hpan) {
         hpanSet.add(hpan);
     }

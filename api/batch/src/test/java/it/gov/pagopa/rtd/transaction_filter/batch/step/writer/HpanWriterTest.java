@@ -65,9 +65,6 @@ public class HpanWriterTest {
     public void write_OK_MonoList_HashWithSalt() {
         BDDMockito.doNothing().when(hpanStoreServiceMock).store(Mockito.eq("pan"));
         HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, true);
-        StepExecution stepExecution = MetaDataInstanceFactory.createStepExecution();
-        stepExecution.getJobExecution().getExecutionContext().put("salt", "testSalt");
-        hpanWriter.recoverSalt(stepExecution);
         hpanWriter.write(Collections.singletonList("pan"));
         BDDMockito.verify(hpanStoreServiceMock).store(Mockito.eq(DigestUtils.sha256Hex("pan"+"testSalt")));
     }

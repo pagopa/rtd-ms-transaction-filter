@@ -4,6 +4,8 @@ public interface HpanStoreService {
 
     void storeSalt(String salt);
 
+    String getSalt();
+
     void store(String hpan);
 
     Boolean hasHpan(String hpan);
