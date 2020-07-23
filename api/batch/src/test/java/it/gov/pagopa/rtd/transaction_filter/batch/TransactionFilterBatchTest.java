@@ -2,6 +2,8 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
+import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
+import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
