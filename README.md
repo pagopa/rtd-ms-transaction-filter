@@ -76,10 +76,14 @@ using the standard implementation of the X509 algorithm. For dedicated configura
 properties listed in __Appendix 2 - Configuration properties__.
 
 Services hosted through Azure will require a subscription key, this can be configured using the property 
-__rest-client.hpan.api.key__.
+__rest-client.hpan.api.key__. 
+
+Explanations on how to use the java keytool commands are in the
+[official guidelines](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html)
 
 For references to the services displayed through Azure's API service, you can find the corresponding links in 
 __Appendix 3 - Authentication Services Acquirer__.
+
 
 ### Minimal Configuration on Override
 
@@ -371,7 +375,7 @@ The format of the certificates will in this case be ".cer".
 The certificates used in the case of services displayed through Azure, must be included in the dedicated section, 
 these must be in the _".pfx"_ format. [Azure Mutual Authentication](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates). 
 
-The services displayed on Azure will allow the configuration of the backend services displayed so as to enable the
+The services displayed on Azure will allow the configuration of the backend services displayed to enable the
 mutual authentication process based on a given certificate. In the case of services used by
 Acquirer introduces a dedicated policy to allow the authentication process through multiple certificates,
 to allow the use of dedicate certificates for the Acquirers. [Mutual Certificates for Clients](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates-for-clients).
