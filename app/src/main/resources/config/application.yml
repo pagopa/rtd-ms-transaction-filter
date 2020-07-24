@@ -5,6 +5,7 @@ spring:
   batch:
     job:
       enabled: false
+      scheduled: true
     initialize-schema: ${RTD_BATCH_INITIALIZE_SCHEMA:always}
   main:
     web-application-type: none
@@ -17,14 +18,8 @@ info:
     description: "@project.description@"
     version: "@project.version@"
 
-
 error-manager:
   enabled: true
-
-meda:
-  core:
-    sessioncontext:
-      enabled: false
 
 logging:
   level:

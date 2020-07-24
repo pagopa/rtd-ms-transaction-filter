@@ -43,6 +43,16 @@ attempt to avoid YESmilar problems, is to reduce the isolation level defined in 
 to either _ISOLAION_READ_COMMITTED_, or _ISOLAION_READ_UNCOMMITTED_. this is doable using the configuration property
 _batchConfiguration.TransactionFilterBatch.isolationForCreate_.
 
+### Execution methods
+
+Available execution methods are either: single-execution, or scheduled execution. This configuration is defined through
+the property _spring.batch.job.scheduled_, a true/false property to define the execution mode, the default value is
+configured for a scheduled execution. In case of a scheduled execution, the process will restart when matching
+the cron expression defined in the property _batchConfiguration.TransactionFilterBatch.cron_.
+
+__Note__: The property _spring.batch.job.enabled_ must as to be configured to false, when overriding the default
+property configurations.
+
 ### REST Services Connection
 
 The Batch Acquirer is configurabile for contacting the salt recovery service, to be applied for the PAN hashing,
@@ -65,8 +75,18 @@ and the algorithm used for the encryption. By default the files are in Java's JK
 using the standard implementation of the X509 algorithm. For dedicated configurations refer to
 properties listed in __Appendix 2 - Configuration properties__.
 
+Services hosted through Azure will require a subscription key, this can be configured using the property 
+__rest-client.hpan.api.key__. 
+
+Explanations on how to use the java keytool commands are in the
+[official guidelines](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html).
+
+References for introducing the Azure truststore key in your system, is in the official 
+[Azure Reference Guidelines](https://docs.microsoft.com/it-it/azure/developer/java/sdk/java-sdk-add-certificate-ca-store)
+
 For references to the services displayed through Azure's API service, you can find the corresponding links in 
 __Appendix 3 - Authentication Services Acquirer__.
+
 
 ### Minimal Configuration on Override
 
@@ -232,6 +252,8 @@ __logging.level.root__ | Log level | INFO | NO | TRACE, DEBUG, INFO, WARN, ERROR
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------ 
+__spring.batch.job.enabled__ | To avoid unmanaged executions, must be at false | FALSE | YES | FALSE
+__spring.batch.job.scheduled__ | To define if the process will remain active with scheduled executions | FALSE | YES | TRUE/FALSE
 __batchConfiguration.TransactionFilterBatch.successArchivePath__ | Move initial csv to success path| file:/${ACQ_BATCH_SUCCESS_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/success} | YES
 __batchConfiguration.TransactionFilterBatch.errorArchivePath__ | Path where the files whose processing goes wrong are moved | file:/${ACQ_BATCH_ERROR_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/error} | YES
 __batchConfiguration.TransactionFilterBatch.cron__ | Batch scheduling | ${ACQ_BATCH_INPUT_CRON:0 0/1 * 1/1 * ?} | YES
@@ -300,9 +322,8 @@ __batchConfiguration.TransactionFilterBatch.hpanListRecovery.attemptExtract__ | 
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.checksumFilePattern__ | Pattern for the checksum file | ${ACQ_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*checksum.* } | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.listFilePattern__ | Pattern for the list containing the pan list | ${CSV_TRX_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*\\.csv } | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved pan files | ${ACQ_BATCH_HPAN_RECOVERY_DAILY_REM_ENABLED:false} | NO | TRUE FALSE
-
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled: ${ACQ_BATCH_HPAN_RECOVERY_DAILY_REM_ENABLED:false}__
 __rest-client.hpan.base-url__ | Base url for REST services | ${HPAN_SERVICE_URL} | NO
+__rest-client.hpan.api.key__ | Subscription key to be used if calling Azure-hosted API methods | ${HPAN_API_KEY} | NO
 __rest-client.hpan.list.url__ | Endpoint pan list service | /list | NO
 __rest-client.hpan.salt.url__ | Endpoint salt service | /salt | NO
 __rest-client.hpan.mtls.enabled__ | Enable MTLS for salt and pan list services | ${HPAN_SERVICE_MTLS_ENABLED:true} | NO
@@ -357,7 +378,7 @@ The format of the certificates will in this case be ".cer".
 The certificates used in the case of services displayed through Azure, must be included in the dedicated section, 
 these must be in the _".pfx"_ format. [Azure Mutual Authentication](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates). 
 
-The services displayed on Azure will allow the configuration of the backend services displayed so as to enable the
+The services displayed on Azure will allow the configuration of the backend services displayed to enable the
 mutual authentication process based on a given certificate. In the case of services used by
 Acquirer introduces a dedicated policy to allow the authentication process through multiple certificates,
 to allow the use of dedicate certificates for the Acquirers. [Mutual Certificates for Clients](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates-for-clients).

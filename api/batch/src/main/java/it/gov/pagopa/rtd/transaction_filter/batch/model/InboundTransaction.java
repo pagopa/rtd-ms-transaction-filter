@@ -75,8 +75,7 @@ public class InboundTransaction {
     String terminalId;
 
     @NotNull
-    @Size(min = 6, max = 6)
-    @Pattern(regexp = "[0-9]{6}")
+    @Pattern(regexp = "([0-9]{6}|[0-9]{8})")
     String bin;
 
     Integer lineNumber;

@@ -22,21 +22,13 @@ public class HpanWriter implements ItemWriter<String> {
 
     private final HpanStoreService hpanStoreService;
     private final Boolean applyHashing;
-    private String salt = "";
 
     @Override
     public void write(List<? extends String> hpanList) {
         hpanList.stream().forEach(hpan-> {
-            hpanStoreService.store(applyHashing ? DigestUtils.sha256Hex(hpan+salt) : hpan);
+            hpanStoreService.store(applyHashing ?
+                    DigestUtils.sha256Hex(hpan+hpanStoreService.getSalt()) : hpan);
         });
     }
-
-    @BeforeStep
-    public void recoverSalt(StepExecution stepExecution) {
-        JobExecution jobExecution = stepExecution.getJobExecution();
-        ExecutionContext jobContext = jobExecution.getExecutionContext();
-        this.salt = jobContext.containsKey("salt") ? String.valueOf(jobContext.get("salt")) : "";
-    }
-
 
 }

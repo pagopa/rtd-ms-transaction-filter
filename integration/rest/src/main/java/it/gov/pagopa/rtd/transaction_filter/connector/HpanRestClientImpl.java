@@ -26,6 +26,9 @@ class HpanRestClientImpl implements HpanRestClient {
     @Value("${rest-client.hpan.base-url}")
     private String baseUrl;
 
+    @Value("${rest-client.hpan.api.key}")
+    private String apiKey;
+
     @Value("${rest-client.hpan.list.url}")
     private String listUrl;
 
@@ -46,8 +49,10 @@ class HpanRestClientImpl implements HpanRestClient {
     @SneakyThrows
     @Override
     public File getList() {
+
         File tempFile = File.createTempFile("hpanDownloadFile", "");
-        ResponseEntity<Resource> responseEntity = hpanRestConnector.getList();
+        ResponseEntity<Resource> responseEntity = hpanRestConnector.getList(apiKey);
+
         try (FileOutputStream tempFileFOS = new FileOutputStream(tempFile)) {
 
             if (attemptExtraction) {
@@ -68,9 +73,12 @@ class HpanRestClientImpl implements HpanRestClient {
             Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
 
             while (enumeration.hasMoreElements()) {
+
                 FileOutputStream tempFileFOS = null;
                 InputStream zipEntryIS = null;
+
                 try {
+
                     ZipEntry zipEntry = enumeration.nextElement();
                     zipEntryIS = zipFile.getInputStream(zipEntry);
                     File newFile = new File(
@@ -86,12 +94,15 @@ class HpanRestClientImpl implements HpanRestClient {
                     }
 
                 } finally {
+
                     if (zipEntryIS != null) {
                         zipEntryIS.close();
                     }
+
                     if (tempFileFOS != null) {
                         tempFileFOS.close();
                     }
+
                 }
             }
         }
@@ -101,7 +112,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
     @Override
     public String getSalt() {
-        return hpanRestConnector.getSalt();
+        return hpanRestConnector.getSalt(apiKey);
     }
 
 }

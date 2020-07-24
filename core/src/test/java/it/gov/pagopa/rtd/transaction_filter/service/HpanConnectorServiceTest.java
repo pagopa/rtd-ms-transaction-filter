@@ -30,6 +30,8 @@ public class HpanConnectorServiceTest {
 
     @Mock
     private HpanRestClient hpanRestClientMock;
+    private HpanConnectorService hpanConnectorService;
+
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -37,6 +39,7 @@ public class HpanConnectorServiceTest {
     @Before
     public void setUp() {
         Mockito.reset(hpanRestClientMock);
+        hpanConnectorService = new HpanConnectorServiceImpl(hpanRestClientMock);
     }
 
     @Rule
@@ -46,7 +49,7 @@ public class HpanConnectorServiceTest {
     @Test
     public void testSalt_OK() {
         BDDMockito.doReturn("testSalt").when(hpanRestClientMock).getSalt();
-        String salt = hpanRestClientMock.getSalt();
+        String salt = hpanConnectorService.getSalt();
         Assert.assertEquals("testSalt", salt);
         BDDMockito.verify(hpanRestClientMock).getSalt();
     }
@@ -57,7 +60,7 @@ public class HpanConnectorServiceTest {
             throw new Exception();
         }).when(hpanRestClientMock).getSalt();
         expectedException.expect(Exception.class);
-        hpanRestClientMock.getSalt();
+        hpanConnectorService.getSalt();
         BDDMockito.verify(hpanRestClientMock).getSalt();
     }
 
@@ -66,7 +69,7 @@ public class HpanConnectorServiceTest {
     public void testList_OK() {
         File file = tempFolder.newFile("testFile");
         BDDMockito.doReturn(file).when(hpanRestClientMock).getList();
-        File returnedFile = hpanRestClientMock.getList();
+        File returnedFile = hpanConnectorService.getHpanList();
         Assert.assertEquals(file, returnedFile);
         BDDMockito.verify(hpanRestClientMock).getList();
     }
@@ -79,7 +82,7 @@ public class HpanConnectorServiceTest {
             throw new Exception();
         }).when(hpanRestClientMock).getList();
         expectedException.expect(Exception.class);
-        hpanRestClientMock.getList();
+        hpanConnectorService.getHpanList();
         BDDMockito.verify(hpanRestClientMock).getList();
     }
 

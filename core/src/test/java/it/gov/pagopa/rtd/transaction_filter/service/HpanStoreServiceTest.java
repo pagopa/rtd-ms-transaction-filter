@@ -72,6 +72,12 @@ public class HpanStoreServiceTest {
     }
 
     @Test
+    public void storeSalt_OK() {
+        Assert.assertEquals("", hpanStoreService.getSalt());
+
+    }
+
+    @Test
     public void clearAll() {
         Assert.assertEquals(0, storeSet.size());
         storeSet.add("test");

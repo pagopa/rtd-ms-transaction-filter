@@ -69,7 +69,7 @@ public class HpanRestConnectorConfig {
                 trustStoreType : KeyStore.getDefaultType());
         KeyManager[] keyManagers = null;
 
-        if (trustStoreFile != null) {
+        if (trustStoreFile != null && !trustStoreFile.equals("file:/")) {
             FileInputStream trustStoreFIS = new FileInputStream(resolver.getResource(trustStoreFile).getFile());
             trustKeyStore.load(trustStoreFIS, trustStorePassword.toCharArray());
         }
@@ -78,7 +78,7 @@ public class HpanRestConnectorConfig {
                 trustStoreAlgorithm != null ? trustStoreAlgorithm : TrustManagerFactory.getDefaultAlgorithm());
         trustManagerFactory.init(trustKeyStore);
 
-        if (keyStoreFile != null) {
+        if (keyStoreFile != null && !keyStoreFile.equals("file:/")) {
             KeyStore keyStoreInstance = KeyStore.getInstance(keyStoreType != null ?
                     keyStoreType : KeyStore.getDefaultType());
             FileInputStream keyStoreFIS = new FileInputStream(resolver.getResource(keyStoreFile).getFile());
