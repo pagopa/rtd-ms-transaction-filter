@@ -79,7 +79,10 @@ Services hosted through Azure will require a subscription key, this can be confi
 __rest-client.hpan.api.key__. 
 
 Explanations on how to use the java keytool commands are in the
-[official guidelines](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html)
+[official guidelines](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html).
+
+References for introducing the Azure truststore key in your system, is in the official 
+[Azure Reference Guidelines](https://docs.microsoft.com/it-it/azure/developer/java/sdk/java-sdk-add-certificate-ca-store)
 
 For references to the services displayed through Azure's API service, you can find the corresponding links in 
 __Appendix 3 - Authentication Services Acquirer__.
