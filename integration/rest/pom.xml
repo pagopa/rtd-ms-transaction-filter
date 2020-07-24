@@ -5,11 +5,13 @@
         <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
         <artifactId>rtd-ms-transaction-filter-integration</artifactId>
         <version>1.0-RC2</version>
+
     </parent>
 
     <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
     <artifactId>rtd-ms-transaction_filter-integration-rest</artifactId>
     <version>1.0-RC2</version>
+
 
     <dependencies>
         <dependency>

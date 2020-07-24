@@ -5,11 +5,13 @@
         <artifactId>rtd-ms-transaction-filter</artifactId>
         <groupId>it.gov.pagopa.rtd.ms</groupId>
         <version>1.0-RC2</version>
+
     </parent>
 
     <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
     <artifactId>rtd-ms-transaction-filter-integration</artifactId>
     <version>1.0-RC2</version>
+
     <packaging>pom</packaging>
 
     <modules>
