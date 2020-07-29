@@ -157,9 +157,7 @@ maintained, in order to have the correct setup for the batch execution.
 - Define a folder for the output files
 
 - Configure the pointing to the trace files to be processed, through the property
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_, or through the environment variable
-  _
-  _PATH_      
+  _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_, or through the environment variable _ACQ_BATCH_OUTPUT_PATH_      
 
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
