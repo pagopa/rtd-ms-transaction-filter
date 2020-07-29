@@ -158,7 +158,8 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Configure the pointing to the trace files to be processed, through the property
   _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_, or through the environment variable
-  _ACQ_BATCH_OUTPUT_PATH_      
+  _
+  _PATH_      
 
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
@@ -168,7 +169,7 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Configure the pointing to the directory where records that are either filtered, or that had an error, are stored,
   through the property _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath_,
-  or through the environment variable _ACQ_BATCH_OUTPUT_PATH_      
+  or through the environment variable _ACQ_BATCH_TRX_LOGS_PATH_      
 
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
