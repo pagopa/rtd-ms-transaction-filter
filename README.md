@@ -63,7 +63,7 @@ and _batchConfiguration.TransactionFilterBatch.hpanList.enabled_.
 Endpoint configurations are through the properties _rest-client.hpan.base-url_, for the base configuration
 , and the endpoint properties for the two services respectively _rest-client.hpan.list.url_ and _rest-client.hpan.salt.url_.
 
-If the client is to be configured for TLS/SSL protocol usage, the configuration property 
+If the client is to be configured for TLS 1.2 protocol usage, the configuration property 
 _rest-client.hpan.mtls.enabled_ is to be used, and the keystore and trust-store files for the client, to be applied
 in the certificate exchange, respectively through the _rest-client.hpan.key-store.file_ and
 _rest-client.hpan.trust-store.file_ properties. 
@@ -85,7 +85,7 @@ References for introducing the Azure truststore key in your system, is in the of
 [Azure Reference Guidelines](https://docs.microsoft.com/it-it/azure/developer/java/sdk/java-sdk-add-certificate-ca-store)
 
 For references to the services displayed through Azure's API service, you can find the corresponding links in 
-__Appendix 3 - Authentication Services Acquirer__.
+__Appendix 4 - RTD Acquirer Interface__.
 
 
 ### Minimal Configuration on Override
@@ -157,8 +157,7 @@ maintained, in order to have the correct setup for the batch execution.
 - Define a folder for the output files
 
 - Configure the pointing to the trace files to be processed, through the property
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_, or through the environment variable
-  _ACQ_BATCH_OUTPUT_PATH_      
+  _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_, or through the environment variable _ACQ_BATCH_OUTPUT_PATH_      
 
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
@@ -168,7 +167,7 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Configure the pointing to the directory where records that are either filtered, or that had an error, are stored,
   through the property _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath_,
-  or through the environment variable _ACQ_BATCH_OUTPUT_PATH_      
+  or through the environment variable _ACQ_BATCH_TRX_LOGS_PATH_      
 
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
@@ -271,8 +270,8 @@ Key |  Description | Default | Mandatory | Values
 __batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath__ | The path where you saved the file pgp containing HPAN | file:/${ACQ_BATCH_HPAN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
 __batchConfiguration.TransactionFilterBatch.panList.secretKeyPath__ | Path where the private key is saved | file:/${ACQ_BATCH_INPUT_SECRET_KEYPATH:} | YES
 __batchConfiguration.TransactionFilterBatch.panList.passphrase__ | Passphrase for the private key | ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:} | YES
-__batchConfiguration.TransactionFilterBatch.panList.partitionerSize__ | YESze of the partitioner used to read the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
-__batchConfiguration.TransactionFilterBatch.panList.chunkSize__ | YESze of the chunks used for reading the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TransactionFilterBatch.panList.partitionerSize__ | Size of the partitioner used to read the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TransactionFilterBatch.panList.chunkSize__ | Size of the chunks used for reading the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
 __batchConfiguration.TransactionFilterBatch.panList.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
 __batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the hpan file | ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE	
 
@@ -283,8 +282,8 @@ Key |  Description | Default | Mandatory | Values
 __batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath__ | Path where the transaction file to be processed is read | file:/${ACQ_BATCH_TRX_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath__ | Path where the final file is writtene | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/output} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath__ | Path containing the public key with which to encrypt the result file | file:/${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize__ | Partitiner YESze for transaction files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize__ | Chunck YESze for reading transaction files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize__ | Partitiner size for transaction files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize__ | Chunck size for reading transaction files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern__ | Pattern relating to the transaction date | ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:MM/dd/yyyy HH:mm:ss} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing__ | Flag that drives the hashing to the pan present in the transaction file | ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:false} | YES | TRUE FALSE
@@ -354,34 +353,6 @@ __spring.datasource.username__ | Database username for login | ${BATCH_DB_USERNA
 __spring.datasource.password__ | Database password for user login | ${BATCH_DB_USERNAME:} | YES
 __spring.datasource.hikari.schema__ | Database schema | ${BATCH_DB_SCHEMA:} | YES
 __spring.jpa.database-platform__ | Database dialect | ${BATCH_DB_DIALECT:} | YES
-
-### Appendix 3 - Acquirer Services Authentication
-
-The interactions for the Acquirer batch services use a mutual authentication mechanism over TLS/SSL protocol,
-through the exchange of public certificates, issued by a CA (the certifying authority), used for the verification
-by both actors compared to the keys in their possession.
-For this mechanism to be applicable it will therefore be necessary that:
-
-The Client will have to be configured to send requests on TLS/SSL protocol, indicating a file containing the
-public certificate issued for the machine that will implement the requests,
-and will also need to be configured to receive a collection of keys to be used for verification of the
-certificates reported by the car contacted. 
-
-the API must be configured to accept requests on TLS/SSL protocol, it must be configured to use
-a collection of keys on which to apply the certificate verification, must be configured to provide an 
-public certificate, used by the Client for authentication of the machine to which the request is directed.
-
-Using the services provided on Azure, to enable the authentication process, the following must be entered
-certificates relating to the SOs [Azure CA Certificates](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-ca-certificates).
-The format of the certificates will in this case be ".cer".
-
-The certificates used in the case of services displayed through Azure, must be included in the dedicated section, 
-these must be in the _".pfx"_ format. [Azure Mutual Authentication](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates). 
-
-The services displayed on Azure will allow the configuration of the backend services displayed to enable the
-mutual authentication process based on a given certificate. In the case of services used by
-Acquirer introduces a dedicated policy to allow the authentication process through multiple certificates,
-to allow the use of dedicate certificates for the Acquirers. [Mutual Certificates for Clients](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-mutual-certificates-for-clients).
 
 ### Appendix 3 - Process Debugging
 
@@ -496,4 +467,4 @@ where the log records are inserted is thhe __logging_event__ table.
 ### Appendix 4 - RTD Acquirer Interface
 
 The document containing the details regarding the interface agreement are available
-at [ops_resources/RTD_Acquirer_Interface_V2.docx](ops_resources/RTD_Acquirer_Interface_V2.docx).
+at [ops_resources/RTD_Acquirer_Interface_V2.pdf](ops_resources/RTD_Acquirer_Interface_V2.pdf).
