@@ -78,6 +78,14 @@ properties listed in __Appendix 2 - Configuration properties__.
 Services hosted through Azure will require a subscription key, this can be configured using the property 
 __rest-client.hpan.api.key__. 
 
+If generating a keystore from the a .pfx file, use the following command to produce a JKS file:
+
+> keytool -importkeystore -srckeystore <PFX_FILE> -srcstoretype pkcs12 -destkeystore <JKS_FILE> -deststoretype JKS
+
+To include the [Microsoft Certificate](https://cacert.omniroot.com/bc2025.crt) in the JKS trustore:
+
+> keytool -import -trustcacerts -file bc2025.crt -alias microsoft-server -keystore <TRUSTSTORE_FILE> -storepass <password>
+
 Explanations on how to use the java keytool commands are in the
 [official guidelines](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html).
 
