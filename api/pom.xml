@@ -4,13 +4,13 @@
     <parent>
         <artifactId>rtd-ms-transaction-filter</artifactId>
         <groupId>it.gov.pagopa.rtd.ms</groupId>
-        <version>1.0-RC2</version>
+        <version>1.0.1-RC2</version>
 
     </parent>
 
     <groupId>it.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
     <artifactId>rtd-ms-transaction-filter-api</artifactId>
-    <version>1.0-RC2</version>
+    <version>1.0.1-RC2</version>
 
     <packaging>pom</packaging>
 
@@ -18,7 +18,7 @@
         <dependency>
             <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
             <artifactId>rtd-ms-transaction-filter-core</artifactId>
-            <version>1.0-RC2</version>
+            <version>1.0.1-RC2</version>
 
         </dependency>
     </dependencies>

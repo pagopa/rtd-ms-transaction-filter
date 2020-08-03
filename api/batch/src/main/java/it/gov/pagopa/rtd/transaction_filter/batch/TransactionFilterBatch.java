@@ -113,7 +113,7 @@ public class TransactionFilterBatch {
         Resource[] hpanResources = resolver.getResources(hpanPath);
 
         if (transactionResources.length > 0 &&
-                (!getHpanListRecoveryEnabled() || hpanResources.length>0)) {
+                (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
 
             if (log.isInfoEnabled()) {
                 log.info("Found " + transactionResources.length +

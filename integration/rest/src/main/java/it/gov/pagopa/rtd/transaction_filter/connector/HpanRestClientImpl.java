@@ -55,7 +55,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
         try (FileOutputStream tempFileFOS = new FileOutputStream(tempFile)) {
 
-            if (attemptExtraction) {
+            if (checksumValidation) {
                 String checksum = responseEntity.getHeaders().get(checksumHeaderName).get(0);
                 if (!checksum.equals(DigestUtils.sha256Hex(responseEntity.getBody().getInputStream()))) {
                     throw new Exception();
