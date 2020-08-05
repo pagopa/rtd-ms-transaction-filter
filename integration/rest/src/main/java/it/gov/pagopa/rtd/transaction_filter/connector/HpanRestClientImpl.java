@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,7 @@ import java.util.zip.ZipFile;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 class HpanRestClientImpl implements HpanRestClient {
 
     @Value("${rest-client.hpan.base-url}")
@@ -88,6 +90,10 @@ class HpanRestClientImpl implements HpanRestClient {
 
                     tempFileFOS = new FileOutputStream(newFile);
                     IOUtils.copy(zipEntryIS, tempFileFOS);
+
+                    if (log.isDebugEnabled()) {
+                        log.debug("Matching " + zipEntry.getName() + " with " + listFilePattern);
+                    }
 
                     if (zipEntry.getName().matches(listFilePattern)) {
                         tempFile = newFile;
