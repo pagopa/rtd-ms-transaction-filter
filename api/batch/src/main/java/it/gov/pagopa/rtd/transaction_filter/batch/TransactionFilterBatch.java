@@ -131,8 +131,10 @@ public class TransactionFilterBatch {
 
         } else {
             if (log.isInfoEnabled()) {
-                log.info("No transaction file has been found on configured path: " + transactionsPath);
-                if (getHpanListRecoveryEnabled() && hpanResources.length==0) {
+                if (transactionResources.length == 0) {
+                    log.info("No transaction file has been found on configured path: " + transactionsPath);
+                }
+                if (!getHpanListRecoveryEnabled() && hpanResources.length==0) {
                     log.info("No hpan file has been found on configured path: " + hpanPath);
                 }
             }

@@ -50,6 +50,7 @@ public class InboundTransaction {
     String circuitType;
 
     @NotNull
+    @NotBlank
     String idTrxIssuer;
 
     String correlationId;
@@ -64,6 +65,8 @@ public class InboundTransaction {
     @NotBlank
     String mcc;
 
+    @NotNull
+    @NotBlank
     String acquirerId;
 
     @NotNull
