@@ -22,6 +22,7 @@ import java.time.OffsetDateTime;
 public class InboundTransaction {
 
     @NotNull
+    @NotBlank
     String idTrxAcquirer;
 
     @NotNull
