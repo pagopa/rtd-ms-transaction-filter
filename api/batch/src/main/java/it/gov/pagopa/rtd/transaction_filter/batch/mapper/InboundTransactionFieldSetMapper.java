@@ -44,9 +44,6 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .operationType(fieldSet.readString("tipo_operazione"))
                         .circuitType(fieldSet.readString("tipo_circuito"))
                         .pan(fieldSet.readString("PAN"))
-                        .trxDate(dtf != null ?
-                                ZonedDateTime.parse(fieldSet.readString("timestamp"), dtf).toOffsetDateTime() :
-                                OffsetDateTime.parse(fieldSet.readString("timestamp")))
                         .idTrxAcquirer(fieldSet.readString("id_trx_acquirer"))
                         .idTrxIssuer(fieldSet.readString("id_trx_issuer"))
                         .correlationId(fieldSet.readString("correlation_id"))
@@ -58,6 +55,14 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .bin(fieldSet.readString("bank_identification_number"))
                         .mcc(fieldSet.readString("MCC"))
                         .build();
+
+        OffsetDateTime dateTime = dtf != null ?
+                ZonedDateTime.parse(fieldSet.readString("timestamp"), dtf).toOffsetDateTime() :
+                OffsetDateTime.parse(fieldSet.readString("timestamp"));
+
+        if (dateTime != null) {
+            inboundTransaction.setTrxDate(fieldSet.readString("timestamp"));
+        }
 
         return inboundTransaction;
 

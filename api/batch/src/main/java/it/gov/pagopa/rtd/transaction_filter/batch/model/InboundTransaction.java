@@ -30,8 +30,8 @@ public class InboundTransaction {
     String acquirerCode;
 
     @NotNull
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    OffsetDateTime trxDate;
+    @NotBlank
+    String trxDate;
 
     @NotNull
     @NotBlank

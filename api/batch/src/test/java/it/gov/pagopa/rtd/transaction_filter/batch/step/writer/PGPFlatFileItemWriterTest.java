@@ -201,7 +201,7 @@ public class PGPFlatFileItemWriterTest {
         return InboundTransaction.builder()
                 .idTrxAcquirer("1")
                 .acquirerCode("001")
-                .trxDate(OffsetDateTime.parse("2020-04-09T16:22:45.304Z"))
+                .trxDate("2020-04-09T16:22:45.304Z")
                 .amount(BigDecimal.valueOf(1313.13))
                 .operationType("00")
                 .pan("pan")

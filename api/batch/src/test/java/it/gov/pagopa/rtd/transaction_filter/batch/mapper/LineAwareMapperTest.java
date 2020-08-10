@@ -83,7 +83,7 @@ public class LineAwareMapperTest {
                 .operationType("00")
                 .circuitType("00")
                 .pan("pan1")
-                .trxDate(ZonedDateTime.parse("03/20/2020 10:50:33", dtf).toOffsetDateTime())
+                .trxDate("03/20/2020 10:50:33")
                 .idTrxAcquirer("1111111111")
                 .idTrxIssuer("5555")
                 .correlationId("")
