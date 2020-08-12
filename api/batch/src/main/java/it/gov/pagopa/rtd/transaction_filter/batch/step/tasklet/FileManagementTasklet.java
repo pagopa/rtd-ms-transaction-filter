@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * implementation of the {@link Tasklet}, in which the execute method contains the logic for processed file archival,
@@ -74,6 +75,17 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         List<String> errorFilenames = new ArrayList<>();
         hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
 
+        List<String> hpanResources = Arrays.asList(resolver.getResources(hpanDirectory)).stream().map(resource -> {
+            try {
+                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+            } catch (IOException e) {
+                if (log.isErrorEnabled()) {
+                    log.error(e.getMessage(),e);
+                }
+                return null;
+            }
+        }).collect(Collectors.toList());
+
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
                 .getStepExecutions();
         for (StepExecution stepExecution : stepExecutions) {
@@ -103,8 +115,8 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         String[] filename = file.replaceAll("\\\\", "/").split("/");
                         errorFilenames.add(filename[filename.length - 1].split("\\.",2)[0]);
                     }
-                    boolean isHpanFile = resolver.getPathMatcher().match(
-                            hpanDirectory, file.replaceAll("\\\\", "/"));
+
+                    boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
                     if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
                         if (log.isInfoEnabled()) {
                             log.info("Removing processed file: " + file);

@@ -55,7 +55,7 @@ public class FileManagementTaskletTest {
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test1/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
-            archivalTasklet.setHpanDirectory(resolver.getResources(
+            archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
                     "classpath:/test-encrypt/**/test1/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("NEVER");
@@ -171,7 +171,7 @@ public class FileManagementTaskletTest {
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test1/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
-            archivalTasklet.setHpanDirectory(resolver.getResources(
+            archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
                     "classpath:/test-encrypt/**/test1/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("NEVER");
@@ -396,7 +396,7 @@ public class FileManagementTaskletTest {
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test3/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test3/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test3/output");
-            archivalTasklet.setHpanDirectory(resolver.getResources(
+            archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
                     "classpath:/test-encrypt/**/test3/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("ERROR");
@@ -506,7 +506,7 @@ public class FileManagementTaskletTest {
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test4/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test4/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test4/output");
-            archivalTasklet.setHpanDirectory(resolver.getResources(
+            archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
                     "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("ERROR");
