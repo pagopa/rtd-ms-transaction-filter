@@ -82,7 +82,12 @@ public class HpanRestConnectorConfig {
 
             if (proxyEnabled) {
                 Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
-                return new Client.Proxied(sslSocketFactory, null, proxy, proxyUsername, proxyPassword);
+                if (proxyUsername != null && !proxyUsername.equals("") &&
+                        proxyPassword != null && !proxyPassword.equals("")) {
+                    return new Client.Proxied(sslSocketFactory,null, proxy, proxyUsername, proxyPassword);
+                } else {
+                    return new Client.Proxied(sslSocketFactory,null, proxy);
+                }
             } else {
                 return new Client.Default(sslSocketFactory, null);
             }
