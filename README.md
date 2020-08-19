@@ -75,6 +75,10 @@ and the algorithm used for the encryption. By default the files are in Java's JK
 using the standard implementation of the X509 algorithm. For dedicated configurations refer to
 properties listed in __Appendix 2 - Configuration properties__.
 
+To use a proxy configuration for the rest client, either use the standard env configurations, or enable
+the internal configuration through the property _rest-client.hpan.proxy.enabled_, and the related configurations
+for the proxy host, port, username and password.
+
 Services hosted through Azure will require a subscription key, this can be configured using the property 
 __rest-client.hpan.api.key__. 
 
@@ -333,6 +337,11 @@ __rest-client.hpan.base-url__ | Base url for REST services | ${HPAN_SERVICE_URL}
 __rest-client.hpan.api.key__ | Subscription key to be used if calling Azure-hosted API methods | ${HPAN_API_KEY} | NO
 __rest-client.hpan.list.url__ | Endpoint pan list service | /list | NO
 __rest-client.hpan.salt.url__ | Endpoint salt service | /salt | NO
+__rest-client.hpan.proxy.enabled__ | Use a Proxied Client | ${HPAN_SERVICE_PROXY_ENABLED:false} | NO
+__rest-client.hpan.proxy.host__ | Proxy host | ${HPAN_SERVICE_PROXY_HOST:} | NO
+__rest-client.hpan.proxy.port__ | Proxy port | ${HPAN_SERVICE_PROXY_PORT:} | NO
+__rest-client.hpan.proxy.username__ | Proxy username | ${HPAN_SERVICE_PROXY_USERNAME:} | NO
+__rest-client.hpan.proxy.password__ | Proxy password | ${HPAN_SERVICE_PROXY_PASSWORD:} | NO
 __rest-client.hpan.mtls.enabled__ | Enable MTLS for salt and pan list services | ${HPAN_SERVICE_MTLS_ENABLED:true} | NO
 __rest-client.hpan.key-store.file__ | Path to key-store | file:/${HPAN_SERVICE_KEY_STORE_FILE:} | NO
 __rest-client.hpan.key-store.type__ | Key-store type | ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}} | NO
