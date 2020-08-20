@@ -21,6 +21,7 @@ import java.util.Iterator;
 **/
 public class EncryptUtil {
 
+    // FIXME: which one of the following block comments is the right one?
     /**
      * Load a secret key ring collection from keyIn and find the secret key
      * corresponding to keyID if it exists.
@@ -47,6 +48,7 @@ public class EncryptUtil {
      * @throws PGPException
      * @throws NoSuchProviderException
      */
+    // FIXME: add @Nullable
     static PGPPrivateKey findSecretKey(PGPSecretKeyRingCollection pgpSec, long keyID, char[] pass)
             throws PGPException, NoSuchProviderException
     {
@@ -66,12 +68,14 @@ public class EncryptUtil {
      * @throws PGPException
      * @throws NoSuchProviderException
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked") // FIXME: not a good idea
     public static byte[] decryptFile(InputStream in, InputStream keyIn, char[] passwd)
             throws IOException, NoSuchProviderException, PGPException {
 
         Security.addProvider(new BouncyCastleProvider());
 
+        // FIXME: this is really bad style, please use a different intermediate
+        //        variable
         in = PGPUtil.getDecoderStream(in);
 
         try
@@ -136,6 +140,9 @@ public class EncryptUtil {
 
                 byte[] decryptedData = IOUtils.toByteArray(unc);
 
+                // FIXME: `in` gets already closed by the finally block below
+                //         - I suggest to move all the close() statements into
+                //         the finally block
                 in.close();
                 unc.close();
                 clear.close();
