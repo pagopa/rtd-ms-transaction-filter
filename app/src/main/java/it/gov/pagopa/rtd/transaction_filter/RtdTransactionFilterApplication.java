@@ -40,6 +40,8 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 
+    // FIXME: this check should be case insensitive, the README states that the
+    //        allowed values are "TRUE" and "FALSE"
 		if (scheduledEnabled.equals("false")) {
 
 			Date startDate = new Date();

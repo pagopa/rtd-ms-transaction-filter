@@ -104,6 +104,7 @@ public class TransactionFilterBatch {
         hpanStoreService.clearAll();
     }
 
+    // FIXME: please comment why we need to throw checked exceptions
     @SneakyThrows
     public void executeBatchJob(Date startDate) {
         String transactionsPath = transactionFilterStep.getTransactionDirectoryPath();
@@ -112,6 +113,8 @@ public class TransactionFilterBatch {
         String hpanPath = panReaderStep.getHpanDirectoryPath();
         Resource[] hpanResources = resolver.getResources(hpanPath);
 
+        // FIXME: please add a short explanation of the following logic since
+        //        it's not easy to understand
         if (transactionResources.length > 0 &&
                 (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
 
@@ -208,8 +211,11 @@ public class TransactionFilterBatch {
      *
      * @return instance of the job to process and archive .pgp files containing Transaction data in csv format
      */
+    // FIXME: please comment why we need SneakyThrows here
     @SneakyThrows
     public FlowJobBuilder transactionJobBuilder() {
+        // FIXME: please document the following flow, it's hard to understand
+        //        what's going on
         return jobBuilderFactory.get("transaction-filter-job")
                 .repository(getJobRepository())
                 .start(hpanListRecoveryTask())

@@ -13,7 +13,8 @@ import java.time.OffsetDateTime;
 /**
  * Model for the processed lines in the batch
  */
-
+// FIXME: it's very important to add a comment to each field of the model,
+//        that describe its meaning
 @Data
 @Builder
 @NoArgsConstructor
