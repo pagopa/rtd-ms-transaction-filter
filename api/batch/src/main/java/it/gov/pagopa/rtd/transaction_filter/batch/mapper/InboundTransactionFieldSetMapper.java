@@ -31,6 +31,7 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
     @Override
     public InboundTransaction mapFieldSet(FieldSet fieldSet) throws BindException {
 
+        // FIXME: please use @Nullable for nullable fields
         if (fieldSet == null) {
             return null;
         }
@@ -38,6 +39,7 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
         DateTimeFormatter dtf = timestampParser != null && !timestampParser.isEmpty() ?
                 DateTimeFormatter.ofPattern(timestampParser).withZone(ZoneId.systemDefault()): null;
 
+        // FIXME: can we have a comment here explaining what's going on?
         InboundTransaction inboundTransaction =
                 InboundTransaction.builder()
                         .acquirerCode(fieldSet.readString("codice_acquirer"))
