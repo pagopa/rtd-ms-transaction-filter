@@ -4,6 +4,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.FieldSet;
+import org.springframework.lang.Nullable;
 import org.springframework.validation.BindException;
 
 import java.time.OffsetDateTime;
@@ -29,9 +30,8 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
      * @throws BindException
      */
     @Override
-    public InboundTransaction mapFieldSet(FieldSet fieldSet) throws BindException {
+    public InboundTransaction mapFieldSet(@Nullable FieldSet fieldSet) throws BindException {
 
-        // FIXME: please use @Nullable for nullable fields
         if (fieldSet == null) {
             return null;
         }
@@ -39,7 +39,11 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
         DateTimeFormatter dtf = timestampParser != null && !timestampParser.isEmpty() ?
                 DateTimeFormatter.ofPattern(timestampParser).withZone(ZoneId.systemDefault()): null;
 
-        // FIXME: can we have a comment here explaining what's going on?
+        /*
+           Building the {@link InboundTransaction} instance from the record data, defined within
+           the {@link FieldSetMapper}, using the appropriate column id
+         */
+
         InboundTransaction inboundTransaction =
                 InboundTransaction.builder()
                         .acquirerCode(fieldSet.readString("codice_acquirer"))

@@ -4,12 +4,18 @@ import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.springframework.batch.core.ItemReadListener;
 import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
+
+/**
+ * Implementation of {@link ItemWriteListener}, to be used to log and/or store records
+ * that have produced an error while reading a record writing phase
+ */
 
 @Slf4j
 @Data

@@ -7,6 +7,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 
+/**
+* Implementation of {@link SftpConnectorService}
+ */
+
 @Service
 @RequiredArgsConstructor
 class SftpConnectorServiceImpl implements SftpConnectorService {

@@ -14,6 +14,10 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
 
+/**
+ * Implementation of {@link ItemProcessListener}, to be used to log and/or store records
+ * filtered or that have produced an error during a record processing phase
+ */
 @Slf4j
 @Data
 public class TransactionItemProcessListener implements ItemProcessListener<InboundTransaction,InboundTransaction> {

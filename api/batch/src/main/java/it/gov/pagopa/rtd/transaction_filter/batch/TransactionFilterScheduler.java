@@ -26,9 +26,6 @@ public class TransactionFilterScheduler {
     @Scheduled(cron = "${batchConfiguration.TransactionFilterBatch.cron}")
     public void launchJob() throws Exception {
 
-        // FIXME: does the scheduler guarantee that only one jobs is running at
-        //        any moment in time? if that's not the case, we may have a new
-        //        launched while the previous one is still running
         Date startDate = new Date();
         if (log.isInfoEnabled()) {
             log.info("CsvTransactionReader scheduled job started at " + startDate);

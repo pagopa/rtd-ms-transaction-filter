@@ -20,6 +20,10 @@ import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+/**
+* Implementation for {@link HpanRestClient}
+*/
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -48,6 +52,11 @@ class HpanRestClientImpl implements HpanRestClient {
 
     private final HpanRestConnector hpanRestConnector;
 
+    /**
+    * Method used for recovering the list, if the properties are enabled, an attempt of validating
+     * the checksum recovered from the configured header name, and eventually extracting the .csv or .pgp
+     * file from the compressed file obtained through the request
+     */
     @SneakyThrows
     @Override
     public File getList() {

@@ -6,6 +6,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.*;
 import org.bouncycastle.openpgp.jcajce.JcaPGPObjectFactory;
 import org.bouncycastle.openpgp.operator.jcajce.*;
+import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,22 +22,6 @@ import java.util.Iterator;
 **/
 public class EncryptUtil {
 
-    // FIXME: which one of the following block comments is the right one?
-    /**
-     * Load a secret key ring collection from keyIn and find the secret key
-     * corresponding to keyID if it exists.
-     *
-     * @param keyIn
-     *            input stream representing a key ring collection.
-     * @param keyID
-     *            keyID we want.
-     * @param pass
-     *            passphrase to decrypt secret key with.
-     * @return
-     * @throws IOException
-     * @throws PGPException
-     * @throws NoSuchProviderException
-     */
     /**
      * Search a secret key ring collection for a secret key corresponding to keyID if it
      * exists.
@@ -48,7 +33,7 @@ public class EncryptUtil {
      * @throws PGPException
      * @throws NoSuchProviderException
      */
-    // FIXME: add @Nullable
+    @Nullable
     static PGPPrivateKey findSecretKey(PGPSecretKeyRingCollection pgpSec, long keyID, char[] pass)
             throws PGPException, NoSuchProviderException
     {
@@ -68,7 +53,6 @@ public class EncryptUtil {
      * @throws PGPException
      * @throws NoSuchProviderException
      */
-    @SuppressWarnings("unchecked") // FIXME: not a good idea
     public static byte[] decryptFile(InputStream in, InputStream keyIn, char[] passwd)
             throws IOException, NoSuchProviderException, PGPException {
 
@@ -77,6 +61,8 @@ public class EncryptUtil {
         // FIXME: this is really bad style, please use a different intermediate
         //        variable
         in = PGPUtil.getDecoderStream(in);
+        InputStream unc = null;
+        InputStream clear = null;
 
         try
         {
@@ -117,7 +103,7 @@ public class EncryptUtil {
                 throw new IllegalArgumentException("secret key for message not found.");
             }
 
-            InputStream clear = pbe.getDataStream(new JcePublicKeyDataDecryptorFactoryBuilder()
+            clear = pbe.getDataStream(new JcePublicKeyDataDecryptorFactoryBuilder()
                     .setProvider("BC").build(sKey));
 
             JcaPGPObjectFactory plainFact = new JcaPGPObjectFactory(clear);
@@ -136,18 +122,9 @@ public class EncryptUtil {
             {
                 PGPLiteralData ld = (PGPLiteralData)message;
 
-                InputStream unc = ld.getInputStream();
+                unc = ld.getInputStream();
 
-                byte[] decryptedData = IOUtils.toByteArray(unc);
-
-                // FIXME: `in` gets already closed by the finally block below
-                //         - I suggest to move all the close() statements into
-                //         the finally block
-                in.close();
-                unc.close();
-                clear.close();
-
-                return decryptedData;
+                return IOUtils.toByteArray(unc);
 
             }
             else if (message instanceof PGPOnePassSignatureList)
@@ -162,7 +139,6 @@ public class EncryptUtil {
         }
         catch (PGPException e)
         {
-            System.err.println(e);
             if (e.getUnderlyingException() != null)
             {
                 e.getUnderlyingException().printStackTrace();
@@ -171,6 +147,12 @@ public class EncryptUtil {
 
         } finally {
             in.close();
+            if (unc != null) {
+                unc.close();
+            }
+            if (clear != null) {
+                clear.close();
+            }
         }
 
     }

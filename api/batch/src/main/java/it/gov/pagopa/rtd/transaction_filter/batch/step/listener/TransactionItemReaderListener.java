@@ -11,6 +11,11 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import java.io.File;
 import java.nio.charset.Charset;
 
+/**
+ * Implementation of {@link ItemReadListener}, to be used to log and/or store records
+ * that have produced an error while reading a record
+ */
+
 @Slf4j
 @Data
 public class TransactionItemReaderListener implements ItemReadListener<InboundTransaction> {

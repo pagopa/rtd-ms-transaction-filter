@@ -6,6 +6,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.TreeSet;
 
+/**
+* Implementation of {@link HpanStoreService}
+ */
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
