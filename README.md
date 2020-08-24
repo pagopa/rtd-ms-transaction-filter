@@ -485,3 +485,72 @@ where the log records are inserted is thhe __logging_event__ table.
 
 The document containing the details regarding the interface agreement are available
 at [ops_resources/RTD_Acquirer_Interface_V2.pdf](ops_resources/RTD_Acquirer_Interface_V2.pdf).
+
+### FAQ
+
+The following section contains answers regarding common or noteworthy errors or questions, 
+occured during the configuration/execution process.
+
+#### Required JDK/JRE
+
+The tested version for the batch acquirer is the latest patch for the 1.8, Oracle version. Therefore, a compatible version for the batch execution
+is a compatible JRE/JDK. Please refer to the requirement paragraph, or in the Acquirer Interface document.
+
+#### Permission Errors While Reading/Writing a file
+
+>2020-07-30 14:11:50.735 ERROR 21876 --- [readerTaskExecutor-5] r.t.b.s.l.TransactionItemProcessListener : /20200730141145327_transactionsErrorRecords.csv (Permission denied)
+>java.io.FileNotFoundException: /20200730141145327_transactionsErrorRecords.csv (Permission denied)
+
+This error occurs when reading/writing a file that is placed in a location for which the process does not have
+permissions. Usually this is due to a lack in the configuration properties related to the file. Some of the misconfigured
+properties that may produce this events are: 
+
+- _batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath_
+- _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath_
+- _batchConfiguration.TransactionFilterBatch.successArchivePath_
+- _batchConfiguration.TransactionFilterBatch.errorArchivePath_
+- _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_
+
+Please refer to __Appendix 2 - Configuration Properties__ or __Execution Guidelines__
+
+#### Skip Limit Exception
+
+>org.springframework.batch.core.step.skip.SkipLimitExceededException: Skip limit of '0' exceeded
+
+This error occurs when an error is encountered, while processing the transaction records, that exceeds the
+configuration for the process fault tolerance, defined by the following property:
+
+- _batchConfiguration.TransactionFilterBatch.transactionFilter.skipLimit_
+
+The stacktrace following the exception indicates the cause of the error that exceeded the defined limit.
+
+#### Missing Datasource
+
+>Error creating bean with name 'scopedTarget.dataSource' defined in class path resource
+>[org/springframework/boot/autoconfigure/jdbc/DataSourceConfiguration$Hikari.class]: Bean instantiation via factory method failed;
+>nested exception is org.springframework.beans.BeanInstantiationException: Failed to instantiate [com.zaxxer.hikari.HikariDataSource]:
+>Factory method 'dataSource' threw exception; nested exception is java.lang.IllegalStateException: Cannot load driver class: org.postgresql.Driver
+
+This error occurs when defining a configuration for the datasource for a database that is not the default in-memory one (HBSQL). In the standard
+release the drivers for any specific vendor has to be included when starting the batch acquirer process. Refer to the command in the Execution guidelines.
+
+#### Logback DBAppender Error on Oracle
+
+>at java.sql.SQLException: Invalid argument(s) in call
+>      at oracle.jdbc.driver.AutoKeyInfo.getNewSql(AutoKeyInfo.java:187)
+>      at oracle.jdbc.driver.PhysicalConnection.prepareStatement(PhysicalConnection.java:4342)
+>      at ch.qos.logback.core.db.DBAppenderBase.append(DBAppenderBase.java:97)
+>      at ch.qos.logback.core.UnsynchronizedAppenderBase.doAppend(UnsynchronizedAppenderBase.java:84)
+>      at ch.qos.logback.core.spi.AppenderAttachableImpl.appendLoopOnAppenders(AppenderAttachableImpl.java:51)
+>      at ch.qos.logback.classic.Logger.appendLoopOnAppenders(Logger.java:270)
+>      at ch.qos.logback.classic.Logger.callAppenders(Logger.java:257)
+>      at ch.qos.logback.classic.Logger.buildLoggingEventAndAppend(Logger.java:421)
+>      at ch.qos.logback.classic.Logger.filterAndLog_0_Or3Plus(Logger.java:383)
+>      at ch.qos.logback.classic.Logger.log(Logger.java:765)
+>      at org.apache.commons.logging.LogAdapter$Slf4jLocationAwareLog.info(LogAdapter.java:454)
+
+This error occurs when using an Oracle Database, and it's related to the usage of a driver version that does not 
+match the one required for the database and java versions. Check the list of available drivers, and refer to the
+[Logback Appenders Documentation](http://dev.cs.ovgu.de/java/logback/manual/appenders.html#DBAppender).
+
+
