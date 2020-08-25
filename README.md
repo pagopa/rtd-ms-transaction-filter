@@ -99,7 +99,6 @@ References for introducing the Azure truststore key in your system, is in the of
 For references to the services displayed through Azure's API service, you can find the corresponding links in 
 __Appendix 4 - RTD Acquirer Interface__.
 
-
 ### Minimal Configuration on Override
 
 When overriding the application.yaml file with an external configuration, the following minimal configuration has to be
@@ -125,10 +124,10 @@ maintained, in order to have the correct setup for the batch execution.
   batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath property, or through the environment variable
   _ACQ_BATCH_INPUT_PUBLIC_KEYPATH_.         
    
-   __Note:__ The configuration is strictly needed only if the encryption function of the produced files is enabled. In the case of
-   configuration on file, the path must be preceded by the prefix _file:/_. for example:
+  __Note:__ The configuration is strictly needed only if the encryption function of the produced files is enabled. 
+  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
    
-    >batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath = file:/C/:Development/keys/public.asc
+  >batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath = file:/C/:Development/keys/public.asc
 
 - Configure the pointing to the file containing the private key, through the property
   _batchConfiguration.TransactionFilterBatch.panList.secretKeyPath_, or through the environment variable
@@ -137,7 +136,7 @@ maintained, in order to have the correct setup for the batch execution.
   __Note:__ The configuration is strictly necessary only if the decryption function of the files containing the pan list is enabled. 
   In the case of configuration on file, the path must be preceded by prefix _file:/_. for example::
 
-    >batchConfiguration.TransactionFilterBatch.panList.secretKeyPath = file:/C:/Development/keys/secret.asc
+  >batchConfiguration.TransactionFilterBatch.panList.secretKeyPath = file:/C:/Development/keys/secret.asc
 	
 - Configure the passphrase to be applied if the secret key is enabled, through the
   _batchConfiguration.TransactionFilterBatch.panList.passphrase_ property , or via the _ACQ_BATCH_INPUT_SECRET_PASSPHRASE_ environment
@@ -159,8 +158,8 @@ maintained, in order to have the correct setup for the batch execution.
 - Define a folder for the files containing the PAN list 
 
 - Configure the path to the files containing the pan list, through the
- _batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath_ property , or through the environment variables
- _ACQ_BATCH_HPAN_INPUT_PATH_ for the folder, and  _ACQ_BATCH_HPAN_INPUT_FILE_PATTERN_, for the pattern of files to read.
+  _batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath_ property , or through the environment variables
+  _ACQ_BATCH_HPAN_INPUT_PATH_ for the folder, and  _ACQ_BATCH_HPAN_INPUT_FILE_PATTERN_, for the pattern of files to read.
  
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example: 
 
@@ -486,15 +485,14 @@ where the log records are inserted is thhe __logging_event__ table.
 The document containing the details regarding the interface agreement are available
 at [ops_resources/RTD_Acquirer_Interface_V2.pdf](ops_resources/RTD_Acquirer_Interface_V2.pdf).
 
-### FAQ
+### FAQ & Troubleshooting
 
 The following section contains answers regarding common or noteworthy errors or questions, 
 occured during the configuration/execution process.
 
-#### Required JDK/JRE
+#### Required Java Version
 
-The tested version for the batch acquirer is the latest patch for the 1.8, Oracle version. Therefore, a compatible version for the batch execution
-is a compatible JRE/JDK. Please refer to the requirement paragraph, or in the Acquirer Interface document.
+The tested version for the batch acquirer is the latest patch for the 1.8, with preference to the Oracle version.
 
 #### Permission Errors While Reading/Writing a file
 
@@ -524,6 +522,14 @@ configuration for the process fault tolerance, defined by the following property
 
 The stacktrace following the exception indicates the cause of the error that exceeded the defined limit.
 
+#### Bin validation error
+
+> bin: must match "([0-9]{6}|[0-9]{8})"
+
+This occurs when inserting a bank identification number that does not match the expected length (the standard value is 8,
+but 6 is at the moment also allowed). In cases where the value does has less characters, the value must be juxtaposed 
+with Zero-Padding. Refer to [ops_resources/RTD_Acquirer_Interface_V2.pdf](ops_resources/RTD_Acquirer_Interface_V2.pdf).
+
 #### Missing Datasource
 
 >Error creating bean with name 'scopedTarget.dataSource' defined in class path resource
@@ -552,5 +558,21 @@ release the drivers for any specific vendor has to be included when starting the
 This error occurs when using an Oracle Database, and it's related to the usage of a driver version that does not 
 match the one required for the database and java versions. Check the list of available drivers, and refer to the
 [Logback Appenders Documentation](http://dev.cs.ovgu.de/java/logback/manual/appenders.html#DBAppender).
+
+#### Oracle Error ORA-08177
+
+> java.sql.SQLException: ORA-08177: can't serialize access for this transaction
+  
+This is a known issue for the Spring Batch Framework. Refer to the note in the __Database connection__,
+and the official [Issue Thread](https://github.com/spring-projects/spring-batch/issues/1127).
+
+#### Cron expression rule error
+
+>org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'transactionFilterBatch' defined in URL
+>[jar:file:/app/spe/CAE/semafori/batch-transaction-filter.jar!/BOOT-INF/lib/rtd-ms-transaction-filter-api-batch-1.0-SNAPSHOT.jar!/it/gov/pagopa/rtd/transaction_filter/batch/TransactionFilterBatch.class]:
+>Initialization of bean failed;nested exception is java.lang.IllegalStateException: Encountered invalid @Scheduled method 'launchJob': Cron expression must consist of 6 fields (found 1 in "0")
+
+This error occurs when configuring a scheduled execution, with an invalid cron expression. Refer to the related
+[Oracle Guidelines](https://docs.oracle.com/cd/E12058_01/doc/doc.1014/e12030/cron_expressions.htm) to create a valid expression.
 
 
