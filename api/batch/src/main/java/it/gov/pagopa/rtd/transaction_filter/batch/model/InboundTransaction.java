@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.OffsetDateTime;
 
 /**
@@ -66,7 +67,7 @@ public class InboundTransaction {
 
     /** Transaction amount */
     @NotNull
-    BigDecimal amount;
+    Long amount;
 
     /** Transaction amount currency */
     @Size(max = 3)

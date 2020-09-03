@@ -53,7 +53,7 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .idTrxAcquirer(fieldSet.readString("id_trx_acquirer"))
                         .idTrxIssuer(fieldSet.readString("id_trx_issuer"))
                         .correlationId(fieldSet.readString("correlation_id"))
-                        .amount(fieldSet.readBigDecimal("importo"))
+                        .amount(fieldSet.readLong("importo"))
                         .amountCurrency(fieldSet.readString("currency"))
                         .acquirerId(fieldSet.readString("acquirerID"))
                         .merchantId(fieldSet.readString("merchantID"))
