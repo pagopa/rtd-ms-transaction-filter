@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
+import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -22,6 +23,30 @@ public class TransactionItemReaderListenerTest {
 
     @SneakyThrows
     @Test
+    public void beforeStep_OK() {
+
+        File folder = tempFolder.newFolder("testListener");
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        String executionDate = OffsetDateTime.now().format(fmt);
+
+        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
+        transactionItemReaderListener.setExecutionDate(executionDate);
+        transactionItemReaderListener.setResolver(new PathMatchingResourcePatternResolver());
+        transactionItemReaderListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
+        transactionItemReaderListener.afterRead(InboundTransaction
+                .builder().filename("test").lineNumber(1).build());
+
+        Assert.assertEquals(0,
+                FileUtils.listFiles(
+                        resolver.getResources("classpath:/test-encrypt/**/testListener")[0].getFile(),
+                        new String[]{"csv"},false).size());
+
+    }
+
+    @SneakyThrows
+    @Test
     public void onReadError_OK() {
 
         File folder = tempFolder.newFolder("testListener");
@@ -32,6 +57,7 @@ public class TransactionItemReaderListenerTest {
 
         TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
         transactionItemReaderListener.setExecutionDate(executionDate);
+        transactionItemReaderListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemReaderListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemReaderListener.onReadError(new FlatFileParseException("Parsing error at line: " +
                 1, new Exception(), "input", 1));
