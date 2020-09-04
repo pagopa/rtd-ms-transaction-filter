@@ -23,6 +23,31 @@ public class TransactionItemProcessListenerTest {
 
     @SneakyThrows
     @Test
+    public void afterProcess_OK() {
+
+        File folder = tempFolder.newFolder("testProcess");
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        String executionDate = OffsetDateTime.now().format(fmt);
+
+        TransactionItemProcessListener TransactionItemProcessListener = new TransactionItemProcessListener();
+        TransactionItemProcessListener.setExecutionDate(executionDate);
+        TransactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
+        TransactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
+        TransactionItemProcessListener.afterProcess(
+                InboundTransaction.builder().filename("test").lineNumber(1).build(),
+                null);
+
+        Assert.assertEquals(1,
+                FileUtils.listFiles(
+                        resolver.getResources("classpath:/test-encrypt/**/testProcess")[0].getFile(),
+                        new String[]{"csv"},false).size());
+
+    }
+
+    @SneakyThrows
+    @Test
     public void onProcessError_OK() {
 
         File folder = tempFolder.newFolder("testProcess");

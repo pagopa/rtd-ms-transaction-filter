@@ -64,9 +64,7 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
                 }
 
             } catch (Exception e) {
-                if (log.isErrorEnabled()) {
-                    log.error(e.getMessage(), e);
-                }
+                log.error(e.getMessage(), e);
             }
 
         }

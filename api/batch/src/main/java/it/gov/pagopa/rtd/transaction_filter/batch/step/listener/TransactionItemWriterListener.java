@@ -44,12 +44,11 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
 
         inboundTransactions.forEach(inboundTransaction -> {
 
-            if (log.isInfoEnabled()) {
-                log.info("Error during during transaction record writing - " + throwable.getMessage() + ", filename: "
-                        + inboundTransaction.getFilename() + ",line: " + inboundTransaction.getLineNumber());
-            }
+            log.info("Error during during transaction record writing - {},filename: {},line: {}" ,
+                    throwable.getMessage() , inboundTransaction.getFilename() ,inboundTransaction.getLineNumber());
 
             try {
+
                 File file = new File(
                         resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                                 .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
@@ -57,9 +56,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                         file, buildCsv(inboundTransaction), Charset.defaultCharset(), true);
 
             } catch (Exception e) {
-                if (log.isErrorEnabled()) {
-                    log.error(e.getMessage(), e);
-                }
+                log.error(e.getMessage(), e);
             }
 
         });

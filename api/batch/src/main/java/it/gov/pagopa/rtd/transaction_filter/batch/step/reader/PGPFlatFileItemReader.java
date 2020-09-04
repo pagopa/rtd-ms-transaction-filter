@@ -44,8 +44,11 @@ public class PGPFlatFileItemReader extends FlatFileItemReader<String> {
     @SneakyThrows
     @Override
     protected void doOpen() throws Exception {
+
         Assert.notNull(this.resource, "Input resource must be set");
+
         if (applyDecrypt) {
+
             File fileToProcess = resource.getFile();
             FileInputStream fileToProcessIS = new FileInputStream(fileToProcess);
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -60,17 +63,17 @@ public class PGPFlatFileItemReader extends FlatFileItemReader<String> {
                 super.setResource(new InputStreamResource(
                         new ByteArrayInputStream(decryptFileData)));
             } catch (Exception e) {
-                if (log.isErrorEnabled()) {
-                    log.error(e.getMessage(),e);
-                }
+                log.error(e.getMessage(),e);
                 throw new PGPDecryptException(e.getMessage(),e);
             } finally {
                 fileToProcessIS.close();
                 secretFilePathIS.close();
             }
+
         } else {
             super.setResource(resource);
         }
+
         super.doOpen();
         log.debug("Reader Opened");
 

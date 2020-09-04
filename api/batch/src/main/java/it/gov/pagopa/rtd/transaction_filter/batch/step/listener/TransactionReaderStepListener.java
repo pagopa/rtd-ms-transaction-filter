@@ -15,13 +15,12 @@ public class TransactionReaderStepListener implements StepExecutionListener {
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
-        if (log.isInfoEnabled()) {
-            log.info("Starting processing for file: " + stepExecution.getExecutionContext().get("fileName"));
-        }
+        log.info("Starting processing for file: {}", stepExecution.getExecutionContext().get("fileName"));
     }
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
+
         ExitStatus exitStatus = stepExecution.getExitStatus();
 
         if (!exitStatus.getExitCode().equals(ExitStatus.FAILED.getExitCode()) &&
@@ -29,12 +28,11 @@ public class TransactionReaderStepListener implements StepExecutionListener {
             exitStatus = new ExitStatus("COMPLETED WITH SKIPS");
         }
 
-        if (log.isInfoEnabled()) {
-            log.info("Processing for file: " + stepExecution.getExecutionContext().get("fileName") +
-                    " ended with status: " + exitStatus.getExitCode());
-        }
+        log.info("Processing for file: {} ended with status: {}",
+                stepExecution.getExecutionContext().get("fileName"), exitStatus.getExitCode());
 
         return exitStatus;
+
     }
 
 }

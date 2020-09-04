@@ -100,10 +100,6 @@ class HpanRestClientImpl implements HpanRestClient {
                     tempFileFOS = new FileOutputStream(newFile);
                     IOUtils.copy(zipEntryIS, tempFileFOS);
 
-                    if (log.isDebugEnabled()) {
-                        log.debug("Matching " + zipEntry.getName() + " with " + listFilePattern);
-                    }
-
                     if (zipEntry.getName().matches(listFilePattern)) {
                         tempFile = newFile;
                     }

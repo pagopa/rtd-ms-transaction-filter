@@ -92,9 +92,7 @@ public class HpanRestConnectorConfig {
                 return new Client.Default(sslSocketFactory, null);
             }
         } catch (Exception e) {
-            if (log.isErrorEnabled()) {
-                log.error(e.getMessage(),e);
-            }
+            log.error(e.getMessage(),e);
             throw new Exception("Error occured while initializing feign client", e);
         }
     }

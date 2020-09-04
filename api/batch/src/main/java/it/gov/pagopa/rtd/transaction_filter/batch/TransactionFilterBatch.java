@@ -127,12 +127,10 @@ public class TransactionFilterBatch {
         if (transactionResources.length > 0 &&
                 (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
 
-            if (log.isInfoEnabled()) {
-                log.info("Found " + transactionResources.length +
-                        (transactionResources.length > 1 ? "resources" : "resource") +
-                        ". Starting filtering process"
-                );
-            }
+            log.info("Found {}. Starting filtering process",
+                    transactionResources.length + (transactionResources.length > 1 ? "resources" : "resource")
+            );
+
 
             createHpanStoreService();
             jobLauncher().run(job(),
@@ -142,13 +140,11 @@ public class TransactionFilterBatch {
             clearHpanStoreService();
 
         } else {
-            if (log.isInfoEnabled()) {
-                if (transactionResources.length == 0) {
-                    log.info("No transaction file has been found on configured path: " + transactionsPath);
-                }
-                if (!getHpanListRecoveryEnabled() && hpanResources.length==0) {
-                    log.info("No hpan file has been found on configured path: " + hpanPath);
-                }
+            if (transactionResources.length == 0) {
+                log.info("No transaction file has been found on configured path: {}", transactionsPath);
+            }
+            if (!getHpanListRecoveryEnabled() && hpanResources.length==0) {
+                log.info("No hpan file has been found on configured path: {}", hpanPath);
             }
         }
     }

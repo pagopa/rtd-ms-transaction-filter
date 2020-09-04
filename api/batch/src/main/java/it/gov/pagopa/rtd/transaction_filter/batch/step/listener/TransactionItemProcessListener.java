@@ -63,16 +63,16 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     public void onProcessError(InboundTransaction item, Exception throwable) {
 
-        if (log.isInfoEnabled()) {
-                log.info("Error during during transaction processing, filename: " +
-                        item.getFilename() + ",line: " + item.getLineNumber());
-        }
+        log.info("Error during during transaction processing, filename: {},line: {}",
+                item.getFilename(), item.getLineNumber());
 
         try {
+
             File file = new File(
                     resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                             .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
             FileUtils.writeStringToFile(file,buildCsv(item) , Charset.defaultCharset(), true);
+
         } catch (Exception e) {
             log.error(e.getMessage(),e);
         }
