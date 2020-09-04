@@ -87,7 +87,7 @@ public class LineAwareMapperTest {
                 .idTrxAcquirer("1111111111")
                 .idTrxIssuer("5555")
                 .correlationId("")
-                .amount(BigDecimal.valueOf(1111))
+                .amount(1111L)
                 .amountCurrency("896")
                 .acquirerId("22222")
                 .merchantId("0000")
