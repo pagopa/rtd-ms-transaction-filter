@@ -30,9 +30,6 @@ public class HpanRestConnectorConfig {
     @Value("${rest-client.hpan.proxy.enabled}")
     private Boolean proxyEnabled;
 
-    @Value("${rest-client.hpan.proxy.type}")
-    private String proxyType;
-
     @Value("${rest-client.hpan.proxy.host}")
     private String proxyHost;
 
