@@ -25,9 +25,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
-    public void beforeRead() {
-
-    }
+    public void beforeRead() {}
 
     public void afterRead(InboundTransaction item) {
 
