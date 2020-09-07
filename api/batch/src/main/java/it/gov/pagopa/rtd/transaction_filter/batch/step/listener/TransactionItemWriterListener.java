@@ -4,12 +4,18 @@ import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.springframework.batch.core.ItemReadListener;
 import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.List;
+
+/**
+ * Implementation of {@link ItemWriteListener}, to be used to log and/or store records
+ * that have produced an error while reading a record writing phase
+ */
 
 @Slf4j
 @Data
@@ -38,12 +44,11 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
 
         inboundTransactions.forEach(inboundTransaction -> {
 
-            if (log.isInfoEnabled()) {
-                log.info("Error during during transaction record writing - " + throwable.getMessage() + ", filename: "
-                        + inboundTransaction.getFilename() + ",line: " + inboundTransaction.getLineNumber());
-            }
+            log.info("Error during during transaction record writing - {},filename: {},line: {}" ,
+                    throwable.getMessage() , inboundTransaction.getFilename() ,inboundTransaction.getLineNumber());
 
             try {
+
                 File file = new File(
                         resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                                 .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
@@ -51,9 +56,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                         file, buildCsv(inboundTransaction), Charset.defaultCharset(), true);
 
             } catch (Exception e) {
-                if (log.isErrorEnabled()) {
-                    log.error(e.getMessage(), e);
-                }
+                log.error(e.getMessage(), e);
             }
 
         });
@@ -62,21 +65,21 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
     }
 
     private String buildCsv(InboundTransaction inboundTransaction) {
-        return inboundTransaction.getAcquirerCode().concat(";")
-                .concat(inboundTransaction.getOperationType()).concat(";")
-                .concat(inboundTransaction.getCircuitType()).concat(";")
-                .concat(inboundTransaction.getPan()).concat(";")
-                .concat(inboundTransaction.getTrxDate().toString()).concat(";")
-                .concat(inboundTransaction.getIdTrxAcquirer()).concat(";")
-                .concat(inboundTransaction.getIdTrxIssuer()).concat(";")
-                .concat(inboundTransaction.getCorrelationId()).concat(";")
-                .concat(inboundTransaction.getAmount().toString()).concat(";")
-                .concat(inboundTransaction.getAmountCurrency()).concat(";")
-                .concat(inboundTransaction.getAcquirerId()).concat(";")
-                .concat(inboundTransaction.getMerchantId()).concat(";")
-                .concat(inboundTransaction.getTerminalId()).concat(";")
-                .concat(inboundTransaction.getBin()).concat(";")
-                .concat(inboundTransaction.getMcc()).concat("\n");
+        return (inboundTransaction.getAcquirerCode() != null ? inboundTransaction.getAcquirerCode() : "").concat(";")
+                .concat(inboundTransaction.getOperationType() != null ? inboundTransaction.getOperationType() : "").concat(";")
+                .concat(inboundTransaction.getCircuitType() != null ? inboundTransaction.getCircuitType() : "").concat(";")
+                .concat(inboundTransaction.getPan() != null ? inboundTransaction.getPan() : "").concat(";")
+                .concat(inboundTransaction.getTrxDate() != null ? inboundTransaction.getTrxDate() : "").concat(";")
+                .concat(inboundTransaction.getIdTrxAcquirer() != null ? inboundTransaction.getIdTrxAcquirer() : "").concat(";")
+                .concat(inboundTransaction.getIdTrxIssuer() != null ? inboundTransaction.getIdTrxIssuer() : "").concat(";")
+                .concat(inboundTransaction.getCorrelationId() != null ? inboundTransaction.getCorrelationId() : "").concat(";")
+                .concat(inboundTransaction.getAmount() != null ? inboundTransaction.getAmount().toString() : "").concat(";")
+                .concat(inboundTransaction.getAmountCurrency() != null ? inboundTransaction.getAmountCurrency() : "").concat(";")
+                .concat(inboundTransaction.getAcquirerId() != null ? inboundTransaction.getAcquirerId() : "").concat(";")
+                .concat(inboundTransaction.getMerchantId() != null ? inboundTransaction.getMerchantId() : "").concat(";")
+                .concat(inboundTransaction.getTerminalId() != null ? inboundTransaction.getTerminalId() : "").concat(";")
+                .concat(inboundTransaction.getBin() != null ? inboundTransaction.getBin() : "").concat(";")
+                .concat(inboundTransaction.getMcc() != null ? inboundTransaction.getMcc() : "").concat("\n");
     }
 
 }

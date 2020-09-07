@@ -4,12 +4,18 @@ import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+
+/**
+ * Implementation of {@link FlatFileItemWriter}, to be used for writing the output transaction records, potentially
+ * encrypting the output file in the pgp phase
+ */
 
 @RequiredArgsConstructor
 public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction> {

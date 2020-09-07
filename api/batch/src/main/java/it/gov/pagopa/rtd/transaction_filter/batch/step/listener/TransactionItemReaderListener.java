@@ -11,6 +11,11 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import java.io.File;
 import java.nio.charset.Charset;
 
+/**
+ * Implementation of {@link ItemReadListener}, to be used to log and/or store records
+ * that have produced an error while reading a record
+ */
+
 @Slf4j
 @Data
 public class TransactionItemReaderListener implements ItemReadListener<InboundTransaction> {
@@ -20,24 +25,15 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
-    public void beforeRead() {
-
-    }
+    public void beforeRead() {}
 
     public void afterRead(InboundTransaction item) {
-
-        if (log.isDebugEnabled()) {
-            log.debug("Read transaction record on filename :" + item.getFilename() + " ,line: "
-                    + item.getLineNumber());
-        }
-
+        log.debug("Read transaction record on filename: {}, line: {}", item.getFilename(), item.getLineNumber());
     }
 
     public void onReadError(Exception throwable) {
 
-        if (log.isInfoEnabled()) {
-                log.info("#### Error while reading a transaction record - " + throwable.getMessage());
-        }
+        log.info("#### Error while reading a transaction record - {}", throwable.getMessage());
 
         if (throwable instanceof FlatFileParseException) {
             FlatFileParseException flatFileParseException = (FlatFileParseException) throwable;
@@ -46,7 +42,8 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
                 File file = new File(
                 resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                                  .concat("/".concat(executionDate))+ "_transactionsErrorRecords.csv");
-                FileUtils.writeStringToFile(file, flatFileParseException.getInput().concat("\n"), Charset.defaultCharset(), true);
+                FileUtils.writeStringToFile(file, flatFileParseException.getInput().concat("\n"),
+                        Charset.defaultCharset(), true);
             } catch (Exception e) {
                 log.error(e.getMessage(),e);
             }

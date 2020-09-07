@@ -19,6 +19,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 
+/**
+ * Custom implementation of {@link FlatFileItemReader}, the source code is replicated
+ * from the original class, and modified to manage proper record line awareness
+ */
 public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTransaction> {
     private static final Log logger = LogFactory.getLog(FlatFileItemReader.class);
     public static final String DEFAULT_CHARSET = Charset.defaultCharset().name();
@@ -102,7 +106,8 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
                             innerCount);
 
                 } catch (Exception var3) {
-                    throw new FlatFileParseException("Parsing error at line: " + innerCount + " in resource=[" + this.resource.getDescription() + "]" , var3, line, innerCount);
+                    throw new FlatFileParseException("Parsing error at line: " + innerCount + " in resource=[" +
+                            this.resource.getDescription() + "]" , var3, line, innerCount);
                 }
             }
         }
@@ -141,7 +146,8 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
                 }
             } catch (IOException var3) {
                 this.noInput = true;
-                throw new NonTransientFlatFileException("Unable to read from resource: [" + this.resource + "]", var3, line, this.lineCount);
+                throw new NonTransientFlatFileException("Unable to read from resource: [" + this.resource + "]",
+                        var3, line, this.lineCount);
             }
         }
     }
@@ -174,13 +180,15 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
         this.noInput = true;
         if (!this.resource.exists()) {
             if (this.strict) {
-                throw new IllegalStateException("Input resource must exist (reader is in 'strict' mode): " + this.resource);
+                throw new IllegalStateException("Input resource must exist (reader is in 'strict' mode): " +
+                        this.resource);
             } else {
                 logger.warn("Input resource does not exist " + this.resource.getDescription());
             }
         } else if (!this.resource.isReadable()) {
             if (this.strict) {
-                throw new IllegalStateException("Input resource must be readable (reader is in 'strict' mode): " + this.resource);
+                throw new IllegalStateException("Input resource must be readable (reader is in 'strict' mode): " +
+                        this.resource);
             } else {
                 logger.warn("Input resource is not readable " + this.resource.getDescription());
             }
@@ -211,11 +219,13 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
 
     private String applyRecordSeparatorPolicy(String line) throws IOException {
         String record;
-        for(record = line; line != null && !this.recordSeparatorPolicy.isEndOfRecord(record); record = this.recordSeparatorPolicy.preProcess(record) + line) {
+        for(record = line; line != null && !this.recordSeparatorPolicy.isEndOfRecord(record); record =
+                this.recordSeparatorPolicy.preProcess(record) + line) {
             line = this.reader.readLine();
             if (line == null) {
                 if (StringUtils.hasText(record)) {
-                    throw new FlatFileParseException("Unexpected end of file before record complete", record, this.lineCount);
+                    throw new FlatFileParseException("Unexpected end of file before record complete",
+                            record, this.lineCount);
                 }
                 break;
             }

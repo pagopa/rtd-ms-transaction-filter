@@ -30,17 +30,14 @@ public class TransactionFilterScheduler {
         //        any moment in time? if that's not the case, we may have a new
         //        launched while the previous one is still running
         Date startDate = new Date();
-        if (log.isInfoEnabled()) {
-            log.info("CsvTransactionReader scheduled job started at " + startDate);
-        }
+        log.info("CsvTransactionReader scheduled job started at {}", startDate);
 
         transactionFilterBatch.executeBatchJob(startDate);
 
         Date endDate = new Date();
-        if (log.isInfoEnabled()) {
-            log.info("CsvTransactionReader scheduled job ended at " + endDate);
-            log.info("Completed in: " + (endDate.getTime() - startDate.getTime()) + " (ms)");
-        }
+
+        log.info("CsvTransactionReader scheduled job ended at {}", endDate);
+        log.info("Completed in: {} (ms)", (endDate.getTime() - startDate.getTime()));
 
     }
 

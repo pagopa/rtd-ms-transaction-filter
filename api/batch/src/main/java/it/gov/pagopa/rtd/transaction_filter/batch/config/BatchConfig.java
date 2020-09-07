@@ -24,7 +24,7 @@ public class BatchConfig {
 
     /**
      *
-     * @return bean configured for usage in the partitioner instance of the job
+     * @return bean configured for usage in the partitioned instance of the job
      */
     @Bean
     public TaskExecutor partitionerTaskExecutor() {

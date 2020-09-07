@@ -22,7 +22,6 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.job.builder.FlowJobBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
-import org.springframework.batch.core.listener.ExecutionContextPromotionListener;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
 import org.springframework.beans.factory.BeanFactory;
@@ -43,8 +42,10 @@ import javax.sql.DataSource;
 import java.util.Date;
 
 /**
- * Configuration of a scheduled batch job to read and decrypt .pgp files with csv content,
- * to be processed in instances of Transaction class, to be sent in an outbound Kafka channel
+ * Configuration of a scheduled batch job to read and decrypt .pgp files containing pan lists
+ * (possibly recovered from a remote service), and .csv files to be processed in instances of Transaction class,
+ * to be filtered by checking transaction pan (eventually hashed with a salt remotely recovered).
+ * The output files can be encrypted with a public PGP key, and sent through an SFTP channel
  */
 
 @Configuration
@@ -104,7 +105,13 @@ public class TransactionFilterBatch {
         hpanStoreService.clearAll();
     }
 
-    // FIXME: please comment why we need to throw checked exceptions
+    /**
+     *
+     * @return Method to start the execution of the transaction filter job
+     * @param startDate starting date for the batch job execution
+     * @throws java.io.IOException
+     * @throws  java.lang.Exception
+     */
     @SneakyThrows
     public void executeBatchJob(Date startDate) {
         String transactionsPath = transactionFilterStep.getTransactionDirectoryPath();
@@ -113,17 +120,17 @@ public class TransactionFilterBatch {
         String hpanPath = panReaderStep.getHpanDirectoryPath();
         Resource[] hpanResources = resolver.getResources(hpanPath);
 
-        // FIXME: please add a short explanation of the following logic since
-        //        it's not easy to understand
+        /** The jobLauncher run method is called only if, based on the configured properties, a matching transaction
+        resource is found, and either the remote pan list recovery is enabled, or a pan list file is available locally
+        on the configured path
+         */
         if (transactionResources.length > 0 &&
                 (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
 
-            if (log.isInfoEnabled()) {
-                log.info("Found " + transactionResources.length +
-                        (transactionResources.length > 1 ? "resources" : "resource") +
-                        ". Starting filtering process"
-                );
-            }
+            log.info("Found {}. Starting filtering process",
+                    transactionResources.length + (transactionResources.length > 1 ? "resources" : "resource")
+            );
+
 
             createHpanStoreService();
             jobLauncher().run(job(),
@@ -133,11 +140,11 @@ public class TransactionFilterBatch {
             clearHpanStoreService();
 
         } else {
-            if (log.isInfoEnabled()) {
-                log.info("No transaction file has been found on configured path: " + transactionsPath);
-                if (getHpanListRecoveryEnabled() && hpanResources.length==0) {
-                    log.info("No hpan file has been found on configured path: " + hpanPath);
-                }
+            if (transactionResources.length == 0) {
+                log.info("No transaction file has been found on configured path: {}", transactionsPath);
+            }
+            if (!getHpanListRecoveryEnabled() && hpanResources.length==0) {
+                log.info("No hpan file has been found on configured path: {}", hpanPath);
             }
         }
     }
@@ -208,14 +215,28 @@ public class TransactionFilterBatch {
     }
 
     /**
-     *
-     * @return instance of the job to process and archive .pgp files containing Transaction data in csv format
+     * @throws java.lang.Exception
+     * @return Instance of {@link FlowJobBuilder}, with the configured steps executed
+     * for the pan/transaction processing
      */
-    // FIXME: please comment why we need SneakyThrows here
     @SneakyThrows
     public FlowJobBuilder transactionJobBuilder() {
-        // FIXME: please document the following flow, it's hard to understand
-        //        what's going on
+
+        /**
+         * The flow is defined with the followings steps:
+         * 1) Attempts panlist recovery, if enabled. In case of a failure in the execution, the process is stopped.
+         * 2) Attempts salt recovery, if enabled. In case of a failure in the execution, the process is stopped.
+         *    Otherwise, the panList step is executed
+         * 3) The panList step is executed, to store the .csv files including the list of active pans. If the step
+         *    fails, the file archival tasklet is called, otherwise the transaction filter step is called.
+         * 4) The transaction filter step checks the records with the stored pans, writing the matching records in
+         *    the output file. If the process fails, the file management tasklet is called,
+         *    otherwise the transaction sender step si called.
+         * 5) Attempts sending the output files through an sftp channel, if enabled. The file management tasklet
+         *    is always called, after the step
+         * 6) After all the possible file management executions, the process is stopped
+         */
+
         return jobBuilderFactory.get("transaction-filter-job")
                 .repository(getJobRepository())
                 .start(hpanListRecoveryTask())
@@ -261,8 +282,8 @@ public class TransactionFilterBatch {
     }
 
     /**
-     *
-     * @return step instance based on the tasklet to be used for file archival at the end of the reading process
+     * @return step instance based on the {@link FileManagementTasklet} to be used for
+     * file archival at the end of the reading process
      */
     @SneakyThrows
     @Bean

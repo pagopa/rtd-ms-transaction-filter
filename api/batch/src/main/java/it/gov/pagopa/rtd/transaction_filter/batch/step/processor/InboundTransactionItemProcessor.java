@@ -28,7 +28,8 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
     private final Boolean saveHashing;
 
     /**
-     * Validates the input {@link InboundTransaction}, and maps it to an instance of Transaction
+     * Validates the input {@link InboundTransaction}, and filters the model, if the pan is not available
+     * in the {@link HpanStoreService}. Optionally applies the hashing function to the transaction PAN
      * @param inboundTransaction
      *              instance of {@link InboundTransaction} from the read phase of the step
      * @return instance of  {@link InboundTransaction}

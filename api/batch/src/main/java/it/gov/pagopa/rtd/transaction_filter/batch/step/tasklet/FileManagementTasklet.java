@@ -25,10 +25,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * implementation of the {@link Tasklet}, in which the execute method contains the logic for processed file archival,
- * based on the status of conclusion for every file processed
+ * based on the status of conclusion for every processed file
  */
 
 @Data
@@ -74,6 +75,15 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         List<String> errorFilenames = new ArrayList<>();
         hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
 
+        List<String> hpanResources = Arrays.asList(resolver.getResources(hpanDirectory)).stream().map(resource -> {
+            try {
+                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+                return null;
+            }
+        }).collect(Collectors.toList());
+
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
                 .getStepExecutions();
         for (StepExecution stepExecution : stepExecutions) {
@@ -85,14 +95,8 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                 try {
                     path = resolver.getResource(file).getFile().getAbsolutePath();
                 } catch (Exception e) {
-                    if (log.isErrorEnabled()) {
-                        log.error(e.getMessage(),e);
-                    }
+                    log.error(e.getMessage(),e);
                     path = file.replace("file:/", "");
-                }
-
-                if (log.isErrorEnabled()) {
-                    log.info("Resolved path file: " + path);
                 }
 
                 try {
@@ -103,23 +107,17 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         String[] filename = file.replaceAll("\\\\", "/").split("/");
                         errorFilenames.add(filename[filename.length - 1].split("\\.",2)[0]);
                     }
-                    boolean isHpanFile = resolver.getPathMatcher().match(
-                            hpanDirectory, file.replaceAll("\\\\", "/"));
+
+                    boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
                     if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
-                        if (log.isInfoEnabled()) {
-                            log.info("Removing processed file: " + file);
-                        }
+                        log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
                     } else if (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
-                        if (log.isInfoEnabled()) {
-                            log.info("Archiving processed file: " + file);
-                        }
+                        log.info("Archiving processed file: {}", file);
                         archiveFile(file, path, isComplete);
                     }
                 } catch (Exception e) {
-                    if (log.isErrorEnabled()) {
-                        log.error(e.getMessage(), e);
-                    }
+                    log.error(e.getMessage(), e);
                 }
 
             }
@@ -135,22 +133,16 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                             try {
                                 return outputDirectoryResource.getFile().getAbsolutePath().contains(errorFilename);
                             } catch (IOException e) {
-                                if (log.isErrorEnabled()) {
-                                    log.error(e.getMessage(),e);
-                                }
+                                log.error(e.getMessage(),e);
                                 return false;
                             }
                         }))
                 ) {
                     try {
-                        if (log.isInfoEnabled()) {
-                            log.info("Deleting output file: " + outputDirectoryResource.getFile());
-                        }
+                        log.info("Deleting output file: {}", outputDirectoryResource.getFile());
                         FileUtils.forceDelete(outputDirectoryResource.getFile());
                     } catch (IOException e) {
-                        if (log.isErrorEnabled()) {
-                            log.error(e.getMessage(), e);
-                        }
+                        log.error(e.getMessage(), e);
                     }
                 }
             });

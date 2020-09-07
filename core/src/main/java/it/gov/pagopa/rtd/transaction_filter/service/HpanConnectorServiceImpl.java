@@ -7,6 +7,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 
+/**
+* Implementation of {@link HpanConnectorService}
+ */
+
 @Service
 @RequiredArgsConstructor
 public class HpanConnectorServiceImpl implements HpanConnectorService {

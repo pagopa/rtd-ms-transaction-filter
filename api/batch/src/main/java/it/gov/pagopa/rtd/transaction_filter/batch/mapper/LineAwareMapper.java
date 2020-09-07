@@ -9,6 +9,10 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 
+/**
+* Custom implementation of {@link LineMapper}, to be used for adding the lineNumber and filename to the
+ * mapped record
+*/
 @Data
 public class LineAwareMapper<T> implements LineMapper<InboundTransaction>, InitializingBean {
 
@@ -17,6 +21,7 @@ public class LineAwareMapper<T> implements LineMapper<InboundTransaction>, Initi
     private FieldSetMapper<InboundTransaction> fieldSetMapper;
 
     private String filename;
+
 
     public InboundTransaction mapLine(String line, int lineNumber) throws Exception {
         try{

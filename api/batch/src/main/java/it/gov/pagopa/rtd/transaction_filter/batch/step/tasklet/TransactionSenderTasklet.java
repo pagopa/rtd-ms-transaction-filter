@@ -11,6 +11,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.util.Assert;
 
+/**
+ * implementation of the {@link Tasklet}, sends the output files to an sftp channel,
+ * when enabled
+ */
+
 @Data
 public class TransactionSenderTasklet implements Tasklet, InitializingBean {
 

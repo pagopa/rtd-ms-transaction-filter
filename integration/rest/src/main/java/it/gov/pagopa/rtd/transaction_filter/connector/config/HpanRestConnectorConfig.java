@@ -14,6 +14,8 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import javax.net.ssl.*;
 import java.io.FileInputStream;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.security.KeyStore;
 
 @Configuration
@@ -21,6 +23,24 @@ import java.security.KeyStore;
 @PropertySource("classpath:config/rest-client.properties")
 @Slf4j
 public class HpanRestConnectorConfig {
+
+    @Value("${rest-client.hpan.mtls.enabled}")
+    private Boolean mtlsEnabled;
+
+    @Value("${rest-client.hpan.proxy.enabled}")
+    private Boolean proxyEnabled;
+
+    @Value("${rest-client.hpan.proxy.host}")
+    private String proxyHost;
+
+    @Value("${rest-client.hpan.proxy.port}")
+    private Integer proxyPort;
+
+    @Value("${rest-client.hpan.proxy.username}")
+    private String proxyUsername;
+
+    @Value("${rest-client.hpan.proxy.password}")
+    private String proxyPassword;
 
     @Value("${rest-client.hpan.trust-store.file}")
     private String trustStoreFile;
@@ -49,15 +69,28 @@ public class HpanRestConnectorConfig {
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Bean
-    @ConditionalOnProperty(name = "rest-client.hpan.mtls.enabled", havingValue = "true")
     public Client getFeignClient() throws Exception {
         try {
-            return new Client.Default(getSSLSocketFactory(), null);
-        } catch (Exception e) {
-            if (log.isErrorEnabled()) {
-                log.error(e.getMessage(),e);
+            SSLSocketFactory sslSocketFactory = null;
+
+            if (mtlsEnabled) {
+                sslSocketFactory = getSSLSocketFactory();
             }
-            throw new Exception("Error in initializing feign client", e);
+
+            if (proxyEnabled) {
+                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
+                if (proxyUsername != null && !proxyUsername.equals("") &&
+                        proxyPassword != null && !proxyPassword.equals("")) {
+                    return new Client.Proxied(sslSocketFactory,null, proxy, proxyUsername, proxyPassword);
+                } else {
+                    return new Client.Proxied(sslSocketFactory,null, proxy);
+                }
+            } else {
+                return new Client.Default(sslSocketFactory, null);
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage(),e);
+            throw new Exception("Error occured while initializing feign client", e);
         }
     }
 
