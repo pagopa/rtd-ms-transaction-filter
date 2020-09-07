@@ -23,6 +23,11 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * implementation of the {@link Tasklet}, recovers the pan list from a REST service,
+ * when eneabled
+ */
+
 @Slf4j
 @Data
 public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
@@ -36,6 +41,14 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
+    /**
+     * Recovers a file contianing the pan list, and optionally applies checksum
+     * validation, and extracts the content from a compressed file, if required
+     * @param stepContribution
+     * @param chunkContext
+     * @return task exit status
+     * @throws Exception
+     */
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 

@@ -19,6 +19,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 
+/**
+ * Custom implementation of {@link FlatFileItemReader}, the source code is replicated
+ * from the original class, and modified to manage proper record line awareness
+ */
 public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTransaction> {
     private static final Log logger = LogFactory.getLog(FlatFileItemReader.class);
     public static final String DEFAULT_CHARSET = Charset.defaultCharset().name();

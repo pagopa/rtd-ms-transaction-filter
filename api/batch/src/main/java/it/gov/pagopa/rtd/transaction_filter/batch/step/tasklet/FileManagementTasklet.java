@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 
 /**
  * implementation of the {@link Tasklet}, in which the execute method contains the logic for processed file archival,
- * based on the status of conclusion for every file processed
+ * based on the status of conclusion for every processed file
  */
 
 @Data

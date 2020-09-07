@@ -22,6 +22,7 @@ public class LineAwareMapper<T> implements LineMapper<InboundTransaction>, Initi
 
     private String filename;
 
+
     public InboundTransaction mapLine(String line, int lineNumber) throws Exception {
         try{
             InboundTransaction inboundTransaction = fieldSetMapper.mapFieldSet(tokenizer.tokenize(line));

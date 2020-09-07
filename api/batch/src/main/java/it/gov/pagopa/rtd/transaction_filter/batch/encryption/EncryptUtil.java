@@ -53,21 +53,18 @@ public class EncryptUtil {
      * @throws PGPException
      * @throws NoSuchProviderException
      */
-    public static byte[] decryptFile(InputStream in, InputStream keyIn, char[] passwd)
+    public static byte[] decryptFile(InputStream input, InputStream keyInput, char[] passwd)
             throws IOException, NoSuchProviderException, PGPException {
 
         Security.addProvider(new BouncyCastleProvider());
-
-        // FIXME: this is really bad style, please use a different intermediate
-        //        variable
-        in = PGPUtil.getDecoderStream(in);
-        InputStream unc = null;
+        input = PGPUtil.getDecoderStream(input);
+        InputStream unencrypted = null;
         InputStream clear = null;
 
         try
         {
-            JcaPGPObjectFactory pgpF = new JcaPGPObjectFactory(in);
-            PGPEncryptedDataList    enc;
+            JcaPGPObjectFactory pgpF = new JcaPGPObjectFactory(input);
+            PGPEncryptedDataList encrypted;
 
             Object o = pgpF.nextObject();
             //
@@ -75,21 +72,21 @@ public class EncryptUtil {
             //
             if (o instanceof PGPEncryptedDataList)
             {
-                enc = (PGPEncryptedDataList)o;
+                encrypted = (PGPEncryptedDataList)o;
             }
             else
             {
-                enc = (PGPEncryptedDataList)pgpF.nextObject();
+                encrypted = (PGPEncryptedDataList)pgpF.nextObject();
             }
 
             //
             // find the secret key
             //
-            Iterator                    it = enc.getEncryptedDataObjects();
-            PGPPrivateKey               sKey = null;
-            PGPPublicKeyEncryptedData   pbe = null;
-            PGPSecretKeyRingCollection  pgpSec = new PGPSecretKeyRingCollection(
-                    PGPUtil.getDecoderStream(keyIn), new JcaKeyFingerprintCalculator());
+            Iterator it = encrypted.getEncryptedDataObjects();
+            PGPPrivateKey sKey = null;
+            PGPPublicKeyEncryptedData pbe = null;
+            PGPSecretKeyRingCollection pgpSec = new PGPSecretKeyRingCollection(
+                    PGPUtil.getDecoderStream(keyInput), new JcaKeyFingerprintCalculator());
 
             while (sKey == null && it.hasNext())
             {
@@ -122,9 +119,9 @@ public class EncryptUtil {
             {
                 PGPLiteralData ld = (PGPLiteralData)message;
 
-                unc = ld.getInputStream();
+                unencrypted = ld.getInputStream();
 
-                return IOUtils.toByteArray(unc);
+                return IOUtils.toByteArray(unencrypted);
 
             }
             else if (message instanceof PGPOnePassSignatureList)
@@ -146,9 +143,9 @@ public class EncryptUtil {
             throw e;
 
         } finally {
-            in.close();
-            if (unc != null) {
-                unc.close();
+            keyInput.close();
+            if (unencrypted != null) {
+                unencrypted.close();
             }
             if (clear != null) {
                 clear.close();

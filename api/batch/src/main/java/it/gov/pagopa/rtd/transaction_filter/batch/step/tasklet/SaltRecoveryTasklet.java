@@ -9,6 +9,12 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.repeat.RepeatStatus;
 
+
+/**
+ * implementation of the {@link Tasklet}, recovers the salt from a REST service,
+ * when eneabled
+ */
+
 @Data
 public class SaltRecoveryTasklet implements Tasklet {
 
@@ -16,6 +22,13 @@ public class SaltRecoveryTasklet implements Tasklet {
     private HpanStoreService hpanStoreService;
     private Boolean taskletEnabled = false;
 
+    /**
+     * Recovers a string containing the salt to be applied for the pan hashing
+     * @param stepContribution
+     * @param chunkContext
+     * @return
+     * @throws Exception
+     */
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
         if (taskletEnabled) {
