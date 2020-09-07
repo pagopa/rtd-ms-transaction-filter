@@ -53,7 +53,7 @@ batchConfiguration:
     readerCorePoolSize: ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5}
     tablePrefix: ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_}
     panList:
-      hpanDirectoryPath: file:${ACQ_BATCH_HPAN_INPUT_PATH:resources/hpans}/${ACQ_BATCH_INPUT_FILE_PATTERN:*}
+      hpanDirectoryPath: file:${ACQ_BATCH_HPAN_INPUT_PATH:resources/hpans}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
       secretKeyPath: file:${ACQ_BATCH_INPUT_SECRET_KEYPATH:}
       passphrase: ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:}
       partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
@@ -62,34 +62,34 @@ batchConfiguration:
       applyDecrypt: ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:false}
       applyHashing: ${ACQ_BATCH_PAN_LIST_APPLY_HASHING:false}
     transactionFilter:
-      transactionDirectoryPath: file:${ACQ_BATCH_TRX_INPUT_PATH:resources/transactions}/${ACQ_BATCH_INPUT_FILE_PATTERN:*}
+      transactionDirectoryPath: file:${ACQ_BATCH_TRX_INPUT_PATH:resources/transactions}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
       outputDirectoryPath: file:${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources}/output}
       publicKeyPath: file:${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:}
       partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
       chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000}
-      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
+      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:1000}
       timestampPattern: ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX}
-      applyHashing: ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:false}
+      applyHashing: ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:true}
       applyEncrypt: ${ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT:false}
       saveHashing: ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:true}
       linesToSkip: ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0}
       deleteProcessedFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:false}
       deleteOutputFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:ERROR}
-      manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:KEEP}
+      manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE}
       transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
       sftp:
         localdirectory: file:${SFTP_LOCAL_DIR:resources/output}/${SFTP_FILE_PATTERN:*}
     transactionSender:
       enabled: ${ACQ_BATCH_TRX_SENDER_ENABLED:false}
     saltRecovery:
-      enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:false}
+      enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:true}
     hpanListRecovery:
-      enabled: ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:false}
-      directoryPath: ${ACQ_BATCH_HPAN_INPUT_PATH:}
+      enabled: ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true}
+      directoryPath: ${ACQ_BATCH_HPAN_INPUT_PATH:C:/batch-transaction-filter/resources/hpans}
       filename: ${ACQ_BATCH_HPAN_LIST_FILENAME:hpanList}${ACQ_BATCH_INPUT_FILE_PATTERN:.csv}
       attemptExtract: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
       checksumFilePattern: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTE
-      listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*\\.csv}
+      listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
 
 connectors:
   sftpConfigurations:
@@ -107,21 +107,33 @@ connectors:
 rest-client:
   hpan:
     serviceCode: hpan-service
-    base-url: ${HPAN_SERVICE_URL:https://localhost:${HPAN_SERVICE_PORT:8443}}/hpan
-    list.url: /list
-    salt.url: /salt
+    base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}/rtd/payment-instrument-manager
+    proxy:
+      enabled: ${HPAN_SERVICE_PROXY_ENABLED:false}
+      host: ${HPAN_SERVICE_PROXY_HOST:localhost}
+      port: ${HPAN_SERVICE_PROXY_PORT:8866}
+    api:
+      key: f551bb099add46d2a395c93540515af1
+    list:
+      url: /hashed-pans
+      attemptExtraction: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
+      checksumValidation: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_VALIDATION:true}
+      checksumHeaderName: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_HEADER:x-ms-meta-sha256}
+      listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
+    salt:
+      url: /salt
     mtls:
-      enabled: ${HPAN_SERVICE_MTLS_ENABLED:false}
+      enabled: ${HPAN_SERVICE_MTLS_ENABLED:true}
     key-store:
-      file: file:/${HPAN_SERVICE_KEY_STORE_FILE:}
+      file: file:${HPAN_SERVICE_KEY_STORE_FILE:resources/keys/keystore_cert_1.jks}
       type: ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}}
       algorithm: ${HPAN_SERVICE_KEY_STORE_ALGORITHM:#{null}}
-      password: ${HPAN_SERVICE_KEY_STORE_PASSWORD:}
+      password: ${HPAN_SERVICE_KEY_STORE_PASSWORD:secret}
     trust-store:
-      file: file:/${HPAN_SERVICE_TRUST_STORE_FILE:}
+      file: file:${HPAN_SERVICE_TRUST_STORE_FILE:resources/keys/truststore_cert_1.jks}
       type: ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}}
       algorithm: ${HPAN_SERVICE_TRUST_STORE_ALGORITHM:#{null}}
-      password: ${HPAN_SERVICE_TRUST_STORE_PASSWORD:}
+      password: ${HPAN_SERVICE_TRUST_STORE_PASSWORD:secret}
 
 feign:
   client:
