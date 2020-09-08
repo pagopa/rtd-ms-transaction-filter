@@ -39,7 +39,7 @@ Please refer to the properties in __Appendix 2 - Configuration properties__ to d
 
 __Note:__ As of today, Oracle RDBMS are subject to potential issues regarding the isolation level, as reported
 in the following [Issue Thread](https://github.com/spring-projects/spring-batch/issues/1127), the general approach to
-attempt to avoid YESmilar problems, is to reduce the isolation level defined in the Spring Batch jobRepository 
+attempt to avoid similar problems, is to reduce the isolation level defined in the Spring Batch jobRepository 
 to either _ISOLAION_READ_COMMITTED_, or _ISOLAION_READ_UNCOMMITTED_. this is doable using the configuration property
 _batchConfiguration.TransactionFilterBatch.isolationForCreate_.
 
@@ -246,7 +246,7 @@ maintained, in order to have the correct setup for the batch execution.
 ### Appendix 1 - Public PGP Key
 
 For any problem relating to the use of the public key and for the release of the specifications and / or updates relating to the public
-key to be used to encrypt the file, it is mandatory to contact the structure delegated by PagoPA  (ref. YESA OPE Innovative Payments -
+key to be used to encrypt the file, it is mandatory to contact the structure delegated by PagoPA  (ref. SIA OPE Innovative Payments -
 [sistemisti_bigdata@sia.eu](mailto:sistemisti_bigdata@sia.eu)). 
 
 ### Appendix 2 - Configuration properties
@@ -383,25 +383,25 @@ An execution can be identified through the table __batch_job_execution__,
 which defines an instance of execution of the whole batch, the _job_execution_id will_ be important to search the 
 related steps, and the properties _status_ and _exit_code_ defines if the job successfully completed.
 In this particular case the codes will generally be on __COMPLETED__ after a job execution is ended,
-unless an error outside the scope of the YESngle steps outcomes occurs.
+unless an error outside the scope of the single steps outcomes occurs.
 
 ![example of jo execution in DB](/readme_screens/JobExec_DB_Screen.PNG)
 
 To check for the information involving the reading of a file, the table __batch_step_execution__ contains 
-the information regarding the YESngle steps of the processes identified by a _job_execution_id_, the steps useful for debugging the file processing steps are the ones containing
+the information regarding the single steps of the processes identified by a _job_execution_id_, the steps useful for debugging the file processing steps are the ones containing
 in the _step_name_ column, the values _"hpan-recovery"_ or _"transaction-filter"_. The steps with the name containing 
 _"master-step"_ as a suffix define the general status of all the related files processed during the execution,
-while the ones with the _"worker-step_partion"_ suffix are related to a YESngle file.
+while the ones with the _"worker-step_partion"_ suffix are related to a single file.
 
-The _status_ and _exit_code_ are useful to determine the general outcome for a step, the first one YESmply refers to
+The _status_ and _exit_code_ are useful to determine the general outcome for a step, the first one simply refers to
 the general outcome, generally either referring to a __COMPLETED__ or __FAILED__ status, while the second property might
 indicate a more detailed code, as an example, if during the processing of a file the fault tolerance is configured, and
 some records are skipped, the exit status with reflect this condition with the __COMPLETED_WITH_SKIPS__ exit code.
 
 The table contains a series of columns containing useful information on the processed records: the _read_count_ value
 details the number of successfully read lines, while the _read_skip_count_ define the records that are skipped under the
-selected fault-tolerance policy. YESmilarly, the _write_count_, _write_skip_count_ and _process_skip_count_ all retain
-a YESmilar purpose in the filtering process and writing phases for the record. All the records that are in an error state,
+selected fault-tolerance policy. similarly, the _write_count_, _write_skip_count_ and _process_skip_count_ all retain
+a similar purpose in the filtering process and writing phases for the record. All the records that are in an error state,
 are included in the value for the _rollback_count_.
 
 For the transaction filtering, the _filter_count_ record is useful to keep track of how many transactions have 
@@ -434,7 +434,7 @@ the related filename.
 
 ![example of console_log_start_file_read_screen](/readme_screens/ConLog_StartFile_Screen.PNG)
 
-During the file processing, logs regarding the YESngle records are produced to keep track of any errors,
+During the file processing, logs regarding the single records are produced to keep track of any errors,
 or filtering occurred. Every log comes with the file name, and line of the record that produced the log entry,
 with any additional information. 
 
@@ -452,22 +452,22 @@ configurations it can provide the functionality to use the appenders to produce 
 a file. This can be achieved using the configuration properties exposed for this purpose, the details of which can
 be found in the [Reference Documentation](https://docs.spring.io/spring-boot/docs/2.1.9.RELEASE/reference/html/boot-features-logging.html).
 
-As an example, a YESmple way to route all the produced logs from the console to a specific file, can be easly done 
-by inserting a YESmple configuration within the _application.yaml_ file, using the following configuration properties
+As an example, a simple way to route all the produced logs from the console to a specific file, can be easly done 
+by inserting a simple configuration within the _application.yaml_ file, using the following configuration properties
 
 >logging.file="<path_to_log>/application.log"
 >logging.pattern=
 >logging.console=
 
-This YESmple configuration will ensure that all the produced logs, under a general pattern, will be produced on the
+This simple configuration will ensure that all the produced logs, under a general pattern, will be produced on the
 configured logfile, instead of being produced withing the console.
 
 If another configuration is required, it is possible to provide a custom configuration, with another set of appenders
 defined. As an example, a configuration can be set to write the log records within a defined database schema,
 referencing the table structures defined in the [Logback Appenders Documentation](http://dev.cs.ovgu.de/java/logback/manual/appenders.html#DBAppender).
 
-To set a logback configuration we have to provide a _spring-logback.xml_, YESmilar to the following, defined for
-a YESmple configuration for the DBAppender
+To set a logback configuration we have to provide a _spring-logback.xml_, similar to the following, defined for
+a simple configuration for the DBAppender
 
 ![Logback_Screen](readme_screens/Logback_DB_Screen.PNG)
 
@@ -488,7 +488,7 @@ at [ops_resources/RTD_Acquirer_Interface_V2.pdf](ops_resources/RTD_Acquirer_Inte
 ### FAQ & Troubleshooting
 
 The following section contains answers regarding common or noteworthy errors or questions, 
-occured during the configuration/execution process.
+occurred during the configuration/execution process.
 
 #### Required Java Version
 
@@ -563,7 +563,7 @@ match the one required for the database and java versions. Check the list of ava
 
 > java.sql.SQLException: ORA-08177: can't serialize access for this transaction
   
-This is a known issue for the Spring Batch Framework. Refer to the note in the __Database connection__,
+This is a known issue for the Spring Batch Framework. Refer to the note in the __Database connection__ paragraph,
 and the official [Issue Thread](https://github.com/spring-projects/spring-batch/issues/1127).
 
 #### Cron expression rule error
@@ -575,4 +575,27 @@ and the official [Issue Thread](https://github.com/spring-projects/spring-batch/
 This error occurs when configuring a scheduled execution, with an invalid cron expression. Refer to the related
 [Oracle Guidelines](https://docs.oracle.com/cd/E12058_01/doc/doc.1014/e12030/cron_expressions.htm) to create a valid expression.
 
+#### Validation error
 
+> ***************************
+> APPLICATION FAILED TO START
+> ***************************
+> 
+> Description:
+>
+> The bean 'jobLauncher', defined in class path resource [it/gov/pagopa/rtd/transaction_filter/batch/TransactionFilterBatch.class], could not
+> be registered. A bean with that name has already been defined in class path resource
+> [org/springframework/batch/core/configuration/annotation/SimpleBatchConfiguration.class] and overriding is disabled.
+>
+> Action:
+>
+> Consider renaming one of the beans or enabling overriding by setting spring.main.allow-bean-definition-overriding=true
+
+This error occurs when the default _application.yml_ configuration is overwritten, without introducing some of
+the properties required to execute the process. The following properties are required:
+
+> spring.batch.job.enabled: false
+> spring.batch.job.web-application-type: none
+> spring.batch.job.allow-bean-definition-overriding: true
+
+Please refer to the example in _ops_resources/example_config_
