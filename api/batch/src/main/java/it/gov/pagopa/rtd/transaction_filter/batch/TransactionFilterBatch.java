@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
@@ -14,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -113,12 +115,14 @@ public class TransactionFilterBatch {
      * @throws  java.lang.Exception
      */
     @SneakyThrows
-    public void executeBatchJob(Date startDate) {
+    public JobExecution executeBatchJob(Date startDate) {
         String transactionsPath = transactionFilterStep.getTransactionDirectoryPath();
         Resource[] transactionResources = resolver.getResources(transactionsPath);
 
         String hpanPath = panReaderStep.getHpanDirectoryPath();
         Resource[] hpanResources = resolver.getResources(hpanPath);
+
+        JobExecution execution = null;
 
         /** The jobLauncher run method is called only if, based on the configured properties, a matching transaction
         resource is found, and either the remote pan list recovery is enabled, or a pan list file is available locally
@@ -133,7 +137,7 @@ public class TransactionFilterBatch {
 
 
             createHpanStoreService();
-            jobLauncher().run(job(),
+            execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
@@ -147,6 +151,9 @@ public class TransactionFilterBatch {
                 log.info("No hpan file has been found on configured path: {}", hpanPath);
             }
         }
+
+        return execution;
+
     }
 
     /**
@@ -239,6 +246,7 @@ public class TransactionFilterBatch {
 
         return jobBuilderFactory.get("transaction-filter-job")
                 .repository(getJobRepository())
+                .listener(jobListener())
                 .start(hpanListRecoveryTask())
                 .on("FAILED").end()
                 .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.hpanStoreService))
@@ -255,6 +263,12 @@ public class TransactionFilterBatch {
                         this.sftpConnectorService))
                 .on("*").to(fileManagementTask())
                 .build();
+    }
+
+    @Bean
+    public JobListener jobListener() {
+        JobListener jobListener = new JobListener();
+        return jobListener;
     }
 
     @Bean

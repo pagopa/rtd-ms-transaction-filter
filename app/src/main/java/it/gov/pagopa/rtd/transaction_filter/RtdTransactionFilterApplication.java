@@ -5,6 +5,8 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.launch.support.SimpleJvmExitCodeMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -47,7 +49,7 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 				log.info("CsvTransactionReader single-time job started at " + startDate);
 			}
 
-			transactionFilterBatch.executeBatchJob(startDate);
+			JobExecution jobExecution = transactionFilterBatch.executeBatchJob(startDate);
 
 			Date endDate = new Date();
 			if (log.isInfoEnabled()) {
@@ -55,7 +57,8 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 				log.info("Completed in: " + (endDate.getTime() - startDate.getTime()) + " (ms)");
 			}
 
-			System.exit(0);
+			System.exit(jobExecution != null ?
+					new SimpleJvmExitCodeMapper().intValue(jobExecution.getExitStatus().getExitCode()) : 0);
 
 		}
 
