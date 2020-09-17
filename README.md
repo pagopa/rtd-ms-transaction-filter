@@ -490,6 +490,13 @@ at [ops_resources/RTD_Acquirer_Interface_V2.pdf](ops_resources/RTD_Acquirer_Inte
 The following section contains answers regarding common or noteworthy errors or questions, 
 occurred during the configuration/execution process.
 
+#### Are there any example files?
+
+In ops_resources/example_files there are example for an input, panlist and output files, all without encryption,
+and under the configuration expected when calling the remote services (transactions with clear pan, and a pan list with
+the hashing already applied), the output is also defined without encryption, please refer to the guideline for further
+details on how to manage the input/output possibilities.
+
 #### Required Java Version
 
 The tested version for the batch acquirer is the latest patch for the 1.8, with preference to the Oracle version.
@@ -599,3 +606,4 @@ the properties required to execute the process. The following properties are req
 > spring.batch.job.allow-bean-definition-overriding: true
 
 Please refer to the example in _ops_resources/example_config_
+
