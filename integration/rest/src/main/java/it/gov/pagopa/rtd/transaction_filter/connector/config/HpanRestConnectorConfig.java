@@ -14,7 +14,9 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import javax.net.ssl.*;
 import java.io.FileInputStream;
+import java.net.Authenticator;
 import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.security.KeyStore;
 
@@ -75,16 +77,26 @@ public class HpanRestConnectorConfig {
 
             if (mtlsEnabled) {
                 sslSocketFactory = getSSLSocketFactory();
+                log.debug("enabled socket factory: {}", sslSocketFactory);
             }
 
             if (proxyEnabled) {
                 Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
                 if (proxyUsername != null && !proxyUsername.equals("") &&
                         proxyPassword != null && !proxyPassword.equals("")) {
-                    return new Client.Proxied(sslSocketFactory,null, proxy, proxyUsername, proxyPassword);
+                    Client client = new Client.Proxied(sslSocketFactory,null, proxy,
+                            proxyUsername, proxyPassword);
+                    System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+                    Authenticator.setDefault(new Authenticator() {
+                        protected PasswordAuthentication getPasswordAuthentication() {
+                            return new PasswordAuthentication(proxyUsername, proxyPassword.toCharArray());
+                        }
+                    });
+                    return client;
                 } else {
                     return new Client.Proxied(sslSocketFactory,null, proxy);
                 }
+
             } else {
                 return new Client.Default(sslSocketFactory, null);
             }

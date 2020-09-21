@@ -42,7 +42,9 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
                 File file = new File(
                 resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                                  .concat("/".concat(executionDate))+ "_transactionsErrorRecords.csv");
-                FileUtils.writeStringToFile(file, flatFileParseException.getInput().concat("\n"),
+                String[] lineArray = flatFileParseException.getInput().split("_",2);
+                FileUtils.writeStringToFile(file, (lineArray.length > 1 ?
+                                lineArray[1] : lineArray[0]).concat("\n"),
                         Charset.defaultCharset(), true);
             } catch (Exception e) {
                 log.error(e.getMessage(),e);

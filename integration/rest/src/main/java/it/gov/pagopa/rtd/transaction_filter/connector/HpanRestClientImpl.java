@@ -16,7 +16,15 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalField;
 import java.util.Enumeration;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -50,7 +58,18 @@ class HpanRestClientImpl implements HpanRestClient {
     @Value("${rest-client.hpan.list.listFilePattern}")
     private String listFilePattern;
 
+    @Value("${rest-client.hpan.list.dateValidation}")
+    private Boolean dateValidation;
+
+    @Value("${rest-client.hpan.list.dateValidationHeaderName}")
+    private String dateValidationHeaderName;
+
+    @Value("${rest-client.hpan.list.dateValidationPattern}")
+    private String dateValidationPattern;
+
     private final HpanRestConnector hpanRestConnector;
+
+    private OffsetDateTime validationDate;
 
     /**
     * Method used for recovering the list, if the properties are enabled, an attempt of validating
@@ -63,6 +82,27 @@ class HpanRestClientImpl implements HpanRestClient {
 
         File tempFile = File.createTempFile("hpanDownloadFile", "");
         ResponseEntity<Resource> responseEntity = hpanRestConnector.getList(apiKey);
+
+        if (dateValidation) {
+            String dateString = Objects.requireNonNull(responseEntity.getHeaders()
+                    .get(dateValidationHeaderName)).get(0);
+            DateTimeFormatter dtf = dateValidationPattern != null && !dateValidationPattern.isEmpty() ?
+                    DateTimeFormatter.ofPattern(dateValidationPattern).withZone(ZoneId.systemDefault()):
+                    DateTimeFormatter.RFC_1123_DATE_TIME;
+            OffsetDateTime fileCreationDateTime = ZonedDateTime.parse(dateString, dtf).toOffsetDateTime();
+            OffsetDateTime currentDate = validationDate != null ? validationDate : OffsetDateTime.now();
+            long differenceHours = ChronoUnit.HOURS.between(fileCreationDateTime, this.validationDate != null?
+                    this.validationDate : currentDate);
+            boolean sameMinutes = currentDate.getMinute() == fileCreationDateTime.getMinute();
+            boolean sameSeconds = currentDate.getSecond() == fileCreationDateTime.getSecond();
+            boolean sameMillis = currentDate.get(ChronoField.MILLI_OF_SECOND) ==
+                    fileCreationDateTime.get(ChronoField.MILLI_OF_SECOND);
+
+            if (differenceHours > 24 ||
+                (differenceHours == 24 && (!sameMillis || !sameSeconds || !sameMinutes))) {
+                throw new Exception("Recovered PAN list exceeding a day");
+            }
+        }
 
         try (FileOutputStream tempFileFOS = new FileOutputStream(tempFile)) {
 
@@ -124,6 +164,10 @@ class HpanRestClientImpl implements HpanRestClient {
     @Override
     public String getSalt() {
         return hpanRestConnector.getSalt(apiKey);
+    }
+
+    public void setValidationDate(OffsetDateTime now) {
+        this.validationDate = now;
     }
 
 }
