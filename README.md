@@ -82,6 +82,19 @@ for the proxy host, port, username and password.
 Services hosted through Azure will require a subscription key, this can be configured using the property 
 __rest-client.hpan.api.key__. 
 
+For the list recovery service additional configurations are considered for extracting the resource through a compressed file
+(default setting for the exposed Azure enviroment), enabled through the property __rest-client.hpan.list.attemptExtraction__,
+the resource matching __rest-client.hpan.list.listFilePattern__ is considered to be a valid
+pan list file.
+
+Checksum validation for the recovered file is enabled through the property __rest-client.hpan.list.checksumValidation__,
+the resource checksum is extracted through the header configured with __checksumHeaderName__.
+
+Date validation for the recovered file is enabled through the property __rest-client.hpan.list.dateValidation__,
+the resource creation/update timestamp is extracted through the header configured with __dateValidationHeaderName__, and
+defined with the timestamp pattern defined in __rest-client.hpan.list.dateValidationPattern__, if enabled the execution date
+is compared with the recovered timestamp, if the difference exceeds 24 hours, an exception is thrown.
+
 If generating a keystore from the a .pfx file, use the following command to produce a JKS file:
 
 > keytool -importkeystore -srckeystore <PFX_FILE> -srcstoretype pkcs12 -destkeystore <JKS_FILE> -deststoretype JKS
@@ -328,14 +341,16 @@ __batchConfiguration.TransactionFilterBatch.saltRecovery.enabled__ | Enable the 
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled__ | Enable the recovery service for the pan list | ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath__ | Location where the file containing the list of files will be saved | ${ACQ_BATCH_HPAN_INPUT_PATH:} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Name assigned to the recovered file | ${CSV_TRX_BATCH_HPAN_LIST_FILENAME:} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.attemptExtract__ | Indication if the recovered file will be in the form of a compressed file with checksum | ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:false} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.checksumFilePattern__ | Pattern for the checksum file | ${ACQ_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*checksum.* } | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.listFilePattern__ | Pattern for the list containing the pan list | ${CSV_TRX_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTERN: .*\\.csv } | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved pan files | ${ACQ_BATCH_HPAN_RECOVERY_DAILY_REM_ENABLED:false} | NO | TRUE FALSE
 __rest-client.hpan.base-url__ | Base url for REST services | ${HPAN_SERVICE_URL} | NO
 __rest-client.hpan.api.key__ | Subscription key to be used if calling Azure-hosted API methods | ${HPAN_API_KEY} | NO
-__rest-client.hpan.list.url__ | Endpoint pan list service | /list | NO
-__rest-client.hpan.salt.url__ | Endpoint salt service | /salt | NO
+__rest-client.hpan.list.attemptExtraction__ | Considers the downloaded file as compressed, and attempts an estraction | TRUE | NO | TRUE FALSE
+__rest-client.hpan.list.checksumValidation__ | Attempts to validate the downloaded file using a checksum | TRUE | NO | TRUE FALSE 
+__rest-client.hpan.list.checksumHeaderName__ | Response header containing the file's checksum | x-ms-meta-sha256 | NO
+__rest-client.hpan.list.listFilePattern__ | Pattern to be used for extracting the correct file from the compressed resource | *\\.csv | NO
+__rest-client.hpan.list.dateValidation__ | Enables date validation for the recovered resource | TRUE | NO | TRUE FALSE
+__rest-client.hpan.list.dateValidationHeaderName__ | Response header containing the file's creation/update date | x-ms-creation-time | NO
+__rest-client.hpan.list.dateValidationPattern__ | Response header date timestamp pattern (defaults to RFC-1123) | | NO
 __rest-client.hpan.proxy.enabled__ | Use a Proxied Client | ${HPAN_SERVICE_PROXY_ENABLED:false} | NO
 __rest-client.hpan.proxy.host__ | Proxy host | ${HPAN_SERVICE_PROXY_HOST:} | NO
 __rest-client.hpan.proxy.port__ | Proxy port | ${HPAN_SERVICE_PROXY_PORT:} | NO
