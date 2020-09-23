@@ -56,8 +56,10 @@ property configurations.
 ### REST Services Connection
 
 The Batch Acquirer is configurabile for contacting the salt recovery service, to be applied for the PAN hashing,
-and the pan list recovery service, to be used for filtering the transaction records. To enabled this services,
-the following configuration properties must be enabled: _batchConfiguration.TransactionFilterBatch.saltRecovery.enabled_ 
+and the hpan list recovery service, to be used for filtering the transaction records. The hpan list containing all enabled
+payment instruments up to day "T" will be available for recovery starting from 02:00AM of day  "T"+1.
+To enabled this services, the following configuration properties must be enabled:
+_batchConfiguration.TransactionFilterBatch.saltRecovery.enabled_ 
 and _batchConfiguration.TransactionFilterBatch.hpanList.enabled_. 
 
 Endpoint configurations are through the properties _rest-client.hpan.base-url_, for the base configuration
@@ -85,7 +87,7 @@ __rest-client.hpan.api.key__.
 For the list recovery service additional configurations are considered for extracting the resource through a compressed file
 (default setting for the exposed Azure enviroment), enabled through the property __rest-client.hpan.list.attemptExtraction__,
 the resource matching __rest-client.hpan.list.listFilePattern__ is considered to be a valid
-pan list file.
+hpan list file.
 
 Checksum validation for the recovered file is enabled through the property __rest-client.hpan.list.checksumValidation__,
 the resource checksum is extracted through the header configured with __checksumHeaderName__.
@@ -338,10 +340,10 @@ __connectors.sftpConfigurations.connection.passphrase__ | Indicates the passphra
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
 __batchConfiguration.TransactionFilterBatch.saltRecovery.enabled__ | Enable the recovery service for the salt | ${ACQ_BATCH_SALT_RECOVERY_ENABLED:false} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled__ | Enable the recovery service for the pan list | ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true} | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled__ | Enable the recovery service for the hpan list | ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath__ | Location where the file containing the list of files will be saved | ${ACQ_BATCH_HPAN_INPUT_PATH:} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Name assigned to the recovered file | ${CSV_TRX_BATCH_HPAN_LIST_FILENAME:} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved pan files | ${ACQ_BATCH_HPAN_RECOVERY_DAILY_REM_ENABLED:false} | NO | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved hpan files | ${ACQ_BATCH_HPAN_RECOVERY_DAILY_REM_ENABLED:false} | NO | TRUE FALSE
 __rest-client.hpan.base-url__ | Base url for REST services | ${HPAN_SERVICE_URL} | NO
 __rest-client.hpan.api.key__ | Subscription key to be used if calling Azure-hosted API methods | ${HPAN_API_KEY} | NO
 __rest-client.hpan.list.attemptExtraction__ | Considers the downloaded file as compressed, and attempts an estraction | TRUE | NO | TRUE FALSE
@@ -372,7 +374,7 @@ Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
 __batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles__ | Enable deletion of any processed file (all files related to a batch computation) | ${FLAG_DELETE_LOCAL_FILE:true} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles__ | Define output files management rule | ${ACQ_BATCH_DELETE_LOCAL_FILE:ERROR} | YES | ALWAYS ERROR KEEP
-__batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess__ | Define PAN files management rule on success | ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE} | YES | DELETE ARCHIVE KEEP
+__batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess__ | Define HPAN files management rule on success | ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE} | YES | DELETE ARCHIVE KEEP
 
 #### 8. Batch properties - Repository
 
@@ -420,7 +422,7 @@ a similar purpose in the filtering process and writing phases for the record. Al
 are included in the value for the _rollback_count_.
 
 For the transaction filtering, the _filter_count_ record is useful to keep track of how many transactions have 
-been filtered, due to not matching the stored PAN records. Filtered records are by default not included in the rollback 
+been filtered, due to not matching the stored HPAN records. Filtered records are by default not included in the rollback 
 count, as it's part of the business logic.
 
 ![example of execution with skips in DB](/readme_screens/Skips_DB_Screen.PNG)
