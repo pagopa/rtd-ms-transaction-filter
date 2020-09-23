@@ -120,6 +120,9 @@ rest-client:
       checksumValidation: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_VALIDATION:true}
       checksumHeaderName: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_HEADER:x-ms-meta-sha256}
       listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
+      dateValidation: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION:true}
+      dateValidationHeaderName: ${ACQ_BATCH_HPAN_LIST_DATEVAL_HEADER:last-modified}
+      dateValidationPattern: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION_PATTERN:}
     salt:
       url: /salt
     mtls:
