@@ -622,3 +622,16 @@ the properties required to execute the process. The following properties are req
 
 Please refer to the example in _ops_resources/example_config_
 
+#### SSL Handshake Errors
+
+>feign.RetryableException: sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested target executing GET https://bpd-dev.azure-api.net:443/rtd/payment-instrument-manager/hashed-pans
+>at feign.FeignException.errorExecuting(FeignException.java:213) ~[feign-core-10.4.0.jar!/:na]
+>at feign.SynchronousMethodHandler.executeAndDecode(SynchronousMethodHandler.java:115) ~[feign-core-10.4.0.jar!/:na]
+>at feign.SynchronousMethodHandler.invoke(SynchronousMethodHandler.java:80) ~[feign-core-10.4.0.jar!/:na]
+>at feign.ReflectiveFeign$FeignInvocationHandler.invoke(ReflectiveFeign.java:103) ~[feign-core-10.4.0.jar!/:na]
+>at com.sun.proxy.$Proxy91.getList(Unknown Source) ~[na:na]
+
+As of 24/09/2020 the Baltimore CyberTrust Root, defined as the CA certificate within the
+[Microsoft documentation](https://docs.microsoft.com/it-it/azure/developer/java/sdk/java-sdk-add-certificate-ca-store), 
+may result in failures of the SSL handshake. Either add the [DigiCert Global Root G2 CA certificate](https://cacerts.digicert.com/DigiCertGlobalRootG2.crt)
+within the truststore .jks file, or configure to load the cacerts file, available within the JRE/JDK distributions (default password: changeme).
