@@ -97,19 +97,23 @@ the resource creation/update timestamp is extracted through the header configure
 defined with the timestamp pattern defined in __rest-client.hpan.list.dateValidationPattern__, if enabled the execution date
 is compared with the recovered timestamp, if the difference exceeds 24 hours, an exception is thrown.
 
-If generating a keystore from the a .pfx file, use the following command to produce a JKS file:
+To generate a keystore from the a .pfx file, use the following commands to produce a JKS file:
 
-> keytool -importkeystore -srckeystore <PFX_FILE> -srcstoretype pkcs12 -destkeystore <JKS_FILE> -deststoretype JKS
+> openssl pkcs12 -export -out <PFX_FILE>.pfx -inkey <PRIVATE_KEY_FILE>.key -in <CLIENT_CERTIFICATE_FILE>.pem
 
-To include the [Microsoft Certificate](https://cacert.omniroot.com/bc2025.crt) in the JKS trustore:
+> keytool -importkeystore -srckeystore <PFX_FILE>.pfx -srcstoretype pkcs12 -destkeystore <JKS_FILE> -deststoretype JKS
 
-> keytool -import -trustcacerts -file bc2025.crt -alias microsoft-server -keystore <TRUSTSTORE_FILE> -storepass <password>
+To include the [Microsoft Certificate](https://cacert.omniroot.com/bc2025.crt) (only for SIT env) in the JKS trustore:
+
+> keytool -import -trustcacerts -file bc2025.crt -alias microsoft-server -keystore <TRUSTSTORE_FILE> -storepass <TRUSTSORE_PASSWORD>
 
 To include the Entrust CA Chain ([Entrust Root Certification Authority](https://web.entrust.com/root-certificates/entrust_ev_ca.cer?_ga=2.91873948.700920475.1600672559-1785033261.1600339748), [(Non‐EV SSL) CA - L1K](https://web.entrust.com/root-certificates/entrust_l1k.cer?_ga=2.91873948.700920475.1600672559-1785033261.1600339748), [Cross Cert - L1K](https://web.entrust.com/root-certificates/entrust_l1k_chain_root.cer?_ga=2.87336862.700920475.1600672559-1785033261.1600339748)) in the JKS trustore:
 
-> keytool -import -trustcacerts -file entrust_ev_ca.cer -alias cstar-server -keystore <TRUSTSTORE_FILE> -storepass <password>
-> keytool -import -trustcacerts -file entrust_l1k_chain_root.cer -alias cstar-server -keystore <TRUSTSTORE_FILE> -storepass <password>
-> keytool -import -trustcacerts -file entrust_l1k.cer -alias cstar-server -keystore <TRUSTSTORE_FILE> -storepass <password>
+> keytool -import -trustcacerts -file entrust_ev_ca.cer -alias cstar-server -keystore <TRUSTSTORE_FILE> -storepass <TRUSTSORE_PASSWORD>
+
+> keytool -import -trustcacerts -file entrust_l1k_chain_root.cer -alias cstar-server -keystore <TRUSTSTORE_FILE> -storepass <TRUSTSORE_PASSWORD>
+
+> keytool -import -trustcacerts -file entrust_l1k.cer -alias cstar-server -keystore <TRUSTSTORE_FILE> -storepass <TRUSTSORE_PASSWORD>
 
 Explanations on how to use the java keytool commands are in the
 [official guidelines](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html).
