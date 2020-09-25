@@ -105,6 +105,12 @@ To include the [Microsoft Certificate](https://cacert.omniroot.com/bc2025.crt) i
 
 > keytool -import -trustcacerts -file bc2025.crt -alias microsoft-server -keystore <TRUSTSTORE_FILE> -storepass <password>
 
+To include the Entrust CA Chain ([Entrust Root Certification Authority](https://web.entrust.com/root-certificates/entrust_ev_ca.cer?_ga=2.91873948.700920475.1600672559-1785033261.1600339748), [(Non‐EV SSL) CA - L1K](https://web.entrust.com/root-certificates/entrust_l1k.cer?_ga=2.91873948.700920475.1600672559-1785033261.1600339748), [Cross Cert - L1K](https://web.entrust.com/root-certificates/entrust_l1k_chain_root.cer?_ga=2.87336862.700920475.1600672559-1785033261.1600339748)) in the JKS trustore:
+
+> keytool -import -trustcacerts -file entrust_ev_ca.cer -alias cstar-server -keystore <TRUSTSTORE_FILE> -storepass <password>
+> keytool -import -trustcacerts -file entrust_l1k_chain_root.cer -alias cstar-server -keystore <TRUSTSTORE_FILE> -storepass <password>
+> keytool -import -trustcacerts -file entrust_l1k.cer -alias cstar-server -keystore <TRUSTSTORE_FILE> -storepass <password>
+
 Explanations on how to use the java keytool commands are in the
 [official guidelines](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html).
 
