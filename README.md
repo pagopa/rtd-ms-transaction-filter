@@ -56,8 +56,7 @@ property configurations.
 ### REST Services Connection
 
 The Batch Acquirer is configurabile for contacting the salt recovery service, to be applied for the PAN hashing,
-and the hpan list recovery service, to be used for filtering the transaction records. The hpan list containing all enabled
-payment instruments up to day "T" will be available for recovery starting from 02:00AM of day  "T"+1.
+and the hpan list recovery service, to be used for filtering the transaction records.
 To enabled this services, the following configuration properties must be enabled:
 _batchConfiguration.TransactionFilterBatch.saltRecovery.enabled_ 
 and _batchConfiguration.TransactionFilterBatch.hpanList.enabled_. 
