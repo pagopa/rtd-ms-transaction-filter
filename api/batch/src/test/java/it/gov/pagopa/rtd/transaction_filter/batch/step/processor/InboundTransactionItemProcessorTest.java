@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.MetaDataInstanceFactory;
 
+import javax.validation.ConstraintViolationException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
@@ -146,6 +147,64 @@ public class InboundTransactionItemProcessorTest  {
         expectedException.expect(Exception.class);
         inboundTransactionItemProcessor.process(getInboundTransaction());
         BDDMockito.verify(hpanStoreServiceMock).hasHpan(Mockito.eq(hashPan));
+    }
+
+    @Test
+    public void process_OK_validForReturn() {
+        try {
+            BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq("pan"));
+            BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
+            InboundTransactionItemProcessor inboundTransactionItemProcessor =
+                    new InboundTransactionItemProcessor(hpanStoreServiceMock, false, false);
+
+            InboundTransaction inboundTransaction = getInboundTransaction();
+            inboundTransaction.setOperationType("01");
+            inboundTransaction.setIdTrxIssuer("");
+            InboundTransaction outboundTransaction =
+                    inboundTransactionItemProcessor.process(getInboundTransaction());
+            Assert.assertNotNull(outboundTransaction);
+            Assert.assertEquals(getInboundTransaction(), outboundTransaction);
+            BDDMockito.verify(hpanStoreServiceMock).hasHpan(Mockito.eq("pan"));
+
+            inboundTransaction = getInboundTransaction();
+            inboundTransaction.setOperationType("01");
+            inboundTransaction.setIdTrxIssuer(null);
+            outboundTransaction = inboundTransactionItemProcessor.process(inboundTransaction);
+            Assert.assertNotNull(outboundTransaction);
+            Assert.assertEquals(getInboundTransaction(), outboundTransaction);
+            BDDMockito.verify(hpanStoreServiceMock, Mockito.times(2)).hasHpan(Mockito.eq("pan"));
+
+        } catch (Exception e) {
+            Assert.fail();
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void process_KO_InvalidForGeneral() {
+        try {
+
+            BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq("pan"));
+            BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
+            InboundTransactionItemProcessor inboundTransactionItemProcessor =
+                    new InboundTransactionItemProcessor(hpanStoreServiceMock, false, false);
+            InboundTransaction inboundTransaction = getInboundTransaction();
+            inboundTransaction.setOperationType("00");
+            inboundTransaction.setIdTrxIssuer("");
+            expectedException.expect(AssertionError.class);
+            inboundTransactionItemProcessor.process(inboundTransaction);
+
+            inboundTransaction = getInboundTransaction();
+            inboundTransaction.setOperationType("00");
+            inboundTransaction.setIdTrxIssuer(null);
+            expectedException.expect(AssertionError.class);
+            inboundTransactionItemProcessor.process(inboundTransaction);
+
+
+        } catch (Exception e) {
+            Assert.fail();
+            e.printStackTrace();
+        }
     }
 
     protected InboundTransaction getInboundTransaction() {

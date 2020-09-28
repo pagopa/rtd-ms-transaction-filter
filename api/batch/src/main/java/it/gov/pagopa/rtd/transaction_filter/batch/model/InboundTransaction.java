@@ -58,8 +58,6 @@ public class InboundTransaction {
     String circuitType;
 
     /** Issuer Authorization identifier code for the transaction */
-    @NotNull
-    @NotBlank
     String idTrxIssuer;
 
     /** Identifier correlating to a previous transaction */
