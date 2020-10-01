@@ -180,33 +180,6 @@ public class InboundTransactionItemProcessorTest  {
         }
     }
 
-    @Test
-    public void process_KO_InvalidForGeneral() {
-        try {
-
-            BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq("pan"));
-            BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
-            InboundTransactionItemProcessor inboundTransactionItemProcessor =
-                    new InboundTransactionItemProcessor(hpanStoreServiceMock, false, false);
-            InboundTransaction inboundTransaction = getInboundTransaction();
-            inboundTransaction.setOperationType("00");
-            inboundTransaction.setIdTrxIssuer("");
-            expectedException.expect(AssertionError.class);
-            inboundTransactionItemProcessor.process(inboundTransaction);
-
-            inboundTransaction = getInboundTransaction();
-            inboundTransaction.setOperationType("00");
-            inboundTransaction.setIdTrxIssuer(null);
-            expectedException.expect(AssertionError.class);
-            inboundTransactionItemProcessor.process(inboundTransaction);
-
-
-        } catch (Exception e) {
-            Assert.fail();
-            e.printStackTrace();
-        }
-    }
-
     protected InboundTransaction getInboundTransaction() {
         return InboundTransaction.builder()
                 .idTrxAcquirer("1")
