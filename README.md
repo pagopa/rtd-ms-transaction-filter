@@ -389,12 +389,12 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSucces
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__spring.datasource.driver-class-name__ | Classname for the driver to user | ${BATCH_DB_CLASS_NAME:} | YES
-__spring.datasource.url__ | Database connection url | ${BATCH_DB_CONN_URL:} | YES
-__spring.datasource.username__ | Database username for login | ${BATCH_DB_USERNAME:} | YES
-__spring.datasource.password__ | Database password for user login | ${BATCH_DB_USERNAME:} | YES
-__spring.datasource.hikari.schema__ | Database schema | ${BATCH_DB_SCHEMA:} | YES
-__spring.jpa.database-platform__ | Database dialect | ${BATCH_DB_DIALECT:} | YES
+__spring.datasource.driver-class-name__ | Classname for the driver to user | ${ACQ_BATCH_DB_CLASS_NAME:} | YES
+__spring.datasource.url__ | Database connection url | ${ACQ_BATCH_DB_CONN_URL:} | YES
+__spring.datasource.username__ | Database username for login | ${ACQ_BATCH_DB_USERNAME:} | YES
+__spring.datasource.password__ | Database password for user login | ${ACQ_BATCH_DB_PASSWORD:} | YES
+__spring.datasource.hikari.schema__ | Database schema | ${ACQ_BATCH_DB_SCHEMA:} | YES
+__spring.jpa.database-platform__ | Database dialect | ${ACQ_BATCH_DB_DIALECT:} | YES
 
 ### Appendix 3 - Process Debugging
 
