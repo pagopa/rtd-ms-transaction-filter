@@ -102,6 +102,34 @@ public class HpanListRecoveryTaskletTest {
 
     @SneakyThrows
     @Test
+    public void testRecover_OK_NoRecover_AlreadyDownloaded() {
+
+        File hpanFolder = tempFolder.newFolder("hpanDir");
+        BDDMockito.doReturn(tempFolder.newFile("tempFile")).when(hpanConnectorServiceMock).getHpanList();
+        HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
+        hpanListRecoveryTasklet.setFileName(OffsetDateTime.now().format(fmt).concat("_hpanlist.pgp"));
+        hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
+        hpanListRecoveryTasklet.setHpanListDirectory(hpanFolder.getAbsolutePath());
+        hpanListRecoveryTasklet.setHpanFilePattern("*.pgp");
+        hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(true);
+        hpanListRecoveryTasklet.setRecoveryTaskletEnabled(true);
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        StepContext stepContext = new StepContext(execution);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+        hpanListRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
+
+        BDDMockito.verify(hpanConnectorServiceMock, Mockito.times(1)).getHpanList();
+        Assert.assertEquals(1, FileUtils.listFiles(hpanFolder, new String[]{"pgp"},false).size());
+
+        hpanListRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
+        BDDMockito.verifyNoMoreInteractions(hpanConnectorServiceMock);
+        Assert.assertEquals(1, FileUtils.listFiles(hpanFolder, new String[]{"pgp"},false).size());
+
+    }
+
+    @SneakyThrows
+    @Test
     public void testRecover_KO() {
         File hpanFolder = tempFolder.newFolder("hpanDir");
         BDDMockito.doAnswer(invocationOnMock -> {
