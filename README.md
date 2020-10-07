@@ -265,7 +265,7 @@ maintained, in order to have the correct setup for the batch execution.
                 
   For a batch process that does not use the default in-memory database, execute the following command:
   
-  >java -jar batch-transaction-filter.jar --spring.config.location=file:config -cp <VENDOR_SPECIFIC_JDBC_DRIVER.jar>
+  >java -cp "batch-transaction-filter.jar;<vendor_jar>" -Dloader.main=RtdTransactionFilterApplication org.springframework.boot.loader.PropertiesLauncher -jar .\batch-transaction-filter.jar --spring.config.location=file:config\
                                                                                                                                                                                                                                                                                                                                                                                                                               
 ### Appendix 1 - Public PGP Key
 
