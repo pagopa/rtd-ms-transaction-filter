@@ -74,7 +74,7 @@ batchConfiguration:
       saveHashing: ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:true}
       linesToSkip: ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0}
       deleteProcessedFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:false}
-      deleteOutputFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:ERROR}
+      deleteOutputFiles: ${ACQ_BATCH_DELETE_OUTPUT_FILE:ERROR}
       manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE}
       transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
       sftp:
@@ -88,7 +88,6 @@ batchConfiguration:
       directoryPath: ${ACQ_BATCH_HPAN_INPUT_PATH:C:/batch-transaction-filter/resources/hpans}
       filename: ${ACQ_BATCH_HPAN_LIST_FILENAME:hpanList}${ACQ_BATCH_INPUT_FILE_PATTERN:.csv}
       attemptExtract: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
-      checksumFilePattern: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_FILE_PATTE
       listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
 
 connectors:
