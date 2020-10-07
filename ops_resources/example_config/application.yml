@@ -112,7 +112,7 @@ rest-client:
       host: ${HPAN_SERVICE_PROXY_HOST:localhost}
       port: ${HPAN_SERVICE_PROXY_PORT:8866}
     api:
-      key: test
+      key: ${HPAN_SERVICE_API_KEY:test}
     list:
       url: /hashed-pans
       attemptExtraction: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
