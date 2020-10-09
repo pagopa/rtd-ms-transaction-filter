@@ -561,7 +561,7 @@ The stacktrace following the exception indicates the cause of the error that exc
 
 This occurs when inserting a bank identification number that does not match the expected length (the standard value is 8,
 but 6 is at the moment also allowed). In cases where the value does has less characters, the value must be juxtaposed 
-with Zero-Padding. Refer to [ops_resources/RTD_Acquirer_Interface_V2.pdf](ops_resources/RTD_Acquirer_Interface_V2.pdf).
+with Zero-Padding. Refer to [ops_resources/RTD_Acquirer_Interface_V3.pdf](ops_resources/RTD_Acquirer_Interface_V3.pdf).
 
 #### Missing Datasource
 
