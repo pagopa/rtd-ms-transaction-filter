@@ -44,7 +44,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
 
         inboundTransactions.forEach(inboundTransaction -> {
 
-            log.info("Error during during transaction record writing - {},filename: {},line: {}" ,
+            log.error("Error during during transaction record writing - {},filename: {},line: {}" ,
                     throwable.getMessage() , inboundTransaction.getFilename() ,inboundTransaction.getLineNumber());
 
             try {

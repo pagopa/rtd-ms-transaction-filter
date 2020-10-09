@@ -35,7 +35,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
         if (result == null) {
 
-            if (log.isInfoEnabled()) {
+            if (log.isDebugEnabled()) {
                     log.info("Filtered transaction record on filename: "
                             + item.getFilename() + " ,line: " +
                             item.getLineNumber());
@@ -63,7 +63,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     public void onProcessError(InboundTransaction item, Exception throwable) {
 
-        log.info("Error during during transaction processing, filename: {},line: {}",
+        log.error("Error during during transaction processing, filename: {},line: {}",
                 item.getFilename(), item.getLineNumber());
 
         try {

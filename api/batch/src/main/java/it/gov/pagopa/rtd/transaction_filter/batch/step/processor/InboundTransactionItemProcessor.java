@@ -27,6 +27,10 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
     private final Boolean applyHashing;
     private final Boolean saveHashing;
 
+    private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+    private static final Validator validator = factory.getValidator();
+
+
     /**
      * Validates the input {@link InboundTransaction}, and filters the model, if the pan is not available
      * in the {@link HpanStoreService}. Optionally applies the hashing function to the transaction PAN
@@ -37,9 +41,6 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
      */
     @Override
     public InboundTransaction process(InboundTransaction inboundTransaction) {
-
-        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
-        Validator validator = factory.getValidator();
 
         Set<ConstraintViolation<InboundTransaction>> constraintViolations = validator.validate(inboundTransaction);
         if (constraintViolations.size() > 0) {
