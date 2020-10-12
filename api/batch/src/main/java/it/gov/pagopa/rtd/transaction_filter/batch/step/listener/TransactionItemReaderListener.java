@@ -22,20 +22,35 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
 
     private String errorTransactionsLogsPath;
     private String executionDate;
+    private Boolean enableOnErrorLogging;
+    private Boolean enableOnErrorFileLogging;
+    private Boolean enableAfterReadLogging;
+    private Long loggingFrequency;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
     public void beforeRead() {}
 
     public void afterRead(InboundTransaction item) {
-        log.trace("Read transaction record on filename: {}, line: {}", item.getFilename(), item.getLineNumber());
+
+        if (enableAfterReadLogging) {
+            if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
+                log.info("Read {} lines on file: {}", item.getLineNumber(), item.getFilename());
+            } else {
+                log.debug("Read transaction record on filename: {}, line: {}",
+                        item.getFilename(), item.getLineNumber());
+            }
+        }
+
     }
 
     public void onReadError(Exception throwable) {
 
-        log.error("#### Error while reading a transaction record - {}", throwable.getMessage());
+        if (enableOnErrorLogging) {
+            log.error("#### Error while reading a transaction record - {}", throwable.getMessage());
+        }
 
-        if (throwable instanceof FlatFileParseException) {
+        if (enableOnErrorFileLogging && throwable instanceof FlatFileParseException) {
             FlatFileParseException flatFileParseException = (FlatFileParseException) throwable;
 
             try {
@@ -43,8 +58,8 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
                 resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                                  .concat("/".concat(executionDate))+ "_transactionsErrorRecords.csv");
                 String[] lineArray = flatFileParseException.getInput().split("_",2);
-                FileUtils.writeStringToFile(file, (lineArray.length > 1 ?
-                                lineArray[1] : lineArray[0]).concat("\n"),
+                FileUtils.writeStringToFile(
+                        file, (lineArray.length > 1 ? lineArray[1] : lineArray[0]).concat("\n"),
                         Charset.defaultCharset(), true);
             } catch (Exception e) {
                 log.error(e.getMessage(),e);

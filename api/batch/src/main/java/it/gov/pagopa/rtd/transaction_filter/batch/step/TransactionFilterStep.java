@@ -74,6 +74,14 @@ public class TransactionFilterStep {
     private Boolean transactionSenderEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath}")
     private String transactionLogsPath;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterReadLogging}")
+    private Boolean enableAfterReadLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnErrorFileLogging}")
+    private Boolean enableOnErrorFileLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnErrorLogging}")
+    private Boolean enableOnErrorLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency}")
+    private Long loggingFrequency;
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
@@ -254,10 +262,14 @@ public class TransactionFilterStep {
 
     @Bean
     public TransactionItemReaderListener transactionItemReaderListener(String executionDate) {
-        TransactionItemReaderListener transactionsSkipListener = new TransactionItemReaderListener();
-        transactionsSkipListener.setExecutionDate(executionDate);
-        transactionsSkipListener.setErrorTransactionsLogsPath(transactionLogsPath);
-        return transactionsSkipListener;
+        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
+        transactionItemReaderListener.setExecutionDate(executionDate);
+        transactionItemReaderListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionItemReaderListener.setEnableAfterReadLogging(enableAfterReadLogging);
+        transactionItemReaderListener.setLoggingFrequency(loggingFrequency);
+        transactionItemReaderListener.setEnableOnErrorFileLogging(enableOnErrorFileLogging);
+        transactionItemReaderListener.setEnableOnErrorLogging(enableOnErrorLogging);
+        return transactionItemReaderListener;
     }
 
     @Bean
