@@ -40,7 +40,7 @@ Please refer to the properties in __Appendix 2 - Configuration properties__ to d
 __Note:__ As of today, Oracle RDBMS are subject to potential issues regarding the isolation level, as reported
 in the following [Issue Thread](https://github.com/spring-projects/spring-batch/issues/1127), the general approach to
 attempt to avoid similar problems, is to reduce the isolation level defined in the Spring Batch jobRepository 
-to either _ISOLAION_READ_COMMITTED_, or _ISOLAION_READ_UNCOMMITTED_. this is doable using the configuration property
+to either _ISOLATION_READ_COMMITTED_, or _ISOLATION_READ_UNCOMMITTED_. this is doable using the configuration property
 _batchConfiguration.TransactionFilterBatch.isolationForCreate_.
 
 ### Execution methods
@@ -381,8 +381,8 @@ __rest-client.hpan.trust-store.password__ | Trust-store password | ${HPAN_SERVIC
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles__ | Enable deletion of any processed file (all files related to a batch computation) | ${FLAG_DELETE_LOCAL_FILE:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles__ | Define output files management rule | ${ACQ_BATCH_DELETE_LOCAL_FILE:ERROR} | YES | ALWAYS ERROR KEEP
+__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles__ | Enable deletion of any processed file (all files related to a batch computation) | ${ACQ_BATCH_DELETE_LOCAL_FILE:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles__ | Define output files management rule | ${ACQ_BATCH_DELETE_OUTPUT_FILE:ERROR} | YES | ALWAYS ERROR KEEP
 __batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess__ | Define HPAN files management rule on success | ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE} | YES | DELETE ARCHIVE KEEP
 
 #### 8. Batch properties - Repository
