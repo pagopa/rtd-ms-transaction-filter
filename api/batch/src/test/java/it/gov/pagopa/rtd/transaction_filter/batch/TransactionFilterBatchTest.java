@@ -68,7 +68,6 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.panList.applyHashing=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath=classpath:/test-encrypt/**/transactions/*trx*.csv",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath=classpath:/test-encrypt/output",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath=classpath:/test-encrypt/errorLogs",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath=classpath:/test-encrypt/publicKey.asc",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern=MM/dd/yyyy HH:mm:ss",
@@ -79,9 +78,8 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles=false",
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.transactionSender.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=false"
-       }
+                "batchConfiguration.TransactionFilterBatch.transactionSender.enabled=false"
+        }
 )
 public class TransactionFilterBatchTest {
 
@@ -131,7 +129,7 @@ public class TransactionFilterBatchTest {
         panPgpFOS.close();
 
         File file = new File(resolver.getResource("classpath:/test-encrypt/output")
-                .getFile().getAbsolutePath()+"/FilteredRecords_test-trx.csv");
+                .getFile().getAbsolutePath()+"/test-trx.csv");
 
         if (!file.exists()) {
             file.createNewFile();
