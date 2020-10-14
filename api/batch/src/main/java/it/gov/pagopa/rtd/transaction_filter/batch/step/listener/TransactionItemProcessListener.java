@@ -5,14 +5,12 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.batch.core.ItemProcessListener;
-import org.springframework.batch.core.ItemReadListener;
-import org.springframework.batch.item.file.FlatFileParseException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.List;
 
 /**
  * Implementation of {@link ItemProcessListener}, to be used to log and/or store records
@@ -20,11 +18,14 @@ import java.util.List;
  */
 @Slf4j
 @Data
-public class TransactionItemProcessListener implements ItemProcessListener<InboundTransaction,InboundTransaction> {
+public class TransactionItemProcessListener implements ItemProcessListener<InboundTransaction, InboundTransaction> {
 
     private String errorTransactionsLogsPath;
     private String executionDate;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+
+    @Value(value = "${logController}")
+    private boolean logController;
 
     @Override
     public void beforeProcess(InboundTransaction inboundTransaction) {
@@ -35,10 +36,10 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
         if (result == null) {
 
-            if (log.isDebugEnabled()) {
-                    log.info("Filtered transaction record on filename: "
-                            + item.getFilename() + " ,line: " +
-                            item.getLineNumber());
+            if (log.isDebugEnabled() && logController) {
+                log.info("Filtered transaction record on filename: "
+                        + item.getFilename() + " ,line: " +
+                        item.getLineNumber());
             }
 
             try {

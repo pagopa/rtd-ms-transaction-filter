@@ -1,7 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
+import it.gov.pagopa.rtd.transaction_filter.batch.config.LoggerRule;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -13,13 +15,16 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import java.io.File;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 
+@Slf4j
 public class TransactionItemProcessListenerTest {
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
             new File(getClass().getResource("/test-encrypt").getFile()));
+
+    @Rule
+    public final LoggerRule loggerRule = new LoggerRule();
 
     @SneakyThrows
     @Test
@@ -67,8 +72,34 @@ public class TransactionItemProcessListenerTest {
         Assert.assertEquals(1,
                 FileUtils.listFiles(
                         resolver.getResources("classpath:/test-encrypt/**/testProcess")[0].getFile(),
-                        new String[]{"csv"},false).size());
+                        new String[]{"csv"}, false).size());
 
+    }
+
+    @Test
+    public void logEnabled_OK() {
+
+        boolean logController = true;
+
+        if (log.isDebugEnabled() && logController) {
+            log.info("Some Log");
+        }
+
+        Assert.assertTrue(logController);
+        Assert.assertEquals(loggerRule.getFormattedMessages().size(), 1);
+    }
+
+    @Test
+    public void logEnabled_KO() {
+
+        boolean logController = false;
+
+        if (log.isDebugEnabled() && logController) {
+            log.info("Some Log");
+        }
+
+        Assert.assertFalse(logController);
+        Assert.assertEquals(loggerRule.getFormattedMessages().size(), 0);
     }
 
     @After
