@@ -33,12 +33,44 @@ public class TransactionItemWriterListenerTest {
 
         TransactionItemWriterListener transactionItemWriterListener = new TransactionItemWriterListener();
         transactionItemWriterListener.setExecutionDate(executionDate);
+        transactionItemWriterListener.setEnableOnErrorLogging(true);
+        transactionItemWriterListener.setEnableAfterWriteLogging(true);
+        transactionItemWriterListener.setEnableOnErrorFileLogging(true);
+        transactionItemWriterListener.setLoggingFrequency(1L);
         transactionItemWriterListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemWriterListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemWriterListener.onWriteError(new Exception(), Collections.singletonList(InboundTransaction
                 .builder().filename("test").lineNumber(1).build()));
 
         Assert.assertEquals(1,
+                FileUtils.listFiles(
+                        resolver.getResources("classpath:/test-encrypt/**/testWriter")[0].getFile(),
+                        new String[]{"csv"},false).size());
+
+    }
+
+    @SneakyThrows
+    @Test
+    public void onWriteError_OK_NoFileWritten() {
+
+        File folder = tempFolder.newFolder("testWriter");
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        String executionDate = OffsetDateTime.now().format(fmt);
+
+        TransactionItemWriterListener transactionItemWriterListener = new TransactionItemWriterListener();
+        transactionItemWriterListener.setExecutionDate(executionDate);
+        transactionItemWriterListener.setEnableOnErrorLogging(true);
+        transactionItemWriterListener.setEnableAfterWriteLogging(true);
+        transactionItemWriterListener.setEnableOnErrorFileLogging(false);
+        transactionItemWriterListener.setLoggingFrequency(1L);
+        transactionItemWriterListener.setResolver(new PathMatchingResourcePatternResolver());
+        transactionItemWriterListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
+        transactionItemWriterListener.onWriteError(new Exception(), Collections.singletonList(InboundTransaction
+                .builder().filename("test").lineNumber(1).build()));
+
+        Assert.assertEquals(0,
                 FileUtils.listFiles(
                         resolver.getResources("classpath:/test-encrypt/**/testWriter")[0].getFile(),
                         new String[]{"csv"},false).size());

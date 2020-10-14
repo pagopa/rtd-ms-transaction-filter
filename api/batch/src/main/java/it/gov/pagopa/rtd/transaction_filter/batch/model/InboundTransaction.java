@@ -20,7 +20,8 @@ import java.time.OffsetDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = {"idTrxAcquirer", "acquirerCode", "trxDate"}, callSuper = false)
-public class InboundTransaction {
+public class
+InboundTransaction {
 
     /** Unique Acquirer transaction identifier */
     @NotNull
@@ -99,5 +100,6 @@ public class InboundTransaction {
     /** Internal fields, describing the lineNumber and filename for the recored used to extract the other fields */
     Integer lineNumber;
     String filename;
+    Boolean valid;
 
 }

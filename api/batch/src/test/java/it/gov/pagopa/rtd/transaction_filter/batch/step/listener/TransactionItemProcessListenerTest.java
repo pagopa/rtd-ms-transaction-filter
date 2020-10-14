@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.File;
@@ -36,18 +37,17 @@ public class TransactionItemProcessListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemProcessListener TransactionItemProcessListener = new TransactionItemProcessListener();
-        TransactionItemProcessListener.setExecutionDate(executionDate);
-        TransactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
-        TransactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
-        TransactionItemProcessListener.afterProcess(
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        transactionItemProcessListener.setExecutionDate(executionDate);
+        transactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
+        transactionItemProcessListener.setEnableOnErrorLogging(true);
+        transactionItemProcessListener.setEnableAfterProcessLogging(true);
+        transactionItemProcessListener.setEnableOnErrorFileLogging(true);
+        transactionItemProcessListener.setLoggingFrequency(1L);
+        transactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
+        transactionItemProcessListener.afterProcess(
                 InboundTransaction.builder().filename("test").lineNumber(1).build(),
                 null);
-
-        Assert.assertEquals(1,
-                FileUtils.listFiles(
-                        resolver.getResources("classpath:/test-encrypt/**/testProcess")[0].getFile(),
-                        new String[]{"csv"},false).size());
 
     }
 
@@ -61,11 +61,15 @@ public class TransactionItemProcessListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemProcessListener TransactionItemProcessListener = new TransactionItemProcessListener();
-        TransactionItemProcessListener.setExecutionDate(executionDate);
-        TransactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
-        TransactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
-        TransactionItemProcessListener.onProcessError(
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        transactionItemProcessListener.setExecutionDate(executionDate);
+        transactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
+        transactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
+        transactionItemProcessListener.setEnableOnErrorLogging(true);
+        transactionItemProcessListener.setEnableAfterProcessLogging(true);
+        transactionItemProcessListener.setEnableOnErrorFileLogging(true);
+        transactionItemProcessListener.setLoggingFrequency(1L);
+        transactionItemProcessListener.onProcessError(
                 InboundTransaction.builder().filename("test").lineNumber(1).build(),
                 new Exception());
 
@@ -76,31 +80,36 @@ public class TransactionItemProcessListenerTest {
 
     }
 
+
+    @SneakyThrows
     @Test
-    public void logEnabled_OK() {
+    public void onProcessError_OK_NoFileWritten() {
 
-        boolean logController = true;
+        File folder = tempFolder.newFolder("testProcess");
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-        if (log.isDebugEnabled() && logController) {
-            log.info("Some Log");
-        }
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        String executionDate = OffsetDateTime.now().format(fmt);
 
-        Assert.assertTrue(logController);
-        Assert.assertEquals(loggerRule.getFormattedMessages().size(), 1);
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        transactionItemProcessListener.setExecutionDate(executionDate);
+        transactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
+        transactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
+        transactionItemProcessListener.setEnableOnErrorLogging(true);
+        transactionItemProcessListener.setEnableAfterProcessLogging(true);
+        transactionItemProcessListener.setEnableOnErrorFileLogging(false);
+        transactionItemProcessListener.setLoggingFrequency(1L);
+        transactionItemProcessListener.onProcessError(
+                InboundTransaction.builder().filename("test").lineNumber(1).build(),
+                new Exception());
+
+        Assert.assertEquals(0,
+                FileUtils.listFiles(
+                        resolver.getResources("classpath:/test-encrypt/**/testProcess")[0].getFile(),
+                        new String[]{"csv"}, false).size());
+
     }
 
-    @Test
-    public void logEnabled_KO() {
-
-        boolean logController = false;
-
-        if (log.isDebugEnabled() && logController) {
-            log.info("Some Log");
-        }
-
-        Assert.assertFalse(logController);
-        Assert.assertEquals(loggerRule.getFormattedMessages().size(), 0);
-    }
 
     @After
     public void tearDown() {

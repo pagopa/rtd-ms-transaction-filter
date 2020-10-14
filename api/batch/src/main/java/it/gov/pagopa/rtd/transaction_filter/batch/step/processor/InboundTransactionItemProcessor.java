@@ -56,9 +56,11 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                 inboundTransaction.setPan(applyHashing ?
                         hpan : DigestUtils.sha256Hex(inboundTransaction.getPan()+hpanStoreService.getSalt()));
             }
-            return inboundTransaction;
+        } else {
+            inboundTransaction.setValid(false);
         }
-        return null;
+
+        return inboundTransaction;
     }
 
 }

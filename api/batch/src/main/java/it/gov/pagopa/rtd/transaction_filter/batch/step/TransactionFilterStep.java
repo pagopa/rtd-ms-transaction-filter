@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.classifiers.InboundTransactionClassifier;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemProcessListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemReaderListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemWriterListener;
@@ -23,9 +24,11 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.Partitioner;
+import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.*;
+import org.springframework.batch.item.support.ClassifierCompositeItemWriter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -76,10 +79,22 @@ public class TransactionFilterStep {
     private String transactionLogsPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterReadLogging}")
     private Boolean enableAfterReadLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnErrorFileLogging}")
-    private Boolean enableOnErrorFileLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnErrorLogging}")
-    private Boolean enableOnErrorLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorFileLogging}")
+    private Boolean enableOnReadErrorFileLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorLogging}")
+    private Boolean enableOnReadErrorLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging}")
+    private Boolean enableAfterProcessLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnProcessErrorFileLogging}")
+    private Boolean enableOnProcessErrorFileLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnProcessErrorLogging}")
+    private Boolean enableOnProcessErrorLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterWriteLogging}")
+    private Boolean enableAfterWriteLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorFileLogging}")
+    private Boolean enableOnWriteErrorFileLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorLogging}")
+    private Boolean enableOnWriteErrorLogging;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency}")
     private Long loggingFrequency;
 
@@ -145,7 +160,7 @@ public class TransactionFilterStep {
      * @return instance of the LineTokenizer to be used in the itemReader configured for the job
      */
     @Bean
-    public BeanWrapperFieldExtractor transactionWriterFieldExtractor() {
+    public BeanWrapperFieldExtractor<InboundTransaction> transactionWriterFieldExtractor() {
         BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
         extractor.setNames(new String[] {
                 "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
@@ -159,7 +174,7 @@ public class TransactionFilterStep {
      * @return instance of the LineTokenizer to be used in the itemReader configured for the job
      */
     @Bean
-    public LineAggregator transactionWriterAggregator() {
+    public LineAggregator<InboundTransaction> transactionWriterAggregator() {
         DelimitedLineAggregator<InboundTransaction> delimitedLineTokenizer = new DelimitedLineAggregator<>();
         delimitedLineTokenizer.setDelimiter(";");
         delimitedLineTokenizer.setFieldExtractor(transactionWriterFieldExtractor());
@@ -185,6 +200,37 @@ public class TransactionFilterStep {
         flatFileItemWriter.setResource(
                 resolver.getResource(outputDirectoryPath.concat("/".concat(filename[filename.length-1]))));
         return flatFileItemWriter;
+    }
+
+    /**
+     *
+     * @param file
+     *          Late-Binding parameter to be used as the resource for the reader instance
+     * @return instance of the itemReader to be used in the first step of the configured job
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public FlatFileItemWriter<InboundTransaction> transactionFilteredItemWriter(
+            @Value("#{stepExecutionContext['fileName']}") String file) {
+        FlatFileItemWriter<InboundTransaction> flatFileItemWriter = new FlatFileItemWriter<>();
+        flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
+        file = file.replaceAll("\\\\", "/");
+        String[] filename = file.split("/");
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        flatFileItemWriter.setResource(
+                resolver.getResource(transactionLogsPath.concat("/"
+                        .concat("FilteredRecords_"+filename[filename.length-1]))));
+        return flatFileItemWriter;
+    }
+
+    @Bean
+    public ClassifierCompositeItemWriter<InboundTransaction> classifierTransactionCompositeItemWriter() throws Exception {
+        ClassifierCompositeItemWriter<InboundTransaction> compositeItemWriter = new ClassifierCompositeItemWriter<>();
+        compositeItemWriter.setClassifier(
+                new InboundTransactionClassifier(transactionItemWriter(null),
+                transactionFilteredItemWriter(null)));
+        return compositeItemWriter;
     }
 
 
@@ -242,11 +288,13 @@ public class TransactionFilterStep {
                 .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                 .reader(transactionItemReader(null))
                 .processor(transactionItemProcessor(hpanStoreService))
-                .writer(transactionItemWriter(null))
+                .writer(classifierTransactionCompositeItemWriter())
                 .faultTolerant()
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
                 .skip(Exception.class)
+                .stream(transactionItemWriter(null))
+                .stream(transactionFilteredItemWriter(null))
                 .listener(transactionItemReaderListener(executionDate))
                 .listener(transactionsItemProcessListener(executionDate))
                 .listener(transactionsItemWriteListener(executionDate))
@@ -267,8 +315,8 @@ public class TransactionFilterStep {
         transactionItemReaderListener.setErrorTransactionsLogsPath(transactionLogsPath);
         transactionItemReaderListener.setEnableAfterReadLogging(enableAfterReadLogging);
         transactionItemReaderListener.setLoggingFrequency(loggingFrequency);
-        transactionItemReaderListener.setEnableOnErrorFileLogging(enableOnErrorFileLogging);
-        transactionItemReaderListener.setEnableOnErrorLogging(enableOnErrorLogging);
+        transactionItemReaderListener.setEnableOnErrorFileLogging(enableOnReadErrorFileLogging);
+        transactionItemReaderListener.setEnableOnErrorLogging(enableOnReadErrorLogging);
         return transactionItemReaderListener;
     }
 
@@ -277,6 +325,10 @@ public class TransactionFilterStep {
         TransactionItemWriterListener transactionsItemWriteListener = new TransactionItemWriterListener();
         transactionsItemWriteListener.setExecutionDate(executionDate);
         transactionsItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionsItemWriteListener.setEnableAfterWriteLogging(enableAfterWriteLogging);
+        transactionsItemWriteListener.setLoggingFrequency(loggingFrequency);
+        transactionsItemWriteListener.setEnableOnErrorFileLogging(enableOnWriteErrorFileLogging);
+        transactionsItemWriteListener.setEnableOnErrorLogging(enableOnWriteErrorLogging);
         return transactionsItemWriteListener;
     }
 
@@ -285,6 +337,10 @@ public class TransactionFilterStep {
         TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionItemProcessListener.setEnableAfterProcessLogging(enableAfterProcessLogging);
+        transactionItemProcessListener.setLoggingFrequency(loggingFrequency);
+        transactionItemProcessListener.setEnableOnErrorFileLogging(enableOnProcessErrorFileLogging);
+        transactionItemProcessListener.setEnableOnErrorLogging(enableOnProcessErrorLogging);
         return transactionItemProcessListener;
     }
 
