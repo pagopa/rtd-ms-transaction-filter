@@ -85,6 +85,8 @@ public class TransactionFilterStep {
     private Boolean enableOnReadErrorLogging;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging}")
     private Boolean enableAfterProcessLogging;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging}")
+    private Boolean enableAfterProcessFileLogging;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnProcessErrorFileLogging}")
     private Boolean enableOnProcessErrorFileLogging;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnProcessErrorLogging}")
@@ -284,6 +286,31 @@ public class TransactionFilterStep {
     public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService) throws Exception {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
+        return enableAfterProcessFileLogging ?
+                simpleWorkerStep(hpanStoreService, executionDate) :
+                compositeWorkerStep(hpanStoreService, executionDate);
+    }
+
+
+    public Step simpleWorkerStep(HpanStoreService hpanStoreService, String executionDate) throws Exception {
+            return stepBuilderFactory.get("transaction-filter-worker-step")
+                    .<InboundTransaction, InboundTransaction>chunk(chunkSize)
+                    .reader(transactionItemReader(null))
+                    .processor(transactionItemProcessor(hpanStoreService))
+                    .writer(transactionItemWriter(null))
+                    .faultTolerant()
+                    .skipLimit(skipLimit)
+                    .noSkip(FileNotFoundException.class)
+                    .skip(Exception.class)
+                    .listener(transactionItemReaderListener(executionDate))
+                    .listener(transactionsItemProcessListener(executionDate))
+                    .listener(transactionsItemWriteListener(executionDate))
+                    .listener(transactionStepListener())
+                    .taskExecutor(batchConfig.readerTaskExecutor())
+                    .build();
+    }
+
+    public Step compositeWorkerStep(HpanStoreService hpanStoreService, String executionDate) throws Exception {
         return stepBuilderFactory.get("transaction-filter-worker-step")
                 .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                 .reader(transactionItemReader(null))
