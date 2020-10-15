@@ -78,7 +78,8 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.deleteLocalFiles=false",
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.transactionSender.enabled=false"
+                "batchConfiguration.TransactionFilterBatch.transactionSender.enabled=false",
+                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=false"
         }
 )
 public class TransactionFilterBatchTest {
