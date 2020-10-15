@@ -5,14 +5,12 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.batch.core.ItemProcessListener;
-import org.springframework.batch.core.ItemReadListener;
-import org.springframework.batch.item.file.FlatFileParseException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.lang.Nullable;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.List;
 
 /**
  * Implementation of {@link ItemProcessListener}, to be used to log and/or store records
@@ -20,42 +18,39 @@ import java.util.List;
  */
 @Slf4j
 @Data
-public class TransactionItemProcessListener implements ItemProcessListener<InboundTransaction,InboundTransaction> {
+public class TransactionItemProcessListener implements ItemProcessListener<InboundTransaction, InboundTransaction> {
 
     private String errorTransactionsLogsPath;
     private String executionDate;
+    private Boolean enableOnErrorLogging;
+    private Boolean enableOnErrorFileLogging;
+    private Boolean enableAfterProcessLogging;
+    private Long loggingFrequency;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
-    public void beforeProcess(InboundTransaction inboundTransaction) {
-
-    }
+    public void beforeProcess(InboundTransaction inboundTransaction) {}
 
     public void afterProcess(InboundTransaction item, @Nullable InboundTransaction result) {
 
-        if (result == null) {
-
-            if (log.isDebugEnabled()) {
-                    log.info("Filtered transaction record on filename: "
-                            + item.getFilename() + " ,line: " +
+        if (enableAfterProcessLogging) {
+            if (result == null || !result.getValid()) {
+                if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
+                    log.info("Filtered transaction record on filename: {},line: {}",
+                            item.getFilename(),
                             item.getLineNumber());
-            }
-
-            try {
-                File file = new File(
-                        resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
-                                .concat("/".concat(executionDate)) + "_transactionsFilteredRecords.csv");
-                FileUtils.writeStringToFile(file, buildCsv(item), Charset.defaultCharset(), true);
-            } catch (Exception e) {
-                if (log.isErrorEnabled()) {
-                    log.error(e.getMessage(), e);
+                } else {
+                    log.debug("Filtered transaction record on filename: {},line: {}",
+                            item.getFilename(),
+                            item.getLineNumber());
                 }
-            }
-
-        } else {
-            if (log.isDebugEnabled()) {
-                log.debug("Processed transaction record on filename: " + item.getFilename() + " ,line: " +
-                        item.getLineNumber());
+            } else {
+                if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
+                    log.info("Processed {} lines on file: {}", item.getLineNumber(), item.getFilename());
+                } else {
+                    log.debug("Processed transaction record on filename: {}, line: {}",
+                            item.getFilename(), item.getLineNumber());
+                }
             }
         }
 
@@ -63,18 +58,20 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     public void onProcessError(InboundTransaction item, Exception throwable) {
 
-        log.error("Error during during transaction processing, filename: {},line: {}",
-                item.getFilename(), item.getLineNumber());
+        if (enableOnErrorLogging) {
+            log.error("Error during during transaction processing, filename: {},line: {}",
+                    item.getFilename(), item.getLineNumber());
+        }
 
-        try {
-
-            File file = new File(
-                    resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
-                            .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
-            FileUtils.writeStringToFile(file,buildCsv(item) , Charset.defaultCharset(), true);
-
-        } catch (Exception e) {
-            log.error(e.getMessage(),e);
+        if (enableOnErrorFileLogging) {
+            try {
+                File file = new File(
+                        resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
+                                .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
+                FileUtils.writeStringToFile(file, buildCsv(item), Charset.defaultCharset(), true);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
         }
 
     }

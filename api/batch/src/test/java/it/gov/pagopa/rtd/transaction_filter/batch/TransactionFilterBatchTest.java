@@ -79,7 +79,7 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSender.enabled=false"
-       }
+        }
 )
 public class TransactionFilterBatchTest {
 

@@ -69,7 +69,7 @@ public class InboundTransactionItemProcessorTest  {
                 new InboundTransactionItemProcessor(hpanStoreServiceMock, false, false);
         InboundTransaction inboundTransaction =
                 inboundTransactionItemProcessor.process(getInboundTransaction());
-        Assert.assertNull(inboundTransaction);
+        Assert.assertFalse(inboundTransaction.getValid());
         BDDMockito.verify(hpanStoreServiceMock).hasHpan(Mockito.eq("pan"));
     }
 
@@ -197,6 +197,7 @@ public class InboundTransactionItemProcessorTest  {
                 .acquirerId("0")
                 .terminalId("0")
                 .bin("000001")
+                .valid(true)
                 .build();
     }
 }

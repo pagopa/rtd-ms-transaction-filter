@@ -34,6 +34,10 @@ public class TransactionItemReaderListenerTest {
         TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
         transactionItemReaderListener.setExecutionDate(executionDate);
         transactionItemReaderListener.setResolver(new PathMatchingResourcePatternResolver());
+        transactionItemReaderListener.setEnableOnErrorLogging(true);
+        transactionItemReaderListener.setEnableOnErrorFileLogging(true);
+        transactionItemReaderListener.setEnableAfterReadLogging(true);
+        transactionItemReaderListener.setLoggingFrequency(1L);
         transactionItemReaderListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemReaderListener.afterRead(InboundTransaction
                 .builder().filename("test").lineNumber(1).build());
@@ -58,6 +62,9 @@ public class TransactionItemReaderListenerTest {
         TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
         transactionItemReaderListener.setExecutionDate(executionDate);
         transactionItemReaderListener.setResolver(new PathMatchingResourcePatternResolver());
+        transactionItemReaderListener.setEnableOnErrorLogging(true);
+        transactionItemReaderListener.setEnableOnErrorFileLogging(true);
+        transactionItemReaderListener.setEnableAfterReadLogging(true);
         transactionItemReaderListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemReaderListener.onReadError(new FlatFileParseException("Parsing error at line: " +
                 1, new Exception(), "input", 1));
@@ -68,6 +75,34 @@ public class TransactionItemReaderListenerTest {
                         new String[]{"csv"},false).size());
 
     }
+
+    @SneakyThrows
+    @Test
+    public void onReadError_OK_NoFileWritten() {
+
+        File folder = tempFolder.newFolder("testListener");
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        String executionDate = OffsetDateTime.now().format(fmt);
+
+        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
+        transactionItemReaderListener.setExecutionDate(executionDate);
+        transactionItemReaderListener.setResolver(new PathMatchingResourcePatternResolver());
+        transactionItemReaderListener.setEnableOnErrorLogging(false);
+        transactionItemReaderListener.setEnableOnErrorFileLogging(false);
+        transactionItemReaderListener.setEnableAfterReadLogging(true);
+        transactionItemReaderListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
+        transactionItemReaderListener.onReadError(new FlatFileParseException("Parsing error at line: " +
+                1, new Exception(), "input", 1));
+
+        Assert.assertEquals(0,
+                FileUtils.listFiles(
+                        resolver.getResources("classpath:/test-encrypt/**/testListener")[0].getFile(),
+                        new String[]{"csv"},false).size());
+
+    }
+
 
     @After
     public void tearDown() {

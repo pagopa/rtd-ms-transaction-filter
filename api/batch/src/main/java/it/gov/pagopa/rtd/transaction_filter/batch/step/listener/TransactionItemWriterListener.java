@@ -23,6 +23,10 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
 
     private String errorTransactionsLogsPath;
     private String executionDate;
+    private Boolean enableOnErrorLogging;
+    private Boolean enableOnErrorFileLogging;
+    private Boolean enableAfterWriteLogging;
+    private Long loggingFrequency;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
@@ -31,11 +35,15 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
     }
 
     public void afterWrite(List<? extends InboundTransaction> inboundTransactions) {
-        if (log.isDebugEnabled()) {
+        if (log.isDebugEnabled() && enableAfterWriteLogging) {
             inboundTransactions.forEach(inboundTransaction -> {
-                log.debug("Transaction record from filename: "
-                        + inboundTransaction.getFilename() + " ,line: "
-                        + inboundTransaction.getLineNumber() +" written");
+                if (loggingFrequency > 1 && inboundTransaction.getLineNumber() % loggingFrequency == 0) {
+                    log.info("Written {} lines on file: {}",
+                            inboundTransaction.getLineNumber(), inboundTransaction.getFilename());
+                } else {
+                    log.debug("Written transaction record on filename: {}, line: {}",
+                            inboundTransaction.getFilename(), inboundTransaction.getLineNumber());
+                }
             });
         }
     }
@@ -44,19 +52,23 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
 
         inboundTransactions.forEach(inboundTransaction -> {
 
-            log.error("Error during during transaction record writing - {},filename: {},line: {}" ,
-                    throwable.getMessage() , inboundTransaction.getFilename() ,inboundTransaction.getLineNumber());
+            if (enableOnErrorLogging) {
+                log.error("Error during during transaction record writing - {},filename: {},line: {}",
+                        throwable.getMessage(), inboundTransaction.getFilename(), inboundTransaction.getLineNumber());
+            }
 
-            try {
+            if (enableOnErrorFileLogging) {
+                try {
 
-                File file = new File(
-                        resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
-                                .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
-                FileUtils.writeStringToFile(
-                        file, buildCsv(inboundTransaction), Charset.defaultCharset(), true);
+                    File file = new File(
+                            resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
+                                    .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
+                    FileUtils.writeStringToFile(
+                            file, buildCsv(inboundTransaction), Charset.defaultCharset(), true);
 
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
+                } catch (Exception e) {
+                    log.error(e.getMessage(), e);
+                }
             }
 
         });

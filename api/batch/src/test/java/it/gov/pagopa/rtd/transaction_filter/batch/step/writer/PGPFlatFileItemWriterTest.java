@@ -69,7 +69,7 @@ public class PGPFlatFileItemWriterTest {
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
                         "/secretKey.asc", false
         );
-        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "test-trx.csv");
+        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
         ExecutionContext executionContext = MetaDataInstanceFactory.createStepExecution().getExecutionContext();
@@ -87,7 +87,7 @@ public class PGPFlatFileItemWriterTest {
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
                         "/secretKey.asc", false
         );
-        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "test-trx.csv");
+        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
         ExecutionContext executionContext = MetaDataInstanceFactory.createStepExecution().getExecutionContext();
@@ -105,7 +105,7 @@ public class PGPFlatFileItemWriterTest {
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
                         "/secretKey.asc", false
         );
-        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "test-trx.csv");
+        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
         ExecutionContext executionContext = MetaDataInstanceFactory.createStepExecution().getExecutionContext();
@@ -123,9 +123,9 @@ public class PGPFlatFileItemWriterTest {
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
                         "/publicKey.asc", true
         );
-        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "test-trx.csv");
-        UrlResource encryptedFile = new UrlResource(tempFolder.getRoot().toURI() + "test-trx.csv.pgp");
-        UrlResource decryptedFile = new UrlResource(tempFolder.getRoot().toURI() + "/decrypted/test-trx.csv");
+        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
+        UrlResource encryptedFile = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv.pgp");
+        UrlResource decryptedFile = new UrlResource(tempFolder.getRoot().toURI() + "/decrypted/FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
         ExecutionContext executionContext = MetaDataInstanceFactory.createStepExecution().getExecutionContext();
@@ -166,7 +166,7 @@ public class PGPFlatFileItemWriterTest {
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
                         "/wrongKey.asc", true
         );
-        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "test-trx.csv");
+        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
         ExecutionContext executionContext = MetaDataInstanceFactory.createStepExecution().getExecutionContext();
@@ -185,7 +185,7 @@ public class PGPFlatFileItemWriterTest {
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
                         "/wrongKey.asc", false
         );
-        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "test-trx.csv");
+        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
         ExecutionContext executionContext = MetaDataInstanceFactory.createStepExecution().getExecutionContext();
