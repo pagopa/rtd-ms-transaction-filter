@@ -244,7 +244,11 @@ public class TransactionFilterStep {
     @StepScope
     public InboundTransactionItemProcessor transactionItemProcessor(
             HpanStoreService hpanStoreService) {
-        return new InboundTransactionItemProcessor(hpanStoreService, this.applyTrxHashing, this.saveTrxHashing);
+        return new InboundTransactionItemProcessor(
+                hpanStoreService,
+                this.applyTrxHashing,
+                this.saveTrxHashing,
+                this.enableAfterProcessFileLogging);
     }
 
     /**
@@ -287,8 +291,8 @@ public class TransactionFilterStep {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
         return enableAfterProcessFileLogging ?
-                simpleWorkerStep(hpanStoreService, executionDate) :
-                compositeWorkerStep(hpanStoreService, executionDate);
+                compositeWorkerStep(hpanStoreService, executionDate) :
+                simpleWorkerStep(hpanStoreService, executionDate);
     }
 
 
