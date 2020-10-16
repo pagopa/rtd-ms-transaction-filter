@@ -36,7 +36,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
         if (enableAfterReadLogging) {
             if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
                 log.info("Read {} lines on file: {}", item.getLineNumber(), item.getFilename());
-            } else {
+            } else if (loggingFrequency == 1) {
                 log.debug("Read transaction record on filename: {}, line: {}",
                         item.getFilename(), item.getLineNumber());
             }
@@ -47,7 +47,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     public void onReadError(Exception throwable) {
 
         if (enableOnErrorLogging) {
-            log.error("#### Error while reading a transaction record - {}", throwable.getMessage());
+            log.error("Error while reading a transaction record - {}", throwable.getMessage());
         }
 
         if (enableOnErrorFileLogging && throwable instanceof FlatFileParseException) {

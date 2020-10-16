@@ -39,7 +39,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                     log.info("Filtered transaction record on filename: {},line: {}",
                             item.getFilename(),
                             item.getLineNumber());
-                } else {
+                } else if (loggingFrequency == 1){
                     log.debug("Filtered transaction record on filename: {},line: {}",
                             item.getFilename(),
                             item.getLineNumber());
@@ -47,7 +47,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
             } else {
                 if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
                     log.info("Processed {} lines on file: {}", item.getLineNumber(), item.getFilename());
-                } else {
+                } else if (loggingFrequency == 1) {
                     log.debug("Processed transaction record on filename: {}, line: {}",
                             item.getFilename(), item.getLineNumber());
                 }

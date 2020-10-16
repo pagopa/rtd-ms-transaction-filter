@@ -324,12 +324,12 @@ public class TransactionFilterStep {
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
                 .skip(Exception.class)
-                .stream(transactionItemWriter(null))
-                .stream(transactionFilteredItemWriter(null))
                 .listener(transactionItemReaderListener(executionDate))
                 .listener(transactionsItemProcessListener(executionDate))
                 .listener(transactionsItemWriteListener(executionDate))
                 .listener(transactionStepListener())
+                .stream(transactionItemWriter(null))
+                .stream(transactionFilteredItemWriter(null))
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
     }
