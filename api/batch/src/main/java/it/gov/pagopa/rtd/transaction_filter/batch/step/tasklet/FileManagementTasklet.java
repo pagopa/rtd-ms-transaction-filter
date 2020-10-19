@@ -105,7 +105,16 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                     executionWithErrors = executionWithErrors || !isComplete;
                     if (!isComplete) {
                         String[] filename = file.replaceAll("\\\\", "/").split("/");
-                        errorFilenames.add(filename[filename.length - 1].split("\\.",2)[0]);
+                        ArrayList<String> filePartsArray = new ArrayList<>(Arrays.asList(
+                                filename[filename.length - 1].split("\\.")));
+                        if (filePartsArray.size() == 1) {
+                            errorFilenames.add(filePartsArray.get(0));
+                        } else {
+                            filePartsArray.remove(filePartsArray.size()-1);
+                            String[] fileParts = new String[0];
+                            fileParts = filePartsArray.toArray(fileParts);
+                            errorFilenames.add(String.join(".", fileParts));
+                        }
                     }
 
                     boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
