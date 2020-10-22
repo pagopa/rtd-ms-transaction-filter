@@ -12,11 +12,11 @@ public class JobListener implements JobExecutionListener {
 
     @Override
     public void afterJob(JobExecution jobExecution) {
-        boolean hasErrors = jobExecution.getStepExecutions().stream().anyMatch(stepExecution -> {
-               return !ExitStatus.COMPLETED.equals(stepExecution.getExitStatus()) ||
-                       !BatchStatus.COMPLETED.equals(stepExecution.getStatus()) ||
-                        stepExecution.getFailureExceptions().size() > 0;
-        });
+        boolean hasErrors = jobExecution.getStepExecutions().stream().anyMatch(stepExecution ->
+                (!ExitStatus.COMPLETED.equals(stepExecution.getExitStatus()) &&
+               !stepExecution.getExitStatus().equals(new ExitStatus("COMPLETED WITH SKIPS"))) ||
+               !BatchStatus.COMPLETED.equals(stepExecution.getStatus()) ||
+                stepExecution.getFailureExceptions().size() > 0);
         if (hasErrors) {
             jobExecution.setExitStatus(ExitStatus.FAILED);
         }

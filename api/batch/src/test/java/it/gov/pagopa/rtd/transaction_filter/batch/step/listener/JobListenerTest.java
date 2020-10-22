@@ -52,4 +52,43 @@ public class JobListenerTest {
 
     }
 
+    @Test
+    public void afterJobTest_NotWithFailiure() {
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        execution.setExitStatus(ExitStatus.COMPLETED);
+        execution.setStatus(BatchStatus.COMPLETED);
+
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = MetaDataInstanceFactory.createStepExecution("A",1L);
+        stepExecution1.setExitStatus(ExitStatus.COMPLETED);
+        stepExecution1.setStatus(BatchStatus.COMPLETED);
+        stepExecutions.add(stepExecution1);
+
+        StepExecution stepExecution2 = MetaDataInstanceFactory.createStepExecution("B", 1L);
+        stepExecution2.setExitStatus(ExitStatus.COMPLETED);
+        stepExecution2.setStatus(BatchStatus.COMPLETED);
+        stepExecutions.add(stepExecution2);
+
+        StepExecution stepExecution3 = MetaDataInstanceFactory.createStepExecution("C", 1L);
+        stepExecution3.setExitStatus(ExitStatus.COMPLETED);
+        stepExecution3.setStatus(BatchStatus.COMPLETED);
+        stepExecutions.add(stepExecution3);
+
+        StepExecution stepExecution4 = MetaDataInstanceFactory.createStepExecution("D", 1L);
+        stepExecution4.setExitStatus(new ExitStatus("COMPLETED WITH SKIPS"));
+        stepExecution4.setStatus(BatchStatus.COMPLETED);
+        stepExecutions.add(stepExecution4);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+
+        JobListener jobListener = new JobListener();
+        jobListener.afterJob(stepContext.getStepExecution().getJobExecution());
+
+        Assert.assertNotEquals(stepContext.getStepExecution().getJobExecution().getExitStatus(),ExitStatus.FAILED);
+
+    }
+
 }
