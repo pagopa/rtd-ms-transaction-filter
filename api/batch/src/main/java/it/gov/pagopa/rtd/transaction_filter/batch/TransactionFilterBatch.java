@@ -10,6 +10,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTaskl
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -97,7 +98,16 @@ public class TransactionFilterBatch {
 
     private DataSource dataSource;
     private HpanStoreService hpanStoreService;
+    private TransactionWriterServiceImpl transactionWriterService;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+
+    public void transactionWriterService() {
+        transactionWriterService = beanFactory.getBean(TransactionWriterServiceImpl.class);
+    }
+
+    public void closeChannels() {
+        transactionWriterService.closeAll();
+    }
 
     public void createHpanStoreService() {
         this.hpanStoreService = batchHpanStoreService();
@@ -135,12 +145,15 @@ public class TransactionFilterBatch {
                     transactionResources.length + (transactionResources.length > 1 ? "resources" : "resource")
             );
 
-
+            if (transactionWriterService == null) {
+                transactionWriterService();
+            }
             createHpanStoreService();
             execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
+            closeChannels();
             clearHpanStoreService();
 
         } else {
@@ -255,10 +268,10 @@ public class TransactionFilterBatch {
                 .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
                 .on("FAILED").to(fileManagementTask())
                 .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
-                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService))
-                .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService))
+                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
+                .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .on("FAILED").to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService))
+                .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionSenderMasterStep(
                         this.sftpConnectorService))
                 .on("*").to(fileManagementTask())

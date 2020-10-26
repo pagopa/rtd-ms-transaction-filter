@@ -15,6 +15,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSender
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -41,6 +42,10 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import java.io.FileNotFoundException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -99,9 +104,12 @@ public class TransactionFilterStep {
     private Boolean enableOnWriteErrorLogging;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency}")
     private Long loggingFrequency;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize}")
+    private Integer writerPoolSize;
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
+    private ExecutorService writerExecutor;
 
     /**
      *
@@ -247,8 +255,7 @@ public class TransactionFilterStep {
         return new InboundTransactionItemProcessor(
                 hpanStoreService,
                 this.applyTrxHashing,
-                this.saveTrxHashing,
-                this.enableAfterProcessFileLogging);
+                this.saveTrxHashing);
     }
 
     /**
@@ -273,9 +280,11 @@ public class TransactionFilterStep {
      * @throws Exception
      */
     @Bean
-    public Step transactionFilterMasterStep(HpanStoreService hpanStoreService) throws Exception {
+    public Step transactionFilterMasterStep(HpanStoreService hpanStoreService,
+                                            TransactionWriterService transactionWriterService)
+            throws Exception {
         return stepBuilderFactory.get("transaction-filter-master-step").partitioner(
-                transactionFilterWorkerStep(hpanStoreService))
+                transactionFilterWorkerStep(hpanStoreService,transactionWriterService))
                 .partitioner("partition", transactionFilterPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
@@ -287,16 +296,15 @@ public class TransactionFilterStep {
      * @throws Exception
      */
     @Bean
-    public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService) throws Exception {
+    public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService)
+            throws Exception {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
-        return enableAfterProcessFileLogging ?
-                compositeWorkerStep(hpanStoreService, executionDate) :
-                simpleWorkerStep(hpanStoreService, executionDate);
+        return simpleWorkerStep(hpanStoreService, transactionWriterService, executionDate);
     }
 
 
-    public Step simpleWorkerStep(HpanStoreService hpanStoreService, String executionDate) throws Exception {
+    public Step simpleWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService, String executionDate) throws Exception {
             return stepBuilderFactory.get("transaction-filter-worker-step")
                     .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                     .reader(transactionItemReader(null))
@@ -307,36 +315,21 @@ public class TransactionFilterStep {
                     .noSkip(FileNotFoundException.class)
                     .skip(Exception.class)
                     .listener(transactionItemReaderListener(executionDate))
-                    .listener(transactionsItemProcessListener(executionDate))
+                    .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
                     .listener(transactionsItemWriteListener(executionDate))
-                    .listener(transactionStepListener())
+                    .listener(transactionStepListener(transactionWriterService, executionDate))
                     .taskExecutor(batchConfig.readerTaskExecutor())
                     .build();
     }
 
-    public Step compositeWorkerStep(HpanStoreService hpanStoreService, String executionDate) throws Exception {
-        return stepBuilderFactory.get("transaction-filter-worker-step")
-                .<InboundTransaction, InboundTransaction>chunk(chunkSize)
-                .reader(transactionItemReader(null))
-                .processor(transactionItemProcessor(hpanStoreService))
-                .writer(classifierTransactionCompositeItemWriter())
-                .faultTolerant()
-                .skipLimit(skipLimit)
-                .noSkip(FileNotFoundException.class)
-                .skip(Exception.class)
-                .listener(transactionItemReaderListener(executionDate))
-                .listener(transactionsItemProcessListener(executionDate))
-                .listener(transactionsItemWriteListener(executionDate))
-                .listener(transactionStepListener())
-                .stream(transactionItemWriter(null))
-                .stream(transactionFilteredItemWriter(null))
-                .taskExecutor(batchConfig.readerTaskExecutor())
-                .build();
-    }
-
     @Bean
-    public TransactionReaderStepListener transactionStepListener() {
-        return new TransactionReaderStepListener();
+    public TransactionReaderStepListener transactionStepListener(
+            TransactionWriterService transactionWriterService, String executionDate) {
+        TransactionReaderStepListener transactionReaderStepListener = new TransactionReaderStepListener();
+        transactionReaderStepListener.setTransactionWriterService(transactionWriterService);
+        transactionReaderStepListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionReaderStepListener.setExecutionDate(executionDate);
+        return transactionReaderStepListener;
     }
 
     @Bean
@@ -364,7 +357,8 @@ public class TransactionFilterStep {
     }
 
     @Bean
-    public TransactionItemProcessListener transactionsItemProcessListener(String executionDate) {
+    public TransactionItemProcessListener transactionsItemProcessListener(
+            TransactionWriterService transactionWriterService,String executionDate) {
         TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
@@ -372,6 +366,8 @@ public class TransactionFilterStep {
         transactionItemProcessListener.setLoggingFrequency(loggingFrequency);
         transactionItemProcessListener.setEnableOnErrorFileLogging(enableOnProcessErrorFileLogging);
         transactionItemProcessListener.setEnableOnErrorLogging(enableOnProcessErrorLogging);
+        transactionItemProcessListener.setEnableAfterProcessFileLogging(enableAfterProcessFileLogging);
+        transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         return transactionItemProcessListener;
     }
 
@@ -429,6 +425,18 @@ public class TransactionFilterStep {
         transactionSenderTasklet.setSftpConnectorService(sftpConnectorService);
         transactionSenderTasklet.setTaskletEnabled(transactionSenderEnabled);
         return transactionSenderTasklet;
+    }
+
+    /**
+     *
+     * @return bean configured for usage for chunk reading of a single file
+     */
+    @Bean
+    public ExecutorService writerExecutor() {
+        if (writerExecutor == null) {
+            writerExecutor = Executors.newFixedThreadPool(writerPoolSize);
+        }
+        return writerExecutor;
     }
 
 }

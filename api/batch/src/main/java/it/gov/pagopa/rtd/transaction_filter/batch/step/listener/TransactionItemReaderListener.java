@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.batch.core.ItemReadListener;
@@ -26,6 +27,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     private Boolean enableOnErrorFileLogging;
     private Boolean enableAfterReadLogging;
     private Long loggingFrequency;
+    String filename;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
@@ -44,6 +46,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
 
     }
 
+    @SneakyThrows
     public void onReadError(Exception throwable) {
 
         if (enableOnErrorLogging) {
@@ -52,11 +55,15 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
 
         if (enableOnErrorFileLogging && throwable instanceof FlatFileParseException) {
             FlatFileParseException flatFileParseException = (FlatFileParseException) throwable;
-
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            String filename =  resolver.getResource(flatFileParseException.getInput()).getFile()
+                    .getAbsolutePath().replaceAll("\\\\", "/");
+            String[] fileArr = filename.split("/");
             try {
                 File file = new File(
                 resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
-                                 .concat("/".concat(executionDate))+ "_transactionsErrorRecords.csv");
+                        .concat("/".concat(executionDate))
+                        + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv");
                 String[] lineArray = flatFileParseException.getInput().split("_",2);
                 FileUtils.writeStringToFile(
                         file, (lineArray.length > 1 ? lineArray[1] : lineArray[0]).concat("\n"),

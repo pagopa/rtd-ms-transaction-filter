@@ -59,10 +59,12 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
 
             if (enableOnErrorFileLogging) {
                 try {
-
+                    String filename = inboundTransaction.getFilename().replaceAll("\\\\", "/");
+                    String[] fileArr = filename.split("/");
                     File file = new File(
                             resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
-                                    .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
+                                    .concat("/".concat(executionDate))
+                                    + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv");
                     FileUtils.writeStringToFile(
                             file, buildCsv(inboundTransaction), Charset.defaultCharset(), true);
 

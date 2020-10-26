@@ -26,8 +26,6 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
     private final HpanStoreService hpanStoreService;
     private final Boolean applyHashing;
     private final Boolean saveHashing;
-    private final Boolean enableAfterProcessFileLogging;
-
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static final Validator validator = factory.getValidator();
@@ -56,17 +54,14 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
         if (hpanStoreService.hasHpan(hpan)) {
             if (saveHashing) {
                 inboundTransaction.setPan(applyHashing ?
-                        hpan : DigestUtils.sha256Hex(inboundTransaction.getPan()+hpanStoreService.getSalt()));
+                        hpan : DigestUtils.sha256Hex(
+                                inboundTransaction.getPan()+hpanStoreService.getSalt()));
             }
+            return inboundTransaction;
         } else {
-            if (enableAfterProcessFileLogging) {
-                inboundTransaction.setValid(false);
-            } else {
-                return null;
-            }
+            return null;
         }
 
-        return inboundTransaction;
     }
 
 }
