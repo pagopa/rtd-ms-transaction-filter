@@ -55,9 +55,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
 
         if (enableOnErrorFileLogging && throwable instanceof FlatFileParseException) {
             FlatFileParseException flatFileParseException = (FlatFileParseException) throwable;
-            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            String filename =  resolver.getResource(flatFileParseException.getInput()).getFile()
-                    .getAbsolutePath().replaceAll("\\\\", "/");
+            String filename =  flatFileParseException.getInput().replaceAll("\\\\", "/");
             String[] fileArr = filename.split("/");
             try {
                 File file = new File(
