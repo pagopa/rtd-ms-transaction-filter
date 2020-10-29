@@ -52,14 +52,19 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
-        Resource[] resources = resolver.getResources("file:/"
-                .concat(hpanListDirectory)
-                .concat("/")
-                .concat(hpanFilePattern));
+        hpanListDirectory = hpanListDirectory.replaceAll("\\\\", "/");
+        Resource[] resources = null;
+
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
         String currentDate = OffsetDateTime.now().format(fmt);
 
         if (dailyRemovalTaskletEnabled) {
+
+            resources = resolver.getResources("file:/"
+                    .concat(hpanListDirectory.charAt(0) == '/' ?
+                            hpanListDirectory.replaceFirst("/","") : hpanListDirectory)
+                    .concat("/")
+                    .concat(hpanFilePattern));
 
             try {
 
@@ -84,7 +89,8 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
 
         if (recoveryTaskletEnabled) {
             resources = resolver.getResources("file:/"
-                    .concat(hpanListDirectory)
+                    .concat(hpanListDirectory.charAt(0) == '/' ?
+                            hpanListDirectory.replaceFirst("/","") : hpanListDirectory)
                     .concat("/")
                     .concat(hpanFilePattern));
             File outputFile = FileUtils.getFile(hpanListDirectory

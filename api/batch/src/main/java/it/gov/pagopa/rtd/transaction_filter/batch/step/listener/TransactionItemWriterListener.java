@@ -35,12 +35,12 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
     }
 
     public void afterWrite(List<? extends InboundTransaction> inboundTransactions) {
-        if (log.isDebugEnabled() && enableAfterWriteLogging) {
+        if (enableAfterWriteLogging) {
             inboundTransactions.forEach(inboundTransaction -> {
                 if (loggingFrequency > 1 && inboundTransaction.getLineNumber() % loggingFrequency == 0) {
                     log.info("Written {} lines on file: {}",
                             inboundTransaction.getLineNumber(), inboundTransaction.getFilename());
-                } else {
+                } else if (loggingFrequency == 1) {
                     log.debug("Written transaction record on filename: {}, line: {}",
                             inboundTransaction.getFilename(), inboundTransaction.getLineNumber());
                 }
@@ -59,10 +59,12 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
 
             if (enableOnErrorFileLogging) {
                 try {
-
+                    String filename = inboundTransaction.getFilename().replaceAll("\\\\", "/");
+                    String[] fileArr = filename.split("/");
                     File file = new File(
                             resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
-                                    .concat("/".concat(executionDate)) + "_transactionsErrorRecords.csv");
+                                    .concat("/".concat(executionDate))
+                                    + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv");
                     FileUtils.writeStringToFile(
                             file, buildCsv(inboundTransaction), Charset.defaultCharset(), true);
 

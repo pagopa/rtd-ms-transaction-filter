@@ -42,7 +42,9 @@ public class TransactionItemProcessListenerTest {
         transactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemProcessListener.setEnableOnErrorLogging(true);
         transactionItemProcessListener.setEnableAfterProcessLogging(true);
+        transactionItemProcessListener.setEnableAfterProcessFileLogging(true);
         transactionItemProcessListener.setEnableOnErrorFileLogging(true);
+        transactionItemProcessListener.setEnableAfterProcessLogging(true);
         transactionItemProcessListener.setLoggingFrequency(1L);
         transactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemProcessListener.afterProcess(
