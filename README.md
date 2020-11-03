@@ -685,10 +685,10 @@ All the necessary information and instructions can be found in the following pat
 
 All the necessary information and instructions can be found in the following path: https://github.com/pagopa/rtd-ms-transaction-filter in the document “Acquirer Interface Agreement_v3.pdf” in the section "Appendice 7 - Autorizzazione Servizi Acquirer". In this section, it is described step by step the Acquirer's Authorization procedure.
 
-#### Which are the mailing addresses where the certificates must be sent ?
+#### Which are the mailing addresses where the certificates must be sent to?
 
 The Signed Request Certificate can be generated using the client-certificate.cnf configuration template. To enable the authentication process, the certificates related to CAs in ".cer" format must be sent to the API publisher (mail to: TeamCentroStella@sia.eu)
 Regarding the tests in the SIT environment, the client certificate can be self-signed and should be provided to the API's publisher in the ".cer" format (mail to: TeamCentroStella@sia.eu), while for other environments (es: UAT ) must be signed by the CA internal of PagoPA (mail to: security@pagopa.it.)
 
 #### Where should be inserted the Subscription Key obtained after the registration to Azure Portal?
-After completing the subscription, the client can invoke the services by inserting the key obtained "Ocp-Apim-Subscription-Key" as a parameter in the request header.
+After completing the subscription, the Client can invoke the services by inserting the key obtained "Ocp-Apim-Subscription-Key" as a parameter in the request header.
