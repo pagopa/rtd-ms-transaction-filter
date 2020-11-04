@@ -96,7 +96,7 @@ public class HpanRestClientTest {
     @Test
     public void getList_OK_TimeEdge() {
         ((HpanRestClientImpl)hpanRestClient).setValidationDate(ZonedDateTime
-                .parse("Tue, 23 Jun 2020 00:00:00 GMT",
+                .parse("Mon, 22 Jun 2020 00:00:00 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME).toOffsetDateTime());
         File hpanList = hpanRestClient.getList();
         assertNotNull(hpanList);
