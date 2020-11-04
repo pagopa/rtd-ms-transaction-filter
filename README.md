@@ -691,4 +691,9 @@ The Signed Request Certificate can be generated using the client-certificate.cnf
 Regarding the tests in the SIT environment, the client certificate can be self-signed and should be provided to the API's publisher in the ".cer" format (mail to: TeamCentroStella@sia.eu), while for other environments (es: UAT ) must be signed by the CA internal of PagoPA (mail to: security@pagopa.it.)
 
 #### Where should be inserted the Subscription Key obtained after the registration to Azure Portal?
+
 After completing the subscription, the Client can invoke the services by inserting the key obtained "Ocp-Apim-Subscription-Key" as a parameter in the request header.
+
+#### Where is it possible to find the PGP Key necessary for the Production Environment? 
+
+The PGP Key can be found in the Appendice 1 of the document "RTD Acquirer Interface_v3" (link: https://github.com/pagopa/rtd-ms-transaction-filter/blob/master/ops_resources/RTD_Acquirer_Interface_V3.pdf)
