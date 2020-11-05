@@ -676,3 +676,10 @@ As of 24/09/2020 the Baltimore CyberTrust Root, defined as the CA certificate wi
 [Microsoft documentation](https://docs.microsoft.com/it-it/azure/developer/java/sdk/java-sdk-add-certificate-ca-store), 
 may result in failures of the SSL handshake. Either add the [DigiCert Global Root G2 CA certificate](https://cacerts.digicert.com/DigiCertGlobalRootG2.crt)
 within the truststore .jks file, or configure to load the cacerts file, available within the JRE/JDK distributions (default password: changeme).
+
+#### PAN List validation error
+
+>Recovered PAN list exceeding a day
+
+When encountering this message, there is a failure in the validation process for the downloaded PAN list, indicating
+that the file has a creation date that the daily procedure to update the file has not been executed.
