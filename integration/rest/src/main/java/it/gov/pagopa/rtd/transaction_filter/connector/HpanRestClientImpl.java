@@ -20,6 +20,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
 import java.util.Enumeration;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
@@ -86,8 +88,16 @@ class HpanRestClientImpl implements HpanRestClient {
             DateTimeFormatter dtf = dateValidationPattern != null && !dateValidationPattern.isEmpty() ?
                     DateTimeFormatter.ofPattern(dateValidationPattern).withZone(ZoneId.systemDefault()):
                     DateTimeFormatter.RFC_1123_DATE_TIME;
-            OffsetDateTime fileCreationDateTime = ZonedDateTime.parse(dateString, dtf).toOffsetDateTime();
-            OffsetDateTime currentDate = validationDate != null ? validationDate : OffsetDateTime.now();
+
+            ZonedDateTime fileCreationDateTime = ZonedDateTime.parse(dateString, dtf);
+            ZonedDateTime defaultZoneFileCreationDateTime = ZonedDateTime.parse(dateString,
+                    dtf.withZone(ZoneId.systemDefault()));
+
+            Long hoursOfDiff = ChronoUnit.HOURS.between(defaultZoneFileCreationDateTime, fileCreationDateTime);
+            fileCreationDateTime = fileCreationDateTime.plus(hoursOfDiff, ChronoUnit.HOURS);
+
+            OffsetDateTime currentDate = validationDate != null ? validationDate :
+                    ZonedDateTime.now(ZoneId.systemDefault()).toOffsetDateTime();
 
             boolean sameYear = fileCreationDateTime.getYear() == currentDate.getYear();
             boolean sameMonth = fileCreationDateTime.getMonth() == currentDate.getMonth();
@@ -101,7 +111,7 @@ class HpanRestClientImpl implements HpanRestClient {
         try (FileOutputStream tempFileFOS = new FileOutputStream(tempFile)) {
 
             if (checksumValidation) {
-                String checksum = responseEntity.getHeaders().get(checksumHeaderName).get(0);
+                String checksum = Objects.requireNonNull(responseEntity.getHeaders().get(checksumHeaderName)).get(0);
                 if (!checksum.equals(DigestUtils.sha256Hex(responseEntity.getBody().getInputStream()))) {
                     throw new Exception();
                 }
