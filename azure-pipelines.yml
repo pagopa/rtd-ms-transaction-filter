@@ -23,6 +23,7 @@ resources:
 variables:
   # Agent VM image name
   vmImageName: 'ubuntu-latest'
+  TZ: 'Europe/Rome'
 
 
 stages:

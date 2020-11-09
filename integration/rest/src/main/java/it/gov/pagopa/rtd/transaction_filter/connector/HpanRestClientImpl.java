@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
+import com.sun.media.jfxmedia.logging.Logger;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.Temporal;
 import java.util.Enumeration;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
@@ -96,8 +96,10 @@ class HpanRestClientImpl implements HpanRestClient {
             Long hoursOfDiff = ChronoUnit.HOURS.between(defaultZoneFileCreationDateTime, fileCreationDateTime);
             fileCreationDateTime = fileCreationDateTime.plus(hoursOfDiff, ChronoUnit.HOURS);
 
+            log.debug("Current Zone is: {}", ZoneId.systemDefault().toString());
+
             OffsetDateTime currentDate = validationDate != null ? validationDate :
-                    ZonedDateTime.now(ZoneId.systemDefault()).toOffsetDateTime();
+                    ZonedDateTime.now(ZoneId.systemDefault()).toOffsetDateTime();;
 
             boolean sameYear = fileCreationDateTime.getYear() == currentDate.getYear();
             boolean sameMonth = fileCreationDateTime.getMonth() == currentDate.getMonth();
