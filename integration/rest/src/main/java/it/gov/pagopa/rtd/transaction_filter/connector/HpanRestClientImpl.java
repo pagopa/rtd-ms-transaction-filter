@@ -1,6 +1,5 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
-import com.sun.media.jfxmedia.logging.Logger;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
