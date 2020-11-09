@@ -65,6 +65,9 @@ class HpanRestClientImpl implements HpanRestClient {
     @Value("${rest-client.hpan.list.dateValidationPattern}")
     private String dateValidationPattern;
 
+    @Value("${rest-client.hpan.list.dateValidationZone}")
+    private String dateValidationZone;
+
     private final HpanRestConnector hpanRestConnector;
 
     private OffsetDateTime validationDate;
@@ -90,15 +93,20 @@ class HpanRestClientImpl implements HpanRestClient {
 
             ZonedDateTime fileCreationDateTime = ZonedDateTime.parse(dateString, dtf);
             ZonedDateTime defaultZoneFileCreationDateTime = ZonedDateTime.parse(dateString,
-                    dtf.withZone(ZoneId.systemDefault()));
+                    dtf.withZone(dateValidationZone != null ? ZoneId.of(dateValidationZone) : ZoneId.systemDefault()));
 
             Long hoursOfDiff = ChronoUnit.HOURS.between(defaultZoneFileCreationDateTime, fileCreationDateTime);
             fileCreationDateTime = fileCreationDateTime.plus(hoursOfDiff, ChronoUnit.HOURS);
 
             log.debug("Current Zone is: {}", ZoneId.systemDefault().toString());
+            log.debug("Difference between timezone is {}", hoursOfDiff);
 
             OffsetDateTime currentDate = validationDate != null ? validationDate :
-                    ZonedDateTime.now(ZoneId.systemDefault()).toOffsetDateTime();;
+                    ZonedDateTime.now(ZoneId.of(dateValidationZone)).toOffsetDateTime();;
+
+            log.debug("currentDate is: {}", currentDate.toString());
+            log.debug("fileCreationTime is {}", fileCreationDateTime.toString());
+
 
             boolean sameYear = fileCreationDateTime.getYear() == currentDate.getYear();
             boolean sameMonth = fileCreationDateTime.getMonth() == currentDate.getMonth();
