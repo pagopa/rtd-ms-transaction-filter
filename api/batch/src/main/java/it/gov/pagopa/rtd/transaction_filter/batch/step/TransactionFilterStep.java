@@ -1,7 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.classifiers.InboundTransactionClassifier;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemProcessListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemReaderListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemWriterListener;
@@ -72,8 +71,6 @@ public class TransactionFilterStep {
     private String timestampPattern;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing}")
     private Boolean applyTrxHashing;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing}")
-    private Boolean saveTrxHashing;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt}")
     private Boolean applyEncrypt;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory}")
@@ -234,15 +231,6 @@ public class TransactionFilterStep {
         return flatFileItemWriter;
     }
 
-    @Bean
-    public ClassifierCompositeItemWriter<InboundTransaction> classifierTransactionCompositeItemWriter() throws Exception {
-        ClassifierCompositeItemWriter<InboundTransaction> compositeItemWriter = new ClassifierCompositeItemWriter<>();
-        compositeItemWriter.setClassifier(
-                new InboundTransactionClassifier(transactionItemWriter(null),
-                transactionFilteredItemWriter(null)));
-        return compositeItemWriter;
-    }
-
 
     /**
      *
@@ -254,8 +242,7 @@ public class TransactionFilterStep {
             HpanStoreService hpanStoreService) {
         return new InboundTransactionItemProcessor(
                 hpanStoreService,
-                this.applyTrxHashing,
-                this.saveTrxHashing);
+                this.applyTrxHashing);
     }
 
     /**

@@ -37,7 +37,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
         if (enableAfterProcessLogging) {
 
-            if (result == null || !result.getValid()) {
+            if (result == null) {
                 if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
                     log.info("Filtered transaction record on filename: {},line: {}",
                             item.getFilename(),

@@ -239,10 +239,6 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Configure for product encryption, through the batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt property, or
   through the environment variable _ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT_
-
-- Configure for the hash application in the transactions reported in the product file, through the
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing_ property, or through the environment variable
-  _ACQ_BATCH_TRX_LIST_HASHING_SAVE_         
   
 - To send the product file on SFTP channel, the functionality must be enabled through 
   _batchConfiguration.TransactionFilterBatch.transactionSender.enabled_ properties,
@@ -342,7 +338,6 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.skipLimit__ | Maxi
 __batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern__ | Pattern relating to the transaction date | ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:MM/dd/yyyy HH:mm:ss} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing__ | Flag that drives the hashing to the pan present in the transaction file | ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:false} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt__ | Flag to define whether to encrypt the result file | ${ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing__ | Flag to define whether to save the hashing of the pan in the result file | ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:false} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.linesToSkip__ | Number of lines to skip from the beginning of the file (e.g. to avoid the header ) | ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath__ | Path where the processed transaction records resulting in either an error, or getting filtered, are traced in .csv format |  file:/${ACQ_BATCH_TRX_LOGS_PATH:} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterReadLogging__ | Property to enable logging for the read records | ${ACQ_BATCH_TRX_AFTER_READ_LOGGING_ENABLED:false} | YES | TRUE FALSE

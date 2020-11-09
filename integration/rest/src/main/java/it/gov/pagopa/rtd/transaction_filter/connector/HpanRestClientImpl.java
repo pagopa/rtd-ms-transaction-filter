@@ -20,9 +20,6 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoField;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalField;
 import java.util.Enumeration;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
@@ -91,15 +88,12 @@ class HpanRestClientImpl implements HpanRestClient {
                     DateTimeFormatter.RFC_1123_DATE_TIME;
             OffsetDateTime fileCreationDateTime = ZonedDateTime.parse(dateString, dtf).toOffsetDateTime();
             OffsetDateTime currentDate = validationDate != null ? validationDate : OffsetDateTime.now();
-            long differenceHours = ChronoUnit.HOURS.between(fileCreationDateTime, this.validationDate != null?
-                    this.validationDate : currentDate);
-            boolean sameMinutes = currentDate.getMinute() == fileCreationDateTime.getMinute();
-            boolean sameSeconds = currentDate.getSecond() == fileCreationDateTime.getSecond();
-            boolean sameMillis = currentDate.get(ChronoField.MILLI_OF_SECOND) ==
-                    fileCreationDateTime.get(ChronoField.MILLI_OF_SECOND);
 
-            if (differenceHours > 24 ||
-                (differenceHours == 24 && (!sameMillis || !sameSeconds || !sameMinutes))) {
+            boolean sameYear = fileCreationDateTime.getYear() == currentDate.getYear();
+            boolean sameMonth = fileCreationDateTime.getMonth() == currentDate.getMonth();
+            boolean sameDay = fileCreationDateTime.getDayOfMonth() == currentDate.getDayOfMonth();
+
+            if (!sameYear | !sameMonth | !sameDay) {
                 throw new Exception("Recovered PAN list exceeding a day");
             }
         }
