@@ -387,6 +387,7 @@ __rest-client.hpan.list.listFilePattern__ | Pattern to be used for extracting th
 __rest-client.hpan.list.dateValidation__ | Enables date validation for the recovered resource | TRUE | NO | TRUE FALSE
 __rest-client.hpan.list.dateValidationHeaderName__ | Response header containing the file's creation/update date | last-modified | NO
 __rest-client.hpan.list.dateValidationPattern__ | Response header date timestamp pattern (defaults to RFC-1123) | | NO
+__rest-client.hpan.list.dateValidationZone__ | Zone to consider when validating the creation date for the downloaded file | Europe/Rome | NO
 __rest-client.hpan.proxy.enabled__ | Use a Proxied Client | ${HPAN_SERVICE_PROXY_ENABLED:false} | NO
 __rest-client.hpan.proxy.host__ | Proxy host | ${HPAN_SERVICE_PROXY_HOST:} | NO
 __rest-client.hpan.proxy.port__ | Proxy port | ${HPAN_SERVICE_PROXY_PORT:} | NO
@@ -699,3 +700,6 @@ The PGP Key can be found in the Appendice 1 of the document "RTD Acquirer Interf
 
 When encountering this message, there is a failure in the validation process for the downloaded PAN list, indicating
 that the file has a creation date that the daily procedure to update the file has not been executed.
+
+It is possible that there is a misleading errore, due to the set-up for the timezone, try changing the property 
+__rest-client.hpan.list.dateValidationZone__.

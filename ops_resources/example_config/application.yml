@@ -16,17 +16,18 @@ spring:
       connectionTimeout: ${ACQ_BATCH_DB_TIMEOUT:6000}
       schema: ${ACQ_BATCH_DB_SCHEMA:public}
       readOnly: false
-    jpa:
-      properties:
-        hibernate:
-          jdbc:
-            lob:
-              non_contextual_creation:info: true
+  jpa:
+    properties:
       hibernate:
-        ddl-auto: create
-      show-sql: ${ACQ_BATCH_SHOW_SQL:true}
-      open-in-view: false
-      database-platform: ${ACQ_BATCH_DB_DIALECT:org.hibernate.dialect.PostgreSQL95Dialect}
+        jdbc:
+          lob:
+            non_contextual_creation:info: true
+    hibernate:
+      ddl-auto: create
+    show-sql: ${ACQ_BATCH_SHOW_SQL:true}
+    open-in-view: false
+    database-platform: ${ACQ_BATCH_DB_DIALECT:org.hibernate.dialect.PostgreSQL95Dialect}
+
 
   main:
     web-application-type: none
