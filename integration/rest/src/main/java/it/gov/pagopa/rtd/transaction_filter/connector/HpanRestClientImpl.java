@@ -16,6 +16,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -70,7 +71,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
     private final HpanRestConnector hpanRestConnector;
 
-    private OffsetDateTime validationDate;
+    private LocalDateTime validationDate;
 
     /**
     * Method used for recovering the list, if the properties are enabled, an attempt of validating
@@ -91,30 +92,25 @@ class HpanRestClientImpl implements HpanRestClient {
                     DateTimeFormatter.ofPattern(dateValidationPattern).withZone(ZoneId.systemDefault()):
                     DateTimeFormatter.RFC_1123_DATE_TIME;
 
-            ZonedDateTime fileCreationDateTime = ZonedDateTime.parse(dateString, dtf);
-            ZonedDateTime defaultZoneFileCreationDateTime = ZonedDateTime.parse(dateString,
-                    dtf.withZone(dateValidationZone != null ? ZoneId.of(dateValidationZone) : ZoneId.systemDefault()));
+            ZonedDateTime fileCreationDateTime = LocalDateTime.parse(dateString, dtf)
+                    .atZone(ZoneId.of(dateValidationZone));
+;           ZonedDateTime currentDate = validationDate != null ?
+                    validationDate.atZone(ZoneId.of(dateValidationZone)) :
+                    LocalDateTime.now().atZone(ZoneId.of(dateValidationZone));
 
-            Long hoursOfDiff = ChronoUnit.HOURS.between(defaultZoneFileCreationDateTime, fileCreationDateTime);
-            fileCreationDateTime = fileCreationDateTime.plus(hoursOfDiff, ChronoUnit.HOURS);
+            DateTimeFormatter dayFormat = DateTimeFormatter.ofPattern("dd-M-yyyy hh:mm:ss a");
 
-            log.debug("Current Zone is: {}", ZoneId.systemDefault().toString());
-            log.debug("Difference between timezone is {}", hoursOfDiff);
+            log.debug("currentDate is: {}", dayFormat.format(currentDate));
+            log.debug("fileCreationTime is {}", dayFormat.format(fileCreationDateTime));
 
-            OffsetDateTime currentDate = validationDate != null ? validationDate :
-                    ZonedDateTime.now(ZoneId.of(dateValidationZone)).toOffsetDateTime();;
-
-            log.debug("currentDate is: {}", currentDate.toString());
-            log.debug("fileCreationTime is {}", fileCreationDateTime.toString());
-
-
-            boolean sameYear = fileCreationDateTime.getYear() == currentDate.getYear();
-            boolean sameMonth = fileCreationDateTime.getMonth() == currentDate.getMonth();
-            boolean sameDay = fileCreationDateTime.getDayOfMonth() == currentDate.getDayOfMonth();
+            boolean sameYear = ChronoUnit.YEARS.between(fileCreationDateTime,currentDate) == 0;
+            boolean sameMonth = ChronoUnit.MONTHS.between(fileCreationDateTime,currentDate) == 0;
+            boolean sameDay =  ChronoUnit.DAYS.between(fileCreationDateTime,currentDate) == 0;
 
             if (!sameYear | !sameMonth | !sameDay) {
                 throw new Exception("Recovered PAN list exceeding a day");
             }
+
         }
 
         try (FileOutputStream tempFileFOS = new FileOutputStream(tempFile)) {
@@ -179,7 +175,7 @@ class HpanRestClientImpl implements HpanRestClient {
         return hpanRestConnector.getSalt(apiKey);
     }
 
-    public void setValidationDate(OffsetDateTime now) {
+    public void setValidationDate(LocalDateTime now) {
         this.validationDate = now;
     }
 
