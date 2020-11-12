@@ -690,9 +690,13 @@ Regarding the tests in the SIT environment, the client certificate can be self-s
 
 After completing the subscription, the Client can invoke the services by inserting the key obtained "Ocp-Apim-Subscription-Key" as a parameter in the request header.
 
-#### Where is it possible to find the PGP Key necessary for the Production Environment? 
+#### Where is it possible to find the PGP Key necessary for the test (SIT and UAT) Environment? 
 
 The PGP Key can be found in the Appendice 1 of the document "RTD Acquirer Interface_v3" (link: https://github.com/pagopa/rtd-ms-transaction-filter/blob/master/ops_resources/RTD_Acquirer_Interface_V3.pdf)
+
+#### Where is it possible to find the PGP Key necessary for the Production Environment? 
+
+The PGP Key can be found in the Appendice 9 of the document "RTD Acquirer Interface_v3" (link: https://github.com/pagopa/rtd-ms-transaction-filter/blob/master/ops_resources/RTD_Acquirer_Interface_V3.pdf)
 
 #### PAN List validation error
 
