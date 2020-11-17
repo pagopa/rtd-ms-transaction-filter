@@ -47,11 +47,11 @@ import static org.junit.Assert.assertNotNull;
 )
 @ContextConfiguration(initializers = HpanRestClientTest.RandomPortInitializer.class,
         classes = {
-            HpanRestConnectorConfig.class,
-            HpanRestClientImpl.class,
-            HpanRestConnector.class,
-            FeignAutoConfiguration.class,
-            HttpMessageConvertersAutoConfiguration.class
+                HpanRestConnectorConfig.class,
+                HpanRestClientImpl.class,
+                HpanRestConnector.class,
+                FeignAutoConfiguration.class,
+                HttpMessageConvertersAutoConfiguration.class
         }
 )
 public class HpanRestClientTest {
