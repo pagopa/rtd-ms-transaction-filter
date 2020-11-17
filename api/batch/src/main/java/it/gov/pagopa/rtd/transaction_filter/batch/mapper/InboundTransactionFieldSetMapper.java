@@ -59,7 +59,7 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .merchantId(fieldSet.readString("merchantID"))
                         .terminalId(fieldSet.readString("terminal_id"))
                         .bin(fieldSet.readString("bank_identification_number"))
-                        .mcc("000000")
+                        .mcc("0000")
                         .build();
 
         OffsetDateTime dateTime = dtf != null ?
