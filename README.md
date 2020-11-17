@@ -537,6 +537,47 @@ where the log records are inserted is thhe __logging_event__ table.
 The document containing the details regarding the interface agreement are available
 at [ops_resources/RTD_Acquirer_Interface_V2.pdf](ops_resources/RTD_Acquirer_Interface_V2.pdf).
 
+### Joining the BETA  program
+Starting from Tuesday 17/11 will be possible to join the Beta program in order to verify the Cashback features through the use of APP IO.
+
+How to join the program
+1. Please read the documents ("Informativa survey beta testing.docx", "Beta Test_NDA_long form_IT.docx") that can be found in the following path: https://github.com/pagopa/rtd-ms-transaction-filter/tree/master/ops_resources/PILOTA
+2. Compile properly the document "Beta Test_NDA_long form_IT.docx" and send it to the mailing address: teamCentroStella@sia.eu (fill in the parts highlighted in yellow)
+3. Please read the privacy policy for BANCOMAT and send an e-mail to teamCentroStella@sia.eu confirming your willingness to participate in the “pilot” (file in the path: https://github.com/pagopa/rtd-ms-transaction-filter/tree/master/ops_resources/PILOTA)
+4. Collect and provide the information required regarding the Acquirer that will participate in the initiative, by filling in the Excel "Lista partecipanti al pilota" and send it to: teamCentroStella@sia.eu
+
+Once these steps have been completed, you will receive an invitation to participate in the test program with the appropriate instructions according to the operating system that has been indicated in the request to join the pilot.
+
+#### Credit card registration and transaction’s verification procedures
+
+Once the application is installed, we ask you to proceed with the registration of one or more Cards and join the "Bonus Pagamenti Digitali" program.
+From the 17/11 moment on, it will be possible to make payments on shop/stores in the national territory and check a few days later, that the transaction appears correctly in the APP IO’s dedicated section with its associated cashback (the rule is not definitive).
+
+#### App IO
+
+Below will be listed some useful information for using APP IO:
+- Registration of payment instruments:  it can be done starting from the "Portafoglio" section, by clicking the "Aggiungi" button in the "Metodi di Pagamento" section.
+- Subscription to the BPD: ii can be done starting from the " Portafoglio" section, by clicking the "Aggiungi" button in the "Bonus e sconti" section.
+- It is possible to access the cashback detail from the " Portafoglio" section, by entering the "Cashback" section. In this section, the following information is available:
+a. Total cashback accumulated in the period and number of valid transactions
+b. Payment methods, with relative activation / deactivation status
+c. Transactions details
+d. BPD service withdrawal option
+
+#### Errors reporting
+
+In the event of a potential error detected and/or failure to view a transaction, you can open an “issue” by clicking on the question mark icon at the top right of every page and then click on the "Segnala un Bug" button.
+In order to idenitify and give priority to your reports, please report, in the body of the message, the “TEST_INTERNO_BPD” tag.
+
+#### Points of attention
+We kindly ask you to pay attention to the following notes:
+
+- Keep the POS printout. In the event of an error or failure to view the transactions, it will be useful to make the necessary check on that specific transaction
+- Make payments with cards of international circuits and / or ATM and do not use Apple Pay or Google PAY. These services are not enabled yet, so it will not be possible to elaborate transactions made via Apple/Google Pay
+- We remind you that the transactions are displayed in APP IO after a few days based on the accounting date/time of the transaction. We ask you not to open immediately a report  if the transaction is not displayed in APP IO the next day.
+- Please note that it is possible that a transaction may not be sent to CentroStella and therefore will not be displayed in APP IO, if a Merchant has an agreement with an Acquirer who has not joined the pilot in the production environment yet.
+
+
 ### FAQ & Troubleshooting
 
 The following section contains answers regarding common or noteworthy errors or questions, 
