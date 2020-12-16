@@ -53,6 +53,12 @@ the cron expression defined in the property _batchConfiguration.TransactionFilte
 __Note__: The property _spring.batch.job.enabled_ must as to be configured to false, when overriding the default
 property configurations.
 
+### Minimun Parameters Batch Acquirer
+  
+With regard to the Batch Acquirer, the minimun parameters related to the jvm's assigned memory provide a sizing of at least 4GB, therefore it is necessary to add -Xms4g -Xmx4g to the java command.
+Please note that the parameter that controls the hash file date must always be set. In particular, it is necessary to set athe following configuration property: 
+rest-client.hpan.list.dateValidation: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION:true}
+                                                                                    
 ### Logging Configurations
 
 By default, only records that are either filtered, or have been stopped due to an error are logged, while records that
@@ -281,7 +287,8 @@ maintained, in order to have the correct setup for the batch execution.
   For a batch process that does not use the default in-memory database, execute the following command:
   
   >java -cp "batch-transaction-filter.jar;<vendor_jar>" -Dloader.main=RtdTransactionFilterApplication org.springframework.boot.loader.PropertiesLauncher -jar .\batch-transaction-filter.jar --spring.config.location=file:config\
-                                                                                                                                                                                                                                                                                                                                                                                                                              
+  
+                                                                                                                                                                                                                                                                                                                                          
 ### Appendix 1 - Public PGP Key
 
 For any problem relating to the use of the public key and for the release of the specifications and / or updates relating to the public
