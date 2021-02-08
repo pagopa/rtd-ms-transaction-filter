@@ -104,19 +104,23 @@ class HpanStoreServiceImpl implements HpanStoreService {
 
     @SneakyThrows
     private BufferedWriter getBufferedWriter(String filePrefix) {
-        BufferedWriter bufferedWriter;
-        try {
-            lock(filePrefix);
-            if (hpanFiles.containsKey(filePrefix)) {
-                bufferedWriter = bufferedWriterHashMap.get(filePrefix);
-                if (bufferedWriter == null) {
-                    openBufferedWriter(filePrefix);
+        BufferedWriter bufferedWriter = bufferedWriterHashMap.get(filePrefix);
+        if (bufferedWriter != null) {
+            return bufferedWriter;
+        } else {
+            try {
+                lock(filePrefix);
+                if (hpanFiles.containsKey(filePrefix)) {
+                    bufferedWriter = bufferedWriterHashMap.get(filePrefix);
+                    if (bufferedWriter == null) {
+                        openBufferedWriter(filePrefix);
+                    }
+                } else {
+                    bufferedWriter = openBufferedWriter(filePrefix);
                 }
-            } else {
-                bufferedWriter = openBufferedWriter(filePrefix);
+            } finally {
+                unlock(filePrefix);
             }
-        } finally {
-            unlock(filePrefix);
         }
         return bufferedWriter;
     }
