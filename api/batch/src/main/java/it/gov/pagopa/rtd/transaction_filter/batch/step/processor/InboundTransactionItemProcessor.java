@@ -10,6 +10,7 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.core.io.Resource;
 
 import javax.validation.*;
 import java.util.Set;
@@ -50,11 +51,10 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                 DigestUtils.sha256Hex(inboundTransaction.getPan()+hpanStoreService.getSalt()) :
                 inboundTransaction.getPan();
 
-        if (hpanStoreService.hasHpan(hpan)) {
+        if (hpanStoreService.hasHpan(hpan,inboundTransaction.getLineNumber())) {
             inboundTransaction.setPan(applyHashing ?
                     hpan : DigestUtils.sha256Hex(
                             inboundTransaction.getPan()+hpanStoreService.getSalt()));
-
             return inboundTransaction;
         } else {
             return null;

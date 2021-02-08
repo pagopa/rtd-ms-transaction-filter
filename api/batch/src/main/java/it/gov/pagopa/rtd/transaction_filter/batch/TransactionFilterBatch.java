@@ -7,10 +7,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
-import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
-import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
+import it.gov.pagopa.rtd.transaction_filter.service.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -94,11 +91,13 @@ public class TransactionFilterBatch {
     private Boolean hpanListRecoveryEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled}")
     private Boolean hpanListDailyRemovalEnabled;
-
+    @Value("${batchConfiguration.TransactionFilterBatch.hpanList.fileMargin}")
+    private Integer fileMargin;
 
     private DataSource dataSource;
     private HpanStoreService hpanStoreService;
-    private TransactionWriterServiceImpl transactionWriterService;
+    private TransactionWriterService transactionWriterService;
+    private WriterTrackerService writerTrackerService;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     public void transactionWriterService() {
@@ -115,6 +114,14 @@ public class TransactionFilterBatch {
 
     public void clearHpanStoreService() {
         hpanStoreService.clearAll();
+    }
+
+    public void createWriterTrackerService() {
+        this.writerTrackerService = writerTrackerService();
+    }
+
+    public void clearWriterTrackerService() {
+        writerTrackerService.clearAll();
     }
 
     /**
@@ -149,12 +156,14 @@ public class TransactionFilterBatch {
                 transactionWriterService();
             }
             createHpanStoreService();
+            createWriterTrackerService();
             execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
             closeChannels();
             clearHpanStoreService();
+            clearWriterTrackerService();
 
         } else {
             if (transactionResources.length == 0) {
@@ -265,9 +274,9 @@ public class TransactionFilterBatch {
                 .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.hpanStoreService))
                 .on("FAILED").end()
                 .from(saltRecoveryTask(this.hpanStoreService)).on("*")
-                .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
+                .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
                 .on("FAILED").to(fileManagementTask())
-                .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
+                .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
                 .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .on("FAILED").to(fileManagementTask())
@@ -328,7 +337,13 @@ public class TransactionFilterBatch {
     }
 
     public HpanStoreService batchHpanStoreService() {
-        return beanFactory.getBean(HpanStoreService.class);
+        HpanStoreService hpanStoreService = beanFactory.getBean(HpanStoreService.class);
+        hpanStoreService.setFileMargin(fileMargin);
+        return hpanStoreService;
+    }
+
+    public WriterTrackerService writerTrackerService() {
+        return beanFactory.getBean(WriterTrackerService.class);
     }
 
 }

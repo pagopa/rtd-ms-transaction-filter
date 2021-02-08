@@ -1,9 +1,12 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.HpanReaderMasterStepListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.HpanReaderStepListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.PGPFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.HpanWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.WriterTrackerService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -23,6 +26,9 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.FileNotFoundException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -47,9 +53,13 @@ public class PanReaderStep {
     private Boolean applyDecrypt;
     @Value("${batchConfiguration.TransactionFilterBatch.panList.applyHashing}")
     private Boolean applyPanListHashing;
+    @Value("${batchConfiguration.TransactionFilterBatch.panList.poolSize}")
+    private Integer executorPoolSize;
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
+    private ExecutorService executorService;
+
 
     /**
      *
@@ -76,8 +86,10 @@ public class PanReaderStep {
      */
     @Bean
     @StepScope
-    public HpanWriter hpanItemWriter(HpanStoreService hpanStoreService) {
-        return new HpanWriter(hpanStoreService, this.applyPanListHashing);
+    public HpanWriter hpanItemWriter(HpanStoreService hpanStoreService, WriterTrackerService writerTrackerService) {
+        HpanWriter hpanWriter = new HpanWriter(hpanStoreService, writerTrackerService, this.applyPanListHashing);
+        hpanWriter.setExecutor(writerExecutor());
+        return hpanWriter;
     }
 
     /**
@@ -102,10 +114,14 @@ public class PanReaderStep {
      * @throws Exception
      */
     @Bean
-    public Step hpanRecoveryMasterStep(HpanStoreService hpanStoreService) throws Exception {
-        return stepBuilderFactory.get("hpan-recovery-master-step").partitioner(hpanRecoveryWorkerStep(hpanStoreService))
+    public Step hpanRecoveryMasterStep(HpanStoreService hpanStoreService,
+                                       WriterTrackerService writerTrackerService) throws Exception {
+        return stepBuilderFactory.get("hpan-recovery-master-step")
+                .partitioner(hpanRecoveryWorkerStep(hpanStoreService, writerTrackerService))
                 .partitioner("partition", hpanRecoveryPartitioner())
-                .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+                .taskExecutor(batchConfig.partitionerTaskExecutor())
+                .listener(hpanReaderMasterStepListener(hpanStoreService, writerTrackerService))
+                .build();
     }
 
     /**
@@ -115,17 +131,50 @@ public class PanReaderStep {
      * @throws Exception
      */
     @Bean
-    public Step hpanRecoveryWorkerStep(HpanStoreService hpanStoreService) throws Exception {
+    public Step hpanRecoveryWorkerStep(HpanStoreService hpanStoreService,
+                                       WriterTrackerService writerTrackerService) throws Exception {
         return stepBuilderFactory.get("hpan-recovery-worker-step")
                 .<String, String>chunk(chunkSize)
                 .reader(hpanItemReader(null))
-                .writer(hpanItemWriter(hpanStoreService))
+                .writer(hpanItemWriter(hpanStoreService, writerTrackerService))
                 .faultTolerant()
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
                 .skip(Exception.class)
                 .taskExecutor(batchConfig.readerTaskExecutor())
+                .listener(hpanReaderStepListener(writerTrackerService))
                 .build();
     }
+
+    @Bean
+    public HpanReaderMasterStepListener hpanReaderMasterStepListener(
+            HpanStoreService hpanStoreService, WriterTrackerService writerTrackerService) {
+        HpanReaderMasterStepListener hpanReaderStepListener = new HpanReaderMasterStepListener();
+        hpanReaderStepListener.setHpanStoreService(hpanStoreService);
+        hpanReaderStepListener.setWriterTrackerService(writerTrackerService);
+        return hpanReaderStepListener;
+    }
+
+    @Bean
+    public HpanReaderStepListener hpanReaderStepListener(
+            WriterTrackerService writerTrackerService) {
+        HpanReaderStepListener hpanReaderStepListener = new HpanReaderStepListener();
+        hpanReaderStepListener.setWriterTrackerService(writerTrackerService);
+        return hpanReaderStepListener;
+    }
+
+    /**
+     *
+     * @return bean configured for usage for chunk reading of a single file
+     */
+    @Bean
+    public Executor writerExecutor() {
+        if (this.executorService == null) {
+            executorService =  Executors.newFixedThreadPool(executorPoolSize);
+        }
+        return executorService;
+    }
+
+
 
 }
