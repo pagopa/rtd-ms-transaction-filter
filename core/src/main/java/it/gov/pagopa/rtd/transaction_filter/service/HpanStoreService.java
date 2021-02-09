@@ -9,6 +9,9 @@ import java.nio.file.Path;
 */
 public interface HpanStoreService {
 
+
+    void write(String hpan);
+
     /**
      * Method to be used to store the salt applied on the pans
      * @param salt salt applied to the pan for the sha256 hashing
@@ -32,15 +35,19 @@ public interface HpanStoreService {
      * @param hpan
      * @return Boolean defining if the hpan store contains the input hpan
      */
-    Boolean hasHpan(String hpan, long lineNumber);
+    Boolean hasHpan(String hpan);
 
     /**
     * Method explicitly used to clear the stored hpans and salt
      */
     void clearAll();
 
-    void setFileMargin(int fileMargin);
-
     void closeAllWriters();
+
+    void setWorkingHpanDirectory(String workingHpanDirectory);
+
+    void setNumberPerFile(Long numberPerFile);
+
+    void setCurrentNumberOfData(Long currentNumberOfData);
 
 }

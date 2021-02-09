@@ -91,8 +91,10 @@ public class TransactionFilterBatch {
     private Boolean hpanListRecoveryEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled}")
     private Boolean hpanListDailyRemovalEnabled;
-    @Value("${batchConfiguration.TransactionFilterBatch.hpanList.fileMargin}")
-    private Integer fileMargin;
+    @Value("${batchConfiguration.TransactionFilterBatch.hpanList.numberPerFile}")
+    private Long numberPerFile;
+    @Value("${batchConfiguration.TransactionFilterBatch.hpanList.workingHpanDirectory}")
+    private String workingHpanDirectory;
 
     private DataSource dataSource;
     private HpanStoreService hpanStoreService;
@@ -277,6 +279,9 @@ public class TransactionFilterBatch {
                 .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
                 .on("FAILED").to(fileManagementTask())
                 .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
+                .on("*").to(panReaderStep.hpanStoreRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
+                .on("FAILED").to(fileManagementTask())
+                .from(panReaderStep.hpanStoreRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
                 .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .on("FAILED").to(fileManagementTask())
@@ -338,7 +343,9 @@ public class TransactionFilterBatch {
 
     public HpanStoreService batchHpanStoreService() {
         HpanStoreService hpanStoreService = beanFactory.getBean(HpanStoreService.class);
-        hpanStoreService.setFileMargin(fileMargin);
+        hpanStoreService.setNumberPerFile(numberPerFile);
+        hpanStoreService.setWorkingHpanDirectory(workingHpanDirectory);
+        hpanStoreService.setCurrentNumberOfData(0L);
         return hpanStoreService;
     }
 
