@@ -2,15 +2,20 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.LoggerRule;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.BDDMockito;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.springframework.batch.item.file.FlatFileParseException;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.File;
@@ -20,12 +25,34 @@ import java.time.format.DateTimeFormatter;
 @Slf4j
 public class TransactionItemProcessListenerTest {
 
+    public TransactionItemProcessListenerTest(){
+        MockitoAnnotations.initMocks(this);
+    }
+
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
             new File(getClass().getResource("/test-encrypt").getFile()));
 
     @Rule
     public final LoggerRule loggerRule = new LoggerRule();
+
+    @Mock
+    private TransactionWriterService transactionWriterService;
+
+    @Before
+    public void initTest() {
+        Mockito.reset(transactionWriterService);
+        BDDMockito.doReturn(false)
+                .when(transactionWriterService)
+                .hasErrorHpan(Mockito.any());
+        BDDMockito.doNothing()
+                .when(transactionWriterService)
+                .storeErrorPans(Mockito.any());
+        BDDMockito.doNothing()
+                .when(transactionWriterService)
+                .write(Mockito.any(), Mockito.any());
+    }
 
     @SneakyThrows
     @Test
@@ -47,6 +74,7 @@ public class TransactionItemProcessListenerTest {
         transactionItemProcessListener.setEnableAfterProcessLogging(true);
         transactionItemProcessListener.setLoggingFrequency(1L);
         transactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
+        transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.afterProcess(
                 InboundTransaction.builder().filename("test").lineNumber(1).build(),
                 null);
@@ -71,6 +99,7 @@ public class TransactionItemProcessListenerTest {
         transactionItemProcessListener.setEnableAfterProcessLogging(true);
         transactionItemProcessListener.setEnableOnErrorFileLogging(true);
         transactionItemProcessListener.setLoggingFrequency(1L);
+        transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.onProcessError(
                 InboundTransaction.builder().filename("test").lineNumber(1).build(),
                 new Exception());
@@ -101,6 +130,7 @@ public class TransactionItemProcessListenerTest {
         transactionItemProcessListener.setEnableAfterProcessLogging(true);
         transactionItemProcessListener.setEnableOnErrorFileLogging(false);
         transactionItemProcessListener.setLoggingFrequency(1L);
+        transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.onProcessError(
                 InboundTransaction.builder().filename("test").lineNumber(1).build(),
                 new Exception());

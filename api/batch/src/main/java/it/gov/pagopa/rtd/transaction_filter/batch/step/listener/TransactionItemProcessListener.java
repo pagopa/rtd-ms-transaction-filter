@@ -78,6 +78,14 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     public void onProcessError(InboundTransaction item, Exception throwable) {
 
+        if (transactionWriterService.hasErrorHpan(item.getFilename()
+                .concat(String.valueOf(item.getLineNumber())))) {
+            return;
+        }
+
+        transactionWriterService.storeErrorPans(item.getFilename()
+                .concat(String.valueOf(item.getLineNumber())));
+
         if (enableOnErrorLogging) {
             log.error("Error during during transaction processing, filename: {},line: {}",
                     item.getFilename(), item.getLineNumber());

@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.TreeSet;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +20,7 @@ import java.util.HashMap;
 public class TransactionWriterServiceImpl implements TransactionWriterService {
 
     private final HashMap<String, BufferedWriter> fileChannelMap;
+    private final TreeSet<String> errorPans;
 
     @SneakyThrows
     @Override
@@ -42,6 +44,7 @@ public class TransactionWriterServiceImpl implements TransactionWriterService {
 
     @Override
     public void closeAll() {
+        errorPans.clear();
         fileChannelMap.keySet().forEach(filename -> {
             try {
                 fileChannelMap.get(filename).close();
@@ -50,4 +53,15 @@ public class TransactionWriterServiceImpl implements TransactionWriterService {
             }
         });
     }
+
+    @Override
+    public synchronized void storeErrorPans(String fileError) {
+        errorPans.add(fileError);
+    }
+
+    @Override
+    public Boolean hasErrorHpan(String fileError) {
+        return errorPans.contains(fileError);
+    }
+
 }
