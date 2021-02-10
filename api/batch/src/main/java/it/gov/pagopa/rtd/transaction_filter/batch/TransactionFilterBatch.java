@@ -159,10 +159,13 @@ public class TransactionFilterBatch {
             }
             createHpanStoreService();
             createWriterTrackerService();
+
             execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
+
+
             closeChannels();
             clearHpanStoreService();
             clearWriterTrackerService();
@@ -277,9 +280,17 @@ public class TransactionFilterBatch {
                 .on("FAILED").end()
                 .from(saltRecoveryTask(this.hpanStoreService)).on("*")
                 .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
-                .on("FAILED").to(fileManagementTask())
-                .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
-                .on("*").to(panReaderStep.hpanStoreRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
+                .on("*").to(fileManagementTask())
+                .build();
+    }
+
+    @SneakyThrows
+    public FlowJobBuilder transactionInnerJobBuilder() {
+
+        return jobBuilderFactory.get("transaction-inner-filter-job")
+                .repository(getJobRepository())
+                .listener(jobListener())
+                .start(panReaderStep.hpanStoreRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
                 .on("FAILED").to(fileManagementTask())
                 .from(panReaderStep.hpanStoreRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
                 .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))

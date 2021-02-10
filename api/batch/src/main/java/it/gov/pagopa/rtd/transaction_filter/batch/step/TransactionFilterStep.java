@@ -222,6 +222,7 @@ public class TransactionFilterStep {
             @Value("#{stepExecutionContext['fileName']}") String file) {
         FlatFileItemWriter<InboundTransaction> flatFileItemWriter = new FlatFileItemWriter<>();
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
+        flatFileItemWriter.setAppendAllowed(true);
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
