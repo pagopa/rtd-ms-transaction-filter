@@ -301,6 +301,8 @@ public class TransactionFilterStep {
                     .skipLimit(skipLimit)
                     .noSkip(FileNotFoundException.class)
                     .skip(Exception.class)
+                    .noRetry(Exception.class)
+                    .noRollback(Exception.class)
                     .listener(transactionItemReaderListener(executionDate))
                     .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
                     .listener(transactionsItemWriteListener(executionDate))
