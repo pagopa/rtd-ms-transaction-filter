@@ -303,9 +303,9 @@ public class TransactionFilterStep {
                     .skip(Exception.class)
                     .noRetry(Exception.class)
                     .noRollback(Exception.class)
-                    .listener(transactionItemReaderListener(executionDate))
+                    .listener(transactionItemReaderListener(transactionWriterService,executionDate))
                     .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
-                    .listener(transactionsItemWriteListener(executionDate))
+                    .listener(transactionsItemWriteListener(transactionWriterService,executionDate))
                     .listener(transactionStepListener(transactionWriterService, executionDate))
                     .taskExecutor(batchConfig.readerTaskExecutor())
                     .build();
@@ -322,9 +322,11 @@ public class TransactionFilterStep {
     }
 
     @Bean
-    public TransactionItemReaderListener transactionItemReaderListener(String executionDate) {
+    public TransactionItemReaderListener transactionItemReaderListener(
+            TransactionWriterService transactionWriterService, String executionDate) {
         TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
         transactionItemReaderListener.setExecutionDate(executionDate);
+        transactionItemReaderListener.setTransactionWriterService(transactionWriterService);
         transactionItemReaderListener.setErrorTransactionsLogsPath(transactionLogsPath);
         transactionItemReaderListener.setEnableAfterReadLogging(enableAfterReadLogging);
         transactionItemReaderListener.setLoggingFrequency(loggingFrequency);
@@ -334,9 +336,11 @@ public class TransactionFilterStep {
     }
 
     @Bean
-    public TransactionItemWriterListener transactionsItemWriteListener(String executionDate) {
+    public TransactionItemWriterListener transactionsItemWriteListener(
+            TransactionWriterService transactionWriterService, String executionDate) {
         TransactionItemWriterListener transactionsItemWriteListener = new TransactionItemWriterListener();
         transactionsItemWriteListener.setExecutionDate(executionDate);
+        transactionsItemWriteListener.setTransactionWriterService(transactionWriterService);
         transactionsItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
         transactionsItemWriteListener.setEnableAfterWriteLogging(enableAfterWriteLogging);
         transactionsItemWriteListener.setLoggingFrequency(loggingFrequency);
