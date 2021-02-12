@@ -72,6 +72,12 @@ class HpanStoreServiceImpl implements HpanStoreService {
 
     @SneakyThrows
     @Override
+    public void clearStoreSet() {
+        hpanSet.clear();
+    }
+
+    @SneakyThrows
+    @Override
     public void closeAllWriters() {
        for (BufferedWriter bufferedWriter : bufferedWriterList) {
            bufferedWriter.close();
@@ -86,6 +92,7 @@ class HpanStoreServiceImpl implements HpanStoreService {
             return bufferedWriterList.get(bufferedWriterList.size()-1);
         } else {
             synchronized (bufferedWriterList) {
+                data = bufferedWriterList.size();
                 if (Math.multiplyExact(data,numberPerFile) > currentData) {
                     return bufferedWriterList.get(bufferedWriterList.size()-1);
                 } else {

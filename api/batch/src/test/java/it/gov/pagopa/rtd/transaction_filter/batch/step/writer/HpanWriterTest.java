@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.writer;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.WriterTrackerService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.*;
 import org.junit.rules.ExpectedException;
@@ -11,9 +12,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.test.MetaDataInstanceFactory;
-
 import java.util.Collections;
 
 public class HpanWriterTest {
@@ -32,6 +30,9 @@ public class HpanWriterTest {
     @Mock
     private HpanStoreService hpanStoreServiceMock;
 
+    @Mock
+    private WriterTrackerService writerTrackerServiceMock;
+
     @Before
     public void setUp() {
         Mockito.reset(hpanStoreServiceMock);
@@ -45,7 +46,7 @@ public class HpanWriterTest {
         try {
             BDDMockito.doNothing().when(hpanStoreServiceMock).store(Mockito.eq("pan"));
             BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
-            HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, false);
+            HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, writerTrackerServiceMock);
             hpanWriter.write(Collections.emptyList());
             BDDMockito.verifyZeroInteractions(hpanStoreServiceMock);
         } catch (Exception e) {
@@ -58,7 +59,7 @@ public class HpanWriterTest {
     public void write_OK_MonoList_NoHash() {
         BDDMockito.doNothing().when(hpanStoreServiceMock).store(Mockito.eq("pan"));
         BDDMockito.doReturn("").when(hpanStoreServiceMock).getSalt();
-        HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, false);
+        HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, writerTrackerServiceMock);
         hpanWriter.write(Collections.singletonList("pan"));
         BDDMockito.verify(hpanStoreServiceMock).store(Mockito.eq("pan"));
     }
@@ -67,7 +68,7 @@ public class HpanWriterTest {
     public void write_OK_MonoList_HashWithSalt() {
         BDDMockito.doNothing().when(hpanStoreServiceMock).store(Mockito.eq("pan"));
         BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
-        HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, true);
+        HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, writerTrackerServiceMock);
         hpanWriter.write(Collections.singletonList("pan"));
         BDDMockito.verify(hpanStoreServiceMock).store(Mockito.eq(DigestUtils.sha256Hex("pan"+"testSalt")));
     }
@@ -76,7 +77,7 @@ public class HpanWriterTest {
     public void write_OK_MonoList_HashWithoutSalt() {
         BDDMockito.doNothing().when(hpanStoreServiceMock).store(Mockito.eq("pan"));
         BDDMockito.doReturn("").when(hpanStoreServiceMock).getSalt();
-        HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, true);
+        HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, writerTrackerServiceMock);
         hpanWriter.write(Collections.singletonList("pan"));
         BDDMockito.verify(hpanStoreServiceMock).store(Mockito.eq(DigestUtils.sha256Hex("pan")));
     }
@@ -86,7 +87,7 @@ public class HpanWriterTest {
         try {
             BDDMockito.doNothing().when(hpanStoreServiceMock).store(Mockito.eq("pan"));
             BDDMockito.doReturn("").when(hpanStoreServiceMock).getSalt();
-            HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, true);
+            HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, writerTrackerServiceMock);
             hpanWriter.write(Collections.nCopies(5,"pan"));
             BDDMockito.verify(hpanStoreServiceMock, Mockito.times(5))
                     .store(Mockito.eq(DigestUtils.sha256Hex("pan")));
@@ -98,7 +99,7 @@ public class HpanWriterTest {
 
     @Test
     public void write_KO_null() {
-        HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, true);
+        HpanWriter hpanWriter = new HpanWriter(this.hpanStoreServiceMock, writerTrackerServiceMock);
         BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
         expectedException.expect(NullPointerException.class);
         hpanWriter.write(null);

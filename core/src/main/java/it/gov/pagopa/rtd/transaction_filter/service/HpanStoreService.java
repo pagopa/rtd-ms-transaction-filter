@@ -42,6 +42,8 @@ public interface HpanStoreService {
      */
     void clearAll();
 
+    void clearStoreSet();
+
     void closeAllWriters();
 
     void setWorkingHpanDirectory(String workingHpanDirectory);
