@@ -79,6 +79,9 @@ public class TransactionItemProcessListenerTest {
                 InboundTransaction.builder().filename("test").lineNumber(1).build(),
                 null);
 
+        BDDMockito.verify(transactionWriterService).write(Mockito.any(),Mockito.any());
+
+
     }
 
     @SneakyThrows
@@ -104,10 +107,7 @@ public class TransactionItemProcessListenerTest {
                 InboundTransaction.builder().filename("test").lineNumber(1).build(),
                 new Exception());
 
-        Assert.assertEquals(1,
-                FileUtils.listFiles(
-                        resolver.getResources("classpath:/test-encrypt/**/testProcess")[0].getFile(),
-                        new String[]{"csv"}, false).size());
+        BDDMockito.verify(transactionWriterService).write(Mockito.any(),Mockito.any());
 
     }
 
@@ -135,10 +135,7 @@ public class TransactionItemProcessListenerTest {
                 InboundTransaction.builder().filename("test").lineNumber(1).build(),
                 new Exception());
 
-        Assert.assertEquals(0,
-                FileUtils.listFiles(
-                        resolver.getResources("classpath:/test-encrypt/**/testProcess")[0].getFile(),
-                        new String[]{"csv"}, false).size());
+        BDDMockito.verify(transactionWriterService, Mockito.times(0)).write(Mockito.any(),Mockito.any());
 
     }
 
