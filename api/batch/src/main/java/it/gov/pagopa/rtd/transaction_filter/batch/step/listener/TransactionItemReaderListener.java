@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     private Boolean enableOnErrorFileLogging;
     private Boolean enableAfterReadLogging;
     private Long loggingFrequency;
+    private TransactionWriterService transactionWriterService;
     String filename;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -59,14 +61,12 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
                     .replaceAll("]","").replaceAll("\\\\", "/");
             String[] fileArr = filename.split("/");
             try {
-                File file = new File(
-                resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
-                        .concat("/".concat(executionDate))
-                        + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv");
                 String[] lineArray = flatFileParseException.getInput().split("_",2);
-                FileUtils.writeStringToFile(
-                        file, (lineArray.length > 1 ? lineArray[1] : lineArray[0]).concat("\n"),
-                        Charset.defaultCharset(), true);
+                transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
+                                .getFile().getAbsolutePath()
+                                .concat("/".concat(executionDate))
+                                + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",
+                        (lineArray.length > 1 ? lineArray[1] : lineArray[0]).concat("\n"));
             } catch (Exception e) {
                 log.error(e.getMessage(),e);
             }

@@ -61,6 +61,7 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.panList.passphrase=test",
                 "batchConfiguration.TransactionFilterBatch.panList.skipLimit=0",
                 "batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath=classpath:/test-encrypt/**/hpan/*pan*.pgp",
+                "batchConfiguration.TransactionFilterBatch.panList.hpanWorkerDirectoryPath=classpath:/test-encrypt/**/hpan/temp/current/*pan*.pgp",
                 "batchConfiguration.TransactionFilterBatch.panList.linesToSkip=0",
                 "batchConfiguration.TransactionFilterBatch.panList.applyDecrypt=true",
                 "batchConfiguration.TransactionFilterBatch.panList.applyHashing=true",
@@ -77,7 +78,8 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSender.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=false"
+                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=false",
+                "batchConfiguration.TransactionFilterBatch.hpanList.numberPerFile=5000000"
         }
 )
 public class TransactionFilterBatchTest {
@@ -99,6 +101,8 @@ public class TransactionFilterBatchTest {
     @Before
     public void setUp() {
         Mockito.reset(hpanStoreServiceSpy);
+        hpanStoreServiceSpy.setNumberPerFile(5000000L);
+        hpanStoreServiceSpy.setWorkingHpanDirectory("classpath:/test-encrypt/**/hpan/temp/current/*pan*.pgp");
     }
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -114,7 +118,7 @@ public class TransactionFilterBatchTest {
     @Test
     public void panReaderStep_testCoreSteps_OK() {
 
-        tempFolder.newFolder("hpan");
+        tempFolder.newFolder("hpan","temp","current");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");
 
         FileOutputStream panPgpFOS = new FileOutputStream(panPgp);
@@ -151,7 +155,7 @@ public class TransactionFilterBatchTest {
     @Test
     public void panReaderStep_testCoreSteps_KO() {
 
-        tempFolder.newFolder("hpan");
+        tempFolder.newFolder("hpan","temp","current");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");
 
         FileOutputStream panPgpFOS = new FileOutputStream(panPgp);

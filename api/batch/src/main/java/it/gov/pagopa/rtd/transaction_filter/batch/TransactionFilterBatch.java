@@ -1,13 +1,11 @@
 package it.gov.pagopa.rtd.transaction_filter.batch;
 
-
-import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.classifier.InboundTransactionClassifier;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.InnerFileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.service.*;
 import lombok.Data;
@@ -15,11 +13,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.FlowJobBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
@@ -38,11 +36,8 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
-
 import javax.sql.DataSource;
 import java.io.File;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 /**
@@ -179,10 +174,11 @@ public class TransactionFilterBatch {
                     workingHpanDirectory.concat("/*.csv"));
 
             Integer hpanWorkerSize = hpanWorkerResources.length;
-            Integer hpanFilesCounter = 1;
+            Integer hpanFilesCounter = 0;
 
             for (Resource resource : hpanWorkerResources) {
 
+                hpanFilesCounter = hpanFilesCounter+1;
                 clearStoreSet();
 
                 String tempData = workingHpanDirectory.concat("/current");
@@ -211,6 +207,8 @@ public class TransactionFilterBatch {
                                 .addDate("startDateTime", innerStartDate)
                                 .addString("lastSection",
                                         String.valueOf(hpanFilesCounter.equals(hpanWorkerSize)))
+                                .addString("firstSection",
+                                        String.valueOf(hpanFilesCounter.equals(1)))
                                 .toJobParameters());
 
             }
@@ -350,15 +348,15 @@ public class TransactionFilterBatch {
                 .repository(getJobRepository())
                 .listener(jobListener())
                 .start(panReaderStep.hpanStoreRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
-                .on("FAILED").to(fileManagementTask())
+                .on("FAILED").to(innerFileManagementTask())
                 .from(panReaderStep.hpanStoreRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
                 .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
-                .on("FAILED").to(fileManagementTask())
+                .on("FAILED").to(innerFileManagementTask())
                 .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionSenderMasterStep(
                         this.sftpConnectorService))
-                .on("*").to(fileManagementTask())
+                .on("*").to(innerFileManagementTask())
                 .build();
     }
 
@@ -409,6 +407,33 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
         return stepBuilderFactory.get("transaction-filter-file-management-step")
                 .tasklet(fileManagementTasklet).build();
+    }
+
+    /**
+     * @return step instance based on the {@link FileManagementTasklet} to be used for
+     * file archival at the end of the reading process
+     */
+    @SneakyThrows
+    @Bean
+    public Step innerFileManagementTask() {
+        return stepBuilderFactory.get("transaction-inner-filter-file-management-step")
+                .tasklet(innerFileManagementTasklet(null)).build();
+    }
+
+    @Bean
+    @StepScope
+    public InnerFileManagementTasklet innerFileManagementTasklet(
+            @Value("#{jobParameters['firstSection']}") Boolean firstSection) {
+        InnerFileManagementTasklet fileManagementTasklet = new InnerFileManagementTasklet();
+        fileManagementTasklet.setSuccessPath(successArchivePath);
+        fileManagementTasklet.setErrorPath(errorArchivePath);
+        fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanWorkerDirectoryPath());
+        fileManagementTasklet.setOutputDirectory(transactionFilterStep.getOutputDirectoryPath());
+        fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
+        fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
+        fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
+        fileManagementTasklet.setFirstSection(firstSection);
+        return fileManagementTasklet;
     }
 
     public HpanStoreService batchHpanStoreService() {

@@ -38,14 +38,11 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
 import java.io.FileNotFoundException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -308,6 +305,8 @@ public class TransactionFilterStep {
                     .skipLimit(skipLimit)
                     .noSkip(FileNotFoundException.class)
                     .skip(Exception.class)
+                    .noRetry(Exception.class)
+                    .noRollback(Exception.class)
                     .listener(transactionItemReaderListener(executionDate))
                     .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
                     .listener(transactionsItemWriteListener(executionDate))

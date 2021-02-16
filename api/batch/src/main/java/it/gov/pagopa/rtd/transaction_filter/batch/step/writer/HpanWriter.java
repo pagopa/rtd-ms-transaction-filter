@@ -5,15 +5,8 @@ import it.gov.pagopa.rtd.transaction_filter.service.WriterTrackerService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.annotation.BeforeStep;
-import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
-
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 
 /**
@@ -32,9 +25,6 @@ public class HpanWriter implements ItemWriter<String> {
     @Override
     public void write(List<? extends String> hpanList) {
 
-        CountDownLatch countDownLatch = new CountDownLatch(hpanList.size());
-
-
         hpanList.forEach(hpan-> {
             {
                 try {
@@ -42,14 +32,10 @@ public class HpanWriter implements ItemWriter<String> {
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                     log.error("Encountered error on " + hpan);
-                } finally {
-                    countDownLatch.countDown();
                 }
             }
         });
 
-
-        writerTrackerService.addCountDownLatch(countDownLatch);
     }
 
 }

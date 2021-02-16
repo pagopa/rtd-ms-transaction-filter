@@ -4,13 +4,9 @@ import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.batch.core.ItemProcessListener;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.lang.Nullable;
-
-import java.io.File;
-import java.nio.charset.Charset;
 
 /**
  * Implementation of {@link ItemProcessListener}, to be used to log and/or store records
@@ -78,6 +74,14 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     public void onProcessError(InboundTransaction item, Exception throwable) {
 
+        if (transactionWriterService.hasErrorHpan(item.getFilename()
+                .concat(String.valueOf(item.getLineNumber())))) {
+            return;
+        }
+
+        transactionWriterService.storeErrorPans(item.getFilename()
+                .concat(String.valueOf(item.getLineNumber())));
+
         if (enableOnErrorLogging) {
             log.error("Error during during transaction processing, filename: {},line: {}",
                     item.getFilename(), item.getLineNumber());
@@ -87,11 +91,10 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
             try {
                 String filename = item.getFilename().replaceAll("\\\\", "/");
                 String[] fileArr = filename.split("/");
-                File file = new File(
-                        resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
-                                .concat("/".concat(executionDate))
-                                + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv");
-                FileUtils.writeStringToFile(file, buildCsv(item), Charset.defaultCharset(), true);
+                transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
+                        .getFile().getAbsolutePath()
+                        .concat("/".concat(executionDate))
+                        + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }

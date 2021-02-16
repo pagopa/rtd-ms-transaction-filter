@@ -64,6 +64,7 @@ class HpanStoreServiceImpl implements HpanStoreService {
     @SneakyThrows
     @Override
     public void clearAll() {
+        hpanSet.clear();
         for (BufferedWriter bufferedWriter : bufferedWriterList) {
             bufferedWriter.close();
         }
