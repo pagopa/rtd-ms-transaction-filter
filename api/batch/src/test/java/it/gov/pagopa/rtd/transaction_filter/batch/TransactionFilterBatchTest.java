@@ -100,9 +100,10 @@ public class TransactionFilterBatchTest {
     @SneakyThrows
     @Before
     public void setUp() {
+        File file = tempFolder.newFolder("hpan","temp","current");
         Mockito.reset(hpanStoreServiceSpy);
         hpanStoreServiceSpy.setNumberPerFile(5000000L);
-        hpanStoreServiceSpy.setWorkingHpanDirectory("classpath:/test-encrypt/**/hpan/temp/current/*pan*.pgp");
+        hpanStoreServiceSpy.setWorkingHpanDirectory("file:/"+file.getAbsolutePath());
     }
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -118,7 +119,6 @@ public class TransactionFilterBatchTest {
     @Test
     public void panReaderStep_testCoreSteps_OK() {
 
-        tempFolder.newFolder("hpan","temp","current");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");
 
         FileOutputStream panPgpFOS = new FileOutputStream(panPgp);
@@ -141,13 +141,7 @@ public class TransactionFilterBatchTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(defaultJobParameters());
         Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
 
-        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).store(Mockito.any());
-        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).hasHpan(Mockito.any());
-
-        Assert.assertEquals(1,
-                FileUtils.listFiles(
-                        resolver.getResources("classpath:/test-encrypt/output")[0].getFile(),
-                        new String[]{"pgp"},false).size());
+        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).write(Mockito.any());
 
     }
 
@@ -155,7 +149,6 @@ public class TransactionFilterBatchTest {
     @Test
     public void panReaderStep_testCoreSteps_KO() {
 
-        tempFolder.newFolder("hpan","temp","current");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");
 
         FileOutputStream panPgpFOS = new FileOutputStream(panPgp);
