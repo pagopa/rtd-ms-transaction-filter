@@ -24,7 +24,7 @@ public class TransactionWriterServiceImpl implements TransactionWriterService {
 
     @SneakyThrows
     @Override
-    public void openFileChannel(String filename) {
+    public synchronized void openFileChannel(String filename) {
 
         if (!fileChannelMap.containsKey(filename)) {
             Path path = Paths.get(filename);
@@ -39,7 +39,12 @@ public class TransactionWriterServiceImpl implements TransactionWriterService {
     @SneakyThrows
     @Override
     public void write(String filename, String content) {
-        fileChannelMap.get(filename).append(content);
+        BufferedWriter bufferedWriter = fileChannelMap.get(filename);
+        if (bufferedWriter == null) {
+            openFileChannel(filename);
+            bufferedWriter = fileChannelMap.get(filename);
+        }
+        bufferedWriter.append(content);
     }
 
     @Override
@@ -49,7 +54,7 @@ public class TransactionWriterServiceImpl implements TransactionWriterService {
             try {
                 fileChannelMap.get(filename).close();
             } catch (IOException e) {
-               log.error(e.getMessage(),e);
+                log.error(e.getMessage(),e);
             }
         });
     }
