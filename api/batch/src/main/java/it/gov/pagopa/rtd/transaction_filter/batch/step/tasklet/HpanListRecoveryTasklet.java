@@ -71,7 +71,7 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
                 for (Resource resource : resources) {
                     BasicFileAttributes fileAttributes = Files.readAttributes(
                             resource.getFile().toPath(), BasicFileAttributes.class);
-                    Long fileLastModTime = fileAttributes.lastModifiedTime().toMillis();
+                    long fileLastModTime = fileAttributes.lastModifiedTime().toMillis();
                     Instant instant = Instant.ofEpochMilli(fileLastModTime);
                     LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
                     String fileLastModifiedDate = localDateTime.format(fmt);

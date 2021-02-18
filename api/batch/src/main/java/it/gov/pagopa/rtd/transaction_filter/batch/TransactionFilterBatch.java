@@ -202,14 +202,21 @@ public class TransactionFilterBatch {
 
                 Date innerStartDate = new Date();
 
+                Boolean lastSection = hpanFilesCounter.equals(hpanWorkerSize);
                 execution = jobLauncher().run(jobInner(),
                         new JobParametersBuilder()
                                 .addDate("startDateTime", innerStartDate)
                                 .addString("lastSection",
-                                        String.valueOf(hpanFilesCounter.equals(hpanWorkerSize)))
+                                        String.valueOf(lastSection))
                                 .addString("firstSection",
                                         String.valueOf(hpanFilesCounter.equals(1)))
                                 .toJobParameters());
+
+                if (lastSection) {
+                    for (Resource transactionResource : transactionResources) {
+                        FileUtils.forceDelete(transactionResource.getFile());
+                    }
+                }
 
             }
 

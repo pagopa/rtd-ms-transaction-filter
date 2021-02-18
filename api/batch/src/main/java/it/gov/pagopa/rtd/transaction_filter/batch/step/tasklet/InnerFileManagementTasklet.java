@@ -72,11 +72,11 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
-        Boolean executionWithErrors = false;
+        boolean executionWithErrors = false;
         List<String> errorFilenames = new ArrayList<>();
         hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
 
-        List<String> hpanResources = Arrays.asList(resolver.getResources(hpanDirectory)).stream().map(resource -> {
+        List<String> hpanResources = Arrays.stream(resolver.getResources(hpanDirectory)).map(resource -> {
             try {
                 return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
             } catch (IOException e) {
@@ -85,8 +85,8 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
             }
         }).collect(Collectors.toList());
 
-        Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
-                .getStepExecutions();
+        Collection<StepExecution> stepExecutions = chunkContext.getStepContext()
+                .getStepExecution().getJobExecution().getStepExecutions();
         for (StepExecution stepExecution : stepExecutions) {
             if (stepExecution.getExecutionContext().containsKey("fileName")) {
 
@@ -126,6 +126,7 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
                         log.info("Archiving processed file: {}", file);
                         archiveFile(file, path, isComplete);
                     }
+
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -135,7 +136,8 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
 
         if (deleteOutputFiles.equals("ALWAYS") || (deleteOutputFiles.equals("ERROR") && executionWithErrors)) {
             List<Resource> outputDirectoryResources =
-                    Arrays.asList(resolver.getResources(outputDirectory.replaceAll("\\\\", "/") + "/*"));
+                    Arrays.asList(resolver.getResources(outputDirectory
+                            .replaceAll("\\\\", "/") + "/*"));
             outputDirectoryResources.forEach(outputDirectoryResource ->
             {
                 if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
@@ -157,6 +159,8 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
                 }
             });
         }
+
+
 
         return RepeatStatus.FINISHED;
     }
