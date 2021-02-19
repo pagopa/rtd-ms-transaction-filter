@@ -25,6 +25,7 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.Partitioner;
+import org.springframework.batch.core.step.skip.SkipLimitExceededException;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
@@ -38,9 +39,12 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+
+import javax.validation.ConstraintViolationException;
 import java.io.FileNotFoundException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -304,9 +308,12 @@ public class TransactionFilterStep {
                     .faultTolerant()
                     .skipLimit(skipLimit)
                     .noSkip(FileNotFoundException.class)
+                    .noSkip(SkipLimitExceededException.class)
                     .skip(Exception.class)
-                    .noRetry(Exception.class)
-                    .noRollback(Exception.class)
+                    .noRetry(DateTimeParseException.class)
+                    .noRollback(DateTimeParseException.class)
+                    .noRetry(ConstraintViolationException.class)
+                    .noRollback(ConstraintViolationException.class)
                     .listener(transactionItemReaderListener(transactionWriterService,executionDate))
                     .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
                     .listener(transactionsItemWriteListener(transactionWriterService,executionDate))

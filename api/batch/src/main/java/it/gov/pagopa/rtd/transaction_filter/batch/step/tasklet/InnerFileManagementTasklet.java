@@ -43,6 +43,7 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
     private String errorPath;
     private String hpanDirectory;
     private String outputDirectory;
+    private String innerOutputDirectory;
     private Boolean firstSection;
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -138,6 +139,9 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
             List<Resource> outputDirectoryResources =
                     Arrays.asList(resolver.getResources(outputDirectory
                             .replaceAll("\\\\", "/") + "/*"));
+            List<Resource> innerOutputDirectoryResources =
+                    Arrays.asList(resolver.getResources(innerOutputDirectory
+                            .replaceAll("\\\\", "/") + "/*"));
             outputDirectoryResources.forEach(outputDirectoryResource ->
             {
                 if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
@@ -157,6 +161,29 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
                         log.error(e.getMessage(), e);
                     }
                 }
+
+            });
+
+            innerOutputDirectoryResources.forEach(innerOutputDirectoryResource ->
+            {
+                if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
+                        errorFilename -> {
+                            try {
+                                return innerOutputDirectoryResource.getFile().getAbsolutePath().contains(errorFilename);
+                            } catch (IOException e) {
+                                log.error(e.getMessage(),e);
+                                return false;
+                            }
+                        }))
+                ) {
+                    try {
+                        log.info("Deleting output file: {}", innerOutputDirectoryResource.getFile());
+                        FileUtils.forceDelete(innerOutputDirectoryResource.getFile());
+                    } catch (IOException e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+
             });
         }
 
