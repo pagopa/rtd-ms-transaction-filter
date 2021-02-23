@@ -28,6 +28,8 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
+import java.util.Collection;
+import java.util.Collections;
 
 public class HpanListRecoveryTaskletTest {
 
@@ -62,7 +64,8 @@ public class HpanListRecoveryTaskletTest {
     @Test
     public void testRecover_OK_Recover() {
         File hpanFolder = tempFolder.newFolder("hpanDir");
-        BDDMockito.doReturn(tempFolder.newFile("tempFile")).when(hpanConnectorServiceMock).getHpanList();
+        BDDMockito.doReturn(Collections.singletonList(tempFolder.newFile("tempFile")))
+                .when(hpanConnectorServiceMock).getHpanList();
         HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
         hpanListRecoveryTasklet.setFileName(OffsetDateTime.now().format(fmt).concat("_hpanlist.pgp"));
@@ -105,7 +108,8 @@ public class HpanListRecoveryTaskletTest {
     public void testRecover_OK_NoRecover_AlreadyDownloaded() {
 
         File hpanFolder = tempFolder.newFolder("hpanDir");
-        BDDMockito.doReturn(tempFolder.newFile("tempFile")).when(hpanConnectorServiceMock).getHpanList();
+        BDDMockito.doReturn(Collections.singletonList(tempFolder.newFile("tempFile")))
+                .when(hpanConnectorServiceMock).getHpanList();
         HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
         hpanListRecoveryTasklet.setFileName(OffsetDateTime.now().format(fmt).concat("_hpanlist.pgp"));
@@ -156,7 +160,8 @@ public class HpanListRecoveryTaskletTest {
     public void testRecover_OK_RecoverAfterRemoval() {
         File hpanFolder = tempFolder.newFolder("hpanDir");
         File oldFile = tempFolder.newFile("hpanDir/hpanlist.pgp");
-        BDDMockito.doReturn(tempFolder.newFile("tempFile")).when(hpanConnectorServiceMock).getHpanList();
+        BDDMockito.doReturn(Collections.singletonList(tempFolder.newFile("tempFile")))
+                .when(hpanConnectorServiceMock).getHpanList();
         BasicFileAttributeView basicView = Files.getFileAttributeView(
                 oldFile.toPath(), BasicFileAttributeView.class);
         BasicFileAttributes basicAttrs = basicView.readAttributes();

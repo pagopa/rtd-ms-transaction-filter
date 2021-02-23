@@ -104,7 +104,7 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
                 List<File> hpanListTempFiles = hpanConnectorService.getHpanList();
                 for (File hpanListTempFile : hpanListTempFiles) {
                     outputFile = FileUtils.getFile(hpanListDirectory.concat("/".concat(
-                                    String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
+                            String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
                                     .concat(fileName != null ? fileName : "hpanList"))));
                     FileUtils.moveFile(
                             hpanListTempFile,
