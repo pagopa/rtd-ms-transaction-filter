@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * implementation of the {@link Tasklet}, recovers the pan list from a REST service,
@@ -93,14 +94,20 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
                             hpanListDirectory.replaceFirst("/","") : hpanListDirectory)
                     .concat("/")
                     .concat(hpanFilePattern));
-            File outputFile = FileUtils.getFile(hpanListDirectory
-                    .concat("/".concat(OffsetDateTime.now().format(fmt).concat("_")
-                            .concat(fileName != null ? fileName : "hpanList"))));
-            if (resources.length == 0 || !outputFile.exists()) {
-                File hpanListTempFile = hpanConnectorService.getHpanList();
-                FileUtils.moveFile(
-                        hpanListTempFile,
-                        outputFile);
+
+            if (resources.length == 0) {
+                List<File> hpanListTempFiles = hpanConnectorService.getHpanList();
+                Integer fileId=1;
+                for (File hpanListTempFile : hpanListTempFiles) {
+                    File outputFile = FileUtils.getFile(hpanListDirectory
+                            .concat("/".concat(
+                                    String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
+                                    .concat(fileName != null ? fileName : "hpanList"))));
+                    FileUtils.moveFile(
+                            hpanListTempFile,
+                            outputFile);
+                    fileId = fileId+1;
+                }
             }
         }
         return RepeatStatus.FINISHED;

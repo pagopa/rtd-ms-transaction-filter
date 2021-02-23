@@ -23,6 +23,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.Assert.assertNotNull;
@@ -86,7 +87,7 @@ public class HpanRestClientTest {
         ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
                 .parse("Mon, 22 Jun 2020 15:58:35 GMT",
                   DateTimeFormatter.RFC_1123_DATE_TIME));
-        File hpanList = hpanRestClient.getList();
+        List<File> hpanList = hpanRestClient.getList();
         assertNotNull(hpanList);
     }
 
@@ -96,7 +97,7 @@ public class HpanRestClientTest {
         ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
                 .parse("Mon, 22 Jun 2020 00:00:00 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
-        File hpanList = hpanRestClient.getList();
+        List<File> hpanList = hpanRestClient.getList();
         assertNotNull(hpanList);
     }
 

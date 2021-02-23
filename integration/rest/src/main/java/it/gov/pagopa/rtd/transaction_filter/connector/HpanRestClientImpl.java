@@ -22,8 +22,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Enumeration;
-import java.util.Objects;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -69,6 +68,12 @@ class HpanRestClientImpl implements HpanRestClient {
     @Value("${rest-client.hpan.list.dateValidationZone}")
     private String dateValidationZone;
 
+    @Value("${rest-client.hpan.list.partialFileRecovery}")
+    private Boolean partialFileRecovery;
+
+    @Value("${rest-client.hpan.list.nextPartHeader}")
+    private String nextPartHeader;
+
     private final HpanRestConnector hpanRestConnector;
 
     private LocalDateTime validationDate;
@@ -80,10 +85,41 @@ class HpanRestClientImpl implements HpanRestClient {
      */
     @SneakyThrows
     @Override
-    public File getList() {
+    public List<File> getList() {
+        if (!partialFileRecovery) {
+           return fullFileRecovery();
+        } else {
+            String filePartId = "1";
+            return partialFileRecovery(filePartId);
+        }
+    }
 
+    @SneakyThrows
+    private List<File> fullFileRecovery() {
         File tempFile = File.createTempFile("hpanDownloadFile", "");
         ResponseEntity<Resource> responseEntity = hpanRestConnector.getList(apiKey);
+        tempFile = processFile(tempFile, responseEntity);
+        return Collections.singletonList(tempFile);
+    }
+
+    @SneakyThrows
+    private List<File> partialFileRecovery(String filePartId) {
+        File tempFile = File.createTempFile("hpanDownloadFile_"
+                .concat(filePartId), "");
+        ResponseEntity<Resource> responseEntity = hpanRestConnector
+                .getPartialList(apiKey, filePartId);
+        tempFile = processFile(tempFile, responseEntity);
+        List<String> nextPartHeaderValues = responseEntity.getHeaders().get(nextPartHeader);
+        String nextPartHeaderValue = null;
+        if (nextPartHeaderValues != null) {
+            nextPartHeaderValue = nextPartHeaderValues.get(0);
+        }
+        return nextPartHeaderValue == null ? Collections.singletonList(tempFile) :
+                partialFileRecovery(nextPartHeaderValue);
+    }
+
+    @SneakyThrows
+    private File processFile(File tempFile, ResponseEntity<Resource> responseEntity) {
 
         if (dateValidation) {
             String dateString = Objects.requireNonNull(responseEntity.getHeaders()
@@ -94,7 +130,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
             ZonedDateTime fileCreationDateTime = LocalDateTime.parse(dateString, dtf)
                     .atZone(ZoneId.of(dateValidationZone));
-;           ZonedDateTime currentDate = validationDate != null ?
+            ;           ZonedDateTime currentDate = validationDate != null ?
                     validationDate.atZone(ZoneId.of(dateValidationZone)) :
                     LocalDateTime.now().atZone(ZoneId.of(dateValidationZone));
 
