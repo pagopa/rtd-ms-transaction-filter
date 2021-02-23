@@ -114,8 +114,14 @@ class HpanRestClientImpl implements HpanRestClient {
         if (nextPartHeaderValues != null) {
             nextPartHeaderValue = nextPartHeaderValues.get(0);
         }
-        return nextPartHeaderValue == null ? Collections.singletonList(tempFile) :
-                partialFileRecovery(nextPartHeaderValue);
+
+        List<File> returnFile = new ArrayList<>(Collections.singletonList(tempFile));
+
+        if (nextPartHeaderValue != null) {
+            returnFile.addAll(partialFileRecovery(nextPartHeaderValue));
+        }
+
+        return returnFile;
     }
 
     @SneakyThrows
