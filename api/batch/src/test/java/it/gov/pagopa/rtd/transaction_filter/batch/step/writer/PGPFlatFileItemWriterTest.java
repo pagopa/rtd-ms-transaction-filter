@@ -67,7 +67,7 @@ public class PGPFlatFileItemWriterTest {
     public void testWriter_OK_EmptyList() {
         PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/secretKey.asc", false
+                        "/secretKey.asc", false, false
         );
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
@@ -85,7 +85,7 @@ public class PGPFlatFileItemWriterTest {
     public void testWriter_OK_MonoList() {
         PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/secretKey.asc", false
+                        "/secretKey.asc", false, false
         );
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
@@ -103,7 +103,7 @@ public class PGPFlatFileItemWriterTest {
     public void testWriter_OK_MultiList() {
         PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/secretKey.asc", false
+                        "/secretKey.asc", false, false
         );
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
@@ -121,7 +121,7 @@ public class PGPFlatFileItemWriterTest {
     public void testWriter_OK_Encrypt() {
         PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/publicKey.asc", true
+                        "/publicKey.asc", true, false
         );
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         UrlResource encryptedFile = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv.pgp");
@@ -164,7 +164,7 @@ public class PGPFlatFileItemWriterTest {
     public void testWriter_KO_Encrypt() {
         PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/wrongKey.asc", true
+                        "/wrongKey.asc", true, false
         );
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
@@ -183,7 +183,7 @@ public class PGPFlatFileItemWriterTest {
     public void testWriter_KO_NullList() {
         PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/wrongKey.asc", false
+                        "/wrongKey.asc", false, false
         );
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);

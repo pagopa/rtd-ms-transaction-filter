@@ -41,6 +41,7 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
     private String manageHpanOnSuccess;
     private String successPath;
     private String errorPath;
+    private String tempHpanDirectory;
     private String hpanDirectory;
     private String outputDirectory;
     private String innerOutputDirectory;
@@ -173,7 +174,7 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
                             } catch (IOException e) {
                                 log.error(e.getMessage(),e);
                                 return false;
-                            }
+                        }
                         }))
                 ) {
                     try {
@@ -186,8 +187,6 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
 
             });
         }
-
-
 
         return RepeatStatus.FINISHED;
     }

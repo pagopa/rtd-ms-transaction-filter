@@ -202,8 +202,10 @@ public class TransactionFilterStep {
     @Bean
     @StepScope
     public PGPFlatFileItemWriter transactionItemWriter(
-            @Value("#{stepExecutionContext['fileName']}") String file) {
-        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKeyPath, applyEncrypt);
+            @Value("#{stepExecutionContext['fileName']}") String file,
+            @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
+        PGPFlatFileItemWriter flatFileItemWriter =
+                new PGPFlatFileItemWriter(publicKeyPath, applyEncrypt, lastSection);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
         flatFileItemWriter.setAppendAllowed(true);
         file = file.replaceAll("\\\\", "/");
@@ -318,7 +320,7 @@ public class TransactionFilterStep {
                     .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
                     .listener(transactionsItemWriteListener(transactionWriterService,executionDate))
                     .listener(transactionStepListener(transactionWriterService, executionDate))
-                    .stream(transactionItemWriter(null))
+                    .stream(transactionItemWriter(null, null))
                     .stream(transactionFilteredItemWriter(null))
                     .taskExecutor(batchConfig.readerTaskExecutor())
                     .build();
@@ -450,7 +452,7 @@ public class TransactionFilterStep {
         ClassifierCompositeItemWriter<InboundTransaction> compositeItemWriter = new ClassifierCompositeItemWriter<>();
         compositeItemWriter.setClassifier(
                 new InboundTransactionClassifier(
-                        transactionItemWriter(null),
+                        transactionItemWriter(null, null),
                         transactionFilteredItemWriter(null)));
         return compositeItemWriter;
     }

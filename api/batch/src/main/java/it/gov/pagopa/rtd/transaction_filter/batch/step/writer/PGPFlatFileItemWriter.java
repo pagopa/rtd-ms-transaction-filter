@@ -20,6 +20,7 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
 
     private final String publicKeyPath;
     private final Boolean applyEncrypt;
+    private final Boolean lastSection;
 
     private Resource resource;
 
@@ -33,7 +34,7 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
     @Override
     public void close() {
         super.close();
-        if (applyEncrypt) {
+        if (applyEncrypt && lastSection) {
             FileInputStream publicKeyIS = null;
             FileOutputStream outputFOS = null;
             try {

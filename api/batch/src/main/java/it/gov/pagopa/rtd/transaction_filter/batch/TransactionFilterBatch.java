@@ -165,6 +165,22 @@ public class TransactionFilterBatch {
             createHpanStoreService();
             createWriterTrackerService();
 
+            Resource[] hpanResourcesToDelete = resolver.getResources(
+                    panReaderStep.getHpanWorkerDirectoryPath());
+            for (Resource resource : hpanResourcesToDelete) {
+                FileUtils.forceDelete(resource.getFile());
+            }
+            Resource[] tempHpanResourcesToDelete = resolver.getResources(
+                    workingHpanDirectory.concat("/*.csv"));
+            for (Resource resource : tempHpanResourcesToDelete) {
+                FileUtils.forceDelete(resource.getFile());
+            }
+            Resource[] tempTransactionToDelete = resolver.getResources(
+                    transactionFilterStep.getInnerOutputDirectoryPath().concat("/current/*.csv"));
+            for (Resource resource : tempTransactionToDelete) {
+                FileUtils.forceDelete(resource.getFile());
+            }
+
             execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
@@ -435,6 +451,7 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setSuccessPath(successArchivePath);
         fileManagementTasklet.setErrorPath(errorArchivePath);
         fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanWorkerDirectoryPath());
+        fileManagementTasklet.setTempHpanDirectory(workingHpanDirectory);
         fileManagementTasklet.setOutputDirectory(transactionFilterStep.getOutputDirectoryPath());
         fileManagementTasklet.setInnerOutputDirectory(transactionFilterStep.getInnerOutputDirectoryPath());
         fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
