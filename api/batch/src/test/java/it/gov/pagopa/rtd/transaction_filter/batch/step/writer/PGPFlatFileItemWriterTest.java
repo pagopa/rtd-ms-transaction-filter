@@ -121,7 +121,7 @@ public class PGPFlatFileItemWriterTest {
     public void testWriter_OK_Encrypt() {
         PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/publicKey.asc", true, false
+                        "/publicKey.asc", true, true
         );
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         UrlResource encryptedFile = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv.pgp");
@@ -164,7 +164,7 @@ public class PGPFlatFileItemWriterTest {
     public void testWriter_KO_Encrypt() {
         PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/wrongKey.asc", true, false
+                        "/wrongKey.asc", true, true
         );
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
