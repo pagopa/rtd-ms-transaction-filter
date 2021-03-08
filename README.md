@@ -87,7 +87,9 @@ _batchConfiguration.TransactionFilterBatch.saltRecovery.enabled_
 and _batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled_. 
 
 Endpoint configurations are through the properties _rest-client.hpan.base-url_, for the base configuration
-, and the endpoint properties for the two services respectively _rest-client.hpan.list.url_ and _rest-client.hpan.salt.url_.
+, and the endpoint properties for the two services respectively _rest-client.hpan.list.url_ and _rest-client.hpan.salt.url_. 
+The client read and connection timeouts are defined through the properties _feign.client.config.hpan-service.connectTimeout__ 
+and _feign.client.config.hpan-service.readTimeout_.
 
 If the client is to be configured for TLS 1.2 protocol usage, the configuration property 
 _rest-client.hpan.mtls.enabled_ is to be used, and the keystore and trust-store files for the client, to be applied
@@ -408,6 +410,8 @@ __rest-client.hpan.key-store.password__ | Key-store password | ${HPAN_SERVICE_KE
 __rest-client.hpan.trust-store.file__ | Path to trust-store | file:/${HPAN_SERVICE_TRUST_STORE_FILE:} | NO
 __rest-client.hpan.trust-store.type__ | Trust-store type | ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}} | NO
 __rest-client.hpan.trust-store.password__ | Trust-store password | ${HPAN_SERVICE_TRUST_STORE_PASSWORD:} | NO
+__feign.client.config.hpan-service.connectTimeout__ | Rest client connection timeout, defined in milliseconds | ${REST_CLIENT_CONNECT_TIMEOUT:${HPAN_REST_CLIENT_CONNECT_TIMEOUT:5000}} | NO
+__feign.client.config.hpan-service.readTimeout__ | Rest client read timeout, defined in milliseconds | ${REST_CLIENT_READ_TIMEOUT:${HPAN_REST_CLIENT_READ_TIMEOUT:5000}} | NO
 
 
 #### 7. Batch properties - File Handling
@@ -755,3 +759,7 @@ that the file has a creation date that the daily procedure to update the file ha
 
 It is possible that there is a misleading errore, due to the set-up for the timezone, try changing the property 
 __rest-client.hpan.list.dateValidationZone__.
+
+#### Feign Error: Read timeout
+
+This error occurs generally during the download phase when calling the endpoint to recover the hpan list. due to the file volume it's expected to wait a substantial amount of time, and both the application ad eventual proxyies need to tolerate this wait. For the batch application, the read timeout can be configured with the property __feign.client.config.hpan-service.readTimeout__.
