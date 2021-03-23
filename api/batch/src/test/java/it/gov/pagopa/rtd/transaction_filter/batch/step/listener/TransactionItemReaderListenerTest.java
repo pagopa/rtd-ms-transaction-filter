@@ -1,13 +1,15 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.BDDMockito;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
@@ -17,9 +19,30 @@ import java.time.format.DateTimeFormatter;
 
 public class TransactionItemReaderListenerTest {
 
+    public TransactionItemReaderListenerTest(){
+        MockitoAnnotations.initMocks(this);
+    }
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
             new File(getClass().getResource("/test-encrypt").getFile()));
+
+    @Mock
+    private TransactionWriterService transactionWriterService;
+
+    @Before
+    public void initTest() {
+        Mockito.reset(transactionWriterService);
+        BDDMockito.doReturn(false)
+                .when(transactionWriterService)
+                .hasErrorHpan(Mockito.any());
+        BDDMockito.doNothing()
+                .when(transactionWriterService)
+                .storeErrorPans(Mockito.any());
+        BDDMockito.doNothing()
+                .when(transactionWriterService)
+                .write(Mockito.any(), Mockito.any());
+    }
 
     @SneakyThrows
     @Test
@@ -38,14 +61,10 @@ public class TransactionItemReaderListenerTest {
         transactionItemReaderListener.setEnableOnErrorFileLogging(true);
         transactionItemReaderListener.setEnableAfterReadLogging(true);
         transactionItemReaderListener.setLoggingFrequency(1L);
+        transactionItemReaderListener.setTransactionWriterService(transactionWriterService);
         transactionItemReaderListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemReaderListener.afterRead(InboundTransaction
                 .builder().filename("test").lineNumber(1).build());
-
-        Assert.assertEquals(0,
-                FileUtils.listFiles(
-                        resolver.getResources("classpath:/test-encrypt/**/testListener")[0].getFile(),
-                        new String[]{"csv"},false).size());
 
     }
 
@@ -65,14 +84,13 @@ public class TransactionItemReaderListenerTest {
         transactionItemReaderListener.setEnableOnErrorLogging(true);
         transactionItemReaderListener.setEnableOnErrorFileLogging(true);
         transactionItemReaderListener.setEnableAfterReadLogging(true);
+        transactionItemReaderListener.setTransactionWriterService(transactionWriterService);
         transactionItemReaderListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemReaderListener.onReadError(new FlatFileParseException(
                 "Parsing error at line: 1 in resource=[[file:/input]]", new Exception(), "input", 1));
 
-        Assert.assertEquals(1,
-                FileUtils.listFiles(
-                        resolver.getResources("classpath:/test-encrypt/**/testListener")[0].getFile(),
-                        new String[]{"csv"},false).size());
+        BDDMockito.verify(transactionWriterService).write(Mockito.any(),Mockito.any());
+
 
     }
 
@@ -96,10 +114,7 @@ public class TransactionItemReaderListenerTest {
         transactionItemReaderListener.onReadError(new FlatFileParseException("Parsing error at line: " +
                 1, new Exception(), "input", 1));
 
-        Assert.assertEquals(0,
-                FileUtils.listFiles(
-                        resolver.getResources("classpath:/test-encrypt/**/testListener")[0].getFile(),
-                        new String[]{"csv"},false).size());
+        BDDMockito.verify(transactionWriterService, Mockito.times(0)).write(Mockito.any(),Mockito.any());
 
     }
 

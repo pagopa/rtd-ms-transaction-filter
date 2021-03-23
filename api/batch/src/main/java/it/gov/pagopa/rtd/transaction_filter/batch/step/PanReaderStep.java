@@ -22,6 +22,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
+import javax.validation.ConstraintViolationException;
 import java.io.FileNotFoundException;
 
 @Configuration
@@ -124,6 +125,8 @@ public class PanReaderStep {
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
                 .skip(Exception.class)
+                .noRetry(Exception.class)
+                .noRollback(Exception.class)
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
     }

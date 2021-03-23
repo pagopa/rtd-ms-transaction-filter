@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -27,6 +28,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
     private Boolean enableOnErrorFileLogging;
     private Boolean enableAfterWriteLogging;
     private Long loggingFrequency;
+    private TransactionWriterService transactionWriterService;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
@@ -61,12 +63,10 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                 try {
                     String filename = inboundTransaction.getFilename().replaceAll("\\\\", "/");
                     String[] fileArr = filename.split("/");
-                    File file = new File(
-                            resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
-                                    .concat("/".concat(executionDate))
-                                    + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv");
-                    FileUtils.writeStringToFile(
-                            file, buildCsv(inboundTransaction), Charset.defaultCharset(), true);
+                    transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
+                            .getFile().getAbsolutePath()
+                            .concat("/".concat(executionDate))
+                            + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(inboundTransaction));
 
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);

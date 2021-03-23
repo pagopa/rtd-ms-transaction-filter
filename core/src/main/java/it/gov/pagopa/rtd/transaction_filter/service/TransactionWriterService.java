@@ -8,4 +8,8 @@ public interface TransactionWriterService {
 
     void closeAll();
 
+    void storeErrorPans(String hpan);
+
+    public Boolean hasErrorHpan(String hpan);
+
 }

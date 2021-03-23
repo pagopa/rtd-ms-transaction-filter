@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.connector.config;
 
 import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.ProxyHTTP;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,8 @@ import org.springframework.integration.sftp.session.DefaultSftpSessionFactory;
 import org.springframework.messaging.MessageHandler;
 
 import java.io.File;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 
 @Configuration
 @IntegrationComponentScan(value = "it.gov.pagopa.rtd")
@@ -40,6 +43,16 @@ public class TransactionSftpChannelConfig {
     private String remoteDirectory;
     @Value("${connectors.sftpConfigurations.connection.allowUnknownKeys}")
     private Boolean allowUnknownKeys;
+    @Value("${connectors.sftpConfigurations.connection.proxy.enabled}")
+    private Boolean proxyEnabled;
+    @Value("${connectors.sftpConfigurations.connection.proxy.host}")
+    private String proxyHost;
+    @Value("${connectors.sftpConfigurations.connection.proxy.port}")
+    private int proxyPort;
+    @Value("${connectors.sftpConfigurations.connection.proxy.user}")
+    private String proxyUsername;
+    @Value("${connectors.sftpConfigurations.connection.proxy.password}")
+    private String proxyPassword;
 
     @Bean
     public SessionFactory<ChannelSftp.LsEntry> sftpSessionFactory() {
@@ -47,6 +60,21 @@ public class TransactionSftpChannelConfig {
         factory.setHost(host);
         factory.setPort(port);
         factory.setUser(user);
+        if (proxyEnabled) {
+            ProxyHTTP proxy = new ProxyHTTP(proxyHost,proxyPort);
+            if (proxyUsername != null && !proxyUsername.equals("") &&
+                    proxyPassword != null && !proxyPassword.equals("")) {
+                proxy.setUserPasswd(proxyUsername, proxyPassword);
+                System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+                Authenticator.setDefault(new Authenticator() {
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(
+                                proxyUsername, proxyPassword.toCharArray());
+                    }
+                });
+            }
+            factory.setProxy(proxy);
+        }
         if (privateKey != null) {
             factory.setPrivateKey(privateKey);
             factory.setPrivateKeyPassphrase(passphrase);

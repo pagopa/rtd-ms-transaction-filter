@@ -41,7 +41,8 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
     @Override
     public InboundTransaction process(InboundTransaction inboundTransaction) {
 
-        Set<ConstraintViolation<InboundTransaction>> constraintViolations = validator.validate(inboundTransaction);
+        Set<ConstraintViolation<InboundTransaction>> constraintViolations =
+                validator.validate(inboundTransaction);
         if (constraintViolations.size() > 0) {
             throw new ConstraintViolationException(constraintViolations);
         }
@@ -51,11 +52,33 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                 inboundTransaction.getPan();
 
         if (hpanStoreService.hasHpan(hpan)) {
-            inboundTransaction.setPan(applyHashing ?
-                    hpan : DigestUtils.sha256Hex(
-                            inboundTransaction.getPan()+hpanStoreService.getSalt()));
+            InboundTransaction resultTransaction =
+                    InboundTransaction
+                            .builder()
+                            .mcc(inboundTransaction.getMcc())
+                            .lineNumber(inboundTransaction.getLineNumber())
+                            .filename(inboundTransaction.getFilename())
+                            .bin(inboundTransaction.getBin())
+                            .terminalId(inboundTransaction.getTerminalId())
+                            .merchantId(inboundTransaction.getMerchantId())
+                            .acquirerId(inboundTransaction.getAcquirerId())
+                            .amountCurrency(inboundTransaction.getAmountCurrency())
+                            .correlationId(inboundTransaction.getCorrelationId())
+                            .idTrxIssuer(inboundTransaction.getIdTrxIssuer())
+                            .idTrxAcquirer(inboundTransaction.getIdTrxAcquirer())
+                            .pan(inboundTransaction.getPan())
+                            .circuitType(inboundTransaction.getCircuitType())
+                            .operationType(inboundTransaction.getOperationType())
+                            .acquirerCode(inboundTransaction.getAcquirerCode())
+                            .amount(inboundTransaction.getAmount())
+                            .trxDate(inboundTransaction.getTrxDate())
+                            .build();
 
-            return inboundTransaction;
+            resultTransaction.setPan(applyHashing ?
+                    hpan : DigestUtils.sha256Hex(
+                    resultTransaction.getPan()+hpanStoreService.getSalt()));
+
+            return resultTransaction;
         } else {
             return null;
         }
