@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -73,6 +74,9 @@ class HpanRestClientImpl implements HpanRestClient {
 
     private LocalDateTime validationDate;
 
+    private File tempFile;
+    private Path tempDirWithPrefix;
+
     /**
     * Method used for recovering the list, if the properties are enabled, an attempt of validating
      * the checksum recovered from the configured header name, and eventually extracting the .csv or .pgp
@@ -82,7 +86,7 @@ class HpanRestClientImpl implements HpanRestClient {
     @Override
     public File getList() {
 
-        File tempFile = File.createTempFile("hpanDownloadFile", "");
+        tempFile = File.createTempFile("hpanDownloadFile", "");
         ResponseEntity<Resource> responseEntity = hpanRestConnector.getList(apiKey);
 
         if (dateValidation) {
@@ -116,19 +120,22 @@ class HpanRestClientImpl implements HpanRestClient {
         try (FileOutputStream tempFileFOS = new FileOutputStream(tempFile)) {
 
             if (checksumValidation) {
-                String checksum = Objects.requireNonNull(responseEntity.getHeaders().get(checksumHeaderName)).get(0);
-                if (!checksum.equals(DigestUtils.sha256Hex(responseEntity.getBody().getInputStream()))) {
+                String checksum = Objects.requireNonNull(
+                        responseEntity.getHeaders().get(checksumHeaderName)).get(0);
+                if (!checksum.equals(DigestUtils.sha256Hex(Objects.requireNonNull(
+                        responseEntity.getBody()).getInputStream()))) {
                     throw new Exception();
                 }
             }
 
-            StreamUtils.copy(responseEntity.getBody().getInputStream(), tempFileFOS);
+            StreamUtils.copy(Objects.requireNonNull(
+                    responseEntity.getBody()).getInputStream(), tempFileFOS);
         }
 
         if (attemptExtraction) {
 
             ZipFile zipFile = new ZipFile(tempFile);
-            Path tempDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
+            tempDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
 
             Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
 
@@ -177,6 +184,23 @@ class HpanRestClientImpl implements HpanRestClient {
 
     public void setValidationDate(LocalDateTime now) {
         this.validationDate = now;
+    }
+
+    @Override
+    public void cleanTempFile() {
+
+        try {
+            FileUtils.forceDelete(tempFile);
+        } catch (Exception e) {
+            log.error(e.getMessage(),e);
+        }
+
+        try {
+            FileUtils.deleteDirectory(tempDirWithPrefix.toFile());
+        } catch (Exception e) {
+            log.error(e.getMessage(),e);
+        }
+
     }
 
 }

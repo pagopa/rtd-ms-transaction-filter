@@ -20,4 +20,9 @@ public interface HpanConnectorService {
      */
     String getSalt();
 
+    /**
+     * Method to clean all temp files
+     */
+    public void cleanAllTempFiles();
+
 }

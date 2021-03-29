@@ -11,4 +11,6 @@ public interface HpanRestClient {
 
       String getSalt();
 
+      void cleanTempFile();
+
 }
