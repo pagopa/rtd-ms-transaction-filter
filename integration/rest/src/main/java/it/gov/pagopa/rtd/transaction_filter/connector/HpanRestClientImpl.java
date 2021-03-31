@@ -87,6 +87,7 @@ class HpanRestClientImpl implements HpanRestClient {
     public File getList() {
 
         tempFile = File.createTempFile("hpanDownloadFile", "");
+        File localTempFile = tempFile;
         ResponseEntity<Resource> responseEntity = hpanRestConnector.getList(apiKey);
 
         if (dateValidation) {
@@ -134,47 +135,49 @@ class HpanRestClientImpl implements HpanRestClient {
 
         if (attemptExtraction) {
 
-            ZipFile zipFile = new ZipFile(tempFile);
-            tempDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
+            try (ZipFile zipFile = new ZipFile(tempFile)) {
 
-            Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
+                tempDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
 
-            while (enumeration.hasMoreElements()) {
+                Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
 
-                FileOutputStream tempFileFOS = null;
-                InputStream zipEntryIS = null;
+                while (enumeration.hasMoreElements()) {
 
-                try {
+                    FileOutputStream tempFileFOS = null;
+                    InputStream zipEntryIS = null;
 
-                    ZipEntry zipEntry = enumeration.nextElement();
-                    zipEntryIS = zipFile.getInputStream(zipEntry);
-                    File newFile = new File(
-                            tempDirWithPrefix.toFile().getAbsolutePath() +
-                                    File.separator + zipEntry.getName());
-                    new File(newFile.getParent()).mkdirs();
+                    try {
 
-                    tempFileFOS = new FileOutputStream(newFile);
-                    IOUtils.copy(zipEntryIS, tempFileFOS);
+                        ZipEntry zipEntry = enumeration.nextElement();
+                        zipEntryIS = zipFile.getInputStream(zipEntry);
+                        File newFile = new File(
+                                tempDirWithPrefix.toFile().getAbsolutePath() +
+                                        File.separator + zipEntry.getName());
+                        new File(newFile.getParent()).mkdirs();
 
-                    if (zipEntry.getName().matches(listFilePattern)) {
-                        tempFile = newFile;
+                        tempFileFOS = new FileOutputStream(newFile);
+                        IOUtils.copy(zipEntryIS, tempFileFOS);
+
+                        if (zipEntry.getName().matches(listFilePattern)) {
+                            localTempFile = newFile;
+                        }
+
+                    } finally {
+
+                        if (zipEntryIS != null) {
+                            zipEntryIS.close();
+                        }
+
+                        if (tempFileFOS != null) {
+                            tempFileFOS.close();
+                        }
+
                     }
-
-                } finally {
-
-                    if (zipEntryIS != null) {
-                        zipEntryIS.close();
-                    }
-
-                    if (tempFileFOS != null) {
-                        tempFileFOS.close();
-                    }
-
                 }
             }
         }
 
-        return tempFile;
+        return localTempFile;
     }
 
     @Override
