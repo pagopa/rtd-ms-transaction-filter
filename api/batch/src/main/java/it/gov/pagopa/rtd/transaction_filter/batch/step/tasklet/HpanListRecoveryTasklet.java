@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * implementation of the {@link Tasklet}, recovers the pan list from a REST service,
@@ -70,7 +71,7 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
                 for (Resource resource : resources) {
                     BasicFileAttributes fileAttributes = Files.readAttributes(
                             resource.getFile().toPath(), BasicFileAttributes.class);
-                    Long fileLastModTime = fileAttributes.lastModifiedTime().toMillis();
+                    long fileLastModTime = fileAttributes.lastModifiedTime().toMillis();
                     Instant instant = Instant.ofEpochMilli(fileLastModTime);
                     LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
                     String fileLastModifiedDate = localDateTime.format(fmt);
@@ -92,14 +93,23 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
                             hpanListDirectory.replaceFirst("/","") : hpanListDirectory)
                     .concat("/")
                     .concat(hpanFilePattern));
+
+            int fileId=1;
             File outputFile = FileUtils.getFile(hpanListDirectory
-                    .concat("/".concat(OffsetDateTime.now().format(fmt).concat("_")
-                            .concat(fileName != null ? fileName : "hpanList"))));
+                    .concat("/".concat(
+                            String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
+                                    .concat(fileName != null ? fileName : "hpanList"))));
             if (resources.length == 0 || !outputFile.exists()) {
-                File hpanListTempFile = hpanConnectorService.getHpanList();
-                FileUtils.moveFile(
-                        hpanListTempFile,
-                        outputFile);
+                List<File> hpanListTempFiles = hpanConnectorService.getHpanList();
+                for (File hpanListTempFile : hpanListTempFiles) {
+                    outputFile = FileUtils.getFile(hpanListDirectory.concat("/".concat(
+                            String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
+                                    .concat(fileName != null ? fileName : "hpanList"))));
+                    FileUtils.moveFile(
+                            hpanListTempFile,
+                            outputFile);
+                    fileId = fileId+1;
+                }
                 hpanConnectorService.cleanAllTempFiles();
             }
         }

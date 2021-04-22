@@ -101,4 +101,8 @@ InboundTransaction {
     Integer lineNumber;
     String filename;
 
+    Boolean valid;
+
+    String hpan;
+
 }

@@ -4,11 +4,9 @@ import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
@@ -22,6 +20,7 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
 
     private final String publicKeyPath;
     private final Boolean applyEncrypt;
+    private final Boolean lastSection;
 
     private Resource resource;
 
@@ -35,7 +34,7 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
     @Override
     public void close() {
         super.close();
-        if (applyEncrypt) {
+        if (applyEncrypt && lastSection) {
             FileInputStream publicKeyIS = null;
             FileOutputStream outputFOS = null;
             try {

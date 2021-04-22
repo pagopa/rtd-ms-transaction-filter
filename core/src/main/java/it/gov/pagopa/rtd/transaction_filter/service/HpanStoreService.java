@@ -1,10 +1,16 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import java.io.IOException;
+import java.nio.file.Path;
+
 /**
 * Service to be used for storing the pan list obtained from files, and eventually the salt obtained remotely
 * {@link HpanStoreServiceImpl}
 */
 public interface HpanStoreService {
+
+
+    void write(String hpan);
 
     /**
      * Method to be used to store the salt applied on the pans
@@ -35,5 +41,15 @@ public interface HpanStoreService {
     * Method explicitly used to clear the stored hpans and salt
      */
     void clearAll();
+
+    void clearStoreSet();
+
+    void closeAllWriters();
+
+    void setWorkingHpanDirectory(String workingHpanDirectory);
+
+    void setNumberPerFile(Long numberPerFile);
+
+    void setCurrentNumberOfData(Long currentNumberOfData);
 
 }

@@ -10,6 +10,7 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.core.io.Resource;
 
 import javax.validation.*;
 import java.util.Set;
@@ -25,6 +26,7 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
 
     private final HpanStoreService hpanStoreService;
     private final Boolean applyHashing;
+    private final Boolean lastSection;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static final Validator validator = factory.getValidator();
@@ -73,15 +75,20 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                             .amount(inboundTransaction.getAmount())
                             .trxDate(inboundTransaction.getTrxDate())
                             .build();
-
+            resultTransaction.setValid(true);
             resultTransaction.setPan(applyHashing ?
                     hpan : DigestUtils.sha256Hex(
-                    resultTransaction.getPan()+hpanStoreService.getSalt()));
+                            inboundTransaction.getPan()+hpanStoreService.getSalt()));
 
-            return resultTransaction;
+            return inboundTransaction;
         } else {
-            return null;
+            if (lastSection) {
+                return null;
+            }
+            inboundTransaction.setValid(false);
         }
+
+        return inboundTransaction;
 
     }
 

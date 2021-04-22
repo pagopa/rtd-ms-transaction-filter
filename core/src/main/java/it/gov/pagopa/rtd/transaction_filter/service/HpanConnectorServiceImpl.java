@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 import java.io.File;
+import java.util.List;
 
 /**
 * Implementation of {@link HpanConnectorService}
@@ -18,7 +19,7 @@ public class HpanConnectorServiceImpl implements HpanConnectorService {
 
     @SneakyThrows
     @Override
-    public File getHpanList() {
+    public List<File> getHpanList() {
         return hpanRestClient.getList();
     }
 
