@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.ParStoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -25,6 +26,7 @@ import java.util.Set;
 public class InboundTransactionItemProcessor implements ItemProcessor<InboundTransaction, InboundTransaction> {
 
     private final HpanStoreService hpanStoreService;
+    private final ParStoreService parStoreService;
     private final Boolean applyHashing;
     private final Boolean lastSection;
 
@@ -53,7 +55,8 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                 DigestUtils.sha256Hex(inboundTransaction.getPan()+hpanStoreService.getSalt()) :
                 inboundTransaction.getPan();
 
-        if (hpanStoreService.hasHpan(hpan)) {
+        if (hpanStoreService.hasHpan(hpan) ||
+                parStoreService.hasPar(inboundTransaction.getPar())) {
             InboundTransaction resultTransaction =
                     InboundTransaction
                             .builder()
@@ -74,11 +77,11 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                             .acquirerCode(inboundTransaction.getAcquirerCode())
                             .amount(inboundTransaction.getAmount())
                             .trxDate(inboundTransaction.getTrxDate())
+                            .par(inboundTransaction.getPar())
                             .build();
             resultTransaction.setValid(true);
-            resultTransaction.setPan(applyHashing ?
-                    hpan : DigestUtils.sha256Hex(
-                            inboundTransaction.getPan()+hpanStoreService.getSalt()));
+            resultTransaction.setHpan(applyHashing ?
+                    hpan : DigestUtils.sha256Hex(inboundTransaction.getPan() + hpanStoreService.getSalt()));
 
             return inboundTransaction;
         } else {

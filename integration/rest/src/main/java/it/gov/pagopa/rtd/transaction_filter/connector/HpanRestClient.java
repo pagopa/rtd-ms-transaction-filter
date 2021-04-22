@@ -8,7 +8,9 @@ import java.util.List;
  */
 public interface HpanRestClient {
 
-      List<File> getList();
+      List<File> getHpanList();
+
+      List<File> getParList();
 
       String getSalt();
 

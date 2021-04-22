@@ -42,6 +42,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     private String successPath;
     private String errorPath;
     private String hpanDirectory;
+    private String parDirectory;
     private String outputDirectory;
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -71,11 +72,22 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
-        Boolean executionWithErrors = false;
+        boolean executionWithErrors = false;
         List<String> errorFilenames = new ArrayList<>();
         hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
 
         List<String> hpanResources = Arrays.asList(resolver.getResources(hpanDirectory)).stream().map(resource -> {
+            try {
+                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+                return null;
+            }
+        }).collect(Collectors.toList());
+
+        parDirectory = parDirectory.replaceAll("\\\\","/");
+
+        List<String> parResources = Arrays.asList(resolver.getResources(parDirectory)).stream().map(resource -> {
             try {
                 return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
             } catch (IOException e) {
@@ -118,7 +130,11 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                     }
 
                     boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
-                    if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
+                    boolean isParFile = parResources.contains(path.replaceAll("\\\\","/"));
+                    if (deleteProcessedFiles ||
+                       (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE")) ||
+                       (isComplete && isParFile && manageHpanOnSuccess.equals("DELETE"))
+                    ) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
                     } else if (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {

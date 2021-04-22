@@ -14,6 +14,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFil
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.ParStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
@@ -250,9 +251,11 @@ public class TransactionFilterStep {
     @StepScope
     public InboundTransactionItemProcessor transactionItemProcessor(
             HpanStoreService hpanStoreService,
+            ParStoreService parStoreService,
             @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
         return new InboundTransactionItemProcessor(
                 hpanStoreService,
+                parStoreService,
                 this.applyTrxHashing,
                 lastSection);
     }
@@ -280,10 +283,11 @@ public class TransactionFilterStep {
      */
     @Bean
     public Step transactionFilterMasterStep(HpanStoreService hpanStoreService,
+                                            ParStoreService parStoreService,
                                             TransactionWriterService transactionWriterService)
             throws Exception {
         return stepBuilderFactory.get("transaction-filter-master-step").partitioner(
-                transactionFilterWorkerStep(hpanStoreService,transactionWriterService))
+                transactionFilterWorkerStep(hpanStoreService, parStoreService, transactionWriterService))
                 .partitioner("partition", transactionFilterPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
@@ -295,19 +299,24 @@ public class TransactionFilterStep {
      * @throws Exception
      */
     @Bean
-    public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService)
+    public Step transactionFilterWorkerStep(
+            HpanStoreService hpanStoreService, ParStoreService parStoreService,
+            TransactionWriterService transactionWriterService)
             throws Exception {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
-        return simpleWorkerStep(hpanStoreService, transactionWriterService, executionDate);
+        return simpleWorkerStep(hpanStoreService, parStoreService, transactionWriterService, executionDate);
     }
 
 
-    public Step simpleWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService, String executionDate) throws Exception {
+    public Step simpleWorkerStep(HpanStoreService hpanStoreService,
+                                 ParStoreService parStoreService,
+                                 TransactionWriterService transactionWriterService,
+                                 String executionDate) throws Exception {
             return stepBuilderFactory.get("transaction-filter-worker-step")
                     .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                     .reader(transactionItemReader(null))
-                    .processor(transactionItemProcessor(hpanStoreService, null))
+                    .processor(transactionItemProcessor(hpanStoreService, parStoreService, null))
                     .writer(classifierTransactionCompositeItemWriter())
                     .faultTolerant()
                     .skipLimit(skipLimit)

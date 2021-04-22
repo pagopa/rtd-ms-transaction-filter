@@ -97,6 +97,8 @@ InboundTransaction {
     @Pattern(regexp = "([0-9]{6}|[0-9]{8})")
     String bin;
 
+    String par;
+
     /** Internal fields, describing the lineNumber and filename for the record used to extract the other fields */
     Integer lineNumber;
     String filename;

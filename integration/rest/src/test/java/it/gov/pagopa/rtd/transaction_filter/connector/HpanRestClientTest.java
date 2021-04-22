@@ -33,6 +33,7 @@ import static org.junit.Assert.assertNotNull;
 @TestPropertySource(
         locations = "classpath:config/rest-client.properties",
         properties = {
+                "rest-client.par.list.url=/parlist",
                 "rest-client.hpan.list.url=/list",
                 "rest-client.hpan.salt.url=/salt",
                 "rest-client.hpan.mtls.enabled=true",
@@ -87,7 +88,7 @@ public class HpanRestClientTest {
         ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
                 .parse("Mon, 22 Jun 2020 15:58:35 GMT",
                   DateTimeFormatter.RFC_1123_DATE_TIME));
-        List<File> hpanList = hpanRestClient.getList();
+        List<File> hpanList = hpanRestClient.getHpanList();
         assertNotNull(hpanList);
     }
 
@@ -97,7 +98,7 @@ public class HpanRestClientTest {
         ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
                 .parse("Mon, 22 Jun 2020 00:00:00 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
-        List<File> hpanList = hpanRestClient.getList();
+        List<File> hpanList = hpanRestClient.getHpanList();
         assertNotNull(hpanList);
     }
 
@@ -109,7 +110,39 @@ public class HpanRestClientTest {
                 .parse("Tue, 23 Jun 2020 00:00:01 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
         expectedException.expect(Exception.class);
-        hpanRestClient.getList();
+        hpanRestClient.getHpanList();
+    }
+
+
+    @SneakyThrows
+    @Test
+    public void getParList() {
+        ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
+                .parse("Mon, 22 Jun 2020 15:58:35 GMT",
+                        DateTimeFormatter.RFC_1123_DATE_TIME));
+        List<File> parList = hpanRestClient.getParList();
+        assertNotNull(parList);
+    }
+
+    @SneakyThrows
+    @Test
+    public void getParList_OK_TimeEdge() {
+        ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
+                .parse("Mon, 22 Jun 2020 00:00:00 GMT",
+                        DateTimeFormatter.RFC_1123_DATE_TIME));
+        List<File> parList = hpanRestClient.getParList();
+        assertNotNull(parList);
+    }
+
+
+    @SneakyThrows
+    @Test
+    public void getParList_KO_TimeExceeding() {
+        ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
+                .parse("Tue, 23 Jun 2020 00:00:01 GMT",
+                        DateTimeFormatter.RFC_1123_DATE_TIME));
+        expectedException.expect(Exception.class);
+        hpanRestClient.getParList();
     }
 
 

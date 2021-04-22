@@ -20,7 +20,13 @@ public class HpanConnectorServiceImpl implements HpanConnectorService {
     @SneakyThrows
     @Override
     public List<File> getHpanList() {
-        return hpanRestClient.getList();
+        return hpanRestClient.getHpanList();
+    }
+
+    @SneakyThrows
+    @Override
+    public List<File> getParList() {
+        return hpanRestClient.getParList();
     }
 
     @Override

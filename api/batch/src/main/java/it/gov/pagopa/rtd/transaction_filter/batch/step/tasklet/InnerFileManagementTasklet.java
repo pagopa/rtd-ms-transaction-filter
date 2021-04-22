@@ -43,6 +43,8 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
     private String errorPath;
     private String tempHpanDirectory;
     private String hpanDirectory;
+    private String tempParDirectory;
+    private String parDirectory;
     private String outputDirectory;
     private String innerOutputDirectory;
     private Boolean firstSection;
@@ -87,6 +89,17 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
             }
         }).collect(Collectors.toList());
 
+        parDirectory = parDirectory.replaceAll("\\\\","/");
+
+        List<String> parResources = Arrays.stream(resolver.getResources(parDirectory)).map(resource -> {
+            try {
+                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+                return null;
+            }
+        }).collect(Collectors.toList());
+
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext()
                 .getStepExecution().getJobExecution().getStepExecutions();
         for (StepExecution stepExecution : stepExecutions) {
@@ -121,7 +134,8 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
                     }
 
                     boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
-                    if (deleteProcessedFiles || isHpanFile || !firstSection) {
+                    boolean isParFile = parResources.contains(path.replaceAll("\\\\","/"));
+                    if (deleteProcessedFiles || isHpanFile || isParFile || !firstSection) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
                     } else {
