@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.mapper;
 
+import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.Data;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.item.file.LineMapper;
@@ -7,7 +8,6 @@ import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.LineTokenizer;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
-import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 
 /**
 * Custom implementation of {@link LineMapper}, to be used for adding the lineNumber and filename to the
@@ -24,7 +24,10 @@ public class LineAwareMapper<T> implements LineMapper<InboundTransaction>, Initi
 
 
     public InboundTransaction mapLine(String line, int lineNumber) throws Exception {
-        try{
+        try {
+            if (line.split(";").length <= 15) {
+                line = line.concat(";");
+            }
             InboundTransaction inboundTransaction = fieldSetMapper.mapFieldSet(tokenizer.tokenize(line));
             inboundTransaction.setLineNumber(lineNumber);
             inboundTransaction.setFilename(filename);

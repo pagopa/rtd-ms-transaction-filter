@@ -11,9 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 
-import java.math.BigDecimal;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class LineAwareMapperTest {
@@ -43,7 +41,7 @@ public class LineAwareMapperTest {
         delimitedLineTokenizer.setNames(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
-                "bank_identification_number", "MCC");
+                "bank_identification_number", "MCC", "par");
         lineAwareMapper.setTokenizer(delimitedLineTokenizer);
         lineAwareMapper.setFieldSetMapper(new InboundTransactionFieldSetMapper("MM/dd/yyyy HH:mm:ss"));
     }
@@ -94,6 +92,7 @@ public class LineAwareMapperTest {
                 .terminalId("1")
                 .bin("000002")
                 .mcc("5422")
+                .par("par")
                 .filename("test.csv")
                 .lineNumber(1)
                 .build();
