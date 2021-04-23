@@ -29,14 +29,14 @@ public class LineAwareMapperTest {
         ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
     }
 
-    private LineAwareMapper<InboundTransaction> lineAwareMapper;
+    private InboundTransactionLineAwareMapper<InboundTransaction> lineAwareMapper;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
     @Before
     public void setUp() {
-        lineAwareMapper = new LineAwareMapper<>();
+        lineAwareMapper = new InboundTransactionLineAwareMapper<>();
         lineAwareMapper.setFilename("test.csv");
         DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
         delimitedLineTokenizer.setDelimiter(";");
@@ -45,7 +45,7 @@ public class LineAwareMapperTest {
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
                 "bank_identification_number", "MCC");
         lineAwareMapper.setTokenizer(delimitedLineTokenizer);
-        lineAwareMapper.setFieldSetMapper(new InboundTransactionFieldSetMapper("MM/dd/yyyy HH:mm:ss"));
+        lineAwareMapper.setFieldSetMapper(new InboundTransactionFieldSetMapper("MM/dd/yyyy HH:mm:ss", false));
     }
 
     @Test

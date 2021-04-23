@@ -399,6 +399,10 @@ public class TransactionFilterBatch {
                 .on("FAILED").end()
                 .from(saltRecoveryTask(this.hpanStoreService)).on("*")
                 .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
+                .on("FAILED").to(fileManagementTask())
+                .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
+                .on("*")
+                .to(parReaderStep.parRecoveryMasterStep(this.parStoreService, this.writerTrackerService))
                 .on("*").to(fileManagementTask())
                 .build();
     }
@@ -451,6 +455,21 @@ public class TransactionFilterBatch {
                 .get("transaction-filter-salt-hpan-list-recovery-step")
                 .tasklet(hpanListRecoveryTasklet).build();
     }
+
+    @Bean
+    public Step parListRecoveryTask() {
+        HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
+        hpanListRecoveryTasklet.setHpanListDirectory(hpanListDirectory);
+        hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
+        hpanListRecoveryTasklet.setFileName(hpanListFilename);
+        hpanListRecoveryTasklet.setHpanFilePattern(hpanListRecoveryFilePattern);
+        hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(hpanListDailyRemovalEnabled);
+        hpanListRecoveryTasklet.setRecoveryTaskletEnabled(hpanListRecoveryEnabled);
+        return stepBuilderFactory
+                .get("transaction-filter-salt-hpan-list-recovery-step")
+                .tasklet(hpanListRecoveryTasklet).build();
+    }
+
 
     @Bean
     public Step saltRecoveryTask(HpanStoreService hpanStoreService) {

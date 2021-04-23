@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundTransaction> {
 
     private final String timestampParser;
+    private final Boolean enablePar;
 
     /**
      *
@@ -63,6 +64,10 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .mcc("0000")
                         .valid(true)
                         .build();
+
+        if (enablePar) {
+            inboundTransaction.setPar(fieldSet.readString("par"));
+        }
 
         OffsetDateTime dateTime = dtf != null ?
                 ZonedDateTime.parse(fieldSet.readString("timestamp"), dtf).toOffsetDateTime() :

@@ -16,7 +16,7 @@ import java.io.FileOutputStream;
  */
 
 @RequiredArgsConstructor
-public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction> {
+public class PGPFlatFileItemWriter<T> extends FlatFileItemWriter<T> {
 
     private final String publicKeyPath;
     private final Boolean applyEncrypt;

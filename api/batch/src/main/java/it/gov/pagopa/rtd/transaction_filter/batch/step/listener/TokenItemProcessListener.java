@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
-import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTokenPan;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,7 @@ import org.springframework.lang.Nullable;
  */
 @Slf4j
 @Data
-public class TransactionItemProcessListener implements ItemProcessListener<InboundTransaction, InboundTransaction> {
+public class TokenItemProcessListener implements ItemProcessListener<InboundTokenPan, InboundTokenPan> {
 
     private String tokenPanInputPath;
     private String errorTransactionsLogsPath;
@@ -28,9 +28,9 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
-    public void beforeProcess(InboundTransaction inboundTransaction) {}
+    public void beforeProcess(InboundTokenPan inboundTokenPan) {}
 
-    public void afterProcess(InboundTransaction item, @Nullable InboundTransaction result) {
+    public void afterProcess(InboundTokenPan item, @Nullable InboundTokenPan result) {
 
         if (enableAfterProcessLogging) {
 
@@ -63,12 +63,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()
                         .concat("/".concat(executionDate))
-                        + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
-
-                transactionWriterService.write(resolver.getResource(tokenPanInputPath)
-                        .getFile().getAbsolutePath()
-                        .concat("/") + fileArr[fileArr.length-1]+".csv",
-                        buildTokenPan(item));
+                        + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildTokenPan(item));
 
             } catch (Exception e) {
                 if (log.isErrorEnabled()) {
@@ -79,7 +74,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     }
 
-    public void onProcessError(InboundTransaction item, Exception throwable) {
+    public void onProcessError(InboundTokenPan item, Exception throwable) {
 
         if (transactionWriterService.hasErrorHpan(item.getFilename()
                 .concat(String.valueOf(item.getLineNumber())))) {
@@ -101,7 +96,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()
                         .concat("/".concat(executionDate))
-                        + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
+                        + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv",buildTokenPan(item));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -109,28 +104,9 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     }
 
-    private String buildTokenPan(InboundTransaction inboundTransaction) {
-        return (inboundTransaction.getPan() != null ? inboundTransaction.getPan() : "").concat(";")
-                .concat(inboundTransaction.getPar() != null ? inboundTransaction.getPar() : "").concat("\n");
-    }
-
-    private String buildCsv(InboundTransaction inboundTransaction) {
-        return (inboundTransaction.getAcquirerCode() != null ? inboundTransaction.getAcquirerCode() : "").concat(";")
-                .concat(inboundTransaction.getOperationType() != null ? inboundTransaction.getOperationType() : "").concat(";")
-                .concat(inboundTransaction.getCircuitType() != null ? inboundTransaction.getCircuitType() : "").concat(";")
-                .concat(inboundTransaction.getPan() != null ? inboundTransaction.getPan() : "").concat(";")
-                .concat(inboundTransaction.getTrxDate() != null ? inboundTransaction.getTrxDate() : "").concat(";")
-                .concat(inboundTransaction.getIdTrxAcquirer() != null ? inboundTransaction.getIdTrxAcquirer() : "").concat(";")
-                .concat(inboundTransaction.getIdTrxIssuer() != null ? inboundTransaction.getIdTrxIssuer() : "").concat(";")
-                .concat(inboundTransaction.getCorrelationId() != null ? inboundTransaction.getCorrelationId() : "").concat(";")
-                .concat(inboundTransaction.getAmount() != null ? inboundTransaction.getAmount().toString() : "").concat(";")
-                .concat(inboundTransaction.getAmountCurrency() != null ? inboundTransaction.getAmountCurrency() : "").concat(";")
-                .concat(inboundTransaction.getAcquirerId() != null ? inboundTransaction.getAcquirerId() : "").concat(";")
-                .concat(inboundTransaction.getMerchantId() != null ? inboundTransaction.getMerchantId() : "").concat(";")
-                .concat(inboundTransaction.getTerminalId() != null ? inboundTransaction.getTerminalId() : "").concat(";")
-                .concat(inboundTransaction.getBin() != null ? inboundTransaction.getBin() : "").concat(";")
-                .concat(inboundTransaction.getMcc() != null ? inboundTransaction.getMcc() : "").concat(";")
-                .concat(inboundTransaction.getPar() != null ? inboundTransaction.getPar() : "").concat("\n");
+    private String buildTokenPan(InboundTokenPan inboundTokenPan) {
+        return (inboundTokenPan.getTokenPan() != null ? inboundTokenPan.getTokenPan() : "").concat(";")
+                .concat(inboundTokenPan.getPar() != null ? inboundTokenPan.getPar() : "").concat("\n");
     }
 
 }
