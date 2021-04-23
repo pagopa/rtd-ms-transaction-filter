@@ -763,3 +763,27 @@ __rest-client.hpan.list.dateValidationZone__.
 #### Feign Error: Read timeout
 
 This error occurs generally during the download phase when calling the endpoint to recover the hpan list. due to the file volume it's expected to wait a substantial amount of time, and both the application ad eventual proxyies need to tolerate this wait. For the batch application, the read timeout can be configured with the property __feign.client.config.hpan-service.readTimeout__.
+
+#### TOKENIZED CARDS
+
+Q) Should the Acquirer include in the transactions flow sent to the Batch Acquirer, besides the PAN also the TokenPan/s in order to obtain both hashed values (HashPAN and hashTokenPAN)?
+A) Yes, it should.
+
+Q) Should the Acquirer pass the PAR, if applicable, for both the PAN and the TokenPAN?
+A) Yes, it should.
+
+Q) How the Acquirer should value the “operation_type”?
+A) The acquirer should value the “operation_type” field accordingly with the transaction type.
+The Acquirer should use operation_type values such as “02”, “03”,”xx-future uses”  only if it can distinguish whether a Reversal Payment transaction was executed with the Physical Card or with a Tokenized one.
+If the Acquirer cannot distinguish between these typologies of payments, then it should use the default operation_type value “00”.
+All Refund Transactions must be valued with operation_type = “01”.
+
+Q) Should the “Standard PagoPA flow – TokenPANs” be produced by every Acquirer?
+A) No, it should be produced only by the Acquirers that can manage tokenized transaction (ex. ApplePay, GooglePay etc)
+
+Q) If an Acquirer can process transactions made also with Tokenized Cards wallet, what should it do?
+A) This Acquirer should feed the Batch Acquirer with transactions executed with Physical Cards as well as with Tokenized ones and, for both transactions typologies, it should provide the PAR if available.
+
+Q) When and how the new Batch Acquirer files will be released? 
+A) The new Batch Acquirer file will be released gradually in a date TBD. The current Batch Acquirer version will coexist with the new one in order to manage correctly the new and the old version of the transactions flow.
+
