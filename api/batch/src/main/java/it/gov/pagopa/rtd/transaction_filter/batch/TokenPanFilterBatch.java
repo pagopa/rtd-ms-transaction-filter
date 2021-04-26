@@ -211,7 +211,7 @@ public class TokenPanFilterBatch {
                 FileUtils.forceDelete(resource.getFile());
             }
 
-            execution = jobLauncher().run(job(),
+            execution = tokenJobLauncher().run(tokenJob(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
@@ -253,7 +253,7 @@ public class TokenPanFilterBatch {
                 Date innerStartDate = new Date();
 
                 Boolean lastSection = tokenPanFilesCounter.equals(tokenPanWorkerSize);
-                execution = jobLauncher().run(jobInner(),
+                execution = tokenJobLauncher().run(tokenPanBinJobInner(),
                         new JobParametersBuilder()
                                 .addDate("startDateTime", innerStartDate)
                                 .addString("lastSection",
@@ -303,7 +303,7 @@ public class TokenPanFilterBatch {
                 Date innerStartDate = new Date();
 
                 Boolean lastSection = binFilesCounter.equals(binWorkerSize);
-                execution = jobLauncher().run(jobInner(),
+                execution = tokenJobLauncher().run(tokenjobInner(),
                         new JobParametersBuilder()
                                 .addDate("startDateTime", innerStartDate)
                                 .addString("lastSection",
@@ -347,7 +347,7 @@ public class TokenPanFilterBatch {
      * @return configured instance of TransactionManager
      */
     @Bean
-    public PlatformTransactionManager getTransactionManager() {
+    public PlatformTransactionManager tokenTransactionManager() {
         DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
         dataSourceTransactionManager.setDataSource(dataSource);
         return dataSourceTransactionManager;
@@ -359,9 +359,9 @@ public class TokenPanFilterBatch {
      * @throws Exception
      */
     @Bean
-    public JobRepository getJobRepository() throws Exception {
+    public JobRepository tokenJobRepository() throws Exception {
             JobRepositoryFactoryBean jobRepositoryFactoryBean = new JobRepositoryFactoryBean();
-            jobRepositoryFactoryBean.setTransactionManager(getTransactionManager());
+            jobRepositoryFactoryBean.setTransactionManager(tokenTransactionManager());
             jobRepositoryFactoryBean.setTablePrefix(tablePrefix);
             jobRepositoryFactoryBean.setDataSource(dataSource);
             jobRepositoryFactoryBean.afterPropertiesSet();
@@ -377,9 +377,9 @@ public class TokenPanFilterBatch {
      * @throws Exception
      */
     @Bean
-    public JobLauncher jobLauncher() throws Exception {
+    public JobLauncher tokenJobLauncher() throws Exception {
         SimpleJobLauncher simpleJobLauncher = new SimpleJobLauncher();
-        simpleJobLauncher.setJobRepository(getJobRepository());
+        simpleJobLauncher.setJobRepository(tokenJobRepository());
         return simpleJobLauncher;
     }
 
@@ -389,7 +389,7 @@ public class TokenPanFilterBatch {
      */
     @SneakyThrows
     @Bean
-    public Job job() {
+    public Job tokenJob() {
         return tokenJobBuilder().build();
     }
 
@@ -399,9 +399,20 @@ public class TokenPanFilterBatch {
      */
     @SneakyThrows
     @Bean
-    public Job jobInner() {
-        return transactionInnerJobBuilder().build();
+    public Job tokenjobInner() {
+        return tokenInnerJobBuilder().build();
     }
+
+    /**
+     *
+     * @return instance of a job for transaction processing
+     */
+    @SneakyThrows
+    @Bean
+    public Job tokenPanBinJobInner() {
+        return tokenPanInnerJobBuilder().build();
+    }
+
 
     /**
      *
@@ -426,7 +437,7 @@ public class TokenPanFilterBatch {
     public FlowJobBuilder tokenJobBuilder() {
 
         return jobBuilderFactory.get("token-filter-job")
-                .repository(getJobRepository())
+                .repository(tokenJobRepository())
                 .listener(jobListener())
                 .start(tokenPanListRecoveryTask())
                 .on("FAILED").end()
@@ -434,59 +445,59 @@ public class TokenPanFilterBatch {
                 .on("FAILED").end()
                 .from(binListRecoveryTask()).on("*")
                 .to(binReaderStep.binStoreRecoveryMasterStep(this.binStoreService, this.writerTrackerService))
-                .on("FAILED").to(fileManagementTask())
+                .on("FAILED").to(fileTokenManagementTask())
                 .from(binReaderStep.binStoreRecoveryMasterStep(this.binStoreService, this.writerTrackerService))
                 .on("*")
                 .to(tokenPanReaderStep.enrolledTokenPanRecoveryMasterStep(this.tokenPanStoreService, this.writerTrackerService))
-                .on("*").to(fileManagementTask())
+                .on("*").to(fileTokenManagementTask())
                 .build();
     }
 
     @SneakyThrows
-    public FlowJobBuilder transactionInnerJobBuilder() {
+    public FlowJobBuilder tokenInnerJobBuilder() {
 
         return jobBuilderFactory.get("token-inner-bin-filter-job")
-                .repository(getJobRepository())
+                .repository(tokenJobRepository())
                 .listener(jobListener())
                 .start(binReaderStep.binStoreRecoveryMasterStep(
                         this.binStoreService, this.writerTrackerService))
-                .on("FAILED").to(innerFileManagementTask())
+                .on("FAILED").to(innerTokenPanFileManagementTask())
                 .from(binReaderStep.binStoreRecoveryMasterStep(
                         this.binStoreService, this.writerTrackerService))
                 .on("*").to(tokenPanFilterStep.tokenPanFilterMasterStep(
                         this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
                 .from(tokenPanFilterStep.tokenPanFilterMasterStep(
                         this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
-                .on("FAILED").to(innerFileManagementTask())
+                .on("FAILED").to(innerTokenPanFileManagementTask())
                 .from(tokenPanFilterStep.tokenPanFilterMasterStep(
                         this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
                 .on("*").to(tokenPanFilterStep.tokenSenderMasterStep(
                         this.sftpConnectorService))
-                .on("*").to(innerFileManagementTask())
+                .on("*").to(innerTokenPanFileManagementTask())
                 .build();
     }
 
     @SneakyThrows
-    public FlowJobBuilder transactionPanInnerJobBuilder() {
+    public FlowJobBuilder tokenPanInnerJobBuilder() {
 
         return jobBuilderFactory.get("token-inner-tokenpan-filter-job")
-                .repository(getJobRepository())
+                .repository(tokenJobRepository())
                 .listener(jobListener())
                 .start(tokenPanReaderStep.enrolledTokenPanStoreRecoveryMasterStep(
                         this.tokenPanStoreService, this.writerTrackerService))
-                .on("FAILED").to(innerFileManagementTask())
+                .on("FAILED").to(innerTokenPanFileManagementTask())
                 .from(tokenPanReaderStep.enrolledTokenPanStoreRecoveryMasterStep(
                         this.tokenPanStoreService, this.writerTrackerService))
                 .on("*").to(tokenPanFilterStep.tokenPanFilterMasterStep(
                         this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
                 .from(tokenPanFilterStep.tokenPanFilterMasterStep(
                         this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
-                .on("FAILED").to(innerFileManagementTask())
+                .on("FAILED").to(innerTokenPanFileManagementTask())
                 .from(tokenPanFilterStep.tokenPanFilterMasterStep(
                         this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
                 .on("*").to(tokenPanFilterStep.tokenSenderMasterStep(
                         this.sftpConnectorService))
-                .on("*").to(innerFileManagementTask())
+                .on("*").to(innerTokenPanFileManagementTask())
                 .build();
     }
 
@@ -531,7 +542,7 @@ public class TokenPanFilterBatch {
      */
     @SneakyThrows
     @Bean
-    public Step fileManagementTask() {
+    public Step fileTokenManagementTask() {
         TokenFileManagementTasklet fileManagementTasklet = new TokenFileManagementTasklet();
         fileManagementTasklet.setSuccessPath(successArchivePath);
         fileManagementTasklet.setErrorPath(errorArchivePath);
@@ -551,7 +562,7 @@ public class TokenPanFilterBatch {
      */
     @SneakyThrows
     @Bean
-    public Step innerFileManagementTask() {
+    public Step innerTokenPanFileManagementTask() {
         return stepBuilderFactory.get("token-inner-filter-file-management-step")
                 .tasklet(innerTokenPanFileManagementTasklet(null)).build();
     }
