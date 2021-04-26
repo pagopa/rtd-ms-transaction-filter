@@ -1,6 +1,5 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
-import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -18,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class FileManagementTaskletTest {
+public class TransactionFileManagementTaskletTest {
 
     File successFile;
     File errorFile;
@@ -52,7 +51,7 @@ public class FileManagementTaskletTest {
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+            TransactionFileManagementTasklet archivalTasklet = new TransactionFileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test1/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
@@ -171,7 +170,7 @@ public class FileManagementTaskletTest {
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+            TransactionFileManagementTasklet archivalTasklet = new TransactionFileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test1/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
@@ -289,7 +288,7 @@ public class FileManagementTaskletTest {
             tempFolder.newFile("test2/output/success-trx-output-file.pgp");
             tempFolder.newFile("test2/output/error-trx-output-file.csv");
 
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+            TransactionFileManagementTasklet archivalTasklet = new TransactionFileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/output");
@@ -401,7 +400,7 @@ public class FileManagementTaskletTest {
             tempFolder.newFile("test3/output/error-trx-output-file.csv");
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+            TransactionFileManagementTasklet archivalTasklet = new TransactionFileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test3/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test3/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test3/output");
@@ -514,7 +513,7 @@ public class FileManagementTaskletTest {
             tempFolder.newFile("test4/output/error-trx-output-file.csv");
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+            TransactionFileManagementTasklet archivalTasklet = new TransactionFileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test4/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test4/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test4/output");

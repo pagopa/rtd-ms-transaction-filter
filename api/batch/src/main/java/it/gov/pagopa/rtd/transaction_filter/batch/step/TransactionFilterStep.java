@@ -128,7 +128,8 @@ public class TransactionFilterStep {
     public LineTokenizer transactionLineTokenizer() {
         DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
         delimitedLineTokenizer.setDelimiter(";");
-        List<String> parNames = Arrays.asList("codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
+        List<String> parNames = Arrays.asList(
+                "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
                 "bank_identification_number", "MCC");
         if (parEnabled) {

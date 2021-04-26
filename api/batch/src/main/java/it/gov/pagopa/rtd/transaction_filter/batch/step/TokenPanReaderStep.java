@@ -1,11 +1,12 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.BinReaderMasterStepListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.HpanReaderMasterStepListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TokenPanReaderMasterStepListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.PGPFlatFileItemReader;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.BinStoreWriter;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.BinWriter;
-import it.gov.pagopa.rtd.transaction_filter.service.BinStoreService;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.TokenPanStoreWriter;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.TokenPanWriter;
+import it.gov.pagopa.rtd.transaction_filter.service.TokenPanStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.WriterTrackerService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -34,28 +35,28 @@ import java.util.concurrent.Executors;
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
 @RequiredArgsConstructor
 @Data
-@PropertySource("classpath:config/binReaderStep.properties")
-public class BinReaderStep {
+@PropertySource("classpath:config/tokenPanReaderStep.properties")
+public class TokenPanReaderStep {
 
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.partitionerSize}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.partitionerSize}")
     private Integer partitionerSize;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.chunkSize}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.chunkSize}")
     private Integer chunkSize;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.skipLimit}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.skipLimit}")
     private Integer skipLimit;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.parDirectoryPath}")
-    private String binDirectoryPath;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.parWorkerDirectoryPath}")
-    private String binWorkerDirectoryPath;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.secretKeyPath}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.tokenPanDirectoryPath}")
+    private String tokenPanDirectoryPath;
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.tokenPanWorkerDirectoryPath}")
+    private String tokenPanWorkerDirectoryPath;
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.secretKeyPath}")
     private String secretKeyPath;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.passphrase}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.passphrase}")
     private String passphrase;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.applyDecrypt}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.applyDecrypt}")
     private Boolean applyDecrypt;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.applyHashing}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.applyHashing}")
     private Boolean applyPanListHashing;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.poolSize}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.poolSize}")
     private Integer executorPoolSize;
 
     private final BatchConfig batchConfig;
@@ -72,7 +73,7 @@ public class BinReaderStep {
     @SneakyThrows
     @Bean
     @StepScope
-    public PGPFlatFileItemReader binItemReader(
+    public PGPFlatFileItemReader enrolledTokenPanItemReader(
             @Value("#{stepExecutionContext['fileName']}") String file) {
         PGPFlatFileItemReader flatFileItemReader = new PGPFlatFileItemReader(
                 secretKeyPath, passphrase, applyDecrypt);
@@ -88,10 +89,11 @@ public class BinReaderStep {
      */
     @Bean
     @StepScope
-    public BinWriter binItemWriter(BinStoreService binStoreService, WriterTrackerService writerTrackerService) {
-        BinWriter binWriter = new BinWriter(binStoreService, writerTrackerService);
-        binWriter.setExecutor(writerExecutor());
-        return binWriter;
+    public TokenPanWriter enrolledTokenPanItemWriter(
+            TokenPanStoreService tokenPanStoreService, WriterTrackerService writerTrackerService) {
+        TokenPanWriter tokenPanWriter = new TokenPanWriter(tokenPanStoreService, writerTrackerService);
+        tokenPanWriter.setExecutor(writerExecutor());
+        return tokenPanWriter;
     }
 
     /**
@@ -100,8 +102,8 @@ public class BinReaderStep {
      */
     @Bean
     @StepScope
-    public BinStoreWriter binStoreItemWriter(BinStoreService binStoreService) {
-        return new BinStoreWriter(binStoreService);
+    public TokenPanStoreWriter enrolledTokenPanStoreItemWriter(TokenPanStoreService tokenPanStoreService) {
+        return new TokenPanStoreWriter(tokenPanStoreService);
     }
 
     /**
@@ -111,10 +113,10 @@ public class BinReaderStep {
      */
     @Bean
     @JobScope
-    public Partitioner binRecoveryPartitioner() throws Exception {
+    public Partitioner enrolledTokenPanRecoveryPartitioner() throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(binDirectoryPath));
+        partitioner.setResources(resolver.getResources(tokenPanDirectoryPath));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -126,10 +128,10 @@ public class BinReaderStep {
      */
     @Bean
     @JobScope
-    public Partitioner binStoreRecoveryPartitioner() throws Exception {
+    public Partitioner enrolledTokenPanStoreRecoveryPartitioner() throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(binWorkerDirectoryPath));
+        partitioner.setResources(resolver.getResources(tokenPanWorkerDirectoryPath));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -141,13 +143,13 @@ public class BinReaderStep {
      * @throws Exception
      */
     @Bean
-    public Step binStoreRecoveryMasterStep(BinStoreService binStoreService,
+    public Step enrolledTokenPanStoreRecoveryMasterStep(TokenPanStoreService tokenPanStoreService,
                                        WriterTrackerService writerTrackerService) throws Exception {
-        return stepBuilderFactory.get("bin-store-recovery-master-step")
-                .partitioner(binStoreRecoveryWorkerStep(binStoreService))
-                .partitioner("partition", binStoreRecoveryPartitioner())
+        return stepBuilderFactory.get("token-pan-store-recovery-master-step")
+                .partitioner(enrolledTokenPanStoreRecoveryWorkerStep(tokenPanStoreService, writerTrackerService))
+                .partitioner("partition", enrolledTokenPanStoreRecoveryPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor())
-                .listener(binReaderMasterStepListener(binStoreService, writerTrackerService))
+                .listener(enrolledTokenPanReaderMasterStepListener(tokenPanStoreService, writerTrackerService))
                 .build();
     }
 
@@ -158,11 +160,12 @@ public class BinReaderStep {
      * @throws Exception
      */
     @Bean
-    public Step binStoreRecoveryWorkerStep(BinStoreService binStoreService) throws Exception {
-        return stepBuilderFactory.get("bin-store-recovery-worker-step")
+    public Step enrolledTokenPanStoreRecoveryWorkerStep(TokenPanStoreService tokenPanStoreService,
+                                                WriterTrackerService writerTrackerService) throws Exception {
+        return stepBuilderFactory.get("token-pan-store-recovery-worker-step")
                 .<String, String>chunk(chunkSize)
-                .reader(binItemReader(null))
-                .writer(binStoreItemWriter(binStoreService))
+                .reader(enrolledTokenPanItemReader(null))
+                .writer(enrolledTokenPanStoreItemWriter(tokenPanStoreService))
                 .faultTolerant()
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
@@ -178,13 +181,13 @@ public class BinReaderStep {
      * @throws Exception
      */
     @Bean
-    public Step parRecoveryMasterStep(BinStoreService binStoreService,
+    public Step enrolledTokenPanRecoveryMasterStep(TokenPanStoreService tokenPanStoreService,
                                        WriterTrackerService writerTrackerService) throws Exception {
-        return stepBuilderFactory.get("bin-recovery-master-step")
-                .partitioner(binRecoveryWorkerStep(binStoreService, writerTrackerService))
-                .partitioner("partition", binRecoveryPartitioner())
+        return stepBuilderFactory.get("token-pan-recovery-master-step")
+                .partitioner(enrolledTokenPanRecoveryWorkerStep(tokenPanStoreService, writerTrackerService))
+                .partitioner("partition", enrolledTokenPanRecoveryPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor())
-                .listener(binReaderMasterStepListener(binStoreService, writerTrackerService))
+                .listener(enrolledTokenPanReaderMasterStepListener(tokenPanStoreService, writerTrackerService))
                 .build();
     }
 
@@ -195,12 +198,12 @@ public class BinReaderStep {
      * @throws Exception
      */
     @Bean
-    public Step binRecoveryWorkerStep(BinStoreService binStoreService,
+    public Step enrolledTokenPanRecoveryWorkerStep(TokenPanStoreService tokenPanStoreService,
                                        WriterTrackerService writerTrackerService) throws Exception {
-        return stepBuilderFactory.get("bin-recovery-worker-step")
+        return stepBuilderFactory.get("token-recovery-worker-step")
                 .<String, String>chunk(chunkSize)
-                .reader(binItemReader(null))
-                .writer(binItemWriter(binStoreService, writerTrackerService))
+                .reader(enrolledTokenPanItemReader(null))
+                .writer(enrolledTokenPanItemWriter(tokenPanStoreService, writerTrackerService))
                 .faultTolerant()
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
@@ -212,12 +215,12 @@ public class BinReaderStep {
     }
 
     @Bean
-    public BinReaderMasterStepListener binReaderMasterStepListener(
-            BinStoreService binStoreService, WriterTrackerService writerTrackerService) {
-        BinReaderMasterStepListener binReaderMasterStepListener = new BinReaderMasterStepListener();
-        binReaderMasterStepListener.setBinStoreService(binStoreService);
-        binReaderMasterStepListener.setWriterTrackerService(writerTrackerService);
-        return binReaderMasterStepListener;
+    public TokenPanReaderMasterStepListener enrolledTokenPanReaderMasterStepListener(
+            TokenPanStoreService tokenPanStoreService, WriterTrackerService writerTrackerService) {
+        TokenPanReaderMasterStepListener tokenPanReaderMasterStepListener = new TokenPanReaderMasterStepListener();
+        tokenPanReaderMasterStepListener.setTokenPanStoreService(tokenPanStoreService);
+        tokenPanReaderMasterStepListener.setWriterTrackerService(writerTrackerService);
+        return tokenPanReaderMasterStepListener;
     }
 
     /**

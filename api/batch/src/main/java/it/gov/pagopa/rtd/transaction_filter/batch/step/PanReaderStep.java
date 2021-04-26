@@ -24,8 +24,6 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
-import javax.validation.ConstraintViolationException;
 import java.io.FileNotFoundException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -233,7 +231,6 @@ public class PanReaderStep {
         }
         return executorService;
     }
-
 
 
 }

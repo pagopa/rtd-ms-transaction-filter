@@ -34,20 +34,16 @@ import java.util.stream.Collectors;
 
 @Data
 @Slf4j
-public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
+public class TokenFileManagementTasklet implements Tasklet, InitializingBean {
 
     private Boolean deleteProcessedFiles;
     private String deleteOutputFiles;
-    private String manageHpanOnSuccess;
+    private String manageBinOnSuccess;
     private String successPath;
     private String errorPath;
-    private String tempHpanDirectory;
-    private String hpanDirectory;
-    private String tempParDirectory;
-    private String parDirectory;
+    private String binDirectory;
+    private String tokenPanDirectory;
     private String outputDirectory;
-    private String innerOutputDirectory;
-    private Boolean firstSection;
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -61,7 +57,7 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
                 "directory must be set");
         Assert.notNull(resolver.getResources("file:" + errorPath + "*.pgp"),
                 "directory must be set");
-        Assert.notNull(resolver.getResources(hpanDirectory),
+        Assert.notNull(resolver.getResources(binDirectory),
                 "directory must be set");
     }
 
@@ -78,9 +74,9 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
 
         boolean executionWithErrors = false;
         List<String> errorFilenames = new ArrayList<>();
-        hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
+        tokenPanDirectory = tokenPanDirectory.replaceAll("\\\\","/");
 
-        List<String> hpanResources = Arrays.stream(resolver.getResources(hpanDirectory)).map(resource -> {
+        List<String> tokenPanResources = Arrays.asList(resolver.getResources(tokenPanDirectory)).stream().map(resource -> {
             try {
                 return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
             } catch (IOException e) {
@@ -89,9 +85,9 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
             }
         }).collect(Collectors.toList());
 
-        parDirectory = parDirectory.replaceAll("\\\\","/");
+        binDirectory = binDirectory.replaceAll("\\\\","/");
 
-        List<String> parResources = Arrays.stream(resolver.getResources(parDirectory)).map(resource -> {
+        List<String> binResources = Arrays.asList(resolver.getResources(binDirectory)).stream().map(resource -> {
             try {
                 return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
             } catch (IOException e) {
@@ -100,8 +96,8 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
             }
         }).collect(Collectors.toList());
 
-        Collection<StepExecution> stepExecutions = chunkContext.getStepContext()
-                .getStepExecution().getJobExecution().getStepExecutions();
+        Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
+                .getStepExecutions();
         for (StepExecution stepExecution : stepExecutions) {
             if (stepExecution.getExecutionContext().containsKey("fileName")) {
 
@@ -133,16 +129,18 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
                         }
                     }
 
-                    boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
-                    boolean isParFile = parResources.contains(path.replaceAll("\\\\","/"));
-                    if (deleteProcessedFiles || isHpanFile || isParFile || !firstSection) {
+                    boolean isTokenPanFile = tokenPanResources.contains(path.replaceAll("\\\\","/"));
+                    boolean isBinFile = binResources.contains(path.replaceAll("\\\\","/"));
+                    if (deleteProcessedFiles ||
+                       (isComplete && isTokenPanFile && manageBinOnSuccess.equals("DELETE")) ||
+                       (isComplete && isBinFile && manageBinOnSuccess.equals("DELETE"))
+                    ) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
-                    } else {
+                    } else if (!isTokenPanFile || !isComplete || manageBinOnSuccess.equals("ARCHIVE")) {
                         log.info("Archiving processed file: {}", file);
                         archiveFile(file, path, isComplete);
                     }
-
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -152,11 +150,7 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
 
         if (deleteOutputFiles.equals("ALWAYS") || (deleteOutputFiles.equals("ERROR") && executionWithErrors)) {
             List<Resource> outputDirectoryResources =
-                    Arrays.asList(resolver.getResources(outputDirectory
-                            .replaceAll("\\\\", "/") + "/*"));
-            List<Resource> innerOutputDirectoryResources =
-                    Arrays.asList(resolver.getResources(innerOutputDirectory
-                            .replaceAll("\\\\", "/") + "/*"));
+                    Arrays.asList(resolver.getResources(outputDirectory.replaceAll("\\\\", "/") + "/*"));
             outputDirectoryResources.forEach(outputDirectoryResource ->
             {
                 if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
@@ -176,29 +170,6 @@ public class InnerFileManagementTasklet implements Tasklet, InitializingBean {
                         log.error(e.getMessage(), e);
                     }
                 }
-
-            });
-
-            innerOutputDirectoryResources.forEach(innerOutputDirectoryResource ->
-            {
-                if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
-                        errorFilename -> {
-                            try {
-                                return innerOutputDirectoryResource.getFile().getAbsolutePath().contains(errorFilename);
-                            } catch (IOException e) {
-                                log.error(e.getMessage(),e);
-                                return false;
-                        }
-                        }))
-                ) {
-                    try {
-                        log.info("Deleting output file: {}", innerOutputDirectoryResource.getFile());
-                        FileUtils.forceDelete(innerOutputDirectoryResource.getFile());
-                    } catch (IOException e) {
-                        log.error(e.getMessage(), e);
-                    }
-                }
-
             });
         }
 

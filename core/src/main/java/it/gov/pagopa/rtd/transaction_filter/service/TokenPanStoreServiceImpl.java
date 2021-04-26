@@ -7,11 +7,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
+import java.io.BufferedWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.List;
+import java.util.TreeSet;
 
 /**
 * Implementation of {@link HpanStoreService}
@@ -20,24 +21,13 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-class HpanStoreServiceImpl implements HpanStoreService {
+class TokenPanStoreServiceImpl implements TokenPanStoreService {
 
     private final List<BufferedWriter> bufferedWriterList;
-    private final TreeSet<String> hpanSet;
-    private String workingHpanDirectory;
+    private final TreeSet<String> tokenPanSet;
+    private String workingTokenPanDirectory;
     private Long numberPerFile;
     private Long currentNumberOfData = 0L;
-    private String salt = "";
-
-    @Override
-    public void storeSalt(String salt) {
-        this.salt = salt;
-    }
-
-    @Override
-    public String getSalt() {
-        return this.salt;
-    }
 
     @SneakyThrows
     @Override
@@ -48,29 +38,28 @@ class HpanStoreServiceImpl implements HpanStoreService {
     }
 
     @Override
-    public synchronized void store(String hpan) {
-        hpanSet.add(hpan);
+    public synchronized void store(String tokenPan) {
+        tokenPanSet.add(tokenPan);
     }
 
     @Override
-    public Boolean hasHpan(String hpan) {
-        return hpanSet.contains(hpan);
+    public Boolean hasTokenPAN(String tokenPan) {
+        return tokenPanSet.contains(tokenPan);
     }
 
     @SneakyThrows
     @Override
     public void clearAll() {
-        hpanSet.clear();
+        tokenPanSet.clear();
         for (BufferedWriter bufferedWriter : bufferedWriterList) {
             bufferedWriter.close();
         }
-        this.salt = "";
     }
 
     @SneakyThrows
     @Override
     public void clearStoreSet() {
-        hpanSet.clear();
+        tokenPanSet.clear();
     }
 
     @SneakyThrows
@@ -106,7 +95,7 @@ class HpanStoreServiceImpl implements HpanStoreService {
             bufferedWriter = bufferedWriterList.get(pageNumber-1);
         } else {
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            Resource resource = resolver.getResource(workingHpanDirectory);
+            Resource resource = resolver.getResource(workingTokenPanDirectory);
             bufferedWriter = Files.newBufferedWriter(
                     Paths.get(resource.getFile().getAbsolutePath().concat("/".concat
                             ("temp".concat(String.valueOf(pageNumber)).concat(".csv")))),
@@ -122,8 +111,8 @@ class HpanStoreServiceImpl implements HpanStoreService {
     }
 
     @Override
-    public void setWorkingHpanDirectory(String workingHpanDirectory) {
-        this.workingHpanDirectory = workingHpanDirectory;
+    public void setWorkingTokenPANDirectory(String workingTokenPanDirectory) {
+        this.workingTokenPanDirectory = workingTokenPanDirectory;
     }
 
     @Override

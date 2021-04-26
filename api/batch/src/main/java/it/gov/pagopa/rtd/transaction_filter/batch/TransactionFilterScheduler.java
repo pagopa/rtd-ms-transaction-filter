@@ -16,6 +16,8 @@ import java.util.Date;
 public class TransactionFilterScheduler {
 
     private final TransactionFilterBatch transactionFilterBatch;
+    private final TokenPanFilterBatch tokenPanFilterBatch;
+
 
     /**
      * Scheduled method used to launch the configured batch job for processing transaction from a defined directory.
@@ -29,6 +31,7 @@ public class TransactionFilterScheduler {
         log.info("CsvTransactionReader scheduled job started at {}", startDate);
 
         transactionFilterBatch.executeBatchJob(startDate);
+        tokenPanFilterBatch.executeBatchJob(startDate);
 
         Date endDate = new Date();
 

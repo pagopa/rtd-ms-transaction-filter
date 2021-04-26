@@ -17,11 +17,11 @@ import java.util.Set;
 
 @Slf4j
 @RequiredArgsConstructor
-public class InboundTokenPanItemProcessor implements ItemProcessor<InboundTokenPan, InboundTokenPan> {
+public class InboundBinTokenPanItemProcessor implements ItemProcessor<InboundTokenPan, InboundTokenPan> {
 
-    private final TokenPanStoreService tokenPANStoreService;
+    private final BinStoreService binStoreService;
     private final Boolean lastSection;
-    private final Boolean tokenPanValidationEnabled;
+    private final Boolean binValidationEnabled;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static final Validator validator = factory.getValidator();
@@ -44,10 +44,10 @@ public class InboundTokenPanItemProcessor implements ItemProcessor<InboundTokenP
             throw new ConstraintViolationException(constraintViolations);
         }
 
-        boolean hasTokenPan = !tokenPanValidationEnabled ||
-                tokenPANStoreService.hasTokenPAN(inboundTokenPan.getTokenPan());
+        boolean hasBin = !binValidationEnabled || (inboundTokenPan.getPar() != null &&
+                binStoreService.hasBin(inboundTokenPan.getPar().substring(0,4)));
 
-        if (hasTokenPan) {
+        if (hasBin) {
             return inboundTokenPan;
         } else {
             if (lastSection) {

@@ -4,10 +4,10 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.ParReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.InnerFileManagementTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.InnerTransactionFileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionFileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.service.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -132,6 +132,7 @@ public class TransactionFilterBatch {
 
     public void clearStoreSet() {
         hpanStoreService.clearStoreSet();
+        parStoreService.clearStoreSet();
     }
 
 
@@ -395,7 +396,9 @@ public class TransactionFilterBatch {
                 .listener(jobListener())
                 .start(hpanListRecoveryTask())
                 .on("FAILED").end()
-                .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.hpanStoreService))
+                .from(hpanListRecoveryTask()).on("*").to(parListRecoveryTask())
+                .on("FAILED").end()
+                .from(parListRecoveryTask()).on("*").to(saltRecoveryTask(this.hpanStoreService))
                 .on("FAILED").end()
                 .from(saltRecoveryTask(this.hpanStoreService)).on("*")
                 .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
@@ -466,7 +469,7 @@ public class TransactionFilterBatch {
         hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(hpanListDailyRemovalEnabled);
         hpanListRecoveryTasklet.setRecoveryTaskletEnabled(hpanListRecoveryEnabled);
         return stepBuilderFactory
-                .get("transaction-filter-salt-hpan-list-recovery-step")
+                .get("transaction-filter-par-list-recovery-step")
                 .tasklet(hpanListRecoveryTasklet).build();
     }
 
@@ -482,13 +485,13 @@ public class TransactionFilterBatch {
     }
 
     /**
-     * @return step instance based on the {@link FileManagementTasklet} to be used for
+     * @return step instance based on the {@link TransactionFileManagementTasklet} to be used for
      * file archival at the end of the reading process
      */
     @SneakyThrows
     @Bean
     public Step fileManagementTask() {
-        FileManagementTasklet fileManagementTasklet = new FileManagementTasklet();
+        TransactionFileManagementTasklet fileManagementTasklet = new TransactionFileManagementTasklet();
         fileManagementTasklet.setSuccessPath(successArchivePath);
         fileManagementTasklet.setErrorPath(errorArchivePath);
         fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanDirectoryPath());
@@ -502,7 +505,7 @@ public class TransactionFilterBatch {
     }
 
     /**
-     * @return step instance based on the {@link FileManagementTasklet} to be used for
+     * @return step instance based on the {@link InnerTransactionFileManagementTasklet} to be used for
      * file archival at the end of the reading process
      */
     @SneakyThrows
@@ -514,9 +517,9 @@ public class TransactionFilterBatch {
 
     @Bean
     @StepScope
-    public InnerFileManagementTasklet innerFileManagementTasklet(
+    public InnerTransactionFileManagementTasklet innerFileManagementTasklet(
             @Value("#{jobParameters['firstSection']}") Boolean firstSection) {
-        InnerFileManagementTasklet fileManagementTasklet = new InnerFileManagementTasklet();
+        InnerTransactionFileManagementTasklet fileManagementTasklet = new InnerTransactionFileManagementTasklet();
         fileManagementTasklet.setSuccessPath(successArchivePath);
         fileManagementTasklet.setErrorPath(errorArchivePath);
         fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanWorkerDirectoryPath());

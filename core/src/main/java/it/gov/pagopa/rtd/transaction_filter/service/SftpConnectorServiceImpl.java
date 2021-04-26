@@ -2,7 +2,6 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import it.gov.pagopa.rtd.transaction_filter.connector.TransactionSftpConnector;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;

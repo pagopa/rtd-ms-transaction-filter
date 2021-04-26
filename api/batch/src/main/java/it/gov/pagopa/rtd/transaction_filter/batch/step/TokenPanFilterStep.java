@@ -12,6 +12,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSender
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.BinStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
+import it.gov.pagopa.rtd.transaction_filter.service.TokenPanStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,6 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -52,58 +52,62 @@ import java.util.concurrent.Executors;
 @PropertySource("classpath:config/tokenFilterStep.properties")
 public class TokenPanFilterStep {
 
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.partitionerSize}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.partitionerSize}")
     private Integer partitionerSize;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.chunkSize}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.chunkSize}")
     private Integer chunkSize;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.skipLimit}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.skipLimit}")
     private Integer skipLimit;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.transactionDirectoryPath}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.transactionDirectoryPath}")
     private String transactionDirectoryPath;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.outputDirectoryPath}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.outputDirectoryPath}")
     private String outputDirectoryPath;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.innerOutputDirectoryPath}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.innerOutputDirectoryPath}")
     private String innerOutputDirectoryPath;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.publicKeyPath}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.publicKeyPath}")
     private String publicKeyPath;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.linesToSkip}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.linesToSkip}")
     private Integer linesToSkip;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.timestampPattern}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.timestampPattern}")
     private String timestampPattern;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.applyHashing}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.applyHashing}")
     private Boolean applyTrxHashing;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.applyEncrypt}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.applyEncrypt}")
     private Boolean applyEncrypt;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.sftp.localdirectory}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.sftp.localdirectory}")
     private String localdirectory;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanSender.enabled}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanSender.enabled}")
     private Boolean transactionSenderEnabled;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.transactionLogsPath}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.transactionLogsPath}")
     private String transactionLogsPath;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterReadLogging}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableAfterReadLogging}")
     private Boolean enableAfterReadLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorFileLogging}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorFileLogging}")
     private Boolean enableOnReadErrorFileLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorLogging}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorLogging}")
     private Boolean enableOnReadErrorLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterProcessLogging}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableAfterProcessLogging}")
     private Boolean enableAfterProcessLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterProcessFileLogging}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableAfterProcessFileLogging}")
     private Boolean enableAfterProcessFileLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnProcessErrorFileLogging}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnProcessErrorFileLogging}")
     private Boolean enableOnProcessErrorFileLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnProcessErrorLogging}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnProcessErrorLogging}")
     private Boolean enableOnProcessErrorLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterWriteLogging}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableAfterWriteLogging}")
     private Boolean enableAfterWriteLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnWriteErrorFileLogging}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnWriteErrorFileLogging}")
     private Boolean enableOnWriteErrorFileLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnWriteErrorLogging}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnWriteErrorLogging}")
     private Boolean enableOnWriteErrorLogging;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.loggingFrequency}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.loggingFrequency}")
     private Long loggingFrequency;
-    @Value("${batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.writerPoolSize}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.writerPoolSize}")
     private Integer writerPoolSize;
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.binValidationEnabled}")
+    private Boolean binValidationEnabled;
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanValidationEnabled}")
+    private Boolean tokenPanValidationEnabled;
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
@@ -241,10 +245,12 @@ public class TokenPanFilterStep {
     @StepScope
     public InboundTokenPanItemProcessor tokenPanItemProcessor(
             BinStoreService binStoreService,
+            TokenPanStoreService tokenPANStoreService,
             @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
         return new InboundTokenPanItemProcessor(
-                binStoreService,
-                lastSection);
+                tokenPANStoreService,
+                lastSection,
+                binValidationEnabled);
     }
 
     /**
@@ -269,11 +275,11 @@ public class TokenPanFilterStep {
      * @throws Exception
      */
     @Bean
-    public Step tokenPanFilterMasterStep(BinStoreService binStoreService,
+    public Step tokenPanFilterMasterStep(BinStoreService binStoreService, TokenPanStoreService tokenPANStoreService,
                                             TransactionWriterService transactionWriterService)
             throws Exception {
         return stepBuilderFactory.get("token-filter-master-step").partitioner(
-                tokenPanFilterWorkerStep(binStoreService, transactionWriterService))
+                tokenPanFilterWorkerStep(binStoreService, tokenPANStoreService, transactionWriterService))
                 .partitioner("partition", tokenSenderPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
@@ -287,21 +293,24 @@ public class TokenPanFilterStep {
     @Bean
     public Step tokenPanFilterWorkerStep(
             BinStoreService binStoreService,
+            TokenPanStoreService tokenPANStoreService,
             TransactionWriterService transactionWriterService)
             throws Exception {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
-        return simpleWorkerStep(binStoreService, transactionWriterService, executionDate);
+        return simpleWorkerStep(
+                binStoreService, tokenPANStoreService, transactionWriterService, executionDate);
     }
 
 
     public Step simpleWorkerStep(BinStoreService binStoreService,
+                                 TokenPanStoreService tokenPANStoreService,
                                  TransactionWriterService transactionWriterService,
                                  String executionDate) throws Exception {
             return stepBuilderFactory.get("token-pan-worker-step")
                     .<InboundTokenPan, InboundTokenPan>chunk(chunkSize)
                     .reader(tokenPanItemReader(null))
-                    .processor(tokenPanItemProcessor(binStoreService, null))
+                    .processor(tokenPanItemProcessor(binStoreService, tokenPANStoreService, null))
                     .writer(classifierTokenCompositeItemWriter())
                     .faultTolerant()
                     .skipLimit(skipLimit)
