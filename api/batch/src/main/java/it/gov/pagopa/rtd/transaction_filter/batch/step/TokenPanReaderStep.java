@@ -1,7 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.HpanReaderMasterStepListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TokenPanReaderMasterStepListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.PGPFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.TokenPanStoreWriter;

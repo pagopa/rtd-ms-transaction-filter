@@ -60,9 +60,19 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 					new SimpleJvmExitCodeMapper().intValue(
 							jobExecution1.getExitStatus().getExitCode()) : 0;
 
+			Date partEndTime = new Date();
+			if (log.isInfoEnabled()) {
+				log.info("CsvTransactionReader transaction job ended at " + partEndTime);
+				log.info("Completed in: " + (partEndTime.getTime() - startDate.getTime()) + " (ms)");
+			}
 
-			if (jobExecCode != 0 && (tokenPanFilterBatch.getTokenPanListRecoveryEnabled() ||
-					tokenPanFilterBatch.getBinListDailyRemovalEnabled())) {
+			Date partStartDate = new Date();
+			if (log.isInfoEnabled()) {
+				log.info("CsvTransactionReader token single-time job started at " + startDate);
+			}
+
+			if (jobExecCode == 0 && (tokenPanFilterBatch.getTokenPanValidationEnabled() ||
+					tokenPanFilterBatch.getBinValidationEnabled())) {
 				JobExecution jobExecution2 = tokenPanFilterBatch.executeBatchJob(startDate);
 				jobExecCode = jobExecution2 != null ?
 						new SimpleJvmExitCodeMapper().intValue(
@@ -71,6 +81,12 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 			}
 
 			Date endDate = new Date();
+
+			if (log.isInfoEnabled()) {
+				log.info("CsvTransactionReader token single-time job ended at " + endDate);
+				log.info("Completed in: " + (endDate.getTime() - partStartDate.getTime()) + " (ms)");
+			}
+
 			if (log.isInfoEnabled()) {
 				log.info("CsvTransactionReader single-time job ended at " + endDate);
 				log.info("Completed in: " + (endDate.getTime() - startDate.getTime()) + " (ms)");

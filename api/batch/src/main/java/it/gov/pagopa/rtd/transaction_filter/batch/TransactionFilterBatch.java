@@ -212,10 +212,10 @@ public class TransactionFilterBatch {
             Integer hpanFilesCounter = 0;
             Integer parFilesCounter = 0;
 
-            while (hpanFilesCounter <= hpanWorkerSize ||
-                    parFilesCounter <= parWorkerSize) {
+            while (hpanFilesCounter < hpanWorkerSize ||
+                    parFilesCounter < parWorkerSize) {
 
-                if (hpanFilesCounter <= hpanWorkerSize) {
+                if (hpanFilesCounter < hpanWorkerSize) {
                     Resource hpanResource = hpanWorkerResources[hpanFilesCounter];
                     String tempData = workingHpanDirectory.concat("/current");
                     String file = hpanResource.getFile().getAbsolutePath();
@@ -227,8 +227,8 @@ public class TransactionFilterBatch {
                     hpanFilesCounter = hpanFilesCounter + 1;
                 }
 
-                if (parFilesCounter <= parWorkerSize) {
-                    Resource parResource = hpanWorkerResources[parFilesCounter];
+                if (parFilesCounter < parWorkerSize) {
+                    Resource parResource = parWorkerResources[parFilesCounter];
                     String tempData = workingParDirectory.concat("/current");
                     String file = parResource.getFile().getAbsolutePath();
                     file = file.replaceAll("\\\\", "/");

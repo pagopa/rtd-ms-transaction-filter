@@ -128,10 +128,10 @@ public class TransactionFilterStep {
     public LineTokenizer transactionLineTokenizer() {
         DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
         delimitedLineTokenizer.setDelimiter(";");
-        List<String> parNames = Arrays.asList(
+        List<String> parNames = new ArrayList<>(Arrays.asList(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
-                "bank_identification_number", "MCC");
+                "bank_identification_number", "MCC"));
         if (parEnabled) {
             parNames.add("par");
         }
@@ -188,9 +188,9 @@ public class TransactionFilterStep {
     public BeanWrapperFieldExtractor<InboundTransaction> transactionWriterFieldExtractor() {
         BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
 
-        List<String> parNames = Arrays.asList( "acquirerCode", "operationType", "circuitType", "hpan", "trxDate", "idTrxAcquirer",
+        List<String> parNames = new ArrayList<>(Arrays.asList( "acquirerCode", "operationType", "circuitType", "hpan", "trxDate", "idTrxAcquirer",
                 "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
-                "terminalId", "bin", "mcc");
+                "terminalId", "bin", "mcc"));
         if (parEnabled) {
             parNames.add("par");
         }

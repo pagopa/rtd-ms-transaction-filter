@@ -31,7 +31,10 @@ public class TransactionFilterScheduler {
         log.info("CsvTransactionReader scheduled job started at {}", startDate);
 
         transactionFilterBatch.executeBatchJob(startDate);
-        tokenPanFilterBatch.executeBatchJob(startDate);
+        if (tokenPanFilterBatch.getBinValidationEnabled() ||
+                tokenPanFilterBatch.getTokenPanValidationEnabled()) {
+            tokenPanFilterBatch.executeBatchJob(startDate);
+        }
 
         Date endDate = new Date();
 

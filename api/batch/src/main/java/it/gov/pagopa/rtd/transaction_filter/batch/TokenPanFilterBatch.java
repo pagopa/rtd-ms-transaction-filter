@@ -225,7 +225,7 @@ public class TokenPanFilterBatch {
             int tokenPanWorkerSize = tokenPanWorkerResources.length;
             Integer tokenPanFilesCounter = 0;
 
-            while (tokenPanFilesCounter <= tokenPanWorkerSize) {
+            while (tokenPanFilesCounter < tokenPanWorkerSize) {
 
                 Resource tokenPanResource = tokenPanWorkerResources[tokenPanFilesCounter];
                 String tempData = workingTokenPanDirectory.concat("/current");
@@ -275,7 +275,7 @@ public class TokenPanFilterBatch {
             Integer binFilesCounter = 0;
             int binWorkerSize = binWorkerResources.length;
 
-            while (binFilesCounter <= binWorkerSize) {
+            while (binFilesCounter < binWorkerSize) {
 
                 Resource parResource = binWorkerResources[binFilesCounter];
                 String tempData = workingBinDirectory.concat("/current");
@@ -444,9 +444,9 @@ public class TokenPanFilterBatch {
                 .from(tokenPanListRecoveryTask()).on("*").to(binListRecoveryTask())
                 .on("FAILED").end()
                 .from(binListRecoveryTask()).on("*")
-                .to(binReaderStep.binStoreRecoveryMasterStep(this.binStoreService, this.writerTrackerService))
+                .to(binReaderStep.binRecoveryMasterStep(this.binStoreService, this.writerTrackerService))
                 .on("FAILED").to(fileTokenManagementTask())
-                .from(binReaderStep.binStoreRecoveryMasterStep(this.binStoreService, this.writerTrackerService))
+                .from(binReaderStep.binRecoveryMasterStep(this.binStoreService, this.writerTrackerService))
                 .on("*")
                 .to(tokenPanReaderStep.enrolledTokenPanRecoveryMasterStep(this.tokenPanStoreService, this.writerTrackerService))
                 .on("*").to(fileTokenManagementTask())

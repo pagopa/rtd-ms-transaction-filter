@@ -77,9 +77,9 @@ public class TokenPanFilterStep {
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.sftp.localdirectory}")
     private String localdirectory;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanSender.enabled}")
-    private Boolean transactionSenderEnabled;
-    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.transactionLogsPath}")
-    private String transactionLogsPath;
+    private Boolean tokenSenderEnabled;
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanLogsPath}")
+    private String tokenPanLogsPath;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableAfterReadLogging}")
     private Boolean enableAfterReadLogging;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorFileLogging}")
@@ -280,7 +280,7 @@ public class TokenPanFilterStep {
             throws Exception {
         return stepBuilderFactory.get("token-filter-master-step").partitioner(
                 tokenPanFilterWorkerStep(binStoreService, tokenPANStoreService, transactionWriterService))
-                .partitioner("partition", tokenSenderPartitioner())
+                .partitioner("partition", tokenPanFilterPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -336,7 +336,7 @@ public class TokenPanFilterStep {
             TransactionWriterService transactionWriterService, String executionDate) {
         TokenPanReaderStepListener tokenPanReaderStepListener = new TokenPanReaderStepListener();
         tokenPanReaderStepListener.setTransactionWriterService(transactionWriterService);
-        tokenPanReaderStepListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        tokenPanReaderStepListener.setErrorTransactionsLogsPath(tokenPanLogsPath);
         tokenPanReaderStepListener.setExecutionDate(executionDate);
         return tokenPanReaderStepListener;
     }
@@ -347,7 +347,7 @@ public class TokenPanFilterStep {
         TokenItemReaderListener tokenPanItemReaderListener = new TokenItemReaderListener();
         tokenPanItemReaderListener.setExecutionDate(executionDate);
         tokenPanItemReaderListener.setTransactionWriterService(transactionWriterService);
-        tokenPanItemReaderListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        tokenPanItemReaderListener.setErrorTransactionsLogsPath(tokenPanLogsPath);
         tokenPanItemReaderListener.setEnableAfterReadLogging(enableAfterReadLogging);
         tokenPanItemReaderListener.setLoggingFrequency(loggingFrequency);
         tokenPanItemReaderListener.setTransactionWriterService(transactionWriterService);
@@ -362,7 +362,7 @@ public class TokenPanFilterStep {
         TokenItemWriterListener tokenItemWriterListener = new TokenItemWriterListener();
         tokenItemWriterListener.setExecutionDate(executionDate);
         tokenItemWriterListener.setTransactionWriterService(transactionWriterService);
-        tokenItemWriterListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        tokenItemWriterListener.setErrorTransactionsLogsPath(tokenPanLogsPath);
         tokenItemWriterListener.setEnableAfterWriteLogging(enableAfterWriteLogging);
         tokenItemWriterListener.setLoggingFrequency(loggingFrequency);
         tokenItemWriterListener.setTransactionWriterService(transactionWriterService);
@@ -376,7 +376,7 @@ public class TokenPanFilterStep {
             TransactionWriterService transactionWriterService,String executionDate) {
         TokenItemProcessListener tokenItemProcessListener = new TokenItemProcessListener();
         tokenItemProcessListener.setExecutionDate(executionDate);
-        tokenItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        tokenItemProcessListener.setErrorTransactionsLogsPath(tokenPanLogsPath);
         tokenItemProcessListener.setEnableAfterProcessLogging(enableAfterProcessLogging);
         tokenItemProcessListener.setLoggingFrequency(loggingFrequency);
         tokenItemProcessListener.setEnableOnErrorFileLogging(enableOnProcessErrorFileLogging);
@@ -397,7 +397,7 @@ public class TokenPanFilterStep {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] emptyList = {};
-        partitioner.setResources(transactionSenderEnabled ? resolver.getResources(localdirectory)  : emptyList);
+        partitioner.setResources(tokenSenderEnabled ? resolver.getResources(localdirectory)  : emptyList);
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -438,7 +438,7 @@ public class TokenPanFilterStep {
         TransactionSenderTasklet transactionSenderTasklet = new TransactionSenderTasklet();
         transactionSenderTasklet.setResource(new UrlResource(file));
         transactionSenderTasklet.setSftpConnectorService(sftpConnectorService);
-        transactionSenderTasklet.setTaskletEnabled(transactionSenderEnabled);
+        transactionSenderTasklet.setTaskletEnabled(tokenSenderEnabled);
         return transactionSenderTasklet;
     }
 

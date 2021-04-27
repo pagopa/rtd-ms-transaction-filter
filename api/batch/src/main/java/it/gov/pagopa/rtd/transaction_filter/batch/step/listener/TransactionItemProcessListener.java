@@ -56,25 +56,36 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
         }
 
-        if (enableAfterProcessFileLogging && result == null) {
+        if (result == null) {
+            if (enableAfterProcessFileLogging) {
+                try {
+                    String file = item.getFilename().replaceAll("\\\\", "/");
+                    String[] fileArr = file.split("/");
+                    transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
+                            .getFile().getAbsolutePath()
+                            .concat("/".concat(executionDate))
+                            + "_FilteredRecords_" + fileArr[fileArr.length - 1] + ".csv", buildCsv(item));
+
+                } catch (Exception e) {
+                    if (log.isErrorEnabled()) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+            }
+
             try {
                 String file = item.getFilename().replaceAll("\\\\", "/");
                 String[] fileArr = file.split("/");
-                transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
-                        .getFile().getAbsolutePath()
-                        .concat("/".concat(executionDate))
-                        + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
-
                 transactionWriterService.write(resolver.getResource(tokenPanInputPath)
-                        .getFile().getAbsolutePath()
-                        .concat("/") + fileArr[fileArr.length-1]+".csv",
+                                .getFile().getAbsolutePath()
+                                .concat("/") + fileArr[fileArr.length - 1] + ".csv",
                         buildTokenPan(item));
-
             } catch (Exception e) {
                 if (log.isErrorEnabled()) {
                     log.error(e.getMessage(), e);
                 }
             }
+
         }
 
     }

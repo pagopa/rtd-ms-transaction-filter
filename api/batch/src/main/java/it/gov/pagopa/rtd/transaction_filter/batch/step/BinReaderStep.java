@@ -43,9 +43,9 @@ public class BinReaderStep {
     private Integer chunkSize;
     @Value("${batchConfiguration.TokenPanFilterBatch.bin.skipLimit}")
     private Integer skipLimit;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.parDirectoryPath}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.bin.binDirectoryPath}")
     private String binDirectoryPath;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.parWorkerDirectoryPath}")
+    @Value("${batchConfiguration.TokenPanFilterBatch.bin.binWorkerDirectoryPath}")
     private String binWorkerDirectoryPath;
     @Value("${batchConfiguration.TokenPanFilterBatch.bin.secretKeyPath}")
     private String secretKeyPath;
@@ -178,7 +178,7 @@ public class BinReaderStep {
      * @throws Exception
      */
     @Bean
-    public Step parRecoveryMasterStep(BinStoreService binStoreService,
+    public Step binRecoveryMasterStep(BinStoreService binStoreService,
                                        WriterTrackerService writerTrackerService) throws Exception {
         return stepBuilderFactory.get("bin-recovery-master-step")
                 .partitioner(binRecoveryWorkerStep(binStoreService, writerTrackerService))

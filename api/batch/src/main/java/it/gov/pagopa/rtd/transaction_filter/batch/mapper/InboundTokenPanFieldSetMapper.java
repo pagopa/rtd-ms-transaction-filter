@@ -41,13 +41,12 @@ public class InboundTokenPanFieldSetMapper implements FieldSetMapper<InboundToke
            the {@link FieldSetMapper}, using the appropriate column id
          */
 
-        InboundTokenPan inboundTransaction =
-                InboundTokenPan.builder()
-                        .valid(true)
-                        .build();
+        return InboundTokenPan.builder()
+                .tokenPan(fieldSet.readString("token_pan"))
+                .par(fieldSet.readString("par"))
+                .valid(true)
+                .build();
 
-
-        return inboundTransaction;
 
     }
 
