@@ -3,11 +3,13 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTokenPan;
 import it.gov.pagopa.rtd.transaction_filter.service.BinStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TokenPanStoreService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
 import javax.validation.*;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,12 +18,14 @@ import java.util.Set;
  */
 
 @Slf4j
+@Data
 @RequiredArgsConstructor
 public class InboundBinTokenPanItemProcessor implements ItemProcessor<InboundTokenPan, InboundTokenPan> {
 
     private final BinStoreService binStoreService;
     private final Boolean lastSection;
     private final Boolean binValidationEnabled;
+    private List<String> exemptedCircuitType;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static final Validator validator = factory.getValidator();
@@ -44,8 +48,9 @@ public class InboundBinTokenPanItemProcessor implements ItemProcessor<InboundTok
             throw new ConstraintViolationException(constraintViolations);
         }
 
-        boolean hasBin = !binValidationEnabled || (inboundTokenPan.getPar() != null &&
-                binStoreService.hasBin(inboundTokenPan.getPar().substring(0,4)));
+        boolean hasBin = !binValidationEnabled ||
+                (exemptedCircuitType.contains(inboundTokenPan.getCircuitType()) &&
+                binStoreService.hasBin(inboundTokenPan.getTokenPan().substring(0,4)));
 
         if (hasBin) {
             return inboundTokenPan;

@@ -20,6 +20,13 @@ InboundTokenPan {
     @NotBlank
     String tokenPan;
 
+    /** Payment circuit type */
+    @NotNull
+    @NotBlank
+    @Size(min = 2, max = 2)
+    @Pattern(regexp = "[0-9]{2}")
+    String circuitType;
+
     String par;
 
     /** Internal fields, describing the lineNumber and filename for the record used to extract the other fields */

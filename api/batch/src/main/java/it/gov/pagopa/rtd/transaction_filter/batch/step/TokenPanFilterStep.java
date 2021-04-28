@@ -6,6 +6,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTokenPanLineAwar
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTokenPan;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.classifier.InboundTokenPanClassifier;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.*;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundBinTokenPanItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTokenPanItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TokenPanFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderTasklet;
@@ -43,6 +44,8 @@ import java.io.FileNotFoundException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
 @Configuration
@@ -108,6 +111,8 @@ public class TokenPanFilterStep {
     private Boolean binValidationEnabled;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanValidationEnabled}")
     private Boolean tokenPanValidationEnabled;
+    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.exemptedCircuitType}")
+    private String exemptedCircuitType;
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
@@ -244,13 +249,29 @@ public class TokenPanFilterStep {
     @Bean
     @StepScope
     public InboundTokenPanItemProcessor tokenPanItemProcessor(
-            BinStoreService binStoreService,
             TokenPanStoreService tokenPANStoreService,
             @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
-        return new InboundTokenPanItemProcessor(
-                tokenPANStoreService,
-                lastSection,
-                binValidationEnabled);
+        InboundTokenPanItemProcessor inboundTokenPanItemProcessor =
+                new InboundTokenPanItemProcessor(tokenPANStoreService, lastSection, binValidationEnabled);
+        inboundTokenPanItemProcessor.setExemptedCircuitType(new ArrayList<>(
+                Arrays.asList(exemptedCircuitType.split(","))));
+        return inboundTokenPanItemProcessor;
+    }
+
+    /**
+     *
+     * @return instance of the itemProcessor to be used in the first step of the configured job
+     */
+    @Bean
+    @StepScope
+    public InboundBinTokenPanItemProcessor tokenPanBinItemProcessor(
+            BinStoreService binStoreService,
+            @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
+        InboundBinTokenPanItemProcessor inboundBinTokenPanItemProcessor =
+                new InboundBinTokenPanItemProcessor(binStoreService, lastSection, binValidationEnabled);
+        inboundBinTokenPanItemProcessor.setExemptedCircuitType(new ArrayList<>(
+                Arrays.asList(exemptedCircuitType.split(","))));
+        return inboundBinTokenPanItemProcessor;
     }
 
     /**
@@ -275,11 +296,11 @@ public class TokenPanFilterStep {
      * @throws Exception
      */
     @Bean
-    public Step tokenPanFilterMasterStep(BinStoreService binStoreService, TokenPanStoreService tokenPANStoreService,
-                                            TransactionWriterService transactionWriterService)
+    public Step tokenPanFilterMasterStep(TokenPanStoreService tokenPANStoreService,
+                                         TransactionWriterService transactionWriterService)
             throws Exception {
         return stepBuilderFactory.get("token-filter-master-step").partitioner(
-                tokenPanFilterWorkerStep(binStoreService, tokenPANStoreService, transactionWriterService))
+                tokenPanFilterWorkerStep(tokenPANStoreService, transactionWriterService))
                 .partitioner("partition", tokenPanFilterPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
@@ -292,25 +313,85 @@ public class TokenPanFilterStep {
      */
     @Bean
     public Step tokenPanFilterWorkerStep(
-            BinStoreService binStoreService,
             TokenPanStoreService tokenPANStoreService,
             TransactionWriterService transactionWriterService)
             throws Exception {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
         return simpleWorkerStep(
-                binStoreService, tokenPANStoreService, transactionWriterService, executionDate);
+                tokenPANStoreService, transactionWriterService, executionDate);
     }
 
 
-    public Step simpleWorkerStep(BinStoreService binStoreService,
-                                 TokenPanStoreService tokenPANStoreService,
+    /**
+     *
+     * @return master step to be used as the formal main step in the reading phase of the job,
+     * partitioned for scalability on multiple file reading
+     * @throws Exception
+     */
+    @Bean
+    public Step tokenPanBinFilterMasterStep(BinStoreService binStoreService,
+                                         TransactionWriterService transactionWriterService)
+            throws Exception {
+        return stepBuilderFactory.get("token-filter-bin-master-step").partitioner(
+                tokenPanBinFilterWorkerStep(binStoreService, transactionWriterService))
+                .partitioner("partition", tokenPanFilterPartitioner())
+                .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     *
+     * @return worker step, defined as a standard reader/processor/writer process,
+     * using chunk processing for scalability
+     * @throws Exception
+     */
+    @Bean
+    public Step tokenPanBinFilterWorkerStep(
+            BinStoreService binStoreService,
+            TransactionWriterService transactionWriterService)
+            throws Exception {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        String executionDate = OffsetDateTime.now().format(fmt);
+        return simpleBinWorkerStep(
+                binStoreService, transactionWriterService, executionDate);
+    }
+
+
+
+    public Step simpleBinWorkerStep(BinStoreService binStoreService,
+                                 TransactionWriterService transactionWriterService,
+                                 String executionDate) throws Exception {
+        return stepBuilderFactory.get("token-pan-bin-worker-step")
+                .<InboundTokenPan, InboundTokenPan>chunk(chunkSize)
+                .reader(tokenPanItemReader(null))
+                .processor(tokenPanBinItemProcessor(binStoreService, null))
+                .writer(classifierTokenCompositeItemWriter())
+                .faultTolerant()
+                .skipLimit(skipLimit)
+                .noSkip(FileNotFoundException.class)
+                .noSkip(SkipLimitExceededException.class)
+                .skip(Exception.class)
+                .noRetry(DateTimeParseException.class)
+                .noRollback(DateTimeParseException.class)
+                .noRetry(ConstraintViolationException.class)
+                .noRollback(ConstraintViolationException.class)
+                .listener(tokensItemReaderListener(transactionWriterService,executionDate))
+                .listener(tokensItemProcessListener(transactionWriterService,executionDate))
+                .listener(tokensItemWriteListener(transactionWriterService,executionDate))
+                .listener(tokenPanStepListener(transactionWriterService, executionDate))
+                .stream(tokenPanItemWriter(null, null))
+                .stream(tokenPanFilteredItemWriter(null))
+                .taskExecutor(batchConfig.readerTaskExecutor())
+                .build();
+    }
+
+    public Step simpleWorkerStep(TokenPanStoreService tokenPANStoreService,
                                  TransactionWriterService transactionWriterService,
                                  String executionDate) throws Exception {
             return stepBuilderFactory.get("token-pan-worker-step")
                     .<InboundTokenPan, InboundTokenPan>chunk(chunkSize)
                     .reader(tokenPanItemReader(null))
-                    .processor(tokenPanItemProcessor(binStoreService, tokenPANStoreService, null))
+                    .processor(tokenPanItemProcessor(tokenPANStoreService, null))
                     .writer(classifierTokenCompositeItemWriter())
                     .faultTolerant()
                     .skipLimit(skipLimit)

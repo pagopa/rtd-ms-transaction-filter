@@ -122,6 +122,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     private String buildTokenPan(InboundTransaction inboundTransaction) {
         return (inboundTransaction.getPan() != null ? inboundTransaction.getPan() : "").concat(";")
+                .concat(inboundTransaction.getCircuitType() != null ? inboundTransaction.getCircuitType() : "").concat(";")
                 .concat(inboundTransaction.getPar() != null ? inboundTransaction.getPar() : "").concat("\n");
     }
 

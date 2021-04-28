@@ -484,13 +484,13 @@ public class TokenPanFilterBatch {
                 .on("FAILED").to(innerTokenPanFileManagementTask())
                 .from(binReaderStep.binStoreRecoveryMasterStep(
                         this.binStoreService, this.writerTrackerService))
-                .on("*").to(tokenPanFilterStep.tokenPanFilterMasterStep(
-                        this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
-                .from(tokenPanFilterStep.tokenPanFilterMasterStep(
-                        this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
+                .on("*").to(tokenPanFilterStep.tokenPanBinFilterMasterStep(
+                        this.binStoreService,this.transactionWriterService))
+                .from(tokenPanFilterStep.tokenPanBinFilterMasterStep(
+                        this.binStoreService,this.transactionWriterService))
                 .on("FAILED").to(innerTokenPanFileManagementTask())
-                .from(tokenPanFilterStep.tokenPanFilterMasterStep(
-                        this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
+                .from(tokenPanFilterStep.tokenPanBinFilterMasterStep(
+                        this.binStoreService,this.transactionWriterService))
                 .on("*").to(tokenPanFilterStep.tokenSenderMasterStep(
                         this.sftpConnectorService))
                 .on("*").to(innerTokenPanFileManagementTask())
@@ -509,12 +509,12 @@ public class TokenPanFilterBatch {
                 .from(tokenPanReaderStep.enrolledTokenPanStoreRecoveryMasterStep(
                         this.tokenPanStoreService, this.writerTrackerService))
                 .on("*").to(tokenPanFilterStep.tokenPanFilterMasterStep(
-                        this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
+                        this.tokenPanStoreService,this.transactionWriterService))
                 .from(tokenPanFilterStep.tokenPanFilterMasterStep(
-                        this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
+                        this.tokenPanStoreService,this.transactionWriterService))
                 .on("FAILED").to(innerTokenPanFileManagementTask())
                 .from(tokenPanFilterStep.tokenPanFilterMasterStep(
-                        this.binStoreService,this.tokenPanStoreService,this.transactionWriterService))
+                        this.tokenPanStoreService,this.transactionWriterService))
                 .on("*").to(tokenPanFilterStep.tokenSenderMasterStep(
                         this.sftpConnectorService))
                 .on("*").to(innerTokenPanFileManagementTask())

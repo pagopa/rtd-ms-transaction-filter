@@ -3,11 +3,13 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTokenPan;
 import it.gov.pagopa.rtd.transaction_filter.service.BinStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TokenPanStoreService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
 import javax.validation.*;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,12 +18,14 @@ import java.util.Set;
  */
 
 @Slf4j
+@Data
 @RequiredArgsConstructor
 public class InboundTokenPanItemProcessor implements ItemProcessor<InboundTokenPan, InboundTokenPan> {
 
     private final TokenPanStoreService tokenPANStoreService;
     private final Boolean lastSection;
     private final Boolean tokenPanValidationEnabled;
+    private List<String> exemptedCircuitType;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static final Validator validator = factory.getValidator();
@@ -45,7 +49,8 @@ public class InboundTokenPanItemProcessor implements ItemProcessor<InboundTokenP
         }
 
         boolean hasTokenPan = !tokenPanValidationEnabled ||
-                tokenPANStoreService.hasTokenPAN(inboundTokenPan.getTokenPan());
+                (exemptedCircuitType.contains(inboundTokenPan.getCircuitType()) &&
+                        tokenPANStoreService.hasTokenPAN(inboundTokenPan.getTokenPan()));
 
         if (hasTokenPan) {
             return inboundTokenPan;
