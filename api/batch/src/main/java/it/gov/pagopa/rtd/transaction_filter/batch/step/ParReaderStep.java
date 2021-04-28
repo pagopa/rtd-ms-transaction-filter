@@ -1,14 +1,10 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.HpanReaderMasterStepListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.ParReaderMasterStepListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.PGPFlatFileItemReader;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.HpanStoreWriter;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.HpanWriter;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.ParStoreWriter;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.ParWriter;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.ParStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.WriterTrackerService;
 import lombok.Data;
