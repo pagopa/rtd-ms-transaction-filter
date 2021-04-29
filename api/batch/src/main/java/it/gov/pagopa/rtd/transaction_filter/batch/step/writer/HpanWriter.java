@@ -20,7 +20,6 @@ public class HpanWriter implements ItemWriter<String> {
 
     private final HpanStoreService hpanStoreService;
     private final WriterTrackerService writerTrackerService;
-    private Executor executor;
 
     @Override
     public void write(List<? extends String> hpanList) {

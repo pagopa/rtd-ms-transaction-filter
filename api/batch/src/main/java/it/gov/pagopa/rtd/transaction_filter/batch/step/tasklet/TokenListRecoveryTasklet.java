@@ -30,11 +30,11 @@ import java.util.List;
 
 @Slf4j
 @Data
-public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
+public class TokenListRecoveryTasklet implements Tasklet, InitializingBean {
 
     private TokenConnectorService tokenConnectorService;
-    private String binListDirectory;
-    private String binFilePattern;
+    private String tokenListDirectory;
+    private String tokenFilePattern;
     private String fileName;
     private Boolean dailyRemovalTaskletEnabled = false;
     private Boolean recoveryTaskletEnabled = false;
@@ -52,7 +52,7 @@ public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
-        binListDirectory = binListDirectory.replaceAll("\\\\", "/");
+        tokenListDirectory = tokenListDirectory.replaceAll("\\\\", "/");
         Resource[] resources = null;
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -61,10 +61,10 @@ public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
         if (dailyRemovalTaskletEnabled) {
 
             resources = resolver.getResources("file:/"
-                    .concat(binListDirectory.charAt(0) == '/' ?
-                            binListDirectory.replaceFirst("/","") : binListDirectory)
+                    .concat(tokenListDirectory.charAt(0) == '/' ?
+                            tokenListDirectory.replaceFirst("/","") : tokenListDirectory)
                     .concat("/")
-                    .concat(binFilePattern));
+                    .concat(tokenFilePattern));
 
             try {
 
@@ -89,20 +89,20 @@ public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
 
         if (recoveryTaskletEnabled) {
             resources = resolver.getResources("file:/"
-                    .concat(binListDirectory.charAt(0) == '/' ?
-                            binListDirectory.replaceFirst("/","") : binListDirectory)
+                    .concat(tokenListDirectory.charAt(0) == '/' ?
+                            tokenListDirectory.replaceFirst("/","") : tokenListDirectory)
                     .concat("/")
-                    .concat(binFilePattern));
+                    .concat(tokenFilePattern));
 
             int fileId=1;
-            File outputFile = FileUtils.getFile(binListDirectory
+            File outputFile = FileUtils.getFile(tokenListDirectory
                     .concat("/".concat(
                             String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
                                     .concat(fileName != null ? fileName : "hpanList"))));
             if (resources.length == 0 || !outputFile.exists()) {
                 List<File> hpanListTempFiles = tokenConnectorService.getTokenPanList();
                 for (File hpanListTempFile : hpanListTempFiles) {
-                    outputFile = FileUtils.getFile(binListDirectory.concat("/".concat(
+                    outputFile = FileUtils.getFile(tokenListDirectory.concat("/".concat(
                             String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
                                     .concat(fileName != null ? fileName : "hpanList"))));
                     FileUtils.moveFile(
@@ -118,7 +118,7 @@ public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(resolver.getResources(binListDirectory),
+        Assert.notNull(resolver.getResources(tokenListDirectory),
                 "directory must be set");
     }
 }

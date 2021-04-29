@@ -34,53 +34,53 @@ import java.util.zip.ZipFile;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-class HpanRestClientImpl implements HpanRestClient {
+class TokenPanRestClientImpl implements TokenPanRestClient {
 
-    @Value("${rest-client.hpan.base-url}")
+    @Value("${rest-client.tkm.base-url}")
     private String baseUrl;
 
-    @Value("${rest-client.hpan.api.key}")
+    @Value("${rest-client.tkm.api.key}")
     private String apiKey;
 
-    @Value("${rest-client.hpan.list.url}")
+    @Value("${rest-client.tkm.list.url}")
     private String listUrl;
 
-    @Value("${rest-client.hpan.list.checksumValidation}")
+    @Value("${rest-client.tkm.list.checksumValidation}")
     private Boolean checksumValidation;
 
-    @Value("${rest-client.hpan.list.checksumHeaderName}")
+    @Value("${rest-client.tkm.list.checksumHeaderName}")
     private String checksumHeaderName;
 
-    @Value("${rest-client.hpan.list.attemptExtraction}")
+    @Value("${rest-client.tkm.list.attemptExtraction}")
     private Boolean attemptExtraction;
 
-    @Value("${rest-client.hpan.list.listFilePattern}")
+    @Value("${rest-client.tkm.list.listFilePattern}")
     private String listFilePattern;
 
-    @Value("${rest-client.hpan.list.dateValidation}")
+    @Value("${rest-client.tkm.list.dateValidation}")
     private Boolean dateValidation;
 
-    @Value("${rest-client.hpan.list.dateValidationHeaderName}")
+    @Value("${rest-client.tkm.list.dateValidationHeaderName}")
     private String dateValidationHeaderName;
 
-    @Value("${rest-client.hpan.list.dateValidationPattern}")
+    @Value("${rest-client.tkm.list.dateValidationPattern}")
     private String dateValidationPattern;
 
-    @Value("${rest-client.hpan.list.dateValidationZone}")
+    @Value("${rest-client.tkm.list.dateValidationZone}")
     private String dateValidationZone;
 
-    @Value("${rest-client.hpan.list.partialFileRecovery}")
+    @Value("${rest-client.tkm.list.partialFileRecovery}")
     private Boolean partialFileRecovery;
 
-    @Value("${rest-client.hpan.list.nextPartHeader}")
+    @Value("${rest-client.tkm.list.nextPartHeader}")
     private String nextPartHeader;
 
     private final HpanRestConnector hpanRestConnector;
 
     private LocalDateTime validationDate;
 
-    private final List<File> tempHpanFiles;
-    private final List<File> tempParFiles;
+    private List<File> tempBinFiles;
+    private List<File> tempTokenPanFiles;
     private Path tempHpanDirWithPrefix;
 
     /**
@@ -90,12 +90,12 @@ class HpanRestClientImpl implements HpanRestClient {
      */
     @SneakyThrows
     @Override
-    public List<File> getHpanList() {
+    public List<File> getBinList() {
         if (!partialFileRecovery) {
-           return fullFileHpanRecovery();
+           return fullFileBinRecovery();
         } else {
             String filePartId = "1";
-            return partialFileHpanRecovery(filePartId);
+            return partialFileBinRecovery(filePartId);
         }
     }
 
@@ -106,30 +106,30 @@ class HpanRestClientImpl implements HpanRestClient {
      */
     @SneakyThrows
     @Override
-    public List<File> getParList() {
+    public List<File> getTokenList() {
         if (!partialFileRecovery) {
-            return fullFileParRecovery();
+            return fullFileTokenPanRecovery();
         } else {
             String filePartId = "1";
-            return partialFileParRecovery(filePartId);
+            return partialFileTokenPanRecovery(filePartId);
         }
     }
 
     @SneakyThrows
-    private List<File> fullFileParRecovery() {
-        File tempParFile = File.createTempFile("parDownloadFile", "");
-        tempParFiles.add(tempParFile);
-        File localTempFile = tempParFile;
+    private List<File> fullFileTokenPanRecovery() {
+        File tempTokenPanFile = File.createTempFile("tokenPanDownloadFile", "");
+        tempTokenPanFiles.add(tempTokenPanFile);
+        File localTempFile = tempTokenPanFile;
         ResponseEntity<Resource> responseEntity = hpanRestConnector.getParList(apiKey);
         localTempFile = processFile(localTempFile, responseEntity);
         return Collections.singletonList(localTempFile);
     }
 
     @SneakyThrows
-    private List<File> partialFileParRecovery(String filePartId) {
-        File tempFile = File.createTempFile("parDownloadFile_"
+    private List<File> partialFileTokenPanRecovery(String filePartId) {
+        File tempFile = File.createTempFile("tokenPanDownloadFile_"
                 .concat(filePartId), "");
-        tempParFiles.add(tempFile);
+        tempTokenPanFiles.add(tempFile);
         ResponseEntity<Resource> responseEntity = hpanRestConnector
                 .getPartialParList(apiKey, filePartId);
         tempFile = processFile(tempFile, responseEntity);
@@ -142,27 +142,26 @@ class HpanRestClientImpl implements HpanRestClient {
         List<File> returnFile = new ArrayList<>(Collections.singletonList(tempFile));
 
         if (nextPartHeaderValue != null) {
-            returnFile.addAll(partialFileHpanRecovery(nextPartHeaderValue));
+            returnFile.addAll(partialFileTokenPanRecovery(nextPartHeaderValue));
         }
 
         return returnFile;
     }
 
     @SneakyThrows
-    private List<File> fullFileHpanRecovery() {
-        File tempHpanFile = File.createTempFile("hpanDownloadFile", "");
-        tempHpanFiles.add(tempHpanFile);
-        File localTempFile = tempHpanFile;
+    private List<File> fullFileBinRecovery() {
+        File tempBinFile = File.createTempFile("binDownloadFile", "");
+        tempBinFiles.add(tempBinFile);
+        File localTempFile = tempBinFile;
         ResponseEntity<Resource> responseEntity = hpanRestConnector.getHpanList(apiKey);
         localTempFile = processFile(localTempFile, responseEntity);
         return Collections.singletonList(localTempFile);
     }
 
     @SneakyThrows
-    private List<File> partialFileHpanRecovery(String filePartId) {
-        File tempFile = File.createTempFile("hpanDownloadFile_"
+    private List<File> partialFileBinRecovery(String filePartId) {
+        File tempFile = File.createTempFile("binDownloadFile_"
                 .concat(filePartId), "");
-        tempHpanFiles.add(tempFile);
         ResponseEntity<Resource> responseEntity = hpanRestConnector
                 .getPartialList(apiKey, filePartId);
         tempFile = processFile(tempFile, responseEntity);
@@ -175,7 +174,7 @@ class HpanRestClientImpl implements HpanRestClient {
         List<File> returnFile = new ArrayList<>(Collections.singletonList(tempFile));
 
         if (nextPartHeaderValue != null) {
-            returnFile.addAll(partialFileHpanRecovery(nextPartHeaderValue));
+            returnFile.addAll(partialFileBinRecovery(nextPartHeaderValue));
         }
 
         return returnFile;
@@ -274,11 +273,6 @@ class HpanRestClientImpl implements HpanRestClient {
         return tempFile;
     }
 
-    @Override
-    public String getSalt() {
-        return hpanRestConnector.getSalt(apiKey);
-    }
-
     public void setValidationDate(LocalDateTime now) {
         this.validationDate = now;
     }
@@ -287,27 +281,27 @@ class HpanRestClientImpl implements HpanRestClient {
     public void cleanTempFile() {
 
         try {
-            tempHpanFiles.forEach(tempHpanFile -> {
+            tempTokenPanFiles.forEach(tempTokenPanFile -> {
                 try {
-                    FileUtils.forceDelete(tempHpanFile);
+                    FileUtils.forceDelete(tempTokenPanFile);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
-            tempHpanFiles.clear();
+            tempTokenPanFiles.clear();
         } catch (Exception e) {
             log.error(e.getMessage(),e);
         }
 
         try {
-            tempParFiles.forEach(tempParFile -> {
+            tempBinFiles.forEach(tempBinFile -> {
                 try {
-                    FileUtils.forceDelete(tempParFile);
+                    FileUtils.forceDelete(tempBinFile);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             });
-            tempParFiles.clear();
+            tempBinFiles.clear();
         } catch (Exception e) {
             log.error(e.getMessage(),e);
         }

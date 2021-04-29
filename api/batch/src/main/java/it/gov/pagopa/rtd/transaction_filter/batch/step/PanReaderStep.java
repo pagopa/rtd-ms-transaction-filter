@@ -25,9 +25,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import java.io.FileNotFoundException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -89,7 +87,6 @@ public class PanReaderStep {
     @StepScope
     public HpanWriter hpanItemWriter(HpanStoreService hpanStoreService, WriterTrackerService writerTrackerService) {
         HpanWriter hpanWriter = new HpanWriter(hpanStoreService, writerTrackerService);
-        hpanWriter.setExecutor(writerExecutor());
         return hpanWriter;
     }
 
@@ -128,7 +125,7 @@ public class PanReaderStep {
     public Partitioner hpanStoreRecoveryPartitioner() throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(hpanWorkerDirectoryPath));
+        partitioner.setResources(resolver.getResources(getHpanWorkerDirectoryPath()));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -218,18 +215,6 @@ public class PanReaderStep {
         hpanReaderStepListener.setHpanStoreService(hpanStoreService);
         hpanReaderStepListener.setWriterTrackerService(writerTrackerService);
         return hpanReaderStepListener;
-    }
-
-    /**
-     *
-     * @return bean configured for usage for chunk reading of a single file
-     */
-    @Bean
-    public Executor writerExecutor() {
-        if (this.executorService == null) {
-            executorService =  Executors.newFixedThreadPool(executorPoolSize);
-        }
-        return executorService;
     }
 
 

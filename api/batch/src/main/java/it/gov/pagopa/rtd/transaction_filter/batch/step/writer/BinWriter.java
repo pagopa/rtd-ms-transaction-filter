@@ -21,7 +21,6 @@ public class BinWriter implements ItemWriter<String> {
 
     private final BinStoreService binStoreService;
     private final WriterTrackerService writerTrackerService;
-    private Executor executor;
 
     @Override
     public void write(List<? extends String> binList) {

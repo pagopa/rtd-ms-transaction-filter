@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
-import it.gov.pagopa.rtd.transaction_filter.service.TokenConnectorService;
+import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -30,11 +30,11 @@ import java.util.List;
 
 @Slf4j
 @Data
-public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
+public class ParListRecoveryTasklet implements Tasklet, InitializingBean {
 
-    private TokenConnectorService tokenConnectorService;
-    private String binListDirectory;
-    private String binFilePattern;
+    private HpanConnectorService hpanConnectorService;
+    private String parListDirectory;
+    private String parFilePattern;
     private String fileName;
     private Boolean dailyRemovalTaskletEnabled = false;
     private Boolean recoveryTaskletEnabled = false;
@@ -52,7 +52,7 @@ public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
-        binListDirectory = binListDirectory.replaceAll("\\\\", "/");
+        parListDirectory = parListDirectory.replaceAll("\\\\", "/");
         Resource[] resources = null;
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -61,10 +61,10 @@ public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
         if (dailyRemovalTaskletEnabled) {
 
             resources = resolver.getResources("file:/"
-                    .concat(binListDirectory.charAt(0) == '/' ?
-                            binListDirectory.replaceFirst("/","") : binListDirectory)
+                    .concat(parListDirectory.charAt(0) == '/' ?
+                            parListDirectory.replaceFirst("/","") : parListDirectory)
                     .concat("/")
-                    .concat(binFilePattern));
+                    .concat(parFilePattern));
 
             try {
 
@@ -89,28 +89,28 @@ public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
 
         if (recoveryTaskletEnabled) {
             resources = resolver.getResources("file:/"
-                    .concat(binListDirectory.charAt(0) == '/' ?
-                            binListDirectory.replaceFirst("/","") : binListDirectory)
+                    .concat(parListDirectory.charAt(0) == '/' ?
+                            parListDirectory.replaceFirst("/","") : parListDirectory)
                     .concat("/")
-                    .concat(binFilePattern));
+                    .concat(parFilePattern));
 
             int fileId=1;
-            File outputFile = FileUtils.getFile(binListDirectory
+            File outputFile = FileUtils.getFile(parListDirectory
                     .concat("/".concat(
                             String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
                                     .concat(fileName != null ? fileName : "hpanList"))));
             if (resources.length == 0 || !outputFile.exists()) {
-                List<File> hpanListTempFiles = tokenConnectorService.getTokenPanList();
-                for (File hpanListTempFile : hpanListTempFiles) {
-                    outputFile = FileUtils.getFile(binListDirectory.concat("/".concat(
+                List<File> parListTempFiles = hpanConnectorService.getParList();
+                for (File parListTempFile : parListTempFiles) {
+                    outputFile = FileUtils.getFile(parListDirectory.concat("/".concat(
                             String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
                                     .concat(fileName != null ? fileName : "hpanList"))));
                     FileUtils.moveFile(
-                            hpanListTempFile,
+                            parListTempFile,
                             outputFile);
                     fileId = fileId+1;
                 }
-                tokenConnectorService.cleanAllTempFiles();
+                hpanConnectorService.cleanAllTempFiles();
             }
         }
         return RepeatStatus.FINISHED;
@@ -118,7 +118,7 @@ public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(resolver.getResources(binListDirectory),
+        Assert.notNull(resolver.getResources(parListDirectory),
                 "directory must be set");
     }
 }

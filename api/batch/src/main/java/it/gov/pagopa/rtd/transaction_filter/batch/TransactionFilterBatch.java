@@ -4,10 +4,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.ParReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.InnerTransactionFileManagementTasklet;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionFileManagementTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.*;
 import it.gov.pagopa.rtd.transaction_filter.service.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -80,6 +77,12 @@ public class TransactionFilterBatch {
     private String hpanListRecoveryFilePattern;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename}")
     private String hpanListFilename;
+    @Value("${batchConfiguration.TransactionFilterBatch.parListRecovery.directoryPath}")
+    private String parListDirectory;
+    @Value("${batchConfiguration.TransactionFilterBatch.parListRecovery.filePattern}")
+    private String parListRecoveryFilePattern;
+    @Value("${batchConfiguration.TransactionFilterBatch.parListRecovery.filename}")
+    private String parListFilename;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles}")
     private Boolean deleteProcessedFiles;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles}")
@@ -92,6 +95,10 @@ public class TransactionFilterBatch {
     private Boolean hpanListRecoveryEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled}")
     private Boolean hpanListDailyRemovalEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.parListRecovery.enabled}")
+    private Boolean parListRecoveryEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.parListRecovery.dailyRemoval.enabled}")
+    private Boolean parListDailyRemovalEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanList.numberPerFile}")
     private Long numberPerFile;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanList.workingHpanDirectory}")
@@ -461,16 +468,16 @@ public class TransactionFilterBatch {
 
     @Bean
     public Step parListRecoveryTask() {
-        HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
-        hpanListRecoveryTasklet.setHpanListDirectory(hpanListDirectory);
-        hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
-        hpanListRecoveryTasklet.setFileName(hpanListFilename);
-        hpanListRecoveryTasklet.setHpanFilePattern(hpanListRecoveryFilePattern);
-        hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(hpanListDailyRemovalEnabled);
-        hpanListRecoveryTasklet.setRecoveryTaskletEnabled(hpanListRecoveryEnabled);
+        ParListRecoveryTasklet parListRecoveryTasklet = new ParListRecoveryTasklet();
+        parListRecoveryTasklet.setParListDirectory(parListDirectory);
+        parListRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
+        parListRecoveryTasklet.setFileName(parListFilename);
+        parListRecoveryTasklet.setParFilePattern(parListRecoveryFilePattern);
+        parListRecoveryTasklet.setDailyRemovalTaskletEnabled(parListDailyRemovalEnabled);
+        parListRecoveryTasklet.setRecoveryTaskletEnabled(parListRecoveryEnabled);
         return stepBuilderFactory
                 .get("transaction-filter-par-list-recovery-step")
-                .tasklet(hpanListRecoveryTasklet).build();
+                .tasklet(parListRecoveryTasklet).build();
     }
 
 

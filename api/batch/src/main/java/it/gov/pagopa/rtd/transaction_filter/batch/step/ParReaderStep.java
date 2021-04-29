@@ -24,7 +24,6 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
 import java.io.FileNotFoundException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -89,9 +88,7 @@ public class ParReaderStep {
     @Bean
     @StepScope
     public ParWriter parItemWriter(ParStoreService parStoreService, WriterTrackerService writerTrackerService) {
-        ParWriter parWriter = new ParWriter(parStoreService, writerTrackerService);
-        parWriter.setExecutor(writerExecutor());
-        return parWriter;
+        return new ParWriter(parStoreService, writerTrackerService);
     }
 
     /**
@@ -220,19 +217,5 @@ public class ParReaderStep {
         parReaderStepListener.setWriterTrackerService(writerTrackerService);
         return parReaderStepListener;
     }
-
-    /**
-     *
-     * @return bean configured for usage for chunk reading of a single file
-     */
-    @Bean
-    public Executor writerExecutor() {
-        if (this.executorService == null) {
-            executorService =  Executors.newFixedThreadPool(executorPoolSize);
-        }
-        return executorService;
-    }
-
-
 
 }

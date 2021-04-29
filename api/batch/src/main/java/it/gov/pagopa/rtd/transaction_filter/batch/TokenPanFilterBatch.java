@@ -59,7 +59,7 @@ public class TokenPanFilterBatch {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final BeanFactory beanFactory;
-    private final HpanConnectorService hpanConnectorService;
+    private final TokenConnectorService tokenConnectorService;
     private final SftpConnectorService sftpConnectorService;
 
     @Value("${batchConfiguration.TokenPanFilterBatch.isolationForCreate}")
@@ -529,25 +529,25 @@ public class TokenPanFilterBatch {
 
     @Bean
     public Step tokenPanListRecoveryTask() {
-        HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
-        hpanListRecoveryTasklet.setHpanListDirectory(tokenPanListDirectory);
-        hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
-        hpanListRecoveryTasklet.setFileName(hpanListFilename);
-        hpanListRecoveryTasklet.setHpanFilePattern(tokenPanListRecoveryFilePattern);
-        hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(tokenPanListDailyRemovalEnabled);
-        hpanListRecoveryTasklet.setRecoveryTaskletEnabled(tokenPanListRecoveryEnabled);
+        TokenListRecoveryTasklet tokenListRecoveryTasklet = new TokenListRecoveryTasklet();
+        tokenListRecoveryTasklet.setTokenListDirectory(tokenPanListDirectory);
+        tokenListRecoveryTasklet.setTokenConnectorService(tokenConnectorService);
+        tokenListRecoveryTasklet.setFileName(hpanListFilename);
+        tokenListRecoveryTasklet.setTokenFilePattern(tokenPanListRecoveryFilePattern);
+        tokenListRecoveryTasklet.setDailyRemovalTaskletEnabled(tokenPanListDailyRemovalEnabled);
+        tokenListRecoveryTasklet.setRecoveryTaskletEnabled(tokenPanListRecoveryEnabled);
         return stepBuilderFactory
-                .get("token-filter-salt-token-list-recovery-step")
-                .tasklet(hpanListRecoveryTasklet).build();
+                .get("token-filter-token-list-recovery-step")
+                .tasklet(tokenListRecoveryTasklet).build();
     }
 
     @Bean
     public Step binListRecoveryTask() {
         BinListRecoveryTasklet binListRecoveryTasklet = new BinListRecoveryTasklet();
-        binListRecoveryTasklet.setHpanListDirectory(binListDirectory);
-        binListRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
+        binListRecoveryTasklet.setBinListDirectory(binListDirectory);
+        binListRecoveryTasklet.setTokenConnectorService(tokenConnectorService);
         binListRecoveryTasklet.setFileName(hpanListFilename);
-        binListRecoveryTasklet.setHpanFilePattern(binListRecoveryFilePattern);
+        binListRecoveryTasklet.setBinFilePattern(binListRecoveryFilePattern);
         binListRecoveryTasklet.setDailyRemovalTaskletEnabled(binListDailyRemovalEnabled);
         binListRecoveryTasklet.setRecoveryTaskletEnabled(binListRecoveryEnabled);
         return stepBuilderFactory

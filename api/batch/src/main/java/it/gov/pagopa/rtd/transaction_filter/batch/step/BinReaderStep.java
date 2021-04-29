@@ -24,11 +24,8 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
 import java.io.FileNotFoundException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -89,9 +86,7 @@ public class BinReaderStep {
     @Bean
     @StepScope
     public BinWriter binItemWriter(BinStoreService binStoreService, WriterTrackerService writerTrackerService) {
-        BinWriter binWriter = new BinWriter(binStoreService, writerTrackerService);
-        binWriter.setExecutor(writerExecutor());
-        return binWriter;
+        return new BinWriter(binStoreService, writerTrackerService);
     }
 
     /**
@@ -219,18 +214,5 @@ public class BinReaderStep {
         binReaderMasterStepListener.setWriterTrackerService(writerTrackerService);
         return binReaderMasterStepListener;
     }
-
-    /**
-     *
-     * @return bean configured for usage for chunk reading of a single file
-     */
-    @Bean
-    public Executor writerExecutor() {
-        if (this.executorService == null) {
-            executorService =  Executors.newFixedThreadPool(executorPoolSize);
-        }
-        return executorService;
-    }
-
 
 }

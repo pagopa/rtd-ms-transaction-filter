@@ -24,11 +24,8 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
 import java.io.FileNotFoundException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -90,9 +87,7 @@ public class TokenPanReaderStep {
     @StepScope
     public TokenPanWriter enrolledTokenPanItemWriter(
             TokenPanStoreService tokenPanStoreService, WriterTrackerService writerTrackerService) {
-        TokenPanWriter tokenPanWriter = new TokenPanWriter(tokenPanStoreService, writerTrackerService);
-        tokenPanWriter.setExecutor(writerExecutor());
-        return tokenPanWriter;
+        return new TokenPanWriter(tokenPanStoreService, writerTrackerService);
     }
 
     /**
@@ -221,18 +216,5 @@ public class TokenPanReaderStep {
         tokenPanReaderMasterStepListener.setWriterTrackerService(writerTrackerService);
         return tokenPanReaderMasterStepListener;
     }
-
-    /**
-     *
-     * @return bean configured for usage for chunk reading of a single file
-     */
-    @Bean
-    public Executor writerExecutor() {
-        if (this.executorService == null) {
-            executorService =  Executors.newFixedThreadPool(executorPoolSize);
-        }
-        return executorService;
-    }
-
 
 }
