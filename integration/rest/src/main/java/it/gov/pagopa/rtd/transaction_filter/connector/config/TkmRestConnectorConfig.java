@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.connector.config;
 
 import feign.Client;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestConnector;
+import it.gov.pagopa.rtd.transaction_filter.connector.TokenPanRestConnector;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +20,7 @@ import java.net.Proxy;
 import java.security.KeyStore;
 
 @Configuration
-@EnableFeignClients(clients = HpanRestConnector.class)
+@EnableFeignClients(clients = TokenPanRestConnector.class)
 @PropertySource("classpath:config/rest-tkm-client.properties")
 @Slf4j
 public class TkmRestConnectorConfig {

@@ -1,7 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
-import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
+import it.gov.pagopa.rtd.transaction_filter.connector.config.TkmRestConnectorConfig;
 import lombok.SneakyThrows;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -18,6 +18,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.TestPropertySourceUtils;
+
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -29,35 +30,34 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @TestPropertySource(
-        locations = "classpath:config/rest-client.properties",
+        locations = "classpath:config/rest-tkm-client.properties",
         properties = {
-                "rest-client.par.list.url=/parlist",
-                "rest-client.hpan.list.url=/list",
-                "rest-client.hpan.salt.url=/salt",
-                "rest-client.hpan.mtls.enabled=true",
-                "rest-client.hpan.list.checksumHeaderName=checksum",
-                "rest-client.hpan.dateValidation.enabled=true",
-                "rest-client.hpan.list.dateValidationHeaderName=date",
-                "rest-client.hpan.key-store.file=classpath:certs/client-keystore.jks",
-                "rest-client.hpan.key-store.password=secret",
-                "rest-client.hpan.trust-store.file=classpath:certs/client-truststore.jks",
-                "rest-client.hpan.trust-store.password=secret",
-                "spring.application.name=rtd-ms-transaction-filter-integration-rest"
+                "rest-client.bin.list.url=/parlist",
+                "rest-client.token.list.url=/list",
+                "rest-client.tkm.mtls.enabled=true",
+                "rest-client.tkm.list.checksumHeaderName=checksum",
+                "rest-client.tkm.dateValidation.enabled=true",
+                "rest-client.tkm.list.dateValidationHeaderName=date",
+                "rest-client.tkm.key-store.file=classpath:certs/client-keystore.jks",
+                "rest-client.tkm.key-store.password=secret",
+                "rest-client.tkm.trust-store.file=classpath:certs/client-truststore.jks",
+                "rest-client.tkm.trust-store.password=secret",
+                "spring.application.name=rtd-ms-transaction-filter-token-integration-rest"
         }
 )
-@ContextConfiguration(initializers = HpanRestClientTest.RandomPortInitializer.class,
+@ContextConfiguration(initializers = TokenRestClientTest.RandomPortInitializer.class,
         classes = {
-                HpanRestConnectorConfig.class,
-                HpanRestClientImpl.class,
-                HpanRestConnector.class,
+                TkmRestConnectorConfig.class,
+                TokenPanRestClientImpl.class,
+                TokenPanRestConnector.class,
                 FeignAutoConfiguration.class,
                 HttpMessageConvertersAutoConfiguration.class
         }
 )
-public class HpanRestClientTest {
+public class TokenRestClientTest {
 
     @Autowired
-    private HpanRestClient hpanRestClient;
+    private TokenPanRestClient tokenPanRestClient;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -74,29 +74,23 @@ public class HpanRestClientTest {
             .usingFilesUnderClasspath("stubs/hpan")
     );
 
-    @Test
-    public void getSalt() {
-        String salt = hpanRestClient.getSalt();
-        assertNotNull(salt);
-    }
-
     @SneakyThrows
     @Test
     public void getList() {
-        ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
+        ((TokenPanRestClientImpl)tokenPanRestClient).setValidationDate(LocalDateTime
                 .parse("Mon, 22 Jun 2020 15:58:35 GMT",
                   DateTimeFormatter.RFC_1123_DATE_TIME));
-        List<File> hpanList = hpanRestClient.getHpanList();
-        assertNotNull(hpanList);
+        List<File> tokenList = tokenPanRestClient.getTokenList();
+        assertNotNull(tokenList);
     }
 
     @SneakyThrows
     @Test
     public void getList_OK_TimeEdge() {
-        ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
+        ((TokenPanRestClientImpl)tokenPanRestClient).setValidationDate(LocalDateTime
                 .parse("Mon, 22 Jun 2020 00:00:00 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
-        List<File> hpanList = hpanRestClient.getHpanList();
+        List<File> hpanList = tokenPanRestClient.getTokenList();
         assertNotNull(hpanList);
     }
 
@@ -104,43 +98,43 @@ public class HpanRestClientTest {
     @SneakyThrows
     @Test
     public void getList_KO_TimeExceeding() {
-        ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
+        ((TokenPanRestClientImpl)tokenPanRestClient).setValidationDate(LocalDateTime
                 .parse("Tue, 23 Jun 2020 00:00:01 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
         expectedException.expect(Exception.class);
-        hpanRestClient.getHpanList();
+        tokenPanRestClient.getTokenList();
     }
 
 
     @SneakyThrows
     @Test
-    public void getParList() {
-        ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
+    public void getBinList() {
+        ((TokenPanRestClientImpl)tokenPanRestClient).setValidationDate(LocalDateTime
                 .parse("Mon, 22 Jun 2020 15:58:35 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
-        List<File> parList = hpanRestClient.getParList();
-        assertNotNull(parList);
+        List<File> binList = tokenPanRestClient.getBinList();
+        assertNotNull(binList);
     }
 
     @SneakyThrows
     @Test
-    public void getParList_OK_TimeEdge() {
-        ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
+    public void getBinList_OK_TimeEdge() {
+        ((TokenPanRestClientImpl)tokenPanRestClient).setValidationDate(LocalDateTime
                 .parse("Mon, 22 Jun 2020 00:00:00 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
-        List<File> parList = hpanRestClient.getParList();
-        assertNotNull(parList);
+        List<File> binList = tokenPanRestClient.getBinList();
+        assertNotNull(binList);
     }
 
 
     @SneakyThrows
     @Test
     public void getParList_KO_TimeExceeding() {
-        ((HpanRestClientImpl)hpanRestClient).setValidationDate(LocalDateTime
+        ((TokenPanRestClientImpl)tokenPanRestClient).setValidationDate(LocalDateTime
                 .parse("Tue, 23 Jun 2020 00:00:01 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
         expectedException.expect(Exception.class);
-        hpanRestClient.getParList();
+        tokenPanRestClient.getBinList();
     }
 
 
@@ -151,7 +145,7 @@ public class HpanRestClientTest {
         public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertySourceUtils
                     .addInlinedPropertiesToEnvironment(applicationContext,
-                            String.format("rest-client.hpan.base-url=https://localhost:%d/hpan",
+                            String.format("rest-client.tkm.base-url=https://localhost:%d/hpan",
                                     wireMockRule.httpsPort())
                     );
         }

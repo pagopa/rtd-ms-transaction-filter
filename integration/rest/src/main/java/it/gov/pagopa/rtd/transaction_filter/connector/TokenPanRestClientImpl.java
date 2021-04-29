@@ -75,12 +75,12 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
     @Value("${rest-client.tkm.list.nextPartHeader}")
     private String nextPartHeader;
 
-    private final HpanRestConnector hpanRestConnector;
+    private final TokenPanRestConnector tokenPanRestConnector;
 
     private LocalDateTime validationDate;
 
-    private List<File> tempBinFiles;
-    private List<File> tempTokenPanFiles;
+    private final List<File> tempBinFiles;
+    private final List<File> tempTokenPanFiles;
     private Path tempHpanDirWithPrefix;
 
     /**
@@ -120,7 +120,7 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
         File tempTokenPanFile = File.createTempFile("tokenPanDownloadFile", "");
         tempTokenPanFiles.add(tempTokenPanFile);
         File localTempFile = tempTokenPanFile;
-        ResponseEntity<Resource> responseEntity = hpanRestConnector.getParList(apiKey);
+        ResponseEntity<Resource> responseEntity = tokenPanRestConnector.getTokenList(apiKey);
         localTempFile = processFile(localTempFile, responseEntity);
         return Collections.singletonList(localTempFile);
     }
@@ -130,8 +130,8 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
         File tempFile = File.createTempFile("tokenPanDownloadFile_"
                 .concat(filePartId), "");
         tempTokenPanFiles.add(tempFile);
-        ResponseEntity<Resource> responseEntity = hpanRestConnector
-                .getPartialParList(apiKey, filePartId);
+        ResponseEntity<Resource> responseEntity = tokenPanRestConnector
+                .getPartialTokenList(apiKey, filePartId);
         tempFile = processFile(tempFile, responseEntity);
         List<String> nextPartHeaderValues = responseEntity.getHeaders().get(nextPartHeader);
         String nextPartHeaderValue = null;
@@ -153,7 +153,7 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
         File tempBinFile = File.createTempFile("binDownloadFile", "");
         tempBinFiles.add(tempBinFile);
         File localTempFile = tempBinFile;
-        ResponseEntity<Resource> responseEntity = hpanRestConnector.getHpanList(apiKey);
+        ResponseEntity<Resource> responseEntity = tokenPanRestConnector.getBinList(apiKey);
         localTempFile = processFile(localTempFile, responseEntity);
         return Collections.singletonList(localTempFile);
     }
@@ -162,8 +162,8 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
     private List<File> partialFileBinRecovery(String filePartId) {
         File tempFile = File.createTempFile("binDownloadFile_"
                 .concat(filePartId), "");
-        ResponseEntity<Resource> responseEntity = hpanRestConnector
-                .getPartialList(apiKey, filePartId);
+        ResponseEntity<Resource> responseEntity = tokenPanRestConnector
+                .getBinPartialList(apiKey, filePartId);
         tempFile = processFile(tempFile, responseEntity);
         List<String> nextPartHeaderValues = responseEntity.getHeaders().get(nextPartHeader);
         String nextPartHeaderValue = null;
