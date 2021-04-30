@@ -126,7 +126,7 @@ public class TokenPanFilterStep {
     public LineTokenizer tokenPanLineTokenizer() {
         DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
         delimitedLineTokenizer.setDelimiter(";");
-        delimitedLineTokenizer.setNames("token_pan", "par");
+        delimitedLineTokenizer.setNames("token_pan", "circuit_type", "par");
         return delimitedLineTokenizer;
     }
 
@@ -178,7 +178,7 @@ public class TokenPanFilterStep {
     public BeanWrapperFieldExtractor<InboundTokenPan> tokenPanWriterFieldExtractor() {
         BeanWrapperFieldExtractor<InboundTokenPan> extractor = new BeanWrapperFieldExtractor<>();
         extractor.setNames(new String[] {
-                "tokenPan", "par"});
+                "tokenPan", "circuit_type", "par"});
         return extractor;
     }
 

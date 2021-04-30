@@ -2,7 +2,6 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTokenPan;
 import it.gov.pagopa.rtd.transaction_filter.service.BinStoreService;
-import it.gov.pagopa.rtd.transaction_filter.service.TokenPanStoreService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +48,7 @@ public class InboundBinTokenPanItemProcessor implements ItemProcessor<InboundTok
         }
 
         boolean hasBin = !binValidationEnabled ||
-                (exemptedCircuitType.contains(inboundTokenPan.getCircuitType()) &&
+                (!exemptedCircuitType.contains(inboundTokenPan.getCircuitType()) &&
                 binStoreService.hasBin(inboundTokenPan.getTokenPan().substring(0,4)));
 
         if (hasBin) {

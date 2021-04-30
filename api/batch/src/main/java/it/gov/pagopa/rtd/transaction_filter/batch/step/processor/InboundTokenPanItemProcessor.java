@@ -49,7 +49,7 @@ public class InboundTokenPanItemProcessor implements ItemProcessor<InboundTokenP
         }
 
         boolean hasTokenPan = !tokenPanValidationEnabled ||
-                (exemptedCircuitType.contains(inboundTokenPan.getCircuitType()) &&
+                (!exemptedCircuitType.contains(inboundTokenPan.getCircuitType()) &&
                         tokenPANStoreService.hasTokenPAN(inboundTokenPan.getTokenPan()));
 
         if (hasTokenPan) {

@@ -10,15 +10,12 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
-
-import java.math.BigDecimal;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class LineAwareMapperTest {
+public class InboundTransactionLineAwareMapperTest {
 
-    public LineAwareMapperTest(){
+    public InboundTransactionLineAwareMapperTest(){
         MockitoAnnotations.initMocks(this);
     }
 
@@ -45,7 +42,8 @@ public class LineAwareMapperTest {
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
                 "bank_identification_number", "MCC");
         lineAwareMapper.setTokenizer(delimitedLineTokenizer);
-        lineAwareMapper.setFieldSetMapper(new InboundTransactionFieldSetMapper("MM/dd/yyyy HH:mm:ss", false));
+        lineAwareMapper.setFieldSetMapper(
+                new InboundTransactionFieldSetMapper("MM/dd/yyyy HH:mm:ss", false));
     }
 
     @Test
@@ -77,7 +75,8 @@ public class LineAwareMapperTest {
     }
 
     public InboundTransaction getInboundTransaction() {
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss").withZone(ZoneId.systemDefault());
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss")
+                .withZone(ZoneId.systemDefault());
         return InboundTransaction.builder()
                 .acquirerCode("13131")
                 .operationType("00")

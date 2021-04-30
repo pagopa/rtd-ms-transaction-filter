@@ -43,6 +43,7 @@ public class InboundTokenPanFieldSetMapper implements FieldSetMapper<InboundToke
 
         return InboundTokenPan.builder()
                 .tokenPan(fieldSet.readString("token_pan"))
+                .circuitType(fieldSet.readString("circuit_type"))
                 .par(fieldSet.readString("par"))
                 .valid(true)
                 .build();
