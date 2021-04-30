@@ -69,8 +69,6 @@ public class TransactionFilterStep {
     private String transactionDirectoryPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath}")
     private String outputDirectoryPath;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.innerOutputDirectoryPath}")
-    private String innerOutputDirectoryPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath}")
     private String publicKeyPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.linesToSkip}")
@@ -246,7 +244,8 @@ public class TransactionFilterStep {
     @Bean
     @StepScope
     public FlatFileItemWriter<InboundTransaction> transactionFilteredItemWriter(
-            @Value("#{stepExecutionContext['fileName']}") String file) {
+            @Value("#{stepExecutionContext['fileName']}") String file,
+            @Value("#{jobParameters['innerOutputPath']}") String innerOutputPath) {
         FlatFileItemWriter<InboundTransaction> flatFileItemWriter = new FlatFileItemWriter<>();
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
         flatFileItemWriter.setAppendAllowed(true);
@@ -254,7 +253,7 @@ public class TransactionFilterStep {
         String[] filename = file.split("/");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         flatFileItemWriter.setResource(
-                resolver.getResource(innerOutputDirectoryPath.concat("/"
+                resolver.getResource(innerOutputPath.concat("/"
                         .concat(filename[filename.length-1]))));
         return flatFileItemWriter;
     }
@@ -284,10 +283,11 @@ public class TransactionFilterStep {
      */
     @Bean
     @JobScope
-    public Partitioner transactionFilterPartitioner() throws Exception {
+    public Partitioner transactionFilterPartitioner(
+            @Value("#{jobParameters['innerOutputPath']}") String innerOutputPath) throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(innerOutputDirectoryPath.concat("/current/*.csv")));
+        partitioner.setResources(resolver.getResources(innerOutputPath.concat("/current/*.csv")));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -305,7 +305,7 @@ public class TransactionFilterStep {
             throws Exception {
         return stepBuilderFactory.get("transaction-filter-master-step").partitioner(
                 transactionFilterWorkerStep(hpanStoreService, parStoreService, transactionWriterService))
-                .partitioner("partition", transactionFilterPartitioner())
+                .partitioner("partition", transactionFilterPartitioner(null))
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -349,7 +349,7 @@ public class TransactionFilterStep {
                     .listener(transactionsItemWriteListener(transactionWriterService,executionDate))
                     .listener(transactionStepListener(transactionWriterService, executionDate))
                     .stream(transactionItemWriter(null, null))
-                    .stream(transactionFilteredItemWriter(null))
+                    .stream(transactionFilteredItemWriter(null, null))
                     .taskExecutor(batchConfig.readerTaskExecutor())
                     .build();
     }
@@ -484,7 +484,7 @@ public class TransactionFilterStep {
         compositeItemWriter.setClassifier(
                 new InboundTransactionClassifier(
                         transactionItemWriter(null, null),
-                        transactionFilteredItemWriter(null)));
+                        transactionFilteredItemWriter(null, null)));
         return compositeItemWriter;
     }
 

@@ -35,6 +35,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
 import javax.sql.DataSource;
 import java.io.File;
+import java.nio.file.Files;
 import java.util.Date;
 
 /**
@@ -98,10 +99,6 @@ public class TokenPanFilterBatch {
     private Boolean binListDailyRemovalEnabled;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.numberPerFile}")
     private Long numberPerFile;
-    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.workingTokenPanDirectory}")
-    private String workingTokenPanDirectory;
-    @Value("${batchConfiguration.TokenPanFilterBatch.binList.workingBinDirectory}")
-    private String workingBinDirectory;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanValidationEnabled}")
     private Boolean tokenPanValidationEnabled;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.binValidationEnabled}")
@@ -122,12 +119,12 @@ public class TokenPanFilterBatch {
         transactionWriterService.closeAll();
     }
 
-    public void createTokenPanStoreService() {
-        this.tokenPanStoreService = batchTokenPanStoreService();
+    public void createTokenPanStoreService(String workingTokenPanDirectory) {
+        this.tokenPanStoreService = batchTokenPanStoreService(workingTokenPanDirectory);
     }
 
-    public void createBinStoreService() {
-        this.binStoreService = batchBinStoreService();
+    public void createBinStoreService(String workingBinDirectory) {
+        this.binStoreService = batchBinStoreService(workingBinDirectory);
     }
 
     public void clearTokenPanStoreService() {
@@ -170,7 +167,13 @@ public class TokenPanFilterBatch {
     @SneakyThrows
     public JobExecution executeBatchJob(Date startDate) {
         String transactionsPath = tokenPanFilterStep.getTransactionDirectoryPath();
-        String innerOutputPath = tokenPanFilterStep.getInnerOutputDirectoryPath();
+        String innerOutputPath = "file:/".concat(
+                Files.createTempDirectory("tempTokenFolder").toFile().getAbsolutePath());
+        String workingBinDirectory = "file:/".concat(
+                Files.createTempDirectory("workingBinFolder").toFile().getAbsolutePath());
+        String workingTokenPanDirectory = "file:/".concat(
+                Files.createTempDirectory("workingTokenPanFolder").toFile().getAbsolutePath());
+
         Resource[] transactionResources = resolver.getResources(transactionsPath);
 
         String tokenPanPath = tokenPanReaderStep.getTokenPanDirectoryPath();
@@ -192,8 +195,8 @@ public class TokenPanFilterBatch {
             if (transactionWriterService == null) {
                 transactionWriterService();
             }
-            createTokenPanStoreService();
-            createBinStoreService();
+            createTokenPanStoreService(workingBinDirectory);
+            createBinStoreService(workingBinDirectory);
             createWriterTrackerService();
 
             Resource[] tokenPanResourcesToDelete = resolver.getResources(
@@ -207,7 +210,7 @@ public class TokenPanFilterBatch {
                 FileUtils.forceDelete(resource.getFile());
             }
             Resource[] tempTransactionToDelete = resolver.getResources(
-                    tokenPanFilterStep.getInnerOutputDirectoryPath().concat("/current/*.csv"));
+                    innerOutputPath.concat("/current/*.csv"));
             for (Resource resource : tempTransactionToDelete) {
                 FileUtils.forceDelete(resource.getFile());
             }
@@ -223,12 +226,17 @@ public class TokenPanFilterBatch {
             Resource[] binWorkerResources = resolver.getResources(
                     workingBinDirectory.concat("/*.csv"));
 
+            Integer tokenPanFilesCounter = 0;
             if (tokenPanValidationEnabled) {
 
                 int tokenPanWorkerSize = tokenPanWorkerResources.length;
-                Integer tokenPanFilesCounter = 0;
 
                 while (tokenPanFilesCounter < tokenPanWorkerSize) {
+
+                    transactionResources = resolver.getResources(
+                            tokenPanValidationEnabled && tokenPanFilesCounter == 0 ?
+                                    transactionsPath :
+                                    innerOutputPath.concat("/*.csv"));
 
                     Resource tokenPanResource = tokenPanWorkerResources[tokenPanFilesCounter];
                     String tempData = workingTokenPanDirectory.concat("/current");
@@ -242,7 +250,6 @@ public class TokenPanFilterBatch {
 
                     clearStoreSet();
 
-                    transactionResources = resolver.getResources(transactionsPath);
                     for (Resource transactionResource : transactionResources) {
                         tempData = innerOutputPath.concat("/current");
                         file = transactionResource.getFile().getAbsolutePath();
@@ -284,6 +291,13 @@ public class TokenPanFilterBatch {
 
                 while (binFilesCounter < binWorkerSize) {
 
+                    transactionResources = resolver.getResources(
+                            !tokenPanValidationEnabled || (
+                                    tokenPanFilesCounter == 0
+                                    && binFilesCounter == 0) ?
+                                    transactionsPath :
+                                    innerOutputPath.concat("/*.csv"));
+
                     Resource parResource = binWorkerResources[binFilesCounter];
                     String tempData = workingBinDirectory.concat("/current");
                     String file = parResource.getFile().getAbsolutePath();
@@ -296,7 +310,6 @@ public class TokenPanFilterBatch {
 
                     clearStoreSet();
 
-                    transactionResources = resolver.getResources(transactionsPath);
                     for (Resource transactionResource : transactionResources) {
                         tempData = innerOutputPath.concat("/current");
                         file = transactionResource.getFile().getAbsolutePath();
@@ -315,6 +328,9 @@ public class TokenPanFilterBatch {
                                     .addDate("startDateTime", innerStartDate)
                                     .addString("lastSection",
                                             String.valueOf(lastSection))
+                                    .addString("innerOutputPath",innerOutputPath)
+                                    .addString("workingBinDirectory",workingBinDirectory)
+                                    .addString("workingTokenPanDirectory",workingTokenPanDirectory)
                                     .addString("firstSection",
                                             String.valueOf(
                                                     !tokenPanValidationEnabled &&
@@ -584,13 +600,21 @@ public class TokenPanFilterBatch {
     @Bean
     public Step innerTokenPanFileManagementTask() {
         return stepBuilderFactory.get("token-inner-filter-file-management-step")
-                .tasklet(innerTokenPanFileManagementTasklet(null)).build();
+                .tasklet(innerTokenPanFileManagementTasklet(
+                        null,
+                        null,
+                        null,
+                        null))
+                .build();
     }
 
     @Bean
     @StepScope
     public InnerTokenPanFileManagementTasklet innerTokenPanFileManagementTasklet(
-            @Value("#{jobParameters['firstSection']}") Boolean firstSection) {
+            @Value("#{jobParameters['firstSection']}") Boolean firstSection,
+            @Value("#{jobParameters['innerOutputPath']}") String innerOutputPath,
+            @Value("#{jobParameters['workingBinDirectory']}") String workingBinDirectory,
+            @Value("#{jobParameters['workingTokenPanDirectory']}") String workingTokenPanDirectory) {
         InnerTokenPanFileManagementTasklet fileManagementTasklet = new InnerTokenPanFileManagementTasklet();
         fileManagementTasklet.setSuccessPath(successArchivePath);
         fileManagementTasklet.setErrorPath(errorArchivePath);
@@ -599,7 +623,7 @@ public class TokenPanFilterBatch {
         fileManagementTasklet.setTokenPanDirectory(tokenPanReaderStep.getTokenPanDirectoryPath());
         fileManagementTasklet.setTempTokenPanDirectory(workingTokenPanDirectory);
         fileManagementTasklet.setOutputDirectory(tokenPanFilterStep.getOutputDirectoryPath());
-        fileManagementTasklet.setInnerOutputDirectory(tokenPanFilterStep.getInnerOutputDirectoryPath());
+        fileManagementTasklet.setInnerOutputDirectory(innerOutputPath);
         fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
         fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
         fileManagementTasklet.setManageBinOnSuccess(manageHpanOnSuccess);
@@ -607,7 +631,7 @@ public class TokenPanFilterBatch {
         return fileManagementTasklet;
     }
 
-    public TokenPanStoreService batchTokenPanStoreService() {
+    public TokenPanStoreService batchTokenPanStoreService(String workingTokenPanDirectory) {
         TokenPanStoreService tokenPanStoreService = beanFactory.getBean(TokenPanStoreService.class);
         tokenPanStoreService.setNumberPerFile(numberPerFile);
         tokenPanStoreService.setWorkingTokenPANDirectory(workingTokenPanDirectory);
@@ -615,7 +639,7 @@ public class TokenPanFilterBatch {
         return tokenPanStoreService;
     }
 
-    public BinStoreService batchBinStoreService() {
+    public BinStoreService batchBinStoreService(String workingBinDirectory) {
         BinStoreService binStoreService = beanFactory.getBean(BinStoreService.class);
         binStoreService.setNumberPerFile(numberPerFile);
         binStoreService.setWorkingBinDirectory(workingBinDirectory);

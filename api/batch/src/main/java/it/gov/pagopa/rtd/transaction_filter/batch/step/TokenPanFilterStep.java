@@ -65,8 +65,6 @@ public class TokenPanFilterStep {
     private String transactionDirectoryPath;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.outputDirectoryPath}")
     private String outputDirectoryPath;
-    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.innerOutputDirectoryPath}")
-    private String innerOutputDirectoryPath;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.publicKeyPath}")
     private String publicKeyPath;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.linesToSkip}")
@@ -228,7 +226,8 @@ public class TokenPanFilterStep {
     @Bean
     @StepScope
     public FlatFileItemWriter<InboundTokenPan> tokenPanFilteredItemWriter(
-            @Value("#{stepExecutionContext['fileName']}") String file) {
+            @Value("#{stepExecutionContext['fileName']}") String file,
+            @Value("#{jobParameters['innerOutputPath']}") String innerOutputPath) {
         FlatFileItemWriter<InboundTokenPan> flatFileItemWriter = new FlatFileItemWriter<>();
         flatFileItemWriter.setLineAggregator(tokenPanWriterAggregator());
         flatFileItemWriter.setAppendAllowed(true);
@@ -236,7 +235,7 @@ public class TokenPanFilterStep {
         String[] filename = file.split("/");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         flatFileItemWriter.setResource(
-                resolver.getResource(innerOutputDirectoryPath.concat("/"
+                resolver.getResource(innerOutputPath.concat("/"
                         .concat(filename[filename.length-1]))));
         return flatFileItemWriter;
     }
@@ -281,10 +280,11 @@ public class TokenPanFilterStep {
      */
     @Bean
     @JobScope
-    public Partitioner tokenPanFilterPartitioner() throws Exception {
+    public Partitioner tokenPanFilterPartitioner(
+            @Value("#{jobParameters['innerOutputPath']}") String innerOutputPath) throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(innerOutputDirectoryPath.concat("/current/*.csv")));
+        partitioner.setResources(resolver.getResources(innerOutputPath.concat("/current/*.csv")));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -301,7 +301,7 @@ public class TokenPanFilterStep {
             throws Exception {
         return stepBuilderFactory.get("token-filter-master-step").partitioner(
                 tokenPanFilterWorkerStep(tokenPANStoreService, transactionWriterService))
-                .partitioner("partition", tokenPanFilterPartitioner())
+                .partitioner("partition", tokenPanFilterPartitioner(null))
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -335,7 +335,7 @@ public class TokenPanFilterStep {
             throws Exception {
         return stepBuilderFactory.get("token-filter-bin-master-step").partitioner(
                 tokenPanBinFilterWorkerStep(binStoreService, transactionWriterService))
-                .partitioner("partition", tokenPanFilterPartitioner())
+                .partitioner("partition", tokenPanFilterPartitioner(null))
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -380,7 +380,7 @@ public class TokenPanFilterStep {
                 .listener(tokensItemWriteListener(transactionWriterService,executionDate))
                 .listener(tokenPanStepListener(transactionWriterService, executionDate))
                 .stream(tokenPanItemWriter(null, null))
-                .stream(tokenPanFilteredItemWriter(null))
+                .stream(tokenPanFilteredItemWriter(null,null))
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
     }
@@ -407,7 +407,7 @@ public class TokenPanFilterStep {
                     .listener(tokensItemWriteListener(transactionWriterService,executionDate))
                     .listener(tokenPanStepListener(transactionWriterService, executionDate))
                     .stream(tokenPanItemWriter(null, null))
-                    .stream(tokenPanFilteredItemWriter(null))
+                    .stream(tokenPanFilteredItemWriter(null,null))
                     .taskExecutor(batchConfig.readerTaskExecutor())
                     .build();
     }
@@ -530,7 +530,7 @@ public class TokenPanFilterStep {
         compositeItemWriter.setClassifier(
                 new InboundTokenPanClassifier(
                         tokenPanItemWriter(null, null),
-                        tokenPanFilteredItemWriter(null)));
+                        tokenPanFilteredItemWriter(null,null)));
         return compositeItemWriter;
     }
 
