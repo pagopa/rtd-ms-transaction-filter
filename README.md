@@ -787,3 +787,9 @@ This Acquirer should feed the Batch Acquirer with transactions executed with Phy
 #### When and how the new Batch Acquirer files will be released? 
 The new Batch Acquirer file will be released gradually in a date TBD. The current Batch Acquirer version will coexist with the new one in order to manage correctly the new and the old version of the transactions flow.
 
+#### Out of memory errors
+The error occurs when trying to proces the hpan files without enough space reserved for the java process. As of right now the suggested heap space is of 6 Gigabytes
+
+#### JDBC Error: Unable to acquire JDBC Connection
+The error occurs when using a connection pool that is undersized for the operations to be executed inside the database. In case this error occurs, the suggested action is to extend the connection pool, using the config property _spring.datasource.hikari.maximumPoolSize_
+
