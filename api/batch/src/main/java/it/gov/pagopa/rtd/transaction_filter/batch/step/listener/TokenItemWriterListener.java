@@ -77,6 +77,7 @@ public class TokenItemWriterListener implements ItemWriteListener<InboundTokenPa
 
     private String buildTokenPan(InboundTokenPan inboundTokenPan) {
         return (inboundTokenPan.getTokenPan() != null ? inboundTokenPan.getTokenPan() : "").concat(";")
+                .concat(inboundTokenPan.getCircuitType() != null ? inboundTokenPan.getCircuitType() : "").concat(";")
                 .concat(inboundTokenPan.getPar() != null ? inboundTokenPan.getPar() : "").concat("\n");
     }
 

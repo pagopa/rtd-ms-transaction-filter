@@ -49,7 +49,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -106,8 +105,6 @@ public class TransactionFilterStep {
     private Boolean enableOnWriteErrorLogging;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency}")
     private Long loggingFrequency;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize}")
-    private Integer writerPoolSize;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.tokenInputPath}")
     private String tokenInputPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.parEnabled}")
@@ -115,7 +112,6 @@ public class TransactionFilterStep {
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
-    private ExecutorService writerExecutor;
 
     /**
      *

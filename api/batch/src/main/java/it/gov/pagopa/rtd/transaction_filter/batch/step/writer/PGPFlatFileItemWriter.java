@@ -1,7 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.writer;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
-import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.batch.item.file.FlatFileItemWriter;

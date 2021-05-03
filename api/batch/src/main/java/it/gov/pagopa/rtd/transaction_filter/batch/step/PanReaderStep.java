@@ -25,7 +25,6 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import java.io.FileNotFoundException;
-import java.util.concurrent.ExecutorService;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -50,13 +49,9 @@ public class PanReaderStep {
     private Boolean applyDecrypt;
     @Value("${batchConfiguration.TransactionFilterBatch.panList.applyHashing}")
     private Boolean applyPanListHashing;
-    @Value("${batchConfiguration.TransactionFilterBatch.panList.poolSize}")
-    private Integer executorPoolSize;
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
-    private ExecutorService executorService;
-
 
     /**
      *
@@ -215,6 +210,5 @@ public class PanReaderStep {
         hpanReaderStepListener.setWriterTrackerService(writerTrackerService);
         return hpanReaderStepListener;
     }
-
 
 }

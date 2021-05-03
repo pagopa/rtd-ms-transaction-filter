@@ -46,7 +46,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -103,8 +102,6 @@ public class TokenPanFilterStep {
     private Boolean enableOnWriteErrorLogging;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.loggingFrequency}")
     private Long loggingFrequency;
-    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.writerPoolSize}")
-    private Integer writerPoolSize;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.binValidationEnabled}")
     private Boolean binValidationEnabled;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanValidationEnabled}")
@@ -114,7 +111,6 @@ public class TokenPanFilterStep {
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
-    private ExecutorService writerExecutor;
 
     /**
      *
@@ -176,7 +172,7 @@ public class TokenPanFilterStep {
     public BeanWrapperFieldExtractor<InboundTokenPan> tokenPanWriterFieldExtractor() {
         BeanWrapperFieldExtractor<InboundTokenPan> extractor = new BeanWrapperFieldExtractor<>();
         extractor.setNames(new String[] {
-                "tokenPan", "circuit_type", "par"});
+                "tokenPan", "circuitType", "par"});
         return extractor;
     }
 
