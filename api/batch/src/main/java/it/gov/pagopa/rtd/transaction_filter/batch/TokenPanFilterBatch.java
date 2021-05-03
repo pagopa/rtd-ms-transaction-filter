@@ -195,7 +195,7 @@ public class TokenPanFilterBatch {
             if (transactionWriterService == null) {
                 transactionWriterService();
             }
-            createTokenPanStoreService(workingBinDirectory);
+            createTokenPanStoreService(workingTokenPanDirectory);
             createBinStoreService(workingBinDirectory);
             createWriterTrackerService();
 
