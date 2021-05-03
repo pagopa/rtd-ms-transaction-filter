@@ -1,6 +1,5 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
-
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -101,6 +100,7 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
                 FileUtils.moveFile(
                         hpanListTempFile,
                         outputFile);
+                hpanConnectorService.cleanAllTempFiles();
             }
         }
         return RepeatStatus.FINISHED;

@@ -4,7 +4,6 @@ import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
-
 import java.io.File;
 
 /**
@@ -26,6 +25,11 @@ public class HpanConnectorServiceImpl implements HpanConnectorService {
     @Override
     public String getSalt() {
         return hpanRestClient.getSalt();
+    }
+
+    @Override
+    public void cleanAllTempFiles() {
+        hpanRestClient.cleanTempFile();
     }
 
 }

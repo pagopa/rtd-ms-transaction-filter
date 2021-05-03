@@ -120,6 +120,7 @@ public class HpanListRecoveryTaskletTest {
         hpanListRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
 
         BDDMockito.verify(hpanConnectorServiceMock, Mockito.times(1)).getHpanList();
+        BDDMockito.verify(hpanConnectorServiceMock, Mockito.times(1)).cleanAllTempFiles();
         Assert.assertEquals(1, FileUtils.listFiles(hpanFolder, new String[]{"pgp"},false).size());
 
         hpanListRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
