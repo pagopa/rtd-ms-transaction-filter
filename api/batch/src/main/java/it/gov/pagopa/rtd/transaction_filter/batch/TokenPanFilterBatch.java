@@ -199,11 +199,11 @@ public class TokenPanFilterBatch {
             createBinStoreService(workingBinDirectory);
             createWriterTrackerService();
 
-            Resource[] tokenPanResourcesToDelete = resolver.getResources(
-                    tokenPanReaderStep.getTokenPanWorkerDirectoryPath());
-            for (Resource resource : tokenPanResourcesToDelete) {
-                FileUtils.forceDelete(resource.getFile());
-            }
+//            Resource[] tokenPanResourcesToDelete = resolver.getResources(
+//                    tokenPanReaderStep.getTokenPanWorkerDirectoryPath());
+//            for (Resource resource : tokenPanResourcesToDelete) {
+//                FileUtils.forceDelete(resource.getFile());
+//            }
             Resource[] tempTokenPanResourcesToDelete = resolver.getResources(
                     workingTokenPanDirectory.concat("/*.csv"));
             for (Resource resource : tempTokenPanResourcesToDelete) {
@@ -268,6 +268,9 @@ public class TokenPanFilterBatch {
                                     .addDate("startDateTime", innerStartDate)
                                     .addString("lastSection",
                                             String.valueOf(lastSection))
+                                    .addString("innerOutputPath",innerOutputPath)
+                                    .addString("workingBinDirectory",workingBinDirectory)
+                                    .addString("workingTokenPanDirectory",workingTokenPanDirectory)
                                     .addString("firstSection",
                                             String.valueOf(tokenPanValidationEnabled
                                                     && tokenPanFilesCounter.equals(1))

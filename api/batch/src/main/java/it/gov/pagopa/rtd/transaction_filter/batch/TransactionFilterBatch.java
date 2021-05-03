@@ -189,11 +189,11 @@ public class TransactionFilterBatch {
             createParStoreService(workingParDirectory);
             createWriterTrackerService();
 
-            Resource[] hpanResourcesToDelete = resolver.getResources(
-                    panReaderStep.getHpanWorkerDirectoryPath());
-            for (Resource resource : hpanResourcesToDelete) {
-                FileUtils.forceDelete(resource.getFile());
-            }
+//            Resource[] hpanResourcesToDelete = resolver.getResources(
+//                    panReaderStep.getHpanWorkerDirectoryPath());
+//            for (Resource resource : hpanResourcesToDelete) {
+//                FileUtils.forceDelete(resource.getFile());
+//            }
             Resource[] tempHpanResourcesToDelete = resolver.getResources(
                     workingHpanDirectory.concat("/*.csv"));
             for (Resource resource : tempHpanResourcesToDelete) {
@@ -546,9 +546,9 @@ public class TransactionFilterBatch {
         InnerTransactionFileManagementTasklet fileManagementTasklet = new InnerTransactionFileManagementTasklet();
         fileManagementTasklet.setSuccessPath(successArchivePath);
         fileManagementTasklet.setErrorPath(errorArchivePath);
-        fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanWorkerDirectoryPath());
+        fileManagementTasklet.setHpanDirectory(workingHpanDirectory.concat("/*.csv"));
         fileManagementTasklet.setTempHpanDirectory(workingHpanDirectory);
-        fileManagementTasklet.setParDirectory(parReaderStep.getParWorkerDirectoryPath());
+        fileManagementTasklet.setParDirectory(workingParDirectory.concat("/*.csv"));
         fileManagementTasklet.setTempParDirectory(workingParDirectory);
         fileManagementTasklet.setOutputDirectory(transactionFilterStep.getOutputDirectoryPath());
         fileManagementTasklet.setInnerOutputDirectory(innerOutputPath);

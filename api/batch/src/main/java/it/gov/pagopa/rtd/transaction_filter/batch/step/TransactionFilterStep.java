@@ -50,7 +50,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -466,21 +465,11 @@ public class TransactionFilterStep {
         return transactionSenderTasklet;
     }
 
-    /**
-     *
-     * @return bean configured for usage for chunk reading of a single file
-     */
     @Bean
-    public ExecutorService writerExecutor() {
-        if (writerExecutor == null) {
-            writerExecutor = Executors.newFixedThreadPool(writerPoolSize);
-        }
-        return writerExecutor;
-    }
-
-    @Bean
-    public ClassifierCompositeItemWriter<InboundTransaction> classifierTransactionCompositeItemWriter() throws Exception {
-        ClassifierCompositeItemWriter<InboundTransaction> compositeItemWriter = new ClassifierCompositeItemWriter<>();
+    public ClassifierCompositeItemWriter<InboundTransaction> classifierTransactionCompositeItemWriter()
+            throws Exception {
+        ClassifierCompositeItemWriter<InboundTransaction> compositeItemWriter =
+                new ClassifierCompositeItemWriter<>();
         compositeItemWriter.setClassifier(
                 new InboundTransactionClassifier(
                         transactionItemWriter(null, null),

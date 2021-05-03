@@ -42,8 +42,6 @@ public class BinReaderStep {
     private Integer skipLimit;
     @Value("${batchConfiguration.TokenPanFilterBatch.bin.binDirectoryPath}")
     private String binDirectoryPath;
-    @Value("${batchConfiguration.TokenPanFilterBatch.bin.binWorkerDirectoryPath}")
-    private String binWorkerDirectoryPath;
     @Value("${batchConfiguration.TokenPanFilterBatch.bin.secretKeyPath}")
     private String secretKeyPath;
     @Value("${batchConfiguration.TokenPanFilterBatch.bin.passphrase}")
@@ -121,10 +119,11 @@ public class BinReaderStep {
      */
     @Bean
     @JobScope
-    public Partitioner binStoreRecoveryPartitioner() throws Exception {
+    public Partitioner binStoreRecoveryPartitioner(
+            @Value("#{jobParameters['workingBinDirectory']}") String workingBinDirectory) throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(binWorkerDirectoryPath));
+        partitioner.setResources(resolver.getResources(workingBinDirectory.concat("/current/*.csv")));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -140,7 +139,7 @@ public class BinReaderStep {
                                        WriterTrackerService writerTrackerService) throws Exception {
         return stepBuilderFactory.get("bin-store-recovery-master-step")
                 .partitioner(binStoreRecoveryWorkerStep(binStoreService))
-                .partitioner("partition", binStoreRecoveryPartitioner())
+                .partitioner("partition", binStoreRecoveryPartitioner(null))
                 .taskExecutor(batchConfig.partitionerTaskExecutor())
                 .listener(binReaderMasterStepListener(binStoreService, writerTrackerService))
                 .build();

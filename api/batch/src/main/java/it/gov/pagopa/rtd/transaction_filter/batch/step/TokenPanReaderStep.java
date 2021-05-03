@@ -42,8 +42,6 @@ public class TokenPanReaderStep {
     private Integer skipLimit;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.tokenPanDirectoryPath}")
     private String tokenPanDirectoryPath;
-    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.tokenPanWorkerDirectoryPath}")
-    private String tokenPanWorkerDirectoryPath;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.secretKeyPath}")
     private String secretKeyPath;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanList.passphrase}")
@@ -122,10 +120,11 @@ public class TokenPanReaderStep {
      */
     @Bean
     @JobScope
-    public Partitioner enrolledTokenPanStoreRecoveryPartitioner() throws Exception {
+    public Partitioner enrolledTokenPanStoreRecoveryPartitioner(
+            @Value("#{jobParameters['workingTokenPanDirectory']}") String workingTokenPanDirectory) throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(tokenPanWorkerDirectoryPath));
+        partitioner.setResources(resolver.getResources(workingTokenPanDirectory.concat("/current/*.csv")));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -141,7 +140,7 @@ public class TokenPanReaderStep {
                                        WriterTrackerService writerTrackerService) throws Exception {
         return stepBuilderFactory.get("token-pan-store-recovery-master-step")
                 .partitioner(enrolledTokenPanStoreRecoveryWorkerStep(tokenPanStoreService, writerTrackerService))
-                .partitioner("partition", enrolledTokenPanStoreRecoveryPartitioner())
+                .partitioner("partition", enrolledTokenPanStoreRecoveryPartitioner(null))
                 .taskExecutor(batchConfig.partitionerTaskExecutor())
                 .listener(enrolledTokenPanReaderMasterStepListener(tokenPanStoreService, writerTrackerService))
                 .build();

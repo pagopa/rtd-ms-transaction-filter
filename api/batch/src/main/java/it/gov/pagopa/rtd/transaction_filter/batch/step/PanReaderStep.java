@@ -42,8 +42,6 @@ public class PanReaderStep {
     private Integer skipLimit;
     @Value("${batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath}")
     private String hpanDirectoryPath;
-    @Value("${batchConfiguration.TransactionFilterBatch.panList.hpanWorkerDirectoryPath}")
-    private String hpanWorkerDirectoryPath;
     @Value("${batchConfiguration.TransactionFilterBatch.panList.secretKeyPath}")
     private String secretKeyPath;
     @Value("${batchConfiguration.TransactionFilterBatch.panList.passphrase}")
@@ -122,10 +120,11 @@ public class PanReaderStep {
      */
     @Bean
     @JobScope
-    public Partitioner hpanStoreRecoveryPartitioner() throws Exception {
+    public Partitioner hpanStoreRecoveryPartitioner(
+            @Value("#{jobParameters['workingHpanDirectory']}") String workingHpanDirectory) throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(getHpanWorkerDirectoryPath()));
+        partitioner.setResources(resolver.getResources(workingHpanDirectory.concat("/current/*.csv")));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -141,7 +140,7 @@ public class PanReaderStep {
                                        WriterTrackerService writerTrackerService) throws Exception {
         return stepBuilderFactory.get("hpan-store-recovery-master-step")
                 .partitioner(hpanStoreRecoveryWorkerStep(hpanStoreService, writerTrackerService))
-                .partitioner("partition", hpanStoreRecoveryPartitioner())
+                .partitioner("partition", hpanStoreRecoveryPartitioner(null))
                 .taskExecutor(batchConfig.partitionerTaskExecutor())
                 .listener(hpanReaderMasterStepListener(hpanStoreService, writerTrackerService))
                 .build();

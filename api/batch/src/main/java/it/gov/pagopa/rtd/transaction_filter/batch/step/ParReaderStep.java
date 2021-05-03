@@ -25,9 +25,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import java.io.FileNotFoundException;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -44,8 +42,6 @@ public class ParReaderStep {
     private Integer skipLimit;
     @Value("${batchConfiguration.TransactionFilterBatch.parList.parDirectoryPath}")
     private String parDirectoryPath;
-    @Value("${batchConfiguration.TransactionFilterBatch.parList.parWorkerDirectoryPath}")
-    private String parWorkerDirectoryPath;
     @Value("${batchConfiguration.TransactionFilterBatch.parList.secretKeyPath}")
     private String secretKeyPath;
     @Value("${batchConfiguration.TransactionFilterBatch.parList.passphrase}")
@@ -123,10 +119,11 @@ public class ParReaderStep {
      */
     @Bean
     @JobScope
-    public Partitioner parStoreRecoveryPartitioner() throws Exception {
+    public Partitioner parStoreRecoveryPartitioner(
+            @Value("#{jobParameters['workingParDirectory']}") String workingParDirectory) throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(parWorkerDirectoryPath));
+        partitioner.setResources(resolver.getResources(workingParDirectory.concat("/current/*.csv")));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -142,7 +139,7 @@ public class ParReaderStep {
                                        WriterTrackerService writerTrackerService) throws Exception {
         return stepBuilderFactory.get("par-store-recovery-master-step")
                 .partitioner(parStoreRecoveryWorkerStep(parStoreService, writerTrackerService))
-                .partitioner("partition", parStoreRecoveryPartitioner())
+                .partitioner("partition", parStoreRecoveryPartitioner(null))
                 .taskExecutor(batchConfig.partitionerTaskExecutor())
                 .listener(parReaderMasterStepListener(parStoreService, writerTrackerService))
                 .build();
