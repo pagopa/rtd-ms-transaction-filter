@@ -793,3 +793,10 @@ The error occurs when trying to proces the hpan files without enough space reser
 #### JDBC Error: Unable to acquire JDBC Connection
 The error occurs when using a connection pool that is undersized for the operations to be executed inside the database. In case this error occurs, the suggested action is to extend the connection pool, using the config property _spring.datasource.hikari.maximumPoolSize_
 
+#### Par Management in the new version: What to do if it's not expected to have this information
+The new version of the batch process, currently in development, will manage a new information within the transaction records, containing the PAR value. Acquirers that does not expect to have this information will have the following options:
+
+- Use the new version that will be provided, and use the configuration to define wheter to use the new version of the record format, or use the one actually in production
+
+- Mantain the legacy version of the batch process, CentroStella will keep managing the legacy version of the transaction file format
+
