@@ -101,9 +101,8 @@ public class TokenPanFilterBatch {
     private Long numberPerFile;
     @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanValidationEnabled}")
     private Boolean tokenPanValidationEnabled;
-    @Value("${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.binValidationEnabled}")
-    private Boolean binValidationEnabled;
 
+    private String salt = "";
     private DataSource dataSource;
     private TokenPanStoreService tokenPanStoreService;
     private BinStoreService binStoreService;
@@ -121,6 +120,7 @@ public class TokenPanFilterBatch {
 
     public void createTokenPanStoreService(String workingTokenPanDirectory) {
         this.tokenPanStoreService = batchTokenPanStoreService(workingTokenPanDirectory);
+        this.tokenPanStoreService.storeSalt(salt);
     }
 
     public void createBinStoreService(String workingBinDirectory) {
@@ -140,7 +140,6 @@ public class TokenPanFilterBatch {
         tokenPanStoreService.clearStoreSet();
     }
 
-
     public void createWriterTrackerService() {
         this.writerTrackerService = writerTrackerService();
     }
@@ -151,10 +150,6 @@ public class TokenPanFilterBatch {
 
     public Boolean getTokenPanValidationEnabled() {
         return this.tokenPanValidationEnabled;
-    }
-
-    public Boolean getBinValidationEnabled() {
-        return this.binValidationEnabled;
     }
 
     /**
@@ -169,6 +164,8 @@ public class TokenPanFilterBatch {
         String transactionsPath = tokenPanFilterStep.getTransactionDirectoryPath();
         String innerOutputPath = "file:/".concat(
                 Files.createTempDirectory("tempTokenFolder").toFile().getAbsolutePath());
+        String tempOutputPath = "file:/".concat(
+                Files.createTempDirectory("tempTokenPanFolder").toFile().getAbsolutePath());
         String workingBinDirectory = "file:/".concat(
                 Files.createTempDirectory("workingBinFolder").toFile().getAbsolutePath());
         String workingTokenPanDirectory = "file:/".concat(
@@ -226,127 +223,113 @@ public class TokenPanFilterBatch {
             Resource[] binWorkerResources = resolver.getResources(
                     workingBinDirectory.concat("/*.csv"));
 
-            Integer tokenPanFilesCounter = 0;
-            if (tokenPanValidationEnabled) {
+            Integer binFilesCounter = 0;
 
-                int tokenPanWorkerSize = tokenPanWorkerResources.length;
+            int binWorkerSize = binWorkerResources.length;
 
-                while (tokenPanFilesCounter < tokenPanWorkerSize) {
+            while (!execution.getExitStatus().equals(ExitStatus.FAILED)
+                    && binFilesCounter < binWorkerSize) {
 
-                    transactionResources = resolver.getResources(
-                            tokenPanValidationEnabled && tokenPanFilesCounter == 0 ?
-                                    transactionsPath :
-                                    innerOutputPath.concat("/*.csv"));
+                transactionResources = resolver.getResources(
+                        binFilesCounter == 0 ?
+                                transactionsPath :
+                                innerOutputPath.concat("/*.csv"));
 
-                    Resource tokenPanResource = tokenPanWorkerResources[tokenPanFilesCounter];
-                    String tempData = workingTokenPanDirectory.concat("/current");
-                    String file = tokenPanResource.getFile().getAbsolutePath();
+                Resource parResource = binWorkerResources[binFilesCounter];
+                String tempData = workingBinDirectory.concat("/current");
+                String file = parResource.getFile().getAbsolutePath();
+                file = file.replaceAll("\\\\", "/");
+                String[] filename = file.split("/");
+                tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
+                File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                FileUtils.moveFile(FileUtils.getFile(parResource.getFile()), destFile);
+                binFilesCounter = binFilesCounter + 1;
+
+                Boolean lastSection = binFilesCounter.equals(binWorkerSize);
+
+                clearStoreSet();
+
+                for (Resource transactionResource : transactionResources) {
+                    tempData = innerOutputPath.concat("/current");
+                    file = transactionResource.getFile().getAbsolutePath();
                     file = file.replaceAll("\\\\", "/");
-                    String[] filename = file.split("/");
+                    filename = file.split("/");
                     tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                    File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
-                    FileUtils.moveFile(FileUtils.getFile(tokenPanResource.getFile()), destFile);
-                    tokenPanFilesCounter = tokenPanFilesCounter + 1;
-
-                    clearStoreSet();
-
-                    for (Resource transactionResource : transactionResources) {
-                        tempData = innerOutputPath.concat("/current");
-                        file = transactionResource.getFile().getAbsolutePath();
-                        file = file.replaceAll("\\\\", "/");
-                        filename = file.split("/");
-                        tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                        destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
-                        FileUtils.moveFile(FileUtils.getFile(transactionResource.getFile()), destFile);
-                    }
-
-                    Date innerStartDate = new Date();
-
-                    Boolean lastSection = tokenPanFilesCounter.equals(tokenPanWorkerSize);
-                    execution = tokenJobLauncher().run(tokenPanBinJobInner(),
-                            new JobParametersBuilder()
-                                    .addDate("startDateTime", innerStartDate)
-                                    .addString("lastSection",
-                                            String.valueOf(lastSection))
-                                    .addString("innerOutputPath",innerOutputPath)
-                                    .addString("workingBinDirectory",workingBinDirectory)
-                                    .addString("workingTokenPanDirectory",workingTokenPanDirectory)
-                                    .addString("firstSection",
-                                            String.valueOf(tokenPanValidationEnabled
-                                                    && tokenPanFilesCounter.equals(1))
-                                    )
-                                    .toJobParameters());
-
-                    if (!binValidationEnabled && lastSection) {
-                        for (Resource transactionResource : transactionResources) {
-                            FileUtils.forceDelete(transactionResource.getFile());
-                        }
-                    }
-
+                    destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                    FileUtils.moveFile(FileUtils.getFile(transactionResource.getFile()), destFile);
                 }
 
+                Date innerStartDate = new Date();
+
+                execution = tokenJobLauncher().run(tokenjobInner(),
+                        new JobParametersBuilder()
+                                .addDate("startDateTime", innerStartDate)
+                                .addString("lastSection", String.valueOf(lastSection))
+                                .addString("isBin",
+                                        String.valueOf(true))
+                                .addString("innerOutputPath",innerOutputPath)
+                                .addString("temporaryOutputPath", tempOutputPath)
+                                .addString("workingBinDirectory",workingBinDirectory)
+                                .addString("workingTokenPanDirectory",workingTokenPanDirectory)
+                                .addString("firstSection", String.valueOf(binFilesCounter.equals(1)))
+                                .toJobParameters());
             }
 
-            if (binValidationEnabled) {
+            Integer tokenPanFilesCounter = 0;
 
-                Integer binFilesCounter = 0;
-                int binWorkerSize = binWorkerResources.length;
+            int tokenPanWorkerSize = tokenPanWorkerResources.length;
 
-                while (binFilesCounter < binWorkerSize) {
+            while (!execution.getExitStatus().equals(ExitStatus.FAILED) &&
+                    tokenPanFilesCounter < tokenPanWorkerSize) {
 
-                    transactionResources = resolver.getResources(
-                            !tokenPanValidationEnabled || (
-                                    tokenPanFilesCounter == 0
-                                    && binFilesCounter == 0) ?
-                                    transactionsPath :
-                                    innerOutputPath.concat("/*.csv"));
+                transactionResources = resolver.getResources(
+                        tokenPanFilesCounter == 0 ?
+                                tempOutputPath.concat("/*.csv") :
+                                innerOutputPath.concat("/*.csv"));
 
-                    Resource parResource = binWorkerResources[binFilesCounter];
-                    String tempData = workingBinDirectory.concat("/current");
-                    String file = parResource.getFile().getAbsolutePath();
+                Resource tokenPanResource = tokenPanWorkerResources[tokenPanFilesCounter];
+                String tempData = workingTokenPanDirectory.concat("/current");
+                String file = tokenPanResource.getFile().getAbsolutePath();
+                file = file.replaceAll("\\\\", "/");
+                String[] filename = file.split("/");
+                tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
+                File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                FileUtils.moveFile(FileUtils.getFile(tokenPanResource.getFile()), destFile);
+                tokenPanFilesCounter = tokenPanFilesCounter + 1;
+
+                clearStoreSet();
+
+                for (Resource transactionResource : transactionResources) {
+                    tempData = innerOutputPath.concat("/current");
+                    file = transactionResource.getFile().getAbsolutePath();
                     file = file.replaceAll("\\\\", "/");
-                    String[] filename = file.split("/");
+                    filename = file.split("/");
                     tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                    File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
-                    FileUtils.moveFile(FileUtils.getFile(parResource.getFile()), destFile);
-                    binFilesCounter = binFilesCounter + 1;
+                    destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                    FileUtils.moveFile(FileUtils.getFile(transactionResource.getFile()), destFile);
+                }
 
-                    clearStoreSet();
+                Date innerStartDate = new Date();
 
+                Boolean lastSection = tokenPanFilesCounter.equals(tokenPanWorkerSize);
+                execution = tokenJobLauncher().run(tokenPanBinJobInner(),
+                        new JobParametersBuilder()
+                                .addDate("startDateTime", innerStartDate)
+                                .addString("lastSection",
+                                        String.valueOf(lastSection))
+                                .addString("isBin",
+                                        String.valueOf(false))
+                                .addString("innerOutputPath",innerOutputPath)
+                                .addString("temporaryOutputPath", tempOutputPath)
+                                .addString("workingBinDirectory",workingBinDirectory)
+                                .addString("workingTokenPanDirectory",workingTokenPanDirectory)
+                                .addString("firstSection", "false")
+                                .toJobParameters());
+
+                if (lastSection) {
                     for (Resource transactionResource : transactionResources) {
-                        tempData = innerOutputPath.concat("/current");
-                        file = transactionResource.getFile().getAbsolutePath();
-                        file = file.replaceAll("\\\\", "/");
-                        filename = file.split("/");
-                        tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                        destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
-                        FileUtils.moveFile(FileUtils.getFile(transactionResource.getFile()), destFile);
+                        FileUtils.forceDelete(transactionResource.getFile());
                     }
-
-                    Date innerStartDate = new Date();
-
-                    Boolean lastSection = binFilesCounter.equals(binWorkerSize);
-                    execution = tokenJobLauncher().run(tokenjobInner(),
-                            new JobParametersBuilder()
-                                    .addDate("startDateTime", innerStartDate)
-                                    .addString("lastSection",
-                                            String.valueOf(lastSection))
-                                    .addString("innerOutputPath",innerOutputPath)
-                                    .addString("workingBinDirectory",workingBinDirectory)
-                                    .addString("workingTokenPanDirectory",workingTokenPanDirectory)
-                                    .addString("firstSection",
-                                            String.valueOf(
-                                                    !tokenPanValidationEnabled &&
-                                                            binFilesCounter.equals(1))
-                                    )
-                                    .toJobParameters());
-
-                    if (binValidationEnabled && lastSection) {
-                        for (Resource transactionResource : transactionResources) {
-                            FileUtils.forceDelete(transactionResource.getFile());
-                        }
-                    }
-
                 }
 
             }
@@ -472,22 +455,19 @@ public class TokenPanFilterBatch {
                 .on("FAILED").end()
                 .from(binListRecoveryTask()).on("*");
 
-                if (binValidationEnabled) {
-                    transitionBuilder = transitionBuilder.to(
-                            binReaderStep.binRecoveryMasterStep(
-                                    this.binStoreService, this.writerTrackerService))
-                            .on("FAILED").to(fileTokenManagementTask())
-                            .from(binReaderStep.binRecoveryMasterStep(
-                                    this.binStoreService, this.writerTrackerService))
-                            .on("*");
-                }
+                transitionBuilder = transitionBuilder.to(
+                        binReaderStep.binRecoveryMasterStep(
+                                this.binStoreService, this.writerTrackerService))
+                        .on("FAILED").to(fileTokenManagementTask())
+                        .from(binReaderStep.binRecoveryMasterStep(
+                                this.binStoreService, this.writerTrackerService))
+                        .on("*");
 
-                if (tokenPanValidationEnabled) {
-                    transitionBuilder = transitionBuilder.to(
-                            tokenPanReaderStep.enrolledTokenPanRecoveryMasterStep(
-                            this.tokenPanStoreService, this.writerTrackerService))
-                            .on("*");
-                }
+
+                transitionBuilder = transitionBuilder.to(
+                        tokenPanReaderStep.enrolledTokenPanRecoveryMasterStep(
+                                this.tokenPanStoreService, this.writerTrackerService))
+                        .on("*");
 
                 return (FlowJobBuilder) transitionBuilder.to(fileTokenManagementTask()).build();
     }
@@ -542,8 +522,7 @@ public class TokenPanFilterBatch {
 
     @Bean
     public JobListener jobListener() {
-        JobListener jobListener = new JobListener();
-        return jobListener;
+        return new JobListener();
     }
 
     @Bean
@@ -607,6 +586,9 @@ public class TokenPanFilterBatch {
                         null,
                         null,
                         null,
+                        null,
+                        null,
+                        null,
                         null))
                 .build();
     }
@@ -615,7 +597,10 @@ public class TokenPanFilterBatch {
     @StepScope
     public InnerTokenPanFileManagementTasklet innerTokenPanFileManagementTasklet(
             @Value("#{jobParameters['firstSection']}") Boolean firstSection,
+            @Value("#{jobParameters['lastSection']}") Boolean lastSection,
+            @Value("#{jobParameters['isBin']}") Boolean isBin,
             @Value("#{jobParameters['innerOutputPath']}") String innerOutputPath,
+            @Value("#{jobParameters['temporaryOutputPath']}") String tempOutputPath,
             @Value("#{jobParameters['workingBinDirectory']}") String workingBinDirectory,
             @Value("#{jobParameters['workingTokenPanDirectory']}") String workingTokenPanDirectory) {
         InnerTokenPanFileManagementTasklet fileManagementTasklet = new InnerTokenPanFileManagementTasklet();
@@ -627,10 +612,13 @@ public class TokenPanFilterBatch {
         fileManagementTasklet.setTempTokenPanDirectory(workingTokenPanDirectory);
         fileManagementTasklet.setOutputDirectory(tokenPanFilterStep.getOutputDirectoryPath());
         fileManagementTasklet.setInnerOutputDirectory(innerOutputPath);
+        fileManagementTasklet.setTemporaryOutputPath(tempOutputPath);
         fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
         fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
         fileManagementTasklet.setManageBinOnSuccess(manageHpanOnSuccess);
         fileManagementTasklet.setFirstSection(firstSection);
+        fileManagementTasklet.setLastSection(lastSection);
+        fileManagementTasklet.setIsBin(isBin);
         return fileManagementTasklet;
     }
 

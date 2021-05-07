@@ -48,6 +48,8 @@ public class InnerTransactionFileManagementTasklet implements Tasklet, Initializ
     private String outputDirectory;
     private String innerOutputDirectory;
     private Boolean firstSection;
+    private String temporaryOutputPath;
+    private Boolean lastSection;
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -200,6 +202,26 @@ public class InnerTransactionFileManagementTasklet implements Tasklet, Initializ
                 }
 
             });
+        }
+
+        if (lastSection) {
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            try {
+                Resource[] resources = resolver.getResources(temporaryOutputPath.concat("/*"));
+                for (Resource resource : resources) {
+                    String file = resource.getFile().getAbsoluteFile().getAbsolutePath()
+                            .replaceAll("\\\\", "/");
+                    String[] filename = file.split("/");
+                    String archivalPath = resolver.getResources(outputDirectory)[0].getFile().getAbsolutePath();
+                    File destFile = FileUtils.getFile(archivalPath + "/" + filename[filename.length - 1]);
+                    if(destFile.exists()) {
+                        destFile.delete();
+                    }
+                    FileUtils.moveFile(FileUtils.getFile(resource.getFile()), destFile);
+                }
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+            }
         }
 
         return RepeatStatus.FINISHED;

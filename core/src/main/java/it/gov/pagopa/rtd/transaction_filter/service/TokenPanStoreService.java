@@ -6,6 +6,17 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 */
 public interface TokenPanStoreService {
 
+    /**
+     * Method to be used to store the salt applied on the pans
+     * @param salt salt applied to the pan for the sha256 hashing
+     */
+    void storeSalt(String salt);
+
+    /**
+     * Method used to recover the stored salt
+     * @returns String containing the salt
+     */
+    String getSalt();
 
     void write(String tokenPan);
 

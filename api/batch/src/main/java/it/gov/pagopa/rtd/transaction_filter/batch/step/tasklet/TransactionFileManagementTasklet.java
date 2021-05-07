@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.springframework.batch.core.BatchStatus;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -132,12 +133,11 @@ public class TransactionFileManagementTasklet implements Tasklet, InitializingBe
                     boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
                     boolean isParFile = parResources.contains(path.replaceAll("\\\\","/"));
                     if (deleteProcessedFiles ||
-                       (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE")) ||
-                       (isComplete && isParFile && manageHpanOnSuccess.equals("DELETE"))
+                       (isComplete && (isHpanFile || isParFile) && manageHpanOnSuccess.equals("DELETE"))
                     ) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
-                    } else if (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
+                    } else if ((!isHpanFile && !isParFile) || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
                         log.info("Archiving processed file: {}", file);
                         archiveFile(file, path, isComplete);
                     }
@@ -146,11 +146,14 @@ public class TransactionFileManagementTasklet implements Tasklet, InitializingBe
                 }
 
             }
+
         }
 
         if (deleteOutputFiles.equals("ALWAYS") || (deleteOutputFiles.equals("ERROR") && executionWithErrors)) {
+
             List<Resource> outputDirectoryResources =
-                    Arrays.asList(resolver.getResources(outputDirectory.replaceAll("\\\\", "/") + "/*"));
+                    Arrays.asList(resolver.getResources(outputDirectory
+                            .replaceAll("\\\\", "/") + "/*"));
             outputDirectoryResources.forEach(outputDirectoryResource ->
             {
                 if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
@@ -171,6 +174,7 @@ public class TransactionFileManagementTasklet implements Tasklet, InitializingBe
                     }
                 }
             });
+
         }
 
         return RepeatStatus.FINISHED;

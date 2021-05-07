@@ -6,6 +6,7 @@ import it.gov.pagopa.rtd.transaction_filter.service.TokenPanStoreService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.batch.item.ItemProcessor;
 
 import javax.validation.*;
@@ -24,8 +25,7 @@ public class InboundTokenPanItemProcessor implements ItemProcessor<InboundTokenP
 
     private final TokenPanStoreService tokenPANStoreService;
     private final Boolean lastSection;
-    private final Boolean tokenPanValidationEnabled;
-    private List<String> exemptedCircuitType;
+    private final Boolean applyHashing;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static final Validator validator = factory.getValidator();
@@ -48,20 +48,23 @@ public class InboundTokenPanItemProcessor implements ItemProcessor<InboundTokenP
             throw new ConstraintViolationException(constraintViolations);
         }
 
-        boolean hasTokenPan = !tokenPanValidationEnabled ||
-                (exemptedCircuitType.contains(inboundTokenPan.getCircuitType()) ||
-                        tokenPANStoreService.hasTokenPAN(inboundTokenPan.getTokenPan()));
+        boolean hasTokenPan = !tokenPANStoreService.hasTokenPAN(applyHashing ?
+                DigestUtils.sha256Hex(inboundTokenPan.getTokenPan() +
+                        tokenPANStoreService.getSalt()) :
+                inboundTokenPan.getTokenPan());
 
         if (hasTokenPan) {
-            return inboundTokenPan;
+            return InboundTokenPan.builder()
+                    .circuitType(inboundTokenPan.getCircuitType())
+                    .par(inboundTokenPan.getPar())
+                    .tokenPan(inboundTokenPan.getTokenPan())
+                    .filename(inboundTokenPan.getFilename())
+                    .lineNumber(inboundTokenPan.getLineNumber())
+                    .valid(lastSection)
+                    .build();
         } else {
-            if (lastSection) {
-                return null;
-            }
-            inboundTokenPan.setValid(false);
+            return null;
         }
-
-        return inboundTokenPan;
 
     }
 

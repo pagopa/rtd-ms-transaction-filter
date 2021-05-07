@@ -31,8 +31,8 @@ public class TransactionFilterScheduler {
         log.info("CsvTransactionReader scheduled job started at {}", startDate);
 
         transactionFilterBatch.executeBatchJob(startDate);
-        if (tokenPanFilterBatch.getBinValidationEnabled() ||
-                tokenPanFilterBatch.getTokenPanValidationEnabled()) {
+        if (tokenPanFilterBatch.getTokenPanValidationEnabled()) {
+            tokenPanFilterBatch.setSalt(transactionFilterBatch.getSalt());
             tokenPanFilterBatch.executeBatchJob(startDate);
         }
 

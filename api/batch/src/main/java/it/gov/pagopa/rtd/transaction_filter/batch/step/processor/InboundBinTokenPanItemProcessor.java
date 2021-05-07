@@ -5,6 +5,7 @@ import it.gov.pagopa.rtd.transaction_filter.service.BinStoreService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.batch.item.ItemProcessor;
 
 import javax.validation.*;
@@ -23,7 +24,7 @@ public class InboundBinTokenPanItemProcessor implements ItemProcessor<InboundTok
 
     private final BinStoreService binStoreService;
     private final Boolean lastSection;
-    private final Boolean binValidationEnabled;
+    private final Boolean applyHashing;
     private List<String> exemptedCircuitType;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
@@ -47,12 +48,18 @@ public class InboundBinTokenPanItemProcessor implements ItemProcessor<InboundTok
             throw new ConstraintViolationException(constraintViolations);
         }
 
-        boolean hasBin = !binValidationEnabled ||
-                (exemptedCircuitType.contains(inboundTokenPan.getCircuitType()) ||
-                binStoreService.hasBin(inboundTokenPan.getTokenPan().substring(0,4)));
+        boolean hasBin = exemptedCircuitType.contains(inboundTokenPan.getCircuitType()) ||
+                binStoreService.hasBin(inboundTokenPan.getTokenPan().substring(0,4));
 
         if (hasBin) {
-            return inboundTokenPan;
+            return InboundTokenPan.builder()
+                    .circuitType(inboundTokenPan.getCircuitType())
+                    .par(inboundTokenPan.getPar())
+                    .tokenPan(inboundTokenPan.getTokenPan())
+                    .valid(true)
+                    .filename(inboundTokenPan.getFilename())
+                    .lineNumber(inboundTokenPan.getLineNumber())
+                    .build();
         } else {
             if (lastSection) {
                 return null;

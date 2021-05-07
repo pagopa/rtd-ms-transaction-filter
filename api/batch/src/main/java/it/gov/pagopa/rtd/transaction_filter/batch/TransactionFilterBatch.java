@@ -126,6 +126,12 @@ public class TransactionFilterBatch {
         this.parStoreService = batchParStoreService(workingParDirectory);
     }
 
+    public String getSalt() {
+        return hpanStoreService != null ?
+                hpanStoreService.getSalt() :
+                "";
+    }
+
     public void clearHpanStoreService() {
         hpanStoreService.clearAll();
     }
@@ -158,8 +164,10 @@ public class TransactionFilterBatch {
     @SneakyThrows
     public JobExecution executeBatchJob(Date startDate) {
         String transactionsPath = transactionFilterStep.getTransactionDirectoryPath();
+        String tempOutputPath = "file:/".concat(
+                Files.createTempDirectory("tempOutTrxFolder").toFile().getAbsolutePath());
         String innerOutputPath = "file:/".concat(
-                Files.createTempDirectory("tempTrxFolder").toFile().getAbsolutePath());
+                Files.createTempDirectory("tempInTrxFolder").toFile().getAbsolutePath());
         String workingHpanDirectory = "file:/".concat(
                 Files.createTempDirectory("workingHpanFolder").toFile().getAbsolutePath());
         String workingParDirectory = "file:/".concat(
@@ -189,21 +197,6 @@ public class TransactionFilterBatch {
             createParStoreService(workingParDirectory);
             createWriterTrackerService();
 
-//            Resource[] hpanResourcesToDelete = resolver.getResources(
-//                    panReaderStep.getHpanWorkerDirectoryPath());
-//            for (Resource resource : hpanResourcesToDelete) {
-//                FileUtils.forceDelete(resource.getFile());
-//            }
-            Resource[] tempHpanResourcesToDelete = resolver.getResources(
-                    workingHpanDirectory.concat("/*.csv"));
-            for (Resource resource : tempHpanResourcesToDelete) {
-                FileUtils.forceDelete(resource.getFile());
-            }
-            Resource[] tempTransactionToDelete = resolver.getResources(
-                    innerOutputPath.concat("/current/*.csv"));
-            for (Resource resource : tempTransactionToDelete) {
-                FileUtils.forceDelete(resource.getFile());
-            }
 
             execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
@@ -274,6 +267,7 @@ public class TransactionFilterBatch {
                                 .addDate("startDateTime", innerStartDate)
                                 .addString("lastSection",
                                         String.valueOf(lastSection))
+                                .addString("tempOutputPath", tempOutputPath)
                                 .addString("innerOutputPath",innerOutputPath)
                                 .addString("workingParDirectory",workingParDirectory)
                                 .addString("workingHpanDirectory",workingHpanDirectory)
@@ -289,6 +283,22 @@ public class TransactionFilterBatch {
                     }
                 }
 
+            }
+
+            Resource[] parResourcesToDelete = resolver.getResources(
+                    workingParDirectory.concat("/*.csv"));
+            for (Resource resource : parResourcesToDelete) {
+                FileUtils.forceDelete(resource.getFile());
+            }
+            Resource[] tempHpanResourcesToDelete = resolver.getResources(
+                    workingHpanDirectory.concat("/*.csv"));
+            for (Resource resource : tempHpanResourcesToDelete) {
+                FileUtils.forceDelete(resource.getFile());
+            }
+            Resource[] tempTransactionToDelete = resolver.getResources(
+                    innerOutputPath.concat("/current/*.csv"));
+            for (Resource resource : tempTransactionToDelete) {
+                FileUtils.forceDelete(resource.getFile());
             }
 
             closeChannels();
@@ -457,8 +467,7 @@ public class TransactionFilterBatch {
 
     @Bean
     public JobListener jobListener() {
-        JobListener jobListener = new JobListener();
-        return jobListener;
+        return new JobListener();
     }
 
     @Bean
@@ -532,6 +541,8 @@ public class TransactionFilterBatch {
                         null,
                         null,
                         null,
+                        null,
+                        null,
                         null))
                 .build();
     }
@@ -540,7 +551,9 @@ public class TransactionFilterBatch {
     @StepScope
     public InnerTransactionFileManagementTasklet innerFileManagementTasklet(
             @Value("#{jobParameters['firstSection']}") Boolean firstSection,
+            @Value("#{jobParameters['lastSection']}") Boolean lastSection,
             @Value("#{jobParameters['innerOutputPath']}") String innerOutputPath,
+            @Value("#{jobParameters['tempOutputPath']}") String temporaryOutputPath,
             @Value("#{jobParameters['workingParDirectory']}") String workingParDirectory,
             @Value("#{jobParameters['workingHpanDirectory']}") String workingHpanDirectory) {
         InnerTransactionFileManagementTasklet fileManagementTasklet = new InnerTransactionFileManagementTasklet();
@@ -552,10 +565,12 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setTempParDirectory(workingParDirectory);
         fileManagementTasklet.setOutputDirectory(transactionFilterStep.getOutputDirectoryPath());
         fileManagementTasklet.setInnerOutputDirectory(innerOutputPath);
+        fileManagementTasklet.setTemporaryOutputPath(temporaryOutputPath);
         fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
         fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
         fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
         fileManagementTasklet.setFirstSection(firstSection);
+        fileManagementTasklet.setLastSection(lastSection);
         return fileManagementTasklet;
     }
 

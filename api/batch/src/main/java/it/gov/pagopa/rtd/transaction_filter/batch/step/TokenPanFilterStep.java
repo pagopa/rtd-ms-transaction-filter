@@ -176,6 +176,7 @@ public class TokenPanFilterStep {
         return extractor;
     }
 
+
     /**
      *
      * @return instance of the LineTokenizer to be used in the itemReader configured for the job
@@ -199,6 +200,7 @@ public class TokenPanFilterStep {
     @StepScope
     public PGPFlatFileItemWriter<InboundTokenPan> tokenPanItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String file,
+            @Value("#{jobParameters['temporaryOutputPath']}") String tempOutputPath,
             @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
         PGPFlatFileItemWriter<InboundTokenPan> flatFileItemWriter =
                 new PGPFlatFileItemWriter<>(publicKeyPath, applyEncrypt, lastSection);
@@ -208,7 +210,7 @@ public class TokenPanFilterStep {
         String[] filename = file.split("/");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         flatFileItemWriter.setResource(
-                resolver.getResource(outputDirectoryPath.concat("/".concat(filename[filename.length-1]))));
+                resolver.getResource(tempOutputPath.concat("/".concat(filename[filename.length-1]))));
         return flatFileItemWriter;
     }
 
@@ -247,9 +249,8 @@ public class TokenPanFilterStep {
             TokenPanStoreService tokenPANStoreService,
             @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
         InboundTokenPanItemProcessor inboundTokenPanItemProcessor =
-                new InboundTokenPanItemProcessor(tokenPANStoreService, lastSection, binValidationEnabled);
-        inboundTokenPanItemProcessor.setExemptedCircuitType(new ArrayList<>(
-                Arrays.asList(exemptedCircuitType.split(","))));
+                new InboundTokenPanItemProcessor(
+                        tokenPANStoreService, lastSection, applyTrxHashing);
         return inboundTokenPanItemProcessor;
     }
 
@@ -263,7 +264,7 @@ public class TokenPanFilterStep {
             BinStoreService binStoreService,
             @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
         InboundBinTokenPanItemProcessor inboundBinTokenPanItemProcessor =
-                new InboundBinTokenPanItemProcessor(binStoreService, lastSection, binValidationEnabled);
+                new InboundBinTokenPanItemProcessor(binStoreService, lastSection, applyTrxHashing);
         inboundBinTokenPanItemProcessor.setExemptedCircuitType(new ArrayList<>(
                 Arrays.asList(exemptedCircuitType.split(","))));
         return inboundBinTokenPanItemProcessor;
@@ -375,7 +376,7 @@ public class TokenPanFilterStep {
                 .listener(tokensItemProcessListener(transactionWriterService,executionDate))
                 .listener(tokensItemWriteListener(transactionWriterService,executionDate))
                 .listener(tokenPanStepListener(transactionWriterService, executionDate))
-                .stream(tokenPanItemWriter(null, null))
+                .stream(tokenPanItemWriter(null,null, null))
                 .stream(tokenPanFilteredItemWriter(null,null))
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
@@ -402,7 +403,7 @@ public class TokenPanFilterStep {
                     .listener(tokensItemProcessListener(transactionWriterService,executionDate))
                     .listener(tokensItemWriteListener(transactionWriterService,executionDate))
                     .listener(tokenPanStepListener(transactionWriterService, executionDate))
-                    .stream(tokenPanItemWriter(null, null))
+                    .stream(tokenPanItemWriter(null,null, null))
                     .stream(tokenPanFilteredItemWriter(null,null))
                     .taskExecutor(batchConfig.readerTaskExecutor())
                     .build();
@@ -410,7 +411,8 @@ public class TokenPanFilterStep {
 
     @Bean
     public TokenPanReaderStepListener tokenPanStepListener(
-            TransactionWriterService transactionWriterService, String executionDate) {
+            TransactionWriterService transactionWriterService,
+            String executionDate) {
         TokenPanReaderStepListener tokenPanReaderStepListener = new TokenPanReaderStepListener();
         tokenPanReaderStepListener.setTransactionWriterService(transactionWriterService);
         tokenPanReaderStepListener.setErrorTransactionsLogsPath(tokenPanLogsPath);
@@ -520,13 +522,15 @@ public class TokenPanFilterStep {
     }
 
     @Bean
-    public ClassifierCompositeItemWriter<InboundTokenPan> classifierTokenCompositeItemWriter() throws Exception {
+    public ClassifierCompositeItemWriter<InboundTokenPan> classifierTokenCompositeItemWriter()
+            throws Exception {
         ClassifierCompositeItemWriter<InboundTokenPan> compositeItemWriter =
                 new ClassifierCompositeItemWriter<>();
         compositeItemWriter.setClassifier(
                 new InboundTokenPanClassifier(
-                        tokenPanItemWriter(null, null),
-                        tokenPanFilteredItemWriter(null,null)));
+                        tokenPanItemWriter(null, null, null),
+                        tokenPanFilteredItemWriter(null,null))
+        );
         return compositeItemWriter;
     }
 

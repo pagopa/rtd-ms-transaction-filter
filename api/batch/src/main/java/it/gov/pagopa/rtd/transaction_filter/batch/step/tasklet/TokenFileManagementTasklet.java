@@ -132,12 +132,11 @@ public class TokenFileManagementTasklet implements Tasklet, InitializingBean {
                     boolean isTokenPanFile = tokenPanResources.contains(path.replaceAll("\\\\","/"));
                     boolean isBinFile = binResources.contains(path.replaceAll("\\\\","/"));
                     if (deleteProcessedFiles ||
-                       (isComplete && isTokenPanFile && manageBinOnSuccess.equals("DELETE")) ||
-                       (isComplete && isBinFile && manageBinOnSuccess.equals("DELETE"))
+                       (isComplete && (isTokenPanFile || isBinFile) && manageBinOnSuccess.equals("DELETE"))
                     ) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
-                    } else if (!isTokenPanFile || !isComplete || manageBinOnSuccess.equals("ARCHIVE")) {
+                    } else if ((!isTokenPanFile && !isBinFile) || !isComplete || manageBinOnSuccess.equals("ARCHIVE")) {
                         log.info("Archiving processed file: {}", file);
                         archiveFile(file, path, isComplete);
                     }

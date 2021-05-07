@@ -53,7 +53,8 @@ public class InboundTransactionItemProcessorTest  {
             BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq("pan"));
             BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
             InboundTransactionItemProcessor inboundTransactionItemProcessor =
-                    new InboundTransactionItemProcessor(hpanStoreServiceMock, parStoreServiceMock, false, true);
+                    new InboundTransactionItemProcessor(
+                            hpanStoreServiceMock, parStoreServiceMock, false, true, false);
             InboundTransaction inboundTransaction =
                     inboundTransactionItemProcessor.process(getInboundTransaction());
             Assert.assertNotNull(inboundTransaction);
@@ -70,7 +71,8 @@ public class InboundTransactionItemProcessorTest  {
         BDDMockito.doReturn(false).when(hpanStoreServiceMock).hasHpan(Mockito.eq("pan"));
         BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor =
-                new InboundTransactionItemProcessor(hpanStoreServiceMock, parStoreServiceMock, false, true);
+                new InboundTransactionItemProcessor(
+                        hpanStoreServiceMock, parStoreServiceMock, false, true, false);
         InboundTransaction inboundTransaction =
                 inboundTransactionItemProcessor.process(getInboundTransaction());
         Assert.assertNull(inboundTransaction);
@@ -83,7 +85,8 @@ public class InboundTransactionItemProcessorTest  {
         BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(hashPan));
         BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor =
-                new InboundTransactionItemProcessor(hpanStoreServiceMock, parStoreServiceMock, true, true);
+                new InboundTransactionItemProcessor(
+                        hpanStoreServiceMock, parStoreServiceMock, true, true, false);
         InboundTransaction inboundTransaction =
                 inboundTransactionItemProcessor.process(getInboundTransaction());
         Assert.assertNotNull(inboundTransaction);
@@ -96,7 +99,8 @@ public class InboundTransactionItemProcessorTest  {
         BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq("pan"));
         BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor =
-                new InboundTransactionItemProcessor(hpanStoreServiceMock, parStoreServiceMock,false, true);
+                new InboundTransactionItemProcessor(
+                        hpanStoreServiceMock, parStoreServiceMock,false, true, false);
         InboundTransaction inboundTransaction =
                 inboundTransactionItemProcessor.process(getInboundTransaction());
         Assert.assertNotNull(inboundTransaction);
@@ -113,7 +117,8 @@ public class InboundTransactionItemProcessorTest  {
         BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(hashPan));
         BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor =
-                new InboundTransactionItemProcessor(hpanStoreServiceMock, parStoreServiceMock, true, true);
+                new InboundTransactionItemProcessor(
+                        hpanStoreServiceMock, parStoreServiceMock, true, true, false);
         InboundTransaction inboundTransaction =
                 inboundTransactionItemProcessor.process(getInboundTransaction());
         Assert.assertNotNull(inboundTransaction);
@@ -130,7 +135,7 @@ public class InboundTransactionItemProcessorTest  {
         BDDMockito.doReturn("").when(hpanStoreServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor =
                 new InboundTransactionItemProcessor(
-                        hpanStoreServiceMock, parStoreServiceMock,true,true);
+                        hpanStoreServiceMock, parStoreServiceMock,true,true, false);
         InboundTransaction inboundTransaction =
                 inboundTransactionItemProcessor.process(getInboundTransaction());
         Assert.assertNotNull(inboundTransaction);
@@ -148,7 +153,8 @@ public class InboundTransactionItemProcessorTest  {
         }).when(hpanStoreServiceMock).hasHpan(Mockito.eq(hashPan));
         BDDMockito.doReturn("").when(hpanStoreServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor =
-                new InboundTransactionItemProcessor(hpanStoreServiceMock, parStoreServiceMock,true, true);
+                new InboundTransactionItemProcessor(
+                        hpanStoreServiceMock, parStoreServiceMock,true, true, false);
         expectedException.expect(Exception.class);
         inboundTransactionItemProcessor.process(getInboundTransaction());
         BDDMockito.verify(hpanStoreServiceMock).hasHpan(Mockito.eq(hashPan));
@@ -160,7 +166,8 @@ public class InboundTransactionItemProcessorTest  {
             BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq("pan"));
             BDDMockito.doReturn("testSalt").when(hpanStoreServiceMock).getSalt();
             InboundTransactionItemProcessor inboundTransactionItemProcessor =
-                    new InboundTransactionItemProcessor(hpanStoreServiceMock, parStoreServiceMock, false, true);
+                    new InboundTransactionItemProcessor(
+                            hpanStoreServiceMock, parStoreServiceMock, false, true, false);
 
             InboundTransaction inboundTransaction = getInboundTransaction();
             inboundTransaction.setOperationType("01");

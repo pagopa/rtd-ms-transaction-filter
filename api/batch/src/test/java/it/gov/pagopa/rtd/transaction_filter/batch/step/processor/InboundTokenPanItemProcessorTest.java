@@ -39,35 +39,13 @@ public class InboundTokenPanItemProcessorTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    @Test
-    public void process_OK_checkDisabled() {
-        try {
-            BDDMockito.doReturn(true).when(tokenPanStoreService).hasTokenPAN(Mockito.eq("bin"));
-            InboundTokenPanItemProcessor inboundBinTokenPanItemProcessor =
-                    new InboundTokenPanItemProcessor(tokenPanStoreService, true, false);
-            List<String> exemptedCircuitType = new ArrayList<>();
-            exemptedCircuitType.add("02");
-            inboundBinTokenPanItemProcessor.setExemptedCircuitType(exemptedCircuitType);
-            InboundTokenPan inboundTokenPan =
-                    inboundBinTokenPanItemProcessor.process(getInboundTokenPan());
-            Assert.assertNotNull(inboundTokenPan);
-            Assert.assertEquals(getInboundTokenPan(), inboundTokenPan);
-            BDDMockito.verifyZeroInteractions(tokenPanStoreService);
-        } catch (Exception e) {
-            Assert.fail();
-            e.printStackTrace();
-        }
-    }
 
     @Test
     public void process_OK_returnValid() {
         try {
-            BDDMockito.doReturn(true).when(tokenPanStoreService).hasTokenPAN(Mockito.eq("00000"));
+            BDDMockito.doReturn(true).when(tokenPanStoreService).hasTokenPAN(Mockito.eq("00001"));
             InboundTokenPanItemProcessor inboundBinTokenPanItemProcessor =
-                    new InboundTokenPanItemProcessor(tokenPanStoreService, false, true);
-            List<String> exemptedCircuitType = new ArrayList<>();
-            exemptedCircuitType.add("02");
-            inboundBinTokenPanItemProcessor.setExemptedCircuitType(exemptedCircuitType);
+                    new InboundTokenPanItemProcessor(tokenPanStoreService, true, false);
             InboundTokenPan inboundTokenPan =
                     inboundBinTokenPanItemProcessor.process(getInboundTokenPan());
             Assert.assertNotNull(inboundTokenPan);
@@ -85,10 +63,7 @@ public class InboundTokenPanItemProcessorTest {
         try {
             BDDMockito.doReturn(true).when(tokenPanStoreService).hasTokenPAN(Mockito.eq("0001"));
             InboundTokenPanItemProcessor inboundBinTokenPanItemProcessor =
-                    new InboundTokenPanItemProcessor(tokenPanStoreService, false, true);
-            List<String> exemptedCircuitType = new ArrayList<>();
-            exemptedCircuitType.add("02");
-            inboundBinTokenPanItemProcessor.setExemptedCircuitType(exemptedCircuitType);
+                    new InboundTokenPanItemProcessor(tokenPanStoreService, false, false);
             InboundTokenPan inboundTokenPan =
                     inboundBinTokenPanItemProcessor.process(getInboundTokenPan());
             Assert.assertNotNull(inboundTokenPan);
@@ -103,12 +78,9 @@ public class InboundTokenPanItemProcessorTest {
     @Test
     public void process_OK_returnNotValid_LastSection() {
         try {
-            BDDMockito.doReturn(true).when(tokenPanStoreService).hasTokenPAN(Mockito.eq("0001"));
+            BDDMockito.doReturn(true).when(tokenPanStoreService).hasTokenPAN(Mockito.eq("00000"));
             InboundTokenPanItemProcessor inboundBinTokenPanItemProcessor =
-                    new InboundTokenPanItemProcessor(tokenPanStoreService, true, true);
-            List<String> exemptedCircuitType = new ArrayList<>();
-            exemptedCircuitType.add("02");
-            inboundBinTokenPanItemProcessor.setExemptedCircuitType(exemptedCircuitType);
+                    new InboundTokenPanItemProcessor(tokenPanStoreService, true, false);
             InboundTokenPan inboundTokenPan =
                     inboundBinTokenPanItemProcessor.process(getInboundTokenPan());
             Assert.assertNull(inboundTokenPan);
@@ -119,25 +91,6 @@ public class InboundTokenPanItemProcessorTest {
         }
     }
 
-    @Test
-    public void process_OK_returnValid_ExemptedCard() {
-        try {
-            BDDMockito.doReturn(true).when(tokenPanStoreService).hasTokenPAN(Mockito.eq("0001"));
-            InboundTokenPanItemProcessor inboundBinTokenPanItemProcessor =
-                    new InboundTokenPanItemProcessor(tokenPanStoreService, false, true);
-            List<String> exemptedCircuitType = new ArrayList<>();
-            exemptedCircuitType.add("01");
-            inboundBinTokenPanItemProcessor.setExemptedCircuitType(exemptedCircuitType);
-            InboundTokenPan inboundTokenPan =
-                    inboundBinTokenPanItemProcessor.process(getInboundTokenPan());
-            Assert.assertNotNull(inboundTokenPan);
-            Assert.assertEquals(getInboundTokenPan(), inboundTokenPan);
-            BDDMockito.verifyZeroInteractions(tokenPanStoreService);
-        } catch (Exception e) {
-            Assert.fail();
-            e.printStackTrace();
-        }
-    }
     protected InboundTokenPan getInboundTokenPan() {
         return InboundTokenPan.builder()
                 .tokenPan("00000")

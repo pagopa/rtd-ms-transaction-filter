@@ -216,6 +216,7 @@ public class TransactionFilterStep {
     @StepScope
     public PGPFlatFileItemWriter<InboundTransaction> transactionItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String file,
+            @Value("#{jobParameters['tempOutputPath']}") String tempOutputPath,
             @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
         PGPFlatFileItemWriter<InboundTransaction> flatFileItemWriter =
                 new PGPFlatFileItemWriter<>(publicKeyPath, applyEncrypt, lastSection);
@@ -225,7 +226,7 @@ public class TransactionFilterStep {
         String[] filename = file.split("/");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         flatFileItemWriter.setResource(
-                resolver.getResource(outputDirectoryPath.concat("/".concat(filename[filename.length-1]))));
+                resolver.getResource(tempOutputPath.concat("/".concat(filename[filename.length-1]))));
         return flatFileItemWriter;
     }
 
@@ -268,7 +269,8 @@ public class TransactionFilterStep {
                 hpanStoreService,
                 parStoreService,
                 this.applyTrxHashing,
-                lastSection);
+                lastSection,
+                parEnabled);
     }
 
     /**
@@ -343,7 +345,7 @@ public class TransactionFilterStep {
                     .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
                     .listener(transactionsItemWriteListener(transactionWriterService,executionDate))
                     .listener(transactionStepListener(transactionWriterService, executionDate))
-                    .stream(transactionItemWriter(null, null))
+                    .stream(transactionItemWriter(null, null,null))
                     .stream(transactionFilteredItemWriter(null, null))
                     .taskExecutor(batchConfig.readerTaskExecutor())
                     .build();
@@ -351,7 +353,8 @@ public class TransactionFilterStep {
 
     @Bean
     public TransactionReaderStepListener transactionStepListener(
-            TransactionWriterService transactionWriterService, String executionDate) {
+            TransactionWriterService transactionWriterService,
+            String executionDate) {
         TransactionReaderStepListener transactionReaderStepListener = new TransactionReaderStepListener();
         transactionReaderStepListener.setTransactionWriterService(transactionWriterService);
         transactionReaderStepListener.setErrorTransactionsLogsPath(transactionLogsPath);
@@ -468,7 +471,7 @@ public class TransactionFilterStep {
                 new ClassifierCompositeItemWriter<>();
         compositeItemWriter.setClassifier(
                 new InboundTransactionClassifier(
-                        transactionItemWriter(null, null),
+                        transactionItemWriter(null, null,null),
                         transactionFilteredItemWriter(null, null)));
         return compositeItemWriter;
     }

@@ -71,8 +71,8 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 				log.info("CsvTransactionReader token single-time job started at " + startDate);
 			}
 
-			if (jobExecCode == 0 && (tokenPanFilterBatch.getTokenPanValidationEnabled() ||
-					tokenPanFilterBatch.getBinValidationEnabled())) {
+			if (jobExecCode == 0 && tokenPanFilterBatch.getTokenPanValidationEnabled()) {
+				tokenPanFilterBatch.setSalt(transactionFilterBatch.getSalt());
 				JobExecution jobExecution2 = tokenPanFilterBatch.executeBatchJob(startDate);
 				jobExecCode = jobExecution2 != null ?
 						new SimpleJvmExitCodeMapper().intValue(

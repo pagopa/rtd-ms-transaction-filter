@@ -28,6 +28,18 @@ class TokenPanStoreServiceImpl implements TokenPanStoreService {
     private String workingTokenPanDirectory;
     private Long numberPerFile;
     private Long currentNumberOfData = 0L;
+    private String salt = "";
+
+
+    @Override
+    public void storeSalt(String salt) {
+        this.salt = salt;
+    }
+
+    @Override
+    public String getSalt() {
+        return this.salt;
+    }
 
     @SneakyThrows
     @Override

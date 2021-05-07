@@ -50,7 +50,8 @@ public class ParListRecoveryTasklet implements Tasklet, InitializingBean {
      * @throws Exception
      */
     @Override
-    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+    public RepeatStatus execute(
+            StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
         parListDirectory = parListDirectory.replaceAll("\\\\", "/");
         Resource[] resources = null;
@@ -62,7 +63,8 @@ public class ParListRecoveryTasklet implements Tasklet, InitializingBean {
 
             resources = resolver.getResources("file:/"
                     .concat(parListDirectory.charAt(0) == '/' ?
-                            parListDirectory.replaceFirst("/","") : parListDirectory)
+                            parListDirectory.replaceFirst("/","") :
+                            parListDirectory)
                     .concat("/")
                     .concat(parFilePattern));
 
@@ -88,9 +90,11 @@ public class ParListRecoveryTasklet implements Tasklet, InitializingBean {
         }
 
         if (recoveryTaskletEnabled) {
+
             resources = resolver.getResources("file:/"
                     .concat(parListDirectory.charAt(0) == '/' ?
-                            parListDirectory.replaceFirst("/","") : parListDirectory)
+                            parListDirectory.replaceFirst("/","") :
+                            parListDirectory)
                     .concat("/")
                     .concat(parFilePattern));
 
@@ -99,7 +103,9 @@ public class ParListRecoveryTasklet implements Tasklet, InitializingBean {
                     .concat("/".concat(
                             String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
                                     .concat(fileName != null ? fileName : "hpanList"))));
+
             if (resources.length == 0 || !outputFile.exists()) {
+
                 List<File> parListTempFiles = hpanConnectorService.getParList();
                 for (File parListTempFile : parListTempFiles) {
                     outputFile = FileUtils.getFile(parListDirectory.concat("/".concat(
@@ -110,9 +116,12 @@ public class ParListRecoveryTasklet implements Tasklet, InitializingBean {
                             outputFile);
                     fileId = fileId+1;
                 }
+
                 hpanConnectorService.cleanAllTempFiles();
             }
+
         }
+
         return RepeatStatus.FINISHED;
     }
 
