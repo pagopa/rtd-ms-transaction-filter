@@ -97,9 +97,12 @@ public class TransactionFileManagementTasklet implements Tasklet, InitializingBe
             }
         }).collect(Collectors.toList());
 
-        Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
+        Collection<StepExecution> stepExecutions = chunkContext.getStepContext()
+                .getStepExecution().getJobExecution()
                 .getStepExecutions();
+
         for (StepExecution stepExecution : stepExecutions) {
+
             if (stepExecution.getExecutionContext().containsKey("fileName")) {
 
                 String file = stepExecution.getExecutionContext().getString("fileName");
@@ -113,6 +116,7 @@ public class TransactionFileManagementTasklet implements Tasklet, InitializingBe
                 }
 
                 try {
+
                     boolean isComplete = BatchStatus.COMPLETED.equals(stepExecution.getStatus()) &&
                             stepExecution.getFailureExceptions().size() <= 0;
                     executionWithErrors = executionWithErrors || !isComplete;

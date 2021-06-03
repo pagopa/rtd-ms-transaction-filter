@@ -76,9 +76,11 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
             try {
                 String file = item.getFilename().replaceAll("\\\\", "/");
                 String[] fileArr = file.split("/");
+                String filename = fileArr[fileArr.length - 1].replaceAll(
+                        "TRNLOG", "TKNLST").replaceAll("CSTAR","TKM");
                 transactionWriterService.write(resolver.getResource(tokenPanInputPath)
                                 .getFile().getAbsolutePath()
-                                .concat("/") + fileArr[fileArr.length - 1] + ".csv",
+                                .concat("/") + filename + ".csv",
                         buildTokenPan(item));
             } catch (Exception e) {
                 if (log.isErrorEnabled()) {
