@@ -32,8 +32,8 @@ import static org.junit.Assert.assertNotNull;
 @TestPropertySource(
         locations = "classpath:config/rest-tkm-client.properties",
         properties = {
-                "rest-client.bin.list.url=/parlist",
-                "rest-client.token.list.url=/list",
+                "rest-client.bin.list.url=/tmk/list",
+                "rest-client.token.list.url=/tmk/list",
                 "rest-client.tkm.mtls.enabled=true",
                 "rest-client.tkm.list.checksumHeaderName=checksum",
                 "rest-client.tkm.dateValidation.enabled=true",
@@ -42,7 +42,8 @@ import static org.junit.Assert.assertNotNull;
                 "rest-client.tkm.key-store.password=secret",
                 "rest-client.tkm.trust-store.file=classpath:certs/client-truststore.jks",
                 "rest-client.tkm.trust-store.password=secret",
-                "spring.application.name=rtd-ms-transaction-filter-token-integration-rest"
+                "spring.application.name=rtd-ms-transaction-filter-token-integration-rest",
+                "rest-client.tkm.list.partialFileRecovery=true"
         }
 )
 @ContextConfiguration(initializers = TokenRestClientTest.RandomPortInitializer.class,

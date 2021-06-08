@@ -5,6 +5,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
@@ -24,33 +25,35 @@ import java.util.TreeSet;
 class BinStoreServiceImpl implements BinStoreService {
 
     private final List<BufferedWriter> bufferedWriterList;
-    private final TreeSet<String> binSet;
+    private final List<Pair<String,String>> binRangesList;
     private String workingBinDirectory;
     private Long numberPerFile;
     private Long currentNumberOfData = 0L;
 
     @SneakyThrows
     @Override
-    public void write(String par) {
+    public void write(String binStart, String binEnd) {
         BufferedWriter bufferedWriter = getBufferedWriter();
         assert bufferedWriter != null;
-        bufferedWriter.write(par.concat("\n"));
+        bufferedWriter.write(binStart.concat(";").concat(binEnd).concat("\n"));
     }
 
     @Override
-    public synchronized void store(String bin) {
-        binSet.add(bin);
+    public synchronized void store(String binStart, String binEnd) {
+        binRangesList.add(Pair.of(binStart, binEnd));
     }
 
     @Override
     public Boolean hasBin(String bin) {
-        return binSet.contains(bin);
+        assert(bin != null);
+        return binRangesList.stream().anyMatch(binPair ->
+                bin.compareTo(binPair.getFirst()) >= 0 && bin.compareTo(binPair.getSecond()) <= 0);
     }
 
     @SneakyThrows
     @Override
     public void clearAll() {
-        binSet.clear();
+        binRangesList.clear();
         for (BufferedWriter bufferedWriter : bufferedWriterList) {
             bufferedWriter.close();
         }
@@ -59,7 +62,7 @@ class BinStoreServiceImpl implements BinStoreService {
     @SneakyThrows
     @Override
     public void clearStoreSet() {
-        binSet.clear();
+        binRangesList.clear();
     }
 
     @SneakyThrows

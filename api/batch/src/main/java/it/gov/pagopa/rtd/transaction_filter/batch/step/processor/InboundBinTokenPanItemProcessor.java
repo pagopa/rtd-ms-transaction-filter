@@ -49,7 +49,7 @@ public class InboundBinTokenPanItemProcessor implements ItemProcessor<InboundTok
         }
 
         boolean hasBin = exemptedCircuitType.contains(inboundTokenPan.getCircuitType()) ||
-                binStoreService.hasBin(inboundTokenPan.getTokenPan().substring(0,4));
+                binStoreService.hasBin(inboundTokenPan.getTokenPan());
 
         if (hasBin) {
             return InboundTokenPan.builder()

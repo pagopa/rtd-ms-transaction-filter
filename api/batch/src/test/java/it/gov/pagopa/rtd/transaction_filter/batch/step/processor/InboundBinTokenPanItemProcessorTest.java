@@ -42,7 +42,7 @@ public class InboundBinTokenPanItemProcessorTest {
     @Test
     public void process_OK_returnValid() {
         try {
-            BDDMockito.doReturn(true).when(binStoreServiceMock).hasBin(Mockito.eq("0000"));
+            BDDMockito.doReturn(true).when(binStoreServiceMock).hasBin(Mockito.eq("00000"));
             InboundBinTokenPanItemProcessor inboundBinTokenPanItemProcessor =
                     new InboundBinTokenPanItemProcessor(binStoreServiceMock, false, true);
             List<String> exemptedCircuitType = new ArrayList<>();
@@ -52,7 +52,7 @@ public class InboundBinTokenPanItemProcessorTest {
                     inboundBinTokenPanItemProcessor.process(getInboundTokenPan());
             Assert.assertNotNull(inboundTokenPan);
             Assert.assertEquals(getInboundTokenPan(), inboundTokenPan);
-            BDDMockito.verify(binStoreServiceMock).hasBin("0000");
+            BDDMockito.verify(binStoreServiceMock).hasBin("00000");
         } catch (Exception e) {
             Assert.fail();
             e.printStackTrace();
@@ -63,7 +63,7 @@ public class InboundBinTokenPanItemProcessorTest {
     @Test
     public void process_OK_returnNotValid() {
         try {
-            BDDMockito.doReturn(true).when(binStoreServiceMock).hasBin(Mockito.eq("0001"));
+            BDDMockito.doReturn(true).when(binStoreServiceMock).hasBin(Mockito.eq("00001"));
             InboundBinTokenPanItemProcessor inboundBinTokenPanItemProcessor =
                     new InboundBinTokenPanItemProcessor(binStoreServiceMock, false, true);
             List<String> exemptedCircuitType = new ArrayList<>();
@@ -73,7 +73,7 @@ public class InboundBinTokenPanItemProcessorTest {
                     inboundBinTokenPanItemProcessor.process(getInboundTokenPan());
             Assert.assertNotNull(inboundTokenPan);
             Assert.assertNotEquals(getInboundTokenPan().getValid(), inboundTokenPan.getValid());
-            BDDMockito.verify(binStoreServiceMock).hasBin("0000");
+            BDDMockito.verify(binStoreServiceMock).hasBin("00000");
         } catch (Exception e) {
             Assert.fail();
             e.printStackTrace();
@@ -83,7 +83,7 @@ public class InboundBinTokenPanItemProcessorTest {
     @Test
     public void process_OK_returnNotValid_LastSection() {
         try {
-            BDDMockito.doReturn(true).when(binStoreServiceMock).hasBin(Mockito.eq("0001"));
+            BDDMockito.doReturn(true).when(binStoreServiceMock).hasBin(Mockito.eq("00001"));
             InboundBinTokenPanItemProcessor inboundBinTokenPanItemProcessor =
                     new InboundBinTokenPanItemProcessor(binStoreServiceMock, true, true);
             List<String> exemptedCircuitType = new ArrayList<>();
@@ -92,7 +92,7 @@ public class InboundBinTokenPanItemProcessorTest {
             InboundTokenPan inboundTokenPan =
                     inboundBinTokenPanItemProcessor.process(getInboundTokenPan());
             Assert.assertNull(inboundTokenPan);
-            BDDMockito.verify(binStoreServiceMock).hasBin("0000");
+            BDDMockito.verify(binStoreServiceMock).hasBin("00000");
         } catch (Exception e) {
             Assert.fail();
             e.printStackTrace();
@@ -102,7 +102,7 @@ public class InboundBinTokenPanItemProcessorTest {
     @Test
     public void process_OK_returnValid_ExemptedCard() {
         try {
-            BDDMockito.doReturn(true).when(binStoreServiceMock).hasBin(Mockito.eq("0001"));
+            BDDMockito.doReturn(true).when(binStoreServiceMock).hasBin(Mockito.eq("00001"));
             InboundBinTokenPanItemProcessor inboundBinTokenPanItemProcessor =
                     new InboundBinTokenPanItemProcessor(binStoreServiceMock,
                             false, true);

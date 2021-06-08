@@ -7,13 +7,14 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 public interface BinStoreService {
 
 
-    void write(String bin);
+    void write(String binStart, String binEnd);
 
     /**
      * Method to be used to store an bin
-     * @param bin
+     * @param binStart
+     * @param binEnd
      */
-    void store(String bin);
+    void store(String binStart, String binEnd);
 
     /**
      * Method to be called for verifying the presence of an par in the store

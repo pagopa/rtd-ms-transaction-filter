@@ -6,11 +6,11 @@ import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.util.Pair;
 
 import java.io.BufferedWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeSet;
 
 public class BinStoreServiceTest {
 
@@ -25,7 +25,7 @@ public class BinStoreServiceTest {
         ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
     }
 
-    private TreeSet<String> storeSet;
+    private List<Pair<String,String>> storeSet;
     private List<BufferedWriter> bufferedWriterList;
     private BinStoreService binStoreService;
 
@@ -34,7 +34,7 @@ public class BinStoreServiceTest {
 
     @Before
     public void setUp() {
-        storeSet = new TreeSet<>();
+        storeSet = new ArrayList<>();
         bufferedWriterList = new ArrayList<>();
         binStoreService = new BinStoreServiceImpl(bufferedWriterList, storeSet);
     }
@@ -47,7 +47,7 @@ public class BinStoreServiceTest {
 
     @Test
     public void hasBin() {
-        storeSet.add("bin");
+        storeSet.add(Pair.of("bin","end"));
         Assert.assertEquals(1, storeSet.size());
         Assert.assertFalse(binStoreService.hasBin("wrongBin"));
         Assert.assertTrue(binStoreService.hasBin("bin"));
@@ -56,30 +56,30 @@ public class BinStoreServiceTest {
     @Test
     public void store() {
         Assert.assertEquals(0, storeSet.size());
-        binStoreService.store("bin");
+        binStoreService.store("bin","end");
         Assert.assertEquals(1, storeSet.size());
-        Assert.assertTrue(storeSet.contains("bin"));
+        Assert.assertTrue(storeSet.contains(Pair.of("bin","end")));
     }
 
     @Test
     public void store_KO() {
         Assert.assertEquals(0, storeSet.size());
-        expectedException.expect(NullPointerException.class);
-        binStoreService.store(null);
+        expectedException.expect(IllegalArgumentException.class);
+        binStoreService.store(null,null);
         Assert.assertEquals(0, storeSet.size());
     }
 
     @Test
     public void hasBin_KO() {
         Assert.assertEquals(0, storeSet.size());
-        expectedException.expect(NullPointerException.class);
+        expectedException.expect(AssertionError.class);
         binStoreService.hasBin(null);
     }
 
     @Test
     public void clearAll() {
         Assert.assertEquals(0, storeSet.size());
-        storeSet.add("test");
+        storeSet.add(Pair.of("test","end"));
         binStoreService.clearAll();
         Assert.assertEquals(0, storeSet.size());
     }

@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
+import it.gov.pagopa.rtd.transaction_filter.connector.model.TokenPanDataModel;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +17,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -72,9 +74,6 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
     @Value("${rest-client.tkm.list.partialFileRecovery}")
     private Boolean partialFileRecovery;
 
-    @Value("${rest-client.tkm.list.nextPartHeader}")
-    private String nextPartHeader;
-
     private final TokenPanRestConnector tokenPanRestConnector;
 
     private LocalDateTime validationDate;
@@ -91,12 +90,42 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
     @SneakyThrows
     @Override
     public List<File> getBinList() {
-        if (!partialFileRecovery) {
-           return fullFileBinRecovery();
-        } else {
-            String filePartId = "1";
-            return partialFileBinRecovery(filePartId);
+        TokenPanDataModel tokenPanDataModel = tokenPanRestConnector.getBinList(apiKey);
+
+        if (dateValidation) {
+            String dateString = Objects.requireNonNull(tokenPanDataModel.getGenerationDate());
+            DateTimeFormatter dtf = dateValidationPattern != null && !dateValidationPattern.isEmpty() ?
+                    DateTimeFormatter.ofPattern(dateValidationPattern).withZone(ZoneId.systemDefault()):
+                    DateTimeFormatter.RFC_1123_DATE_TIME;
+
+            ZonedDateTime fileCreationDateTime = LocalDateTime.parse(dateString, dtf)
+                    .atZone(ZoneId.of(dateValidationZone));
+            ;           ZonedDateTime currentDate = validationDate != null ?
+                    validationDate.atZone(ZoneId.of(dateValidationZone)) :
+                    LocalDateTime.now().atZone(ZoneId.of(dateValidationZone));
+
+            DateTimeFormatter dayFormat = DateTimeFormatter.ofPattern("dd-M-yyyy hh:mm:ss a");
+
+            log.debug("currentDate is: {}", dayFormat.format(currentDate));
+            log.debug("fileCreationTime is {}", dayFormat.format(fileCreationDateTime));
+
+            boolean sameYear = ChronoUnit.YEARS.between(fileCreationDateTime,currentDate) == 0;
+            boolean sameMonth = ChronoUnit.MONTHS.between(fileCreationDateTime,currentDate) == 0;
+            boolean sameDay =  ChronoUnit.DAYS.between(fileCreationDateTime,currentDate) == 0;
+
+            if (!sameYear | !sameMonth | !sameDay) {
+                throw new Exception("Recovered Bin list exceeding a day");
+            }
+
         }
+
+        List<File> files = new ArrayList<>();
+
+        for (String fileLink : tokenPanDataModel.getFileLinks()) {
+            files.add(fullFileBinRecovery(fileLink));
+        }
+
+        return files;
     }
 
     /**
@@ -107,78 +136,67 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
     @SneakyThrows
     @Override
     public List<File> getTokenList() {
-        if (!partialFileRecovery) {
-            return fullFileTokenPanRecovery();
-        } else {
-            String filePartId = "1";
-            return partialFileTokenPanRecovery(filePartId);
+        TokenPanDataModel tokenPanDataModel = tokenPanRestConnector.getTokenList(apiKey);
+
+        if (dateValidation) {
+            String dateString = Objects.requireNonNull(tokenPanDataModel.getGenerationDate());
+            DateTimeFormatter dtf = dateValidationPattern != null && !dateValidationPattern.isEmpty() ?
+                    DateTimeFormatter.ofPattern(dateValidationPattern).withZone(ZoneId.systemDefault()):
+                    DateTimeFormatter.RFC_1123_DATE_TIME;
+
+            ZonedDateTime fileCreationDateTime = LocalDateTime.parse(dateString, dtf)
+                    .atZone(ZoneId.of(dateValidationZone));
+            ;           ZonedDateTime currentDate = validationDate != null ?
+                    validationDate.atZone(ZoneId.of(dateValidationZone)) :
+                    LocalDateTime.now().atZone(ZoneId.of(dateValidationZone));
+
+            DateTimeFormatter dayFormat = DateTimeFormatter.ofPattern("dd-M-yyyy hh:mm:ss a");
+
+            log.debug("currentDate is: {}", dayFormat.format(currentDate));
+            log.debug("fileCreationTime is {}", dayFormat.format(fileCreationDateTime));
+
+            boolean sameYear = ChronoUnit.YEARS.between(fileCreationDateTime,currentDate) == 0;
+            boolean sameMonth = ChronoUnit.MONTHS.between(fileCreationDateTime,currentDate) == 0;
+            boolean sameDay =  ChronoUnit.DAYS.between(fileCreationDateTime,currentDate) == 0;
+
+            if (!sameYear | !sameMonth | !sameDay) {
+                throw new Exception("Recovered Token list exceeding a day");
+            }
+
         }
+
+        List<File> files = new ArrayList<>();
+
+        for (String fileLink : tokenPanDataModel.getFileLinks()) {
+            files.add(fullFileTokenPanRecovery(fileLink));
+        }
+
+        return files;
     }
 
     @SneakyThrows
-    private List<File> fullFileTokenPanRecovery() {
+    private File fullFileTokenPanRecovery(String link) {
         File tempTokenPanFile = File.createTempFile("tokenPanDownloadFile", "");
         tempTokenPanFiles.add(tempTokenPanFile);
         File localTempFile = tempTokenPanFile;
-        ResponseEntity<Resource> responseEntity = tokenPanRestConnector.getTokenList(apiKey);
-        localTempFile = processFile(localTempFile, responseEntity);
-        return Collections.singletonList(localTempFile);
-    }
-
-    @SneakyThrows
-    private List<File> partialFileTokenPanRecovery(String filePartId) {
-        File tempFile = File.createTempFile("tokenPanDownloadFile_"
-                .concat(filePartId), "");
-        tempTokenPanFiles.add(tempFile);
         ResponseEntity<Resource> responseEntity = tokenPanRestConnector
-                .getPartialTokenList(apiKey, filePartId);
-        tempFile = processFile(tempFile, responseEntity);
-        List<String> nextPartHeaderValues = responseEntity.getHeaders().get(nextPartHeader);
-        String nextPartHeaderValue = null;
-        if (nextPartHeaderValues != null) {
-            nextPartHeaderValue = nextPartHeaderValues.get(0);
-        }
-
-        List<File> returnFile = new ArrayList<>(Collections.singletonList(tempFile));
-
-        if (nextPartHeaderValue != null) {
-            returnFile.addAll(partialFileTokenPanRecovery(nextPartHeaderValue));
-        }
-
-        return returnFile;
+                .getPartialTokenList(new URI(partialFileRecovery ? baseUrl.concat(link) : link), apiKey);
+        localTempFile = processFile(localTempFile, responseEntity);
+        return localTempFile;
     }
 
+
     @SneakyThrows
-    private List<File> fullFileBinRecovery() {
+    private File fullFileBinRecovery(String link) {
         File tempBinFile = File.createTempFile("binDownloadFile", "");
         tempBinFiles.add(tempBinFile);
         File localTempFile = tempBinFile;
-        ResponseEntity<Resource> responseEntity = tokenPanRestConnector.getBinList(apiKey);
+        ResponseEntity<Resource> responseEntity = tokenPanRestConnector.getBinPartialList(
+                new URI(partialFileRecovery ? baseUrl.concat(link) : link), apiKey);
         localTempFile = processFile(localTempFile, responseEntity);
-        return Collections.singletonList(localTempFile);
+        return localTempFile;
     }
 
-    @SneakyThrows
-    private List<File> partialFileBinRecovery(String filePartId) {
-        File tempFile = File.createTempFile("binDownloadFile_"
-                .concat(filePartId), "");
-        ResponseEntity<Resource> responseEntity = tokenPanRestConnector
-                .getBinPartialList(apiKey, filePartId);
-        tempFile = processFile(tempFile, responseEntity);
-        List<String> nextPartHeaderValues = responseEntity.getHeaders().get(nextPartHeader);
-        String nextPartHeaderValue = null;
-        if (nextPartHeaderValues != null) {
-            nextPartHeaderValue = nextPartHeaderValues.get(0);
-        }
-
-        List<File> returnFile = new ArrayList<>(Collections.singletonList(tempFile));
-
-        if (nextPartHeaderValue != null) {
-            returnFile.addAll(partialFileBinRecovery(nextPartHeaderValue));
-        }
-
-        return returnFile;
-    }
 
     @SneakyThrows
     private File processFile(File tempFile, ResponseEntity<Resource> responseEntity) {
