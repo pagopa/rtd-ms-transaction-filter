@@ -328,7 +328,9 @@ public class TokenPanFilterBatch {
 
                 if (lastSection) {
                     for (Resource transactionResource : transactionResources) {
-                        FileUtils.forceDelete(transactionResource.getFile());
+                        if (transactionResource.getFile().exists()) {
+                            FileUtils.forceDelete(transactionResource.getFile());
+                        }
                     }
                 }
 
@@ -544,7 +546,7 @@ public class TokenPanFilterBatch {
         BinListRecoveryTasklet binListRecoveryTasklet = new BinListRecoveryTasklet();
         binListRecoveryTasklet.setBinListDirectory(binListDirectory);
         binListRecoveryTasklet.setTokenConnectorService(tokenConnectorService);
-        binListRecoveryTasklet.setFileName(hpanListFilename);
+        binListRecoveryTasklet.setFileName(binListFilename);
         binListRecoveryTasklet.setBinFilePattern(binListRecoveryFilePattern);
         binListRecoveryTasklet.setDailyRemovalTaskletEnabled(binListDailyRemovalEnabled);
         binListRecoveryTasklet.setRecoveryTaskletEnabled(binListRecoveryEnabled);

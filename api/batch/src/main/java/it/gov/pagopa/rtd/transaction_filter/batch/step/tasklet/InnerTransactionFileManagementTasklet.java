@@ -102,6 +102,28 @@ public class InnerTransactionFileManagementTasklet implements Tasklet, Initializ
             }
         }).collect(Collectors.toList());
 
+        hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
+
+        List<String> tempHpanResources = Arrays.stream(resolver.getResources(tempHpanDirectory)).map(resource -> {
+            try {
+                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+                return null;
+            }
+        }).collect(Collectors.toList());
+
+        parDirectory = parDirectory.replaceAll("\\\\","/");
+
+        List<String> tempParResources = Arrays.stream(resolver.getResources(tempParDirectory)).map(resource -> {
+            try {
+                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+                return null;
+            }
+        }).collect(Collectors.toList());
+
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext()
                 .getStepExecution().getJobExecution().getStepExecutions();
         for (StepExecution stepExecution : stepExecutions) {
@@ -135,8 +157,10 @@ public class InnerTransactionFileManagementTasklet implements Tasklet, Initializ
                         }
                     }
 
-                    boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
-                    boolean isParFile = parResources.contains(path.replaceAll("\\\\","/"));
+                    boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/")) ||
+                            tempHpanResources.contains(path.replaceAll("\\\\","/"));
+                    boolean isParFile = parResources.contains(path.replaceAll("\\\\","/")) ||
+                            tempParResources.contains(path.replaceAll("\\\\","/"));
                     if (deleteProcessedFiles || isHpanFile || isParFile || !firstSection) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));

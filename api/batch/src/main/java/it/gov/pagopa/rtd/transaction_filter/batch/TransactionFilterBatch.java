@@ -279,7 +279,9 @@ public class TransactionFilterBatch {
 
                 if (lastSection) {
                     for (Resource transactionResource : transactionResources) {
-                        FileUtils.forceDelete(transactionResource.getFile());
+                        if (transactionResource.getFile().exists()) {
+                            FileUtils.forceDelete(transactionResource.getFile());
+                        }
                     }
                 }
 

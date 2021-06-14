@@ -100,13 +100,13 @@ public class BinListRecoveryTasklet implements Tasklet, InitializingBean {
                             String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
                                     .concat(fileName != null ? fileName : "binList"))));
             if (resources.length == 0 || !outputFile.exists()) {
-                List<File> hpanListTempFiles = tokenConnectorService.getTokenPanList();
-                for (File hpanListTempFile : hpanListTempFiles) {
+                List<File> binListTempFiles = tokenConnectorService.getBinList();
+                for (File binListTempFile : binListTempFiles) {
                     outputFile = FileUtils.getFile(binListDirectory.concat("/".concat(
                             String.valueOf(fileId).concat(OffsetDateTime.now().format(fmt).concat("_"))
                                     .concat(fileName != null ? fileName : "binList"))));
                     FileUtils.moveFile(
-                            hpanListTempFile,
+                            binListTempFile,
                             outputFile);
                     fileId = fileId+1;
                 }

@@ -12,8 +12,9 @@ import java.io.BufferedWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.TreeSet;
+import java.util.Map;
 
 /**
 * Implementation of {@link ParStoreService}
@@ -25,7 +26,9 @@ import java.util.TreeSet;
 class BinStoreServiceImpl implements BinStoreService {
 
     private final List<BufferedWriter> bufferedWriterList;
-    private final List<Pair<String,String>> binRangesList;
+    private final Map<String,List<Pair<String,String>>> binRangesListMap;
+    private String minRangeStart = "";
+    private String maxRangeEnd = "";
     private String workingBinDirectory;
     private Long numberPerFile;
     private Long currentNumberOfData = 0L;
@@ -40,20 +43,40 @@ class BinStoreServiceImpl implements BinStoreService {
 
     @Override
     public synchronized void store(String binStart, String binEnd) {
-        binRangesList.add(Pair.of(binStart, binEnd));
+        if (minRangeStart.compareTo(binStart) > 0) {
+            minRangeStart = binStart;
+        }
+        if (maxRangeEnd.compareTo(binEnd) < 0) {
+            maxRangeEnd = binEnd;
+        }
+        String prefix = binStart.substring(0,2);
+        List<Pair<String, String>> prefixList = binRangesListMap
+                .computeIfAbsent(prefix, k -> new ArrayList<>());
+        prefixList.add(Pair.of(binStart,binEnd));
     }
 
     @Override
     public Boolean hasBin(String bin) {
         assert(bin != null);
-        return binRangesList.stream().anyMatch(binPair ->
+        if ((!minRangeStart.equals("") && bin.compareTo(minRangeStart) < 0) ||
+                (!maxRangeEnd.equals("") && bin.compareTo(maxRangeEnd) > 0)) {
+            return false;
+        }
+        List<Pair<String,String>> binRangeList = binRangesListMap.get(bin.substring(0,2));
+        if (binRangeList == null) {
+            return false;
+        }
+        return binRangeList.parallelStream().anyMatch(binPair ->
                 bin.compareTo(binPair.getFirst()) >= 0 && bin.compareTo(binPair.getSecond()) <= 0);
     }
 
     @SneakyThrows
     @Override
     public void clearAll() {
-        binRangesList.clear();
+        binRangesListMap.values().forEach(List::clear);
+        binRangesListMap.clear();
+        minRangeStart = "";
+        maxRangeEnd = "";
         for (BufferedWriter bufferedWriter : bufferedWriterList) {
             bufferedWriter.close();
         }
@@ -62,7 +85,10 @@ class BinStoreServiceImpl implements BinStoreService {
     @SneakyThrows
     @Override
     public void clearStoreSet() {
-        binRangesList.clear();
+        binRangesListMap.values().forEach(List::clear);
+        binRangesListMap.clear();
+        minRangeStart = "";
+        maxRangeEnd = "";
     }
 
     @SneakyThrows

@@ -28,6 +28,9 @@ public class TransactionWriterServiceImpl implements TransactionWriterService {
 
         if (!fileChannelMap.containsKey(filename)) {
             Path path = Paths.get(filename);
+            if (path.toFile().exists()) {
+                path.toFile().delete();
+            }
             fileChannelMap.put(filename,Files.newBufferedWriter(path,
                     StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE, StandardOpenOption.APPEND));
         } else {

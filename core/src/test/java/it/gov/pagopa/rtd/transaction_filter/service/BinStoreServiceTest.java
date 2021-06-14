@@ -10,6 +10,8 @@ import org.springframework.data.util.Pair;
 
 import java.io.BufferedWriter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 public class BinStoreServiceTest {
@@ -25,7 +27,7 @@ public class BinStoreServiceTest {
         ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
     }
 
-    private List<Pair<String,String>> storeSet;
+    private HashMap<String,List<Pair<String,String>>> storeSet;
     private List<BufferedWriter> bufferedWriterList;
     private BinStoreService binStoreService;
 
@@ -34,7 +36,7 @@ public class BinStoreServiceTest {
 
     @Before
     public void setUp() {
-        storeSet = new ArrayList<>();
+        storeSet = new HashMap<>();
         bufferedWriterList = new ArrayList<>();
         binStoreService = new BinStoreServiceImpl(bufferedWriterList, storeSet);
     }
@@ -47,7 +49,7 @@ public class BinStoreServiceTest {
 
     @Test
     public void hasBin() {
-        storeSet.add(Pair.of("bin","end"));
+        storeSet.put("bi", Collections.singletonList(Pair.of("bin","end")));
         Assert.assertEquals(1, storeSet.size());
         Assert.assertFalse(binStoreService.hasBin("wrongBin"));
         Assert.assertTrue(binStoreService.hasBin("bin"));
@@ -58,13 +60,13 @@ public class BinStoreServiceTest {
         Assert.assertEquals(0, storeSet.size());
         binStoreService.store("bin","end");
         Assert.assertEquals(1, storeSet.size());
-        Assert.assertTrue(storeSet.contains(Pair.of("bin","end")));
+        Assert.assertTrue(storeSet.get("bi").contains(Pair.of("bin","end")));
     }
 
     @Test
     public void store_KO() {
         Assert.assertEquals(0, storeSet.size());
-        expectedException.expect(IllegalArgumentException.class);
+        expectedException.expect(NullPointerException.class);
         binStoreService.store(null,null);
         Assert.assertEquals(0, storeSet.size());
     }
@@ -79,7 +81,9 @@ public class BinStoreServiceTest {
     @Test
     public void clearAll() {
         Assert.assertEquals(0, storeSet.size());
-        storeSet.add(Pair.of("test","end"));
+        List<Pair<String,String>> pairs = new ArrayList<>();
+        pairs.add(Pair.of("test","end"));
+        storeSet.put("te", pairs);
         binStoreService.clearAll();
         Assert.assertEquals(0, storeSet.size());
     }

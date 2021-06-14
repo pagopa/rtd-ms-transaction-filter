@@ -1,13 +1,12 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
-import feign.RequestLine;
 import it.gov.pagopa.rtd.transaction_filter.connector.model.TokenPanDataModel;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.net.URI;
 
@@ -18,16 +17,11 @@ public interface TokenPanRestConnector {
     TokenPanDataModel getBinList(@RequestHeader("Ocp-Apim-Subscription-Key") String token);
 
     @GetMapping
-    ResponseEntity<Resource> getBinPartialList(
+    ResponseEntity<Resource> getDownloadList(
             URI baseUri,
             @RequestHeader("Ocp-Apim-Subscription-Key") String token);
 
     @GetMapping(value = "${rest-client.token.list.url}")
     TokenPanDataModel getTokenList(@RequestHeader("Ocp-Apim-Subscription-Key") String token);
-
-    @GetMapping
-    ResponseEntity<Resource> getPartialTokenList(
-            URI baseUri,
-            @RequestHeader("Ocp-Apim-Subscription-Key") String token);
 
 }

@@ -62,9 +62,6 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
     @Value("${rest-client.tkm.list.dateValidation}")
     private Boolean dateValidation;
 
-    @Value("${rest-client.tkm.list.dateValidationHeaderName}")
-    private String dateValidationHeaderName;
-
     @Value("${rest-client.tkm.list.dateValidationPattern}")
     private String dateValidationPattern;
 
@@ -179,8 +176,9 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
         File tempTokenPanFile = File.createTempFile("tokenPanDownloadFile", "");
         tempTokenPanFiles.add(tempTokenPanFile);
         File localTempFile = tempTokenPanFile;
+        String[] linkArr = link.split("/");
         ResponseEntity<Resource> responseEntity = tokenPanRestConnector
-                .getPartialTokenList(new URI(partialFileRecovery ? baseUrl.concat(link) : link), apiKey);
+                .getDownloadList(new URI(partialFileRecovery ? baseUrl.concat(link) : link), apiKey);
         localTempFile = processFile(localTempFile, responseEntity);
         return localTempFile;
     }
@@ -191,7 +189,7 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
         File tempBinFile = File.createTempFile("binDownloadFile", "");
         tempBinFiles.add(tempBinFile);
         File localTempFile = tempBinFile;
-        ResponseEntity<Resource> responseEntity = tokenPanRestConnector.getBinPartialList(
+        ResponseEntity<Resource> responseEntity = tokenPanRestConnector.getDownloadList(
                 new URI(partialFileRecovery ? baseUrl.concat(link) : link), apiKey);
         localTempFile = processFile(localTempFile, responseEntity);
         return localTempFile;
@@ -200,34 +198,6 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
 
     @SneakyThrows
     private File processFile(File tempFile, ResponseEntity<Resource> responseEntity) {
-
-        if (dateValidation) {
-            String dateString = Objects.requireNonNull(responseEntity.getHeaders()
-                    .get(dateValidationHeaderName)).get(0);
-            DateTimeFormatter dtf = dateValidationPattern != null && !dateValidationPattern.isEmpty() ?
-                    DateTimeFormatter.ofPattern(dateValidationPattern).withZone(ZoneId.systemDefault()):
-                    DateTimeFormatter.RFC_1123_DATE_TIME;
-
-            ZonedDateTime fileCreationDateTime = LocalDateTime.parse(dateString, dtf)
-                    .atZone(ZoneId.of(dateValidationZone));
-            ;           ZonedDateTime currentDate = validationDate != null ?
-                    validationDate.atZone(ZoneId.of(dateValidationZone)) :
-                    LocalDateTime.now().atZone(ZoneId.of(dateValidationZone));
-
-            DateTimeFormatter dayFormat = DateTimeFormatter.ofPattern("dd-M-yyyy hh:mm:ss a");
-
-            log.debug("currentDate is: {}", dayFormat.format(currentDate));
-            log.debug("fileCreationTime is {}", dayFormat.format(fileCreationDateTime));
-
-            boolean sameYear = ChronoUnit.YEARS.between(fileCreationDateTime,currentDate) == 0;
-            boolean sameMonth = ChronoUnit.MONTHS.between(fileCreationDateTime,currentDate) == 0;
-            boolean sameDay =  ChronoUnit.DAYS.between(fileCreationDateTime,currentDate) == 0;
-
-            if (!sameYear | !sameMonth | !sameDay) {
-                throw new Exception("Recovered PAN list exceeding a day");
-            }
-
-        }
 
         try (FileOutputStream tempFileFOS = new FileOutputStream(tempFile)) {
 
