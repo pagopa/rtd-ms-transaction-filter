@@ -1,0 +1,236 @@
+openapi: 3.0.1
+info:
+  title: tkm-acquirer-apis
+  description: "RESTful APIs provided to acquirers"
+  version: '1.1.0'
+servers:
+  - url: https://test.cstar.pagopa.it/tkm/uat/acquirerm
+  - url: https://prod.cstar.pagopa.it/tkm/acquirerm
+paths:
+  /binrange/link:
+    get:
+      summary: Get Temporary link to download bin range details
+      operationId: getBinRangeLink
+      responses:
+        '200':
+          description: Success
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinksResponse'
+        '401':
+          description: Access Denied
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true
+        '500':
+          description: Internal Server Error
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true
+  /htoken/known/link:
+    get:
+      summary: Get Temporary link to download Known Htoken
+      operationId: getHtokenKnow
+      responses:
+        '200':
+          description: Success
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinksResponse'
+        '401':
+          description: Access Denied
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true
+        '500':
+          description: Internal Server Error
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true              
+  /download/file/{id}/{value}:
+    get:
+      summary: Download Bin range File
+      operationId: downloadBinRange
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+            minLength: 10
+            maxLength: 11
+            example: 1198415375
+          required: true
+        - in: path
+          name: value
+          schema:
+            type: string
+            minLength: 64
+            maxLength: 64
+            example: 279bf2544053e57722927fadcbfb8e4108444740bc7b808972a925e988a3c4b5
+          required: true
+      responses:
+        '200':
+          description: Success
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+            Checksum-Sha256:
+              schema:
+                type: string
+            content-type:
+              schema:
+                type: string  
+                example: application/x-zip-compressed
+          content:
+            properties:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Access Denied
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Not Found
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true
+        '500':
+          description: Internal Server Error
+          headers:
+            Request-Id:
+              schema:
+                type: string
+                minLength: 16
+                maxLength: 16
+                example: 937aee55bbabd29b
+              required: true
+components:
+  schemas:
+    LinksResponse:
+      required:
+        - fileLinks
+      type: object
+      properties:
+        fileLinks:
+          type: array
+          items:
+              type: string
+          description: List of links needed to download file
+        numberOfFiles:
+          type: integer
+        availableUntil:
+          type: string
+          format: date-time
+          pattern: "dd/MM/yyyy HH:mm:ss"
+        generationDate:
+          type: string
+          format: date-time
+          pattern: "dd/MM/yyyy HH:mm:ss"
+    Error:
+      required:
+        - statusCode
+        - message
+      type: object
+      properties:
+        statusCode:
+          type: integer
+          description: The code identifies the error
+          example: 401
+        message:
+          type: string
+          description: Error description
+          example: Access denied due to missing subscription key. Make sure to include subscription key when making requests to an API.
+   
+  securitySchemes:
+    azureApiKey:
+      type: apiKey
+      name: Ocp-Apim-Subscription-Key
+      in: header
+security:
+   - azureApiKey: []
