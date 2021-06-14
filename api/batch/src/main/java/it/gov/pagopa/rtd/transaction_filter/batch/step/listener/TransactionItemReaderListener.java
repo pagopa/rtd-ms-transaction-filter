@@ -63,10 +63,10 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
             try {
                 String[] lineArray = flatFileParseException.getInput().split("_",2);
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
-                        .getFile().getAbsolutePath()
-                        .concat("/".concat(executionDate))
-                        + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",
-                        (lineArray.length > 1 ? lineArray[1] : lineArray[0]).concat("\n"));
+                                .getFile().getAbsolutePath()
+                                .concat("/".concat(executionDate))
+                                + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",
+                                (lineArray.length > 1 ? lineArray[1] : lineArray[0]).concat("\n"));
             } catch (Exception e) {
                 log.error(e.getMessage(),e);
             }

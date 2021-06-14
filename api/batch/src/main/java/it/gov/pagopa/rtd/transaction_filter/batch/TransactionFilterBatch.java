@@ -1,27 +1,21 @@
 package it.gov.pagopa.rtd.transaction_filter.batch;
 
-
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.ParReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
-import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
-import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.*;
+import it.gov.pagopa.rtd.transaction_filter.service.*;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParametersBuilder;
-import org.springframework.batch.core.Step;
+import org.apache.commons.io.FileUtils;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.FlowJobBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
@@ -40,8 +34,9 @@ import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
-
 import javax.sql.DataSource;
+import java.io.File;
+import java.nio.file.Files;
 import java.util.Date;
 
 /**
@@ -54,7 +49,7 @@ import java.util.Date;
 @Configuration
 @Data
 @PropertySource("classpath:config/transactionFilterBatch.properties")
-@Import({TransactionFilterStep.class,PanReaderStep.class})
+@Import({TransactionFilterStep.class,PanReaderStep.class, ParReaderStep.class})
 @EnableBatchProcessing
 @RequiredArgsConstructor
 @Slf4j
@@ -62,6 +57,7 @@ public class TransactionFilterBatch {
 
     private final TransactionFilterStep transactionFilterStep;
     private final PanReaderStep panReaderStep;
+    private final ParReaderStep parReaderStep;
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
     private final BeanFactory beanFactory;
@@ -82,6 +78,12 @@ public class TransactionFilterBatch {
     private String hpanListRecoveryFilePattern;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename}")
     private String hpanListFilename;
+    @Value("${batchConfiguration.TransactionFilterBatch.parListRecovery.directoryPath}")
+    private String parListDirectory;
+    @Value("${batchConfiguration.TransactionFilterBatch.parListRecovery.filePattern}")
+    private String parListRecoveryFilePattern;
+    @Value("${batchConfiguration.TransactionFilterBatch.parListRecovery.filename}")
+    private String parListFilename;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles}")
     private Boolean deleteProcessedFiles;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles}")
@@ -94,11 +96,18 @@ public class TransactionFilterBatch {
     private Boolean hpanListRecoveryEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled}")
     private Boolean hpanListDailyRemovalEnabled;
-
+    @Value("${batchConfiguration.TransactionFilterBatch.parListRecovery.enabled}")
+    private Boolean parListRecoveryEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.parListRecovery.dailyRemoval.enabled}")
+    private Boolean parListDailyRemovalEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.hpanList.numberPerFile}")
+    private Long numberPerFile;
 
     private DataSource dataSource;
     private HpanStoreService hpanStoreService;
-    private TransactionWriterServiceImpl transactionWriterService;
+    private ParStoreService parStoreService;
+    private TransactionWriterService transactionWriterService;
+    private WriterTrackerService writerTrackerService;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     public void transactionWriterService() {
@@ -109,12 +118,40 @@ public class TransactionFilterBatch {
         transactionWriterService.closeAll();
     }
 
-    public void createHpanStoreService() {
-        this.hpanStoreService = batchHpanStoreService();
+    public void createHpanStoreService(String workingHpanDirectory) {
+        this.hpanStoreService = batchHpanStoreService(workingHpanDirectory);
+    }
+
+    public void createParStoreService(String workingParDirectory) {
+        this.parStoreService = batchParStoreService(workingParDirectory);
+    }
+
+    public String getSalt() {
+        return hpanStoreService != null ?
+                hpanStoreService.getSalt() :
+                "";
     }
 
     public void clearHpanStoreService() {
         hpanStoreService.clearAll();
+    }
+
+    public void clearParStoreService() {
+        parStoreService.clearAll();
+    }
+
+    public void clearStoreSet() {
+        hpanStoreService.clearStoreSet();
+        parStoreService.clearStoreSet();
+    }
+
+
+    public void createWriterTrackerService() {
+        this.writerTrackerService = writerTrackerService();
+    }
+
+    public void clearWriterTrackerService() {
+        writerTrackerService.clearAll();
     }
 
     /**
@@ -127,8 +164,16 @@ public class TransactionFilterBatch {
     @SneakyThrows
     public JobExecution executeBatchJob(Date startDate) {
         String transactionsPath = transactionFilterStep.getTransactionDirectoryPath();
-        Resource[] transactionResources = resolver.getResources(transactionsPath);
+        String tempOutputPath = "file:/".concat(
+                Files.createTempDirectory("tempOutTrxFolder").toFile().getAbsolutePath());
+        String innerOutputPath = "file:/".concat(
+                Files.createTempDirectory("tempInTrxFolder").toFile().getAbsolutePath());
+        String workingHpanDirectory = "file:/".concat(
+                Files.createTempDirectory("workingHpanFolder").toFile().getAbsolutePath());
+        String workingParDirectory = "file:/".concat(
+                Files.createTempDirectory("workingParFolder").toFile().getAbsolutePath());
 
+        Resource[] transactionResources = resolver.getResources(transactionsPath);
         String hpanPath = panReaderStep.getHpanDirectoryPath();
         Resource[] hpanResources = resolver.getResources(hpanPath);
 
@@ -148,13 +193,120 @@ public class TransactionFilterBatch {
             if (transactionWriterService == null) {
                 transactionWriterService();
             }
-            createHpanStoreService();
+            createHpanStoreService(workingHpanDirectory);
+            createParStoreService(workingParDirectory);
+            createWriterTrackerService();
+
+
             execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
+
+            Resource[] hpanWorkerResources = resolver.getResources(
+                    workingHpanDirectory.concat("/*.csv"));
+
+            Resource[] parWorkerResources = resolver.getResources(
+                    workingParDirectory.concat("/*.csv"));
+
+            int hpanWorkerSize = hpanWorkerResources.length;
+            int parWorkerSize = parWorkerResources.length;
+            Integer hpanFilesCounter = 0;
+            Integer parFilesCounter = 0;
+
+            while (hpanFilesCounter < hpanWorkerSize ||
+                    parFilesCounter < parWorkerSize) {
+
+                transactionResources = resolver.getResources(
+                        hpanFilesCounter == 0 && parFilesCounter == 0 ?
+                                transactionsPath :
+                                innerOutputPath.concat("/*.csv"));
+
+                if (hpanFilesCounter < hpanWorkerSize) {
+                    Resource hpanResource = hpanWorkerResources[hpanFilesCounter];
+                    String tempData = workingHpanDirectory.concat("/current");
+                    String file = hpanResource.getFile().getAbsolutePath();
+                    file = file.replaceAll("\\\\", "/");
+                    String[] filename = file.split("/");
+                    tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
+                    File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                    FileUtils.moveFile(FileUtils.getFile(hpanResource.getFile()), destFile);
+                    hpanFilesCounter = hpanFilesCounter + 1;
+                }
+
+                if (parFilesCounter < parWorkerSize) {
+                    Resource parResource = parWorkerResources[parFilesCounter];
+                    String tempData = workingParDirectory.concat("/current");
+                    String file = parResource.getFile().getAbsolutePath();
+                    file = file.replaceAll("\\\\", "/");
+                    String[] filename = file.split("/");
+                    tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
+                    File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                    FileUtils.moveFile(FileUtils.getFile(parResource.getFile()), destFile);
+                    parFilesCounter = parFilesCounter + 1;
+                }
+
+                clearStoreSet();
+
+                for (Resource transactionResource : transactionResources) {
+                    String tempData = innerOutputPath.concat("/current");
+                    String file = transactionResource.getFile().getAbsolutePath();
+                    file = file.replaceAll("\\\\", "/");
+                    String[] filename = file.split("/");
+                    tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
+                    File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                    FileUtils.moveFile(FileUtils.getFile(transactionResource.getFile()), destFile);
+                }
+
+                Date innerStartDate = new Date();
+
+                Boolean lastSection = hpanFilesCounter.equals(hpanWorkerSize) &&
+                        parFilesCounter.equals(parWorkerSize);
+                execution = jobLauncher().run(jobInner(),
+                        new JobParametersBuilder()
+                                .addDate("startDateTime", innerStartDate)
+                                .addString("lastSection",
+                                        String.valueOf(lastSection))
+                                .addString("tempOutputPath", tempOutputPath)
+                                .addString("innerOutputPath",innerOutputPath)
+                                .addString("workingParDirectory",workingParDirectory)
+                                .addString("workingHpanDirectory",workingHpanDirectory)
+                                .addString("firstSection",
+                                        String.valueOf(
+                                                hpanFilesCounter.equals(1))
+                                )
+                                .toJobParameters());
+
+                if (lastSection) {
+                    for (Resource transactionResource : transactionResources) {
+                        if (transactionResource.getFile().exists()) {
+                            FileUtils.forceDelete(transactionResource.getFile());
+                        }
+                    }
+                }
+
+            }
+
+            Resource[] parResourcesToDelete = resolver.getResources(
+                    workingParDirectory.concat("/*.csv"));
+            for (Resource resource : parResourcesToDelete) {
+                FileUtils.forceDelete(resource.getFile());
+            }
+            Resource[] tempHpanResourcesToDelete = resolver.getResources(
+                    workingHpanDirectory.concat("/*.csv"));
+            for (Resource resource : tempHpanResourcesToDelete) {
+                FileUtils.forceDelete(resource.getFile());
+            }
+            Resource[] tempTransactionToDelete = resolver.getResources(
+                    innerOutputPath.concat("/current/*.csv"));
+            for (Resource resource : tempTransactionToDelete) {
+                FileUtils.forceDelete(resource.getFile());
+            }
+
             closeChannels();
             clearHpanStoreService();
+            clearParStoreService();
+            clearWriterTrackerService();
 
         } else {
             if (transactionResources.length == 0) {
@@ -222,6 +374,16 @@ public class TransactionFilterBatch {
 
     /**
      *
+     * @return instance of a job for transaction processing
+     */
+    @SneakyThrows
+    @Bean
+    public Job jobInner() {
+        return transactionInnerJobBuilder().build();
+    }
+
+    /**
+     *
      * @return bean for a ThreadPoolTaskScheduler
      */
     @Bean
@@ -262,26 +424,52 @@ public class TransactionFilterBatch {
                 .listener(jobListener())
                 .start(hpanListRecoveryTask())
                 .on("FAILED").end()
-                .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.hpanStoreService))
+                .from(hpanListRecoveryTask()).on("*").to(parListRecoveryTask())
+                .on("FAILED").end()
+                .from(parListRecoveryTask()).on("*").to(saltRecoveryTask(this.hpanStoreService))
                 .on("FAILED").end()
                 .from(saltRecoveryTask(this.hpanStoreService)).on("*")
-                .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
+                .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
                 .on("FAILED").to(fileManagementTask())
-                .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
-                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
-                .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
-                .on("FAILED").to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
+                .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService, this.writerTrackerService))
+                .on("*")
+                .to(parReaderStep.parRecoveryMasterStep(this.parStoreService, this.writerTrackerService))
+                .on("*").to(fileManagementTask())
+                .build();
+    }
+
+    @SneakyThrows
+    public FlowJobBuilder transactionInnerJobBuilder() {
+
+        return jobBuilderFactory.get("transaction-inner-filter-job")
+                .repository(getJobRepository())
+                .listener(jobListener())
+                .start(panReaderStep.hpanStoreRecoveryMasterStep(
+                        this.hpanStoreService, this.writerTrackerService))
+                .on("FAILED").to(innerFileManagementTask())
+                .from(panReaderStep.hpanStoreRecoveryMasterStep(
+                        this.hpanStoreService, this.writerTrackerService))
+                .on("*").to(parReaderStep.parStoreRecoveryMasterStep(
+                        this.parStoreService, this.writerTrackerService))
+                .on("FAILED").to(innerFileManagementTask())
+                .from(parReaderStep.parStoreRecoveryMasterStep(
+                        this.parStoreService, this.writerTrackerService))
+                .on("*").to(transactionFilterStep.transactionFilterMasterStep(
+                        this.hpanStoreService,this.parStoreService,this.transactionWriterService))
+                .from(transactionFilterStep.transactionFilterMasterStep(
+                        this.hpanStoreService,this.parStoreService,this.transactionWriterService))
+                .on("FAILED").to(innerFileManagementTask())
+                .from(transactionFilterStep.transactionFilterMasterStep(
+                        this.hpanStoreService,this.parStoreService,this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionSenderMasterStep(
                         this.sftpConnectorService))
-                .on("*").to(fileManagementTask())
+                .on("*").to(innerFileManagementTask())
                 .build();
     }
 
     @Bean
     public JobListener jobListener() {
-        JobListener jobListener = new JobListener();
-        return jobListener;
+        return new JobListener();
     }
 
     @Bean
@@ -299,6 +487,21 @@ public class TransactionFilterBatch {
     }
 
     @Bean
+    public Step parListRecoveryTask() {
+        ParListRecoveryTasklet parListRecoveryTasklet = new ParListRecoveryTasklet();
+        parListRecoveryTasklet.setParListDirectory(parListDirectory);
+        parListRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
+        parListRecoveryTasklet.setFileName(parListFilename);
+        parListRecoveryTasklet.setParFilePattern(parListRecoveryFilePattern);
+        parListRecoveryTasklet.setDailyRemovalTaskletEnabled(parListDailyRemovalEnabled);
+        parListRecoveryTasklet.setRecoveryTaskletEnabled(parListRecoveryEnabled);
+        return stepBuilderFactory
+                .get("transaction-filter-par-list-recovery-step")
+                .tasklet(parListRecoveryTasklet).build();
+    }
+
+
+    @Bean
     public Step saltRecoveryTask(HpanStoreService hpanStoreService) {
         SaltRecoveryTasklet saltRecoveryTasklet = new SaltRecoveryTasklet();
         saltRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
@@ -309,16 +512,17 @@ public class TransactionFilterBatch {
     }
 
     /**
-     * @return step instance based on the {@link FileManagementTasklet} to be used for
+     * @return step instance based on the {@link TransactionFileManagementTasklet} to be used for
      * file archival at the end of the reading process
      */
     @SneakyThrows
     @Bean
     public Step fileManagementTask() {
-        FileManagementTasklet fileManagementTasklet = new FileManagementTasklet();
+        TransactionFileManagementTasklet fileManagementTasklet = new TransactionFileManagementTasklet();
         fileManagementTasklet.setSuccessPath(successArchivePath);
         fileManagementTasklet.setErrorPath(errorArchivePath);
         fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanDirectoryPath());
+        fileManagementTasklet.setParDirectory(parReaderStep.getParDirectoryPath());
         fileManagementTasklet.setOutputDirectory(transactionFilterStep.getOutputDirectoryPath());
         fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
         fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
@@ -327,8 +531,69 @@ public class TransactionFilterBatch {
                 .tasklet(fileManagementTasklet).build();
     }
 
-    public HpanStoreService batchHpanStoreService() {
-        return beanFactory.getBean(HpanStoreService.class);
+    /**
+     * @return step instance based on the {@link InnerTransactionFileManagementTasklet} to be used for
+     * file archival at the end of the reading process
+     */
+    @SneakyThrows
+    @Bean
+    public Step innerFileManagementTask() {
+        return stepBuilderFactory.get("transaction-inner-filter-file-management-step")
+                .tasklet(innerFileManagementTasklet(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null))
+                .build();
+    }
+
+    @Bean
+    @StepScope
+    public InnerTransactionFileManagementTasklet innerFileManagementTasklet(
+            @Value("#{jobParameters['firstSection']}") Boolean firstSection,
+            @Value("#{jobParameters['lastSection']}") Boolean lastSection,
+            @Value("#{jobParameters['innerOutputPath']}") String innerOutputPath,
+            @Value("#{jobParameters['tempOutputPath']}") String temporaryOutputPath,
+            @Value("#{jobParameters['workingParDirectory']}") String workingParDirectory,
+            @Value("#{jobParameters['workingHpanDirectory']}") String workingHpanDirectory) {
+        InnerTransactionFileManagementTasklet fileManagementTasklet = new InnerTransactionFileManagementTasklet();
+        fileManagementTasklet.setSuccessPath(successArchivePath);
+        fileManagementTasklet.setErrorPath(errorArchivePath);
+        fileManagementTasklet.setHpanDirectory(workingHpanDirectory.concat("/*.csv"));
+        fileManagementTasklet.setTempHpanDirectory(workingHpanDirectory);
+        fileManagementTasklet.setParDirectory(workingParDirectory.concat("/*.csv"));
+        fileManagementTasklet.setTempParDirectory(workingParDirectory);
+        fileManagementTasklet.setOutputDirectory(transactionFilterStep.getOutputDirectoryPath());
+        fileManagementTasklet.setInnerOutputDirectory(innerOutputPath);
+        fileManagementTasklet.setTemporaryOutputPath(temporaryOutputPath);
+        fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
+        fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
+        fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
+        fileManagementTasklet.setFirstSection(firstSection);
+        fileManagementTasklet.setLastSection(lastSection);
+        return fileManagementTasklet;
+    }
+
+    public HpanStoreService batchHpanStoreService(String workingHpanDirectory) {
+        HpanStoreService hpanStoreService = beanFactory.getBean(HpanStoreService.class);
+        hpanStoreService.setNumberPerFile(numberPerFile);
+        hpanStoreService.setWorkingHpanDirectory(workingHpanDirectory);
+        hpanStoreService.setCurrentNumberOfData(0L);
+        return hpanStoreService;
+    }
+
+    public ParStoreService batchParStoreService(String workingParDirectory) {
+        ParStoreService parStoreService = beanFactory.getBean(ParStoreService.class);
+        parStoreService.setNumberPerFile(numberPerFile);
+        parStoreService.setWorkingParDirectory(workingParDirectory);
+        parStoreService.setCurrentNumberOfData(0L);
+        return parStoreService;
+    }
+
+    public WriterTrackerService writerTrackerService() {
+        return beanFactory.getBean(WriterTrackerService.class);
     }
 
 }

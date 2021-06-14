@@ -2,13 +2,10 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.ParStoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.annotation.BeforeStep;
-import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 
 import javax.validation.*;
@@ -24,7 +21,10 @@ import java.util.Set;
 public class InboundTransactionItemProcessor implements ItemProcessor<InboundTransaction, InboundTransaction> {
 
     private final HpanStoreService hpanStoreService;
+    private final ParStoreService parStoreService;
     private final Boolean applyHashing;
+    private final Boolean lastSection;
+    private final Boolean hasPar;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static final Validator validator = factory.getValidator();
@@ -51,7 +51,8 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                 DigestUtils.sha256Hex(inboundTransaction.getPan()+hpanStoreService.getSalt()) :
                 inboundTransaction.getPan();
 
-        if (hpanStoreService.hasHpan(hpan)) {
+        if (hpanStoreService.hasHpan(hpan) ||
+                (hasPar && parStoreService.hasPar(inboundTransaction.getPar()))) {
             InboundTransaction resultTransaction =
                     InboundTransaction
                             .builder()
@@ -72,16 +73,22 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                             .acquirerCode(inboundTransaction.getAcquirerCode())
                             .amount(inboundTransaction.getAmount())
                             .trxDate(inboundTransaction.getTrxDate())
+                            .par(inboundTransaction.getPar())
                             .build();
-
-            resultTransaction.setPan(applyHashing ?
+            resultTransaction.setValid(true);
+            resultTransaction.setHpan(applyHashing ?
                     hpan : DigestUtils.sha256Hex(
-                    resultTransaction.getPan()+hpanStoreService.getSalt()));
+                            inboundTransaction.getPan() + hpanStoreService.getSalt()));
 
-            return resultTransaction;
+            return inboundTransaction;
         } else {
-            return null;
+            if (lastSection) {
+                return null;
+            }
+            inboundTransaction.setValid(false);
         }
+
+        return inboundTransaction;
 
     }
 

@@ -1,8 +1,8 @@
 package it.gov.pagopa.rtd.transaction_filter;
 
+import it.gov.pagopa.rtd.transaction_filter.batch.TokenPanFilterBatch;
 import it.gov.pagopa.rtd.transaction_filter.batch.TransactionFilterBatch;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobExecution;
@@ -32,7 +32,12 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 
 	private final TransactionFilterStep transactionFilterStep;
 	private final PanReaderStep panReaderStep;
+	private final ParReaderStep parReaderStep;
+	private final TokenPanFilterStep tokenPanFilterStep;
+	private final BinReaderStep binReaderStep;
+	private final TokenPanReaderStep tokenPanReaderStep;
 	private final TransactionFilterBatch transactionFilterBatch;
+	private final TokenPanFilterBatch tokenPanFilterBatch;
 	PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
 	public static void main(String[] args) {
@@ -49,16 +54,45 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 				log.info("CsvTransactionReader single-time job started at " + startDate);
 			}
 
-			JobExecution jobExecution = transactionFilterBatch.executeBatchJob(startDate);
+			JobExecution jobExecution1 = transactionFilterBatch.executeBatchJob(startDate);
+
+			int jobExecCode = jobExecution1 != null ?
+					new SimpleJvmExitCodeMapper().intValue(
+							jobExecution1.getExitStatus().getExitCode()) : 0;
+
+			Date partEndTime = new Date();
+			if (log.isInfoEnabled()) {
+				log.info("CsvTransactionReader transaction job ended at " + partEndTime);
+				log.info("Completed in: " + (partEndTime.getTime() - startDate.getTime()) + " (ms)");
+			}
+
+			Date partStartDate = new Date();
+			if (log.isInfoEnabled()) {
+				log.info("CsvTransactionReader token single-time job started at " + startDate);
+			}
+
+			if (jobExecCode == 0 && tokenPanFilterBatch.getTokenPanValidationEnabled()) {
+				tokenPanFilterBatch.setSalt(transactionFilterBatch.getSalt());
+				JobExecution jobExecution2 = tokenPanFilterBatch.executeBatchJob(startDate);
+				jobExecCode = jobExecution2 != null ?
+						new SimpleJvmExitCodeMapper().intValue(
+								jobExecution2.getExitStatus().getExitCode()) : 0;
+
+			}
 
 			Date endDate = new Date();
+
+			if (log.isInfoEnabled()) {
+				log.info("CsvTransactionReader token single-time job ended at " + endDate);
+				log.info("Completed in: " + (endDate.getTime() - partStartDate.getTime()) + " (ms)");
+			}
+
 			if (log.isInfoEnabled()) {
 				log.info("CsvTransactionReader single-time job ended at " + endDate);
 				log.info("Completed in: " + (endDate.getTime() - startDate.getTime()) + " (ms)");
 			}
 
-			System.exit(jobExecution != null ?
-					new SimpleJvmExitCodeMapper().intValue(jobExecution.getExitStatus().getExitCode()) : 0);
+			System.exit(jobExecCode);
 
 		}
 

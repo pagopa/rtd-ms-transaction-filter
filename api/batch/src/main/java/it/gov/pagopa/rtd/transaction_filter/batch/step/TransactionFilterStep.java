@@ -1,18 +1,20 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
+import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionFieldSetMapper;
+import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionLineAwareMapper;
+import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.classifier.InboundTransactionClassifier;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemProcessListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemReaderListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemWriterListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionReaderStepListener;
-import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionFieldSetMapper;
-import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
-import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.ParStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
@@ -44,10 +46,9 @@ import java.io.FileNotFoundException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -104,12 +105,13 @@ public class TransactionFilterStep {
     private Boolean enableOnWriteErrorLogging;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency}")
     private Long loggingFrequency;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize}")
-    private Integer writerPoolSize;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.tokenInputPath}")
+    private String tokenInputPath;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.parEnabled}")
+    private Boolean parEnabled;
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
-    private ExecutorService writerExecutor;
 
     /**
      *
@@ -119,10 +121,15 @@ public class TransactionFilterStep {
     public LineTokenizer transactionLineTokenizer() {
         DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
         delimitedLineTokenizer.setDelimiter(";");
-        delimitedLineTokenizer.setNames(
+        List<String> parNames = new ArrayList<>(Arrays.asList(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
-                "bank_identification_number", "MCC");
+                "bank_identification_number", "MCC"));
+        if (parEnabled) {
+            parNames.add("par");
+        }
+        String[] parNamesArray = parNames.toArray(new String[]{});
+        delimitedLineTokenizer.setNames(parNamesArray);
         return delimitedLineTokenizer;
     }
 
@@ -132,7 +139,7 @@ public class TransactionFilterStep {
      */
     @Bean
     public FieldSetMapper<InboundTransaction> transactionFieldSetMapper() {
-        return new InboundTransactionFieldSetMapper(timestampPattern);
+        return new InboundTransactionFieldSetMapper(timestampPattern, parEnabled);
     }
 
     /**
@@ -140,7 +147,8 @@ public class TransactionFilterStep {
      * @return instance of the LineMapper to be used in the itemReader configured for the job
      */
     public LineMapper<InboundTransaction> transactionLineMapper(String fileName) {
-        LineAwareMapper<InboundTransaction> lineMapper = new LineAwareMapper<>();
+        InboundTransactionLineAwareMapper<InboundTransaction> lineMapper =
+                new InboundTransactionLineAwareMapper<>();
         lineMapper.setTokenizer(transactionLineTokenizer());
         lineMapper.setFieldSetMapper(transactionFieldSetMapper());
         lineMapper.setFilename(fileName);
@@ -172,10 +180,16 @@ public class TransactionFilterStep {
     @Bean
     public BeanWrapperFieldExtractor<InboundTransaction> transactionWriterFieldExtractor() {
         BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
-        extractor.setNames(new String[] {
-                "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
+
+        List<String> parNames = new ArrayList<>(Arrays.asList( "acquirerCode", "operationType", "circuitType", "hpan", "trxDate", "idTrxAcquirer",
                 "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
-                "terminalId", "bin", "mcc"});
+                "terminalId", "bin", "mcc"));
+        if (parEnabled) {
+            parNames.add("par");
+        }
+        String[] parNamesArray = parNames.toArray(new String[]{});
+        extractor.setNames(parNamesArray);
+
         return extractor;
     }
 
@@ -200,15 +214,19 @@ public class TransactionFilterStep {
     @SneakyThrows
     @Bean
     @StepScope
-    public PGPFlatFileItemWriter transactionItemWriter(
-            @Value("#{stepExecutionContext['fileName']}") String file) {
-        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKeyPath, applyEncrypt);
+    public PGPFlatFileItemWriter<InboundTransaction> transactionItemWriter(
+            @Value("#{stepExecutionContext['fileName']}") String file,
+            @Value("#{jobParameters['tempOutputPath']}") String tempOutputPath,
+            @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
+        PGPFlatFileItemWriter<InboundTransaction> flatFileItemWriter =
+                new PGPFlatFileItemWriter<>(publicKeyPath, applyEncrypt, lastSection);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
+        flatFileItemWriter.setAppendAllowed(true);
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         flatFileItemWriter.setResource(
-                resolver.getResource(outputDirectoryPath.concat("/".concat(filename[filename.length-1]))));
+                resolver.getResource(tempOutputPath.concat("/".concat(filename[filename.length-1]))));
         return flatFileItemWriter;
     }
 
@@ -222,15 +240,17 @@ public class TransactionFilterStep {
     @Bean
     @StepScope
     public FlatFileItemWriter<InboundTransaction> transactionFilteredItemWriter(
-            @Value("#{stepExecutionContext['fileName']}") String file) {
+            @Value("#{stepExecutionContext['fileName']}") String file,
+            @Value("#{jobParameters['innerOutputPath']}") String innerOutputPath) {
         FlatFileItemWriter<InboundTransaction> flatFileItemWriter = new FlatFileItemWriter<>();
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
+        flatFileItemWriter.setAppendAllowed(true);
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         flatFileItemWriter.setResource(
-                resolver.getResource(transactionLogsPath.concat("/"
-                        .concat("FilteredRecords_"+filename[filename.length-1]))));
+                resolver.getResource(innerOutputPath.concat("/"
+                        .concat(filename[filename.length-1]))));
         return flatFileItemWriter;
     }
 
@@ -242,10 +262,15 @@ public class TransactionFilterStep {
     @Bean
     @StepScope
     public InboundTransactionItemProcessor transactionItemProcessor(
-            HpanStoreService hpanStoreService) {
+            HpanStoreService hpanStoreService,
+            ParStoreService parStoreService,
+            @Value("#{jobParameters['lastSection']}") Boolean lastSection) {
         return new InboundTransactionItemProcessor(
                 hpanStoreService,
-                this.applyTrxHashing);
+                parStoreService,
+                this.applyTrxHashing,
+                lastSection,
+                parEnabled);
     }
 
     /**
@@ -255,10 +280,11 @@ public class TransactionFilterStep {
      */
     @Bean
     @JobScope
-    public Partitioner transactionFilterPartitioner() throws Exception {
+    public Partitioner transactionFilterPartitioner(
+            @Value("#{jobParameters['innerOutputPath']}") String innerOutputPath) throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(transactionDirectoryPath));
+        partitioner.setResources(resolver.getResources(innerOutputPath.concat("/current/*.csv")));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -271,11 +297,12 @@ public class TransactionFilterStep {
      */
     @Bean
     public Step transactionFilterMasterStep(HpanStoreService hpanStoreService,
+                                            ParStoreService parStoreService,
                                             TransactionWriterService transactionWriterService)
             throws Exception {
         return stepBuilderFactory.get("transaction-filter-master-step").partitioner(
-                transactionFilterWorkerStep(hpanStoreService,transactionWriterService))
-                .partitioner("partition", transactionFilterPartitioner())
+                transactionFilterWorkerStep(hpanStoreService, parStoreService, transactionWriterService))
+                .partitioner("partition", transactionFilterPartitioner(null))
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -286,20 +313,25 @@ public class TransactionFilterStep {
      * @throws Exception
      */
     @Bean
-    public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService)
+    public Step transactionFilterWorkerStep(
+            HpanStoreService hpanStoreService, ParStoreService parStoreService,
+            TransactionWriterService transactionWriterService)
             throws Exception {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
-        return simpleWorkerStep(hpanStoreService, transactionWriterService, executionDate);
+        return simpleWorkerStep(hpanStoreService, parStoreService, transactionWriterService, executionDate);
     }
 
 
-    public Step simpleWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService, String executionDate) throws Exception {
+    public Step simpleWorkerStep(HpanStoreService hpanStoreService,
+                                 ParStoreService parStoreService,
+                                 TransactionWriterService transactionWriterService,
+                                 String executionDate) throws Exception {
             return stepBuilderFactory.get("transaction-filter-worker-step")
                     .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                     .reader(transactionItemReader(null))
-                    .processor(transactionItemProcessor(hpanStoreService))
-                    .writer(transactionItemWriter(null))
+                    .processor(transactionItemProcessor(hpanStoreService, parStoreService, null))
+                    .writer(classifierTransactionCompositeItemWriter())
                     .faultTolerant()
                     .skipLimit(skipLimit)
                     .noSkip(FileNotFoundException.class)
@@ -313,13 +345,16 @@ public class TransactionFilterStep {
                     .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
                     .listener(transactionsItemWriteListener(transactionWriterService,executionDate))
                     .listener(transactionStepListener(transactionWriterService, executionDate))
+                    .stream(transactionItemWriter(null, null,null))
+                    .stream(transactionFilteredItemWriter(null, null))
                     .taskExecutor(batchConfig.readerTaskExecutor())
                     .build();
     }
 
     @Bean
     public TransactionReaderStepListener transactionStepListener(
-            TransactionWriterService transactionWriterService, String executionDate) {
+            TransactionWriterService transactionWriterService,
+            String executionDate) {
         TransactionReaderStepListener transactionReaderStepListener = new TransactionReaderStepListener();
         transactionReaderStepListener.setTransactionWriterService(transactionWriterService);
         transactionReaderStepListener.setErrorTransactionsLogsPath(transactionLogsPath);
@@ -336,6 +371,7 @@ public class TransactionFilterStep {
         transactionItemReaderListener.setErrorTransactionsLogsPath(transactionLogsPath);
         transactionItemReaderListener.setEnableAfterReadLogging(enableAfterReadLogging);
         transactionItemReaderListener.setLoggingFrequency(loggingFrequency);
+        transactionItemReaderListener.setTransactionWriterService(transactionWriterService);
         transactionItemReaderListener.setEnableOnErrorFileLogging(enableOnReadErrorFileLogging);
         transactionItemReaderListener.setEnableOnErrorLogging(enableOnReadErrorLogging);
         return transactionItemReaderListener;
@@ -350,6 +386,7 @@ public class TransactionFilterStep {
         transactionsItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
         transactionsItemWriteListener.setEnableAfterWriteLogging(enableAfterWriteLogging);
         transactionsItemWriteListener.setLoggingFrequency(loggingFrequency);
+        transactionsItemWriteListener.setTransactionWriterService(transactionWriterService);
         transactionsItemWriteListener.setEnableOnErrorFileLogging(enableOnWriteErrorFileLogging);
         transactionsItemWriteListener.setEnableOnErrorLogging(enableOnWriteErrorLogging);
         return transactionsItemWriteListener;
@@ -361,6 +398,7 @@ public class TransactionFilterStep {
         TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionItemProcessListener.setTokenPanInputPath(tokenInputPath);
         transactionItemProcessListener.setEnableAfterProcessLogging(enableAfterProcessLogging);
         transactionItemProcessListener.setLoggingFrequency(loggingFrequency);
         transactionItemProcessListener.setEnableOnErrorFileLogging(enableOnProcessErrorFileLogging);
@@ -426,16 +464,16 @@ public class TransactionFilterStep {
         return transactionSenderTasklet;
     }
 
-    /**
-     *
-     * @return bean configured for usage for chunk reading of a single file
-     */
     @Bean
-    public ExecutorService writerExecutor() {
-        if (writerExecutor == null) {
-            writerExecutor = Executors.newFixedThreadPool(writerPoolSize);
-        }
-        return writerExecutor;
+    public ClassifierCompositeItemWriter<InboundTransaction> classifierTransactionCompositeItemWriter()
+            throws Exception {
+        ClassifierCompositeItemWriter<InboundTransaction> compositeItemWriter =
+                new ClassifierCompositeItemWriter<>();
+        compositeItemWriter.setClassifier(
+                new InboundTransactionClassifier(
+                        transactionItemWriter(null, null,null),
+                        transactionFilteredItemWriter(null, null)));
+        return compositeItemWriter;
     }
 
 }

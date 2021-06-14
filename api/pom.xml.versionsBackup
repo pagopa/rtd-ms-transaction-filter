@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <artifactId>rtd-ms-transaction-filter</artifactId>
+        <groupId>it.gov.pagopa.rtd.ms</groupId>
+        <version>1.0.0-RC9</version>
+
+    </parent>
+
+    <groupId>it.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
+    <artifactId>rtd-ms-transaction-filter-api</artifactId>
+    <version>1.0.0-RC9</version>
+
+    <packaging>pom</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
+            <artifactId>rtd-ms-transaction-filter-core</artifactId>
+            <version>1.0.0-RC9</version>
+
+        </dependency>
+    </dependencies>
+
+    <modules>
+        <module>batch</module>
+    </modules>
+</project>
+

@@ -14,17 +14,16 @@ import org.springframework.util.StreamUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Enumeration;
-import java.util.Objects;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -70,12 +69,19 @@ class HpanRestClientImpl implements HpanRestClient {
     @Value("${rest-client.hpan.list.dateValidationZone}")
     private String dateValidationZone;
 
+    @Value("${rest-client.hpan.list.partialFileRecovery}")
+    private Boolean partialFileRecovery;
+
+    @Value("${rest-client.hpan.list.nextPartHeader}")
+    private String nextPartHeader;
+
     private final HpanRestConnector hpanRestConnector;
 
     private LocalDateTime validationDate;
 
-    private File tempFile;
-    private Path tempDirWithPrefix;
+    private final List<File> tempHpanFiles;
+    private final List<File> tempParFiles;
+    private Path tempHpanDirWithPrefix;
 
     /**
     * Method used for recovering the list, if the properties are enabled, an attempt of validating
@@ -84,11 +90,99 @@ class HpanRestClientImpl implements HpanRestClient {
      */
     @SneakyThrows
     @Override
-    public File getList() {
+    public List<File> getHpanList() {
+        if (!partialFileRecovery) {
+           return fullFileHpanRecovery();
+        } else {
+            String filePartId = "1";
+            return partialFileHpanRecovery(filePartId);
+        }
+    }
 
-        tempFile = File.createTempFile("hpanDownloadFile", "");
-        File localTempFile = tempFile;
-        ResponseEntity<Resource> responseEntity = hpanRestConnector.getList(apiKey);
+    /**
+     * Method used for recovering the list, if the properties are enabled, an attempt of validating
+     * the checksum recovered from the configured header name, and eventually extracting the .csv or .pgp
+     * file from the compressed file obtained through the request
+     */
+    @SneakyThrows
+    @Override
+    public List<File> getParList() {
+        if (!partialFileRecovery) {
+            return fullFileParRecovery();
+        } else {
+            String filePartId = "1";
+            return partialFileParRecovery(filePartId);
+        }
+    }
+
+    @SneakyThrows
+    private List<File> fullFileParRecovery() {
+        File tempParFile = File.createTempFile("parDownloadFile", "");
+        tempParFiles.add(tempParFile);
+        File localTempFile = tempParFile;
+        ResponseEntity<Resource> responseEntity = hpanRestConnector.getParList(apiKey);
+        localTempFile = processFile(localTempFile, responseEntity);
+        return Collections.singletonList(localTempFile);
+    }
+
+    @SneakyThrows
+    private List<File> partialFileParRecovery(String filePartId) {
+        File tempFile = File.createTempFile("parDownloadFile_"
+                .concat(filePartId), "");
+        tempParFiles.add(tempFile);
+        ResponseEntity<Resource> responseEntity = hpanRestConnector
+                .getPartialParList(apiKey, filePartId);
+        tempFile = processFile(tempFile, responseEntity);
+        List<String> nextPartHeaderValues = responseEntity.getHeaders().get(nextPartHeader);
+        String nextPartHeaderValue = null;
+        if (nextPartHeaderValues != null) {
+            nextPartHeaderValue = nextPartHeaderValues.get(0);
+        }
+
+        List<File> returnFile = new ArrayList<>(Collections.singletonList(tempFile));
+
+        if (nextPartHeaderValue != null) {
+            returnFile.addAll(partialFileHpanRecovery(nextPartHeaderValue));
+        }
+
+        return returnFile;
+    }
+
+    @SneakyThrows
+    private List<File> fullFileHpanRecovery() {
+        File tempHpanFile = File.createTempFile("hpanDownloadFile", "");
+        tempHpanFiles.add(tempHpanFile);
+        File localTempFile = tempHpanFile;
+        ResponseEntity<Resource> responseEntity = hpanRestConnector.getHpanList(apiKey);
+        localTempFile = processFile(localTempFile, responseEntity);
+        return Collections.singletonList(localTempFile);
+    }
+
+    @SneakyThrows
+    private List<File> partialFileHpanRecovery(String filePartId) {
+        File tempFile = File.createTempFile("hpanDownloadFile_"
+                .concat(filePartId), "");
+        tempHpanFiles.add(tempFile);
+        ResponseEntity<Resource> responseEntity = hpanRestConnector
+                .getPartialList(apiKey, filePartId);
+        tempFile = processFile(tempFile, responseEntity);
+        List<String> nextPartHeaderValues = responseEntity.getHeaders().get(nextPartHeader);
+        String nextPartHeaderValue = null;
+        if (nextPartHeaderValues != null) {
+            nextPartHeaderValue = nextPartHeaderValues.get(0);
+        }
+
+        List<File> returnFile = new ArrayList<>(Collections.singletonList(tempFile));
+
+        if (nextPartHeaderValue != null) {
+            returnFile.addAll(partialFileHpanRecovery(nextPartHeaderValue));
+        }
+
+        return returnFile;
+    }
+
+    @SneakyThrows
+    private File processFile(File tempFile, ResponseEntity<Resource> responseEntity) {
 
         if (dateValidation) {
             String dateString = Objects.requireNonNull(responseEntity.getHeaders()
@@ -99,7 +193,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
             ZonedDateTime fileCreationDateTime = LocalDateTime.parse(dateString, dtf)
                     .atZone(ZoneId.of(dateValidationZone));
-;           ZonedDateTime currentDate = validationDate != null ?
+            ;           ZonedDateTime currentDate = validationDate != null ?
                     validationDate.atZone(ZoneId.of(dateValidationZone)) :
                     LocalDateTime.now().atZone(ZoneId.of(dateValidationZone));
 
@@ -137,7 +231,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
             try (ZipFile zipFile = new ZipFile(tempFile)) {
 
-                tempDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
+                tempHpanDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
 
                 Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
 
@@ -151,7 +245,7 @@ class HpanRestClientImpl implements HpanRestClient {
                         ZipEntry zipEntry = enumeration.nextElement();
                         zipEntryIS = zipFile.getInputStream(zipEntry);
                         File newFile = new File(
-                                tempDirWithPrefix.toFile().getAbsolutePath() +
+                                tempHpanDirWithPrefix.toFile().getAbsolutePath() +
                                         File.separator + zipEntry.getName());
                         new File(newFile.getParent()).mkdirs();
 
@@ -159,7 +253,7 @@ class HpanRestClientImpl implements HpanRestClient {
                         IOUtils.copy(zipEntryIS, tempFileFOS);
 
                         if (zipEntry.getName().matches(listFilePattern)) {
-                            localTempFile = newFile;
+                            tempFile = newFile;
                         }
 
                     } finally {
@@ -177,7 +271,7 @@ class HpanRestClientImpl implements HpanRestClient {
             }
         }
 
-        return localTempFile;
+        return tempFile;
     }
 
     @Override
@@ -193,13 +287,33 @@ class HpanRestClientImpl implements HpanRestClient {
     public void cleanTempFile() {
 
         try {
-            FileUtils.forceDelete(tempFile);
+            tempHpanFiles.forEach(tempHpanFile -> {
+                try {
+                    FileUtils.forceDelete(tempHpanFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            tempHpanFiles.clear();
         } catch (Exception e) {
             log.error(e.getMessage(),e);
         }
 
         try {
-            FileUtils.deleteDirectory(tempDirWithPrefix.toFile());
+            tempParFiles.forEach(tempParFile -> {
+                try {
+                    FileUtils.forceDelete(tempParFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            tempParFiles.clear();
+        } catch (Exception e) {
+            log.error(e.getMessage(),e);
+        }
+
+        try {
+            FileUtils.deleteDirectory(tempHpanDirWithPrefix.toFile());
         } catch (Exception e) {
             log.error(e.getMessage(),e);
         }

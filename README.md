@@ -78,6 +78,23 @@ value of frequency would be around 10% of the normal record volume per file.
 Active logging/file writing in case of filtered records, or errors, can be disabled through the properties reported
 in __Appendix 2, Paragraph 4 - Batch properties - Transaction list reading__.
 
+### Memory optimization
+
+Starting from the version 2.0.0 the process used to store and compare the data regarding the hpan, par, bin range
+and tokenPAN lists contains a configurable limitation to the number of data that can be stored in-memory, reducing
+the chance to incur into memory problems, and possibile slowing of the entire execution with increasing volumes of data
+to be used for comparison.
+
+The transaction files will be processed in cycles, with a series of job executions using a portion of the data sets, 
+and a version of the transaction file that is the product of the previous cycles, until all the portions of data are used
+to execute the filters with hpan or par in the transaction file production, and bin-range and tokenPans
+for the token file production. The output data will be moved to the final directory when all the cycles are completed.
+
+By default all the properties are set to 5 millions, a set of data that can be used with a memory assignment < 4 Gb. 
+The properties could be changed with an higher or lower limit, depending on the memory that is available for the process.
+If the limit is higher than the current data-sets, a single job run can be expected. 
+
+
 ### REST Services Connection
 
 The Batch Acquirer is configurabile for contacting the salt recovery service, to be applied for the PAN hashing,
@@ -105,15 +122,16 @@ properties listed in __Appendix 2 - Configuration properties__.
 
 To use a proxy configuration for the rest client, either use the standard env configurations, or enable
 the internal configuration through the property _rest-client.hpan.proxy.enabled_, and the related configurations
-for the proxy host, port, username and password.
+for the proxy host, port, username and password. The properties described are valid for the PAR list recovery.
 
 Services hosted through Azure will require a subscription key, this can be configured using the property 
-__rest-client.hpan.api.key__. 
+__rest-client.hpan.api.key__. For the services regarding the recovery for bin and tokenPan lists,
+the endpoints are on the product TKM SIT ACQUIRER API for SIT, TKM UAT ACQUIRER API for UAT and
+TKM PROD ACQUIRER API for PROD. THe subscription are to be used in the property __rest-client.tkm.api.key__.
 
 For the list recovery service additional configurations are considered for extracting the resource through a compressed file
 (default setting for the exposed Azure enviroment), enabled through the property __rest-client.hpan.list.attemptExtraction__,
-the resource matching __rest-client.hpan.list.listFilePattern__ is considered to be a valid
-hpan list file.
+the resource matching __rest-client.hpan.list.listFilePattern__ is considered to be a valid hpan list file.
 
 Checksum validation for the recovered file is enabled through the property __rest-client.hpan.list.checksumValidation__,
 the resource checksum is extracted through the header configured with __checksumHeaderName__.
@@ -121,6 +139,23 @@ the resource checksum is extracted through the header configured with __checksum
 Date validation for the recovered file is enabled through the property __rest-client.hpan.list.dateValidation__,
 the resource creation/update timestamp is extracted through the header configured with __dateValidationHeaderName__, and
 defined with the timestamp pattern defined in __rest-client.hpan.list.dateValidationPattern__, if enabled the execution date
+is compared with the recovered timestamp, if the difference exceeds 24 hours, an exception is thrown.
+
+For the new endpoints, regarding the production of a list of tokens, the REST client used has a similar structure to the previously existing
+endpoints. Differntly from the previous cases, the initial calls does not have a redirect, but the retrieval
+is managed from a list of link retrieved with the first endpoints for the tokenPan and bin lists, and called in a
+sequencial manner, in order to obtain all the parts containing the informations.
+
+For the list recovery service additional configurations are considered for extracting the resource through a compressed file
+(default setting for the exposed Azure enviroment), enabled through the property __rest-client.tkm.list.attemptExtraction__,
+the resource matching __rest-client.tkm.list.listFilePattern__ is considered to be a valid token list file.
+
+Checksum validation for the recovered file is enabled through the property __rest-client.tkm.list.checksumValidation__,
+the resource checksum is extracted through the header configured with __checksumHeaderName__.
+
+Date validation for the recovered file is enabled through the property __rest-client.tkm.list.dateValidation__,
+the resource creation/update timestamp is extracted through the header configured with __dateValidationHeaderName__, and
+defined with the timestamp pattern defined in __rest-client.tkm.list.dateValidationPattern__, if enabled the execution date
 is compared with the recovered timestamp, if the difference exceeds 24 hours, an exception is thrown.
 
 To generate a keystore from the a .pfx file, use the following commands to produce a JKS file:
@@ -321,12 +356,25 @@ __batchConfiguration.TransactionFilterBatch.readerMaxPoolSize__ | Maximum number
 __batchConfiguration.TransactionFilterBatch.readerCorePoolSize__ | Maximum number of transaction csv file readers | ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5} | NO
 __batchConfiguration.TransactionFilterBatch.tablePrefix__ | Table prefix containing the metadata related to the execution of the batch, if active | ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_} | NO
 __batchConfiguration.TransactionFilterBatch.isolationForCreate_ | Define the isolation level used by the jobRepository on the batch tables | ${ACQ_BATCH_TRX_ISOLATION_FOR_CREATE:ISOLATION_SERIALIZABLE} | NO
+__batchConfiguration.TransactionFilterBatch.hpanList.numberPerFile__ | Maximum number can be contained in memory concurrently in a phase of the cycle for the hpan files | ${ACQ_BATCH_WORKER_HPAN_NUMBER:5000000} | NO
+__batchConfiguration.TransactionFilterBatch.panList.numberPerFile__ |  batchConfiguration.TransactionFilterBatch.parList.numberPerFile  | ${ACQ_BATCH_WORKER_PAR_NUMBER:5000000} | NO
+__batchConfiguration.TokenPanFilterBatch.successArchivePath__ | Move initial csv to success path| file:/${ACQ_BATCH_SUCCESS_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/success} | YES
+__batchConfiguration.TokenPanFilterBatch.errorArchivePath__ | Path where the files whose processing goes wrong are moved | file:/${ACQ_BATCH_ERROR_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/error} | YES
+__batchConfiguration.TokenPanFilterBatch.partitionerMaxPoolSize__ | Batch max partitioner setting | ${ACQ_BATCH_INPUT_PART_MAX_POOL_SIZE:5} | NO
+__batchConfiguration.TokenPanFilterBatch.partitionerCorePoolSize__ | Batch partitioner pool setup | ${ACQ_BATCH_INPUT_PART_CORE_POOL_SIZE:5} | NO
+__batchConfiguration.TokenPanFilterBatch.readerMaxPoolSize__ | Maximum number of transaction csv file readers | ${ACQ_BATCH_INPUT_PART_READ_MAX_POOL_SIZE:5} | NO
+__batchConfiguration.TokenPanFilterBatch.readerCorePoolSize__ | Maximum number of transaction csv file readers | ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5} | NO
+__batchConfiguration.TokenPanFilterBatch.tablePrefix__ | Table prefix containing the metadata related to the execution of the batch, if active | ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_} | NO
+__batchConfiguration.TokenPanFilterBatch.isolationForCreate_ | Define the isolation level used by the jobRepository on the batch tables | ${ACQ_BATCH_TRX_ISOLATION_FOR_CREATE:ISOLATION_SERIALIZABLE} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanList.numberPerFile__ | Maximum number can be contained in memory concurrently in a phase of the cycle for the hpan files | ${ACQ_BATCH_WORKER_TOKEN_PAN_NUMBER:5000000} | NO
+__batchConfiguration.TokenPanFilterBatch.binList.numberPerFile__ |  batchConfiguration.TransactionFilterBatch.parList.numberPerFile  | ${ACQ_BATCH_WORKER_BIN_NUMBER:5000000} | NO
+__batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the hpan file | ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE	
 
 #### 3. Batch properties - PAN List reading
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------ 
-__batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath__ | The path where you saved the file pgp containing HPAN | file:/${ACQ_BATCH_HPAN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
+__batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath__ | The path where you saved the file containing HPANs | file:/${ACQ_BATCH_HPAN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
 __batchConfiguration.TransactionFilterBatch.panList.secretKeyPath__ | Path where the private key is saved | file:/${ACQ_BATCH_INPUT_SECRET_KEYPATH:} | YES
 __batchConfiguration.TransactionFilterBatch.panList.passphrase__ | Passphrase for the private key | ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:} | YES
 __batchConfiguration.TransactionFilterBatch.panList.partitionerSize__ | Size of the partitioner used to read the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
@@ -334,12 +382,48 @@ __batchConfiguration.TransactionFilterBatch.panList.chunkSize__ | Size of the ch
 __batchConfiguration.TransactionFilterBatch.panList.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
 __batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the hpan file | ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE	
 
-#### 4. Batch properties - Transaction list reading
+#### 4. Batch properties - PAR List reading
+
+Key |  Description | Default | Mandatory | Values
+--- | ------------ | ------- | ------------ | ------ 
+__batchConfiguration.TransactionFilterBatch.parList.parDirectoryPath__ | The path where you saved the file containing PARs | file:/${ACQ_BATCH_PAR_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
+__batchConfiguration.TransactionFilterBatch.parList.secretKeyPath__ | Path where the private key is saved | file:/${ACQ_BATCH_INPUT_SECRET_KEYPATH:} | YES
+__batchConfiguration.TransactionFilterBatch.parList.passphrase__ | Passphrase for the private key | ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:} | YES
+__batchConfiguration.TransactionFilterBatch.parList.partitionerSize__ | Size of the partitioner used to read the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TransactionFilterBatch.parList.chunkSize__ | Size of the chunks used for reading the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TransactionFilterBatch.parList.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
+__batchConfiguration.TransactionFilterBatch.parList.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the par file | ${ACQ_BATCH_PAR_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE	
+
+#### 3. Batch properties - BIN List reading
+
+Key |  Description | Default | Mandatory | Values
+--- | ------------ | ------- | ------------ | ------ 
+__batchConfiguration.TokenPanFilterBatch.bin.binDirectoryPath__ | The path where you saved the file containing BIN Ranges | file:/${ACQ_BATCH_BIN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
+__batchConfiguration.TokenPanFilterBatch.bin.secretKeyPath__ | Path where the private key is saved | file:/${ACQ_BATCH_INPUT_SECRET_KEYPATH:} | YES
+__batchConfiguration.TokenPanFilterBatch.bin.passphrase__ | Passphrase for the private key | ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:} | YES
+__batchConfiguration.TokenPanFilterBatch.bin.partitionerSize__ | Size of the partitioner used to read the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TokenPanFilterBatch.bin.chunkSize__ | Size of the chunks used for reading the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TokenPanFilterBatch.bin.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
+__batchConfiguration.TokenPanFilterBatch.bin.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the bin file | ${ACQ_BATCH_BIN_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE	
+
+#### 4. Batch properties - HTokenPAN List reading
+
+Key |  Description | Default | Mandatory | Values
+--- | ------------ | ------- | ------------ | ------ 
+__batchConfiguration.TokenPanFilterBatch.tokenPanList.tokenPanDirectoryPath__ | The path where you saved the file containing known HTokenPANs for enrolled instruments | file:/${ACQ_BATCH_TOKEN_PAN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
+__batchConfiguration.TokenPanFilterBatch.tokenPanList.secretKeyPath__ | Path where the private key is saved | file:/${ACQ_BATCH_INPUT_SECRET_KEYPATH:} | YES
+__batchConfiguration.TokenPanFilterBatch.tokenPanList.passphrase__ | Passphrase for the private key | ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:} | YES
+__batchConfiguration.TokenPanFilterBatch.tokenPanList.partitionerSize__ | Size of the partitioner used to read the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanList.chunkSize__ | Size of the chunks used for reading the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanList.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanList.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the htokenPAN file | ${ACQ_BATCH_TOKEN_PAN_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE	
+
+#### 5. Batch properties - Transaction list reading
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
 __batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath__ | Path where the transaction file to be processed is read | file:/${ACQ_BATCH_TRX_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath__ | Path where the final file is writtene | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/output} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath__ | Path where the final file is written | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/output} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath__ | Path containing the public key with which to encrypt the result file | file:/${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize__ | Partitiner size for transaction files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize__ | Chunck size for reading transaction files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
@@ -360,8 +444,37 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.e
 __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorLogging__ | Property to enable logging for the records that had errors on the writing phase | ${ACQ_BATCH_TRX_WRITE_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorFileLogging__ | Property to enable writing the records that had errors on the writing phase | ${ACQ_BATCH_TRX_WRITE_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency__ | Logging frequency for transaction records | ${ACQ_BATCH_TRX_READ_LOGGING_FREQUENCY:10000} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.tokenInputPath__ | Path where the file to be used for the tokenPAN file production is written | file:/${ACQ_BATCH_TOKEN_INPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/output} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.parEnabled__ | Indicates whether the file should contain the par column or not | ${ACQ_BATCH_TRX_PAR_ENABLED:false} | YES | TRUE FALSE
 
-#### 5. Batch properties - SFTP
+
+#### 6. Batch properties - Token list reading
+
+Key |  Description | Default | Mandatory | Values
+--- | ------------ | ------- | ------------ | ------
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.transactionDirectoryPath__ | Path where the transaction file to be processed is read | file:/${ACQ_BATCH_TOKEN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.outputDirectoryPath__ | Path where the final file is written | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TOKEN_INPUT_PATH:}/output} | YES
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.publicKeyPath__ | Path containing the public key with which to encrypt the result file | file:/${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:} | YES
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.partitionerSize__ | Partitiner size for tokens files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.chunkSize__ | Chunck size for reading tokens files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.applyHashing__ | Flag that drives the hashing to the pan present in the transaction file | ${ACQ_BATCH_TOKEN_LIST_APPLY_HASHING:false} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.applyEncrypt__ | Flag to define whether to encrypt the result file | ${ACQ_BATCH_TOKEN_LIST_APPLY_ENCRYPT:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.linesToSkip__ | Number of lines to skip from the beginning of the file (e.g. to avoid the header ) | ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0} | NO
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.transactionLogsPath__ | Path where the processed transaction records resulting in either an error, or getting filtered, are traced in .csv format |  file:/${ACQ_BATCH_TOKEN_LOGS_PATH:} | YES
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterReadLogging__ | Property to enable logging for the read records | ${ACQ_BATCH_TOKEN_AFTER_READ_LOGGING_ENABLED:false} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorLogging__ | Property to enable logging for the records that had errors on the reading phase | ${ACQ_BATCH_TOKEN_READ_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorFileLogging__ | Property to enable writing the records that had errors on the reading phase | ${ACQ_BATCH_TOKEN_READ_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterProcessLogging__ | Property to enable logging for the processed records | ${ACQ_BATCH_TOKEN_AFTER_PROCESS_LOGGING_ENABLED:false} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterProcessFileLogging__ | Property to enable writing the records that had been filtered | ${ACQ_BATCH_TOKEN_AFTER_PROCESS_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnProcessErrorLogging__ | Property to enable logging for the records that had errors on the processing phase | ${ACQ_BATCH_TOKEN_PROCESS_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnProcessErrorFileLogging__ | Property to enable writing the records that had errors on the processing phase | ${ACQ_BATCH_TOKEN_PROCESS_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterWriteLogging__ | Property to enable logging for the written records | ${ACQ_BATCH_TOKEN_AFTER_WRITE_LOGGING_ENABLED:false} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnWriteErrorLogging__ | Property to enable logging for the records that had errors on the writing phase | ${ACQ_BATCH_TOKEN_WRITE_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnWriteErrorFileLogging__ | Property to enable writing the records that had errors on the writing phase | ${ACQ_BATCH_TOKEN_WRITE_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.loggingFrequency__ | Logging frequency for transaction records | ${ACQ_BATCH_TRX_READ_LOGGING_FREQUENCY:10000} | YES
+
+#### 6. Batch properties - SFTP
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
@@ -384,9 +497,13 @@ Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
 __batchConfiguration.TransactionFilterBatch.saltRecovery.enabled__ | Enable the recovery service for the salt | ${ACQ_BATCH_SALT_RECOVERY_ENABLED:false} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled__ | Enable the recovery service for the hpan list | ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true} | NO
+__batchConfiguration.TransactionFilterBatch.parListRecovery.enabled__ | Enable the recovery service for the par list | ${ACQ_BATCH_PAR_RECOVERY_ENABLED:true} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath__ | Location where the file containing the list of files will be saved | ${ACQ_BATCH_HPAN_INPUT_PATH:} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Name assigned to the recovered file | ${CSV_TRX_BATCH_HPAN_LIST_FILENAME:} | NO
 __batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved hpan files | ${ACQ_BATCH_HPAN_RECOVERY_DAILY_REM_ENABLED:false} | NO | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.parListRecovery.directoryPath__ | Location where the file containing the list of par files will be saved | ${ACQ_BATCH_PAR_INPUT_PATH:} | NO
+__batchConfiguration.TransactionFilterBatch.parListRecovery.filename__ | Name assigned to the recovered par file | ${CSV_TRX_BATCH_PAR_LIST_FILENAME:} | NO
+__batchConfiguration.TransactionFilterBatch.parListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved par files | ${ACQ_BATCH_PAR_RECOVERY_DAILY_REM_ENABLED:false} | NO | TRUE FALSE
 __rest-client.hpan.base-url__ | Base url for REST services | ${HPAN_SERVICE_URL} | NO
 __rest-client.hpan.api.key__ | Subscription key to be used if calling Azure-hosted API methods | ${HPAN_API_KEY} | NO
 __rest-client.hpan.list.attemptExtraction__ | Considers the downloaded file as compressed, and attempts an estraction | TRUE | NO | TRUE FALSE
@@ -412,12 +529,46 @@ __rest-client.hpan.trust-store.type__ | Trust-store type | ${HPAN_SERVICE_TRUST_
 __rest-client.hpan.trust-store.password__ | Trust-store password | ${HPAN_SERVICE_TRUST_STORE_PASSWORD:} | NO
 __feign.client.config.hpan-service.connectTimeout__ | Rest client connection timeout, defined in milliseconds | ${REST_CLIENT_CONNECT_TIMEOUT:${HPAN_REST_CLIENT_CONNECT_TIMEOUT:5000}} | NO
 __feign.client.config.hpan-service.readTimeout__ | Rest client read timeout, defined in milliseconds | ${REST_CLIENT_READ_TIMEOUT:${HPAN_REST_CLIENT_READ_TIMEOUT:5000}} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanListRecovery.directoryPath__ | Location where the file containing the list of files will be saved | ${ACQ_BATCH_TOKEN_PAN_INPUT_PATH:} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanListRecovery.filename__ | Name assigned to the recovered file | ${CSV_TRX_BATCH_TOKEN_PAN_LIST_FILENAME:} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved tokenPan files | ${ACQ_BATCH_TOKEN_PAN_RECOVERY_DAILY_REM_ENABLED:false} | NO | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.binListRecovery.directoryPath__ | Location where the file containing the list of bin files will be saved | ${ACQ_BATCH_BIN_INPUT_PATH:} | NO
+__batchConfiguration.TokenPanFilterBatch.binListRecovery.filename__ | Name assigned to the recovered bin file | ${CSV_TRX_BATCH_BIN_IST_FILENAME:} | NO
+__batchConfiguration.TokenPanFilterBatch.binListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved bin files | ${ACQ_BATCH_BIN_RECOVERY_DAILY_REM_ENABLED:false} | NO | TRUE FALSE
+__rest-client.tkm.base-url__ | Base url for REST services | ${TKM_SERVICE_URL:https://test.cstar.pagopa.it:${TKM_SERVICE_PORT:443}${TKM_SERVICE_BASE_URL:/tkm/uat/acquirerm}} | NO
+__rest-client.tkm.api.key__ | Subscription key to be used if calling Azure-hosted API methods | ${HPAN_API_KEY} | NO
+__rest-client.tkm.list.attemptExtraction__ | Considers the downloaded file as compressed, and attempts an estraction | TRUE | NO | TRUE FALSE
+__rest-client.tkm.list.checksumValidation__ | Attempts to validate the downloaded file using a checksum | TRUE | NO | TRUE FALSE 
+__rest-client.tkm.list.checksumHeaderName__ | Response header containing the file's checksum |Checksum-Sha256 | NO
+__rest-client.tkm.list.listFilePattern__ | Pattern to be used for extracting the correct file from the compressed resource | *\\.csv | NO
+__rest-client.tkm.list.dateValidation__ | Enables date validation for the recovered resource | TRUE | NO | TRUE FALSE
+__rest-client.tkm.list.dateValidationHeaderName__ | Response header containing the file's creation/update date | last-modified | NO
+__rest-client.tkm.list.dateValidationPattern__ | Response header date timestamp pattern (defaults to RFC-1123) | | NO
+__rest-client.tkm.list.dateValidationZone__ | Zone to consider when validating the creation date for the downloaded file | Europe/Rome | NO
+__rest-client.tkm.proxy.enabled__ | Use a Proxied Client | ${TKM_SERVICE_PROXY_ENABLED:false} | NO
+__rest-client.tkm.proxy.host__ | Proxy host | ${TKM_SERVICE_PROXY_HOST:} | NO
+__rest-client.tkm.proxy.port__ | Proxy port | ${TKM_SERVICE_PROXY_PORT:} | NO
+__rest-client.tkm.proxy.username__ | Proxy username | ${TKM_SERVICE_PROXY_USERNAME:} | NO
+__rest-client.tkm.proxy.password__ | Proxy password | ${TKM_SERVICE_PROXY_PASSWORD:} | NO
+__rest-client.tkm.mtls.enabled__ | Enable MTLS for salt and pan list services | ${TKM_SERVICE_MTLS_ENABLED:true} | NO
+__rest-client.tkm.key-store.file__ | Path to key-store | file:/${TKM_SERVICE_KEY_STORE_FILE:} | NO
+__rest-client.tkm.key-store.type__ | Key-store type | ${TKM_SERVICE_KEY_STORE_TYPE:#{null}} | NO
+__rest-client.tkm.key-store.algorithm__ | Key-store algorithm | ${TKM_SERVICE_KEY_STORE_ALGORITHM:#{null}} | NO
+__rest-client.tkm.key-store.password__ | Key-store password | ${TKM_SERVICE_KEY_STORE_PASSWORD:} | NO
+__rest-client.tkm.trust-store.file__ | Path to trust-store | file:/${TKM_SERVICE_TRUST_STORE_FILE:} | NO
+__rest-client.tkm.trust-store.type__ | Trust-store type | ${TKM_SERVICE_TRUST_STORE_TYPE:#{null}} | NO
+__rest-client.tkm.trust-store.password__ | Trust-store password | ${TKM_SERVICE_TRUST_STORE_PASSWORD:} | NO
+__feign.client.config.tokenpan-service.connectTimeout__ | Rest client connection timeout, defined in milliseconds | ${REST_CLIENT_CONNECT_TIMEOUT:${TKM_REST_CLIENT_CONNECT_TIMEOUT:5000}} | NO
+__feign.client.config.tokenpan-service.readTimeout__ | Rest client read timeout, defined in milliseconds | ${REST_CLIENT_READ_TIMEOUT:${TKM_REST_CLIENT_READ_TIMEOUT:5000}} | NO
 
 
 #### 7. Batch properties - File Handling
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
+__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles__ | Enable deletion of any processed file (all files related to a batch computation) | ${ACQ_BATCH_DELETE_LOCAL_FILE:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles__ | Define output files management rule | ${ACQ_BATCH_DELETE_OUTPUT_FILE:ERROR} | YES | ALWAYS ERROR KEEP
+__batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess__ | Define HPAN files management rule on success | ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE} | YES | DELETE ARCHIVE KEEP
 __batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles__ | Enable deletion of any processed file (all files related to a batch computation) | ${ACQ_BATCH_DELETE_LOCAL_FILE:true} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles__ | Define output files management rule | ${ACQ_BATCH_DELETE_OUTPUT_FILE:ERROR} | YES | ALWAYS ERROR KEEP
 __batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess__ | Define HPAN files management rule on success | ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE} | YES | DELETE ARCHIVE KEEP
@@ -799,4 +950,5 @@ The new version of the batch process, currently in development, will manage a ne
 - Use the new version that will be provided, and use the configuration to define wheter to use the new version of the record format, or use the one actually in production
 
 - Mantain the legacy version of the batch process, CentroStella will keep managing the legacy version of the transaction file format
+
 

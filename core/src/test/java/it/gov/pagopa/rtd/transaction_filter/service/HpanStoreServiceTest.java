@@ -7,6 +7,9 @@ import org.junit.rules.ExpectedException;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeSet;
 
 public class HpanStoreServiceTest {
@@ -23,6 +26,7 @@ public class HpanStoreServiceTest {
     }
 
     private TreeSet<String> storeSet;
+    private List<BufferedWriter> bufferedWriterList;
     private HpanStoreService hpanStoreService;
 
     @Rule
@@ -31,7 +35,8 @@ public class HpanStoreServiceTest {
     @Before
     public void setUp() {
         storeSet = new TreeSet<>();
-        hpanStoreService = new HpanStoreServiceImpl(storeSet);
+        bufferedWriterList = new ArrayList<>();
+        hpanStoreService = new HpanStoreServiceImpl(bufferedWriterList, storeSet);
     }
 
     @Test

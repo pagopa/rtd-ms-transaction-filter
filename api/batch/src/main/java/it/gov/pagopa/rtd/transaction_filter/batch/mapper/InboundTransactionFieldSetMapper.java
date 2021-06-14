@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundTransaction> {
 
     private final String timestampParser;
+    private final Boolean enablePar;
 
     /**
      *
@@ -50,6 +51,7 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .operationType(fieldSet.readString("tipo_operazione"))
                         .circuitType(fieldSet.readString("tipo_circuito"))
                         .pan(fieldSet.readString("PAN"))
+                        .hpan(fieldSet.readString("PAN"))
                         .idTrxAcquirer(fieldSet.readString("id_trx_acquirer"))
                         .idTrxIssuer(fieldSet.readString("id_trx_issuer"))
                         .correlationId(fieldSet.readString("correlation_id"))
@@ -60,7 +62,12 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .terminalId(fieldSet.readString("terminal_id"))
                         .bin(fieldSet.readString("bank_identification_number"))
                         .mcc("0000")
+                        .valid(true)
                         .build();
+
+        if (enablePar) {
+            inboundTransaction.setPar(fieldSet.readString("par"));
+        }
 
         OffsetDateTime dateTime = dtf != null ?
                 ZonedDateTime.parse(fieldSet.readString("timestamp"), dtf).toOffsetDateTime() :

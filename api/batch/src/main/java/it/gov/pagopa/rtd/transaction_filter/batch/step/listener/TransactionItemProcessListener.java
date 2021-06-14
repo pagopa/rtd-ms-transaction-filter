@@ -16,6 +16,7 @@ import org.springframework.lang.Nullable;
 @Data
 public class TransactionItemProcessListener implements ItemProcessListener<InboundTransaction, InboundTransaction> {
 
+    private String tokenPanInputPath;
     private String errorTransactionsLogsPath;
     private String executionDate;
     private Boolean enableOnErrorLogging;
@@ -55,19 +56,44 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
         }
 
-        if (enableAfterProcessFileLogging && result == null) {
+        if (result == null) {
+            if (enableAfterProcessFileLogging) {
+                try {
+                    String file = item.getFilename().replaceAll("\\\\", "/");
+                    String[] fileArr = file.split("/");
+                    transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
+                            .getFile().getAbsolutePath()
+                            .concat("/".concat(executionDate))
+                            + "_FilteredRecords_" + fileArr[fileArr.length - 1] + ".csv", buildCsv(item));
+
+                } catch (Exception e) {
+                    if (log.isErrorEnabled()) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+            }
+
             try {
                 String file = item.getFilename().replaceAll("\\\\", "/");
                 String[] fileArr = file.split("/");
-                transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
-                        .getFile().getAbsolutePath()
-                        .concat("/".concat(executionDate))
-                        + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
+                String filename = fileArr[fileArr.length - 1].replaceAll(
+                        "TRNLOG", "TKNLST").replaceAll("CSTAR","TKM");
+                if (!filename.contains("TKM")) {
+                    filename = "TKM.".concat(filename);
+                }
+                if (!filename.contains(".csv")) {
+                    filename = filename.concat(".csv");
+                }
+                transactionWriterService.write(resolver.getResource(tokenPanInputPath)
+                                .getFile().getAbsolutePath()
+                                .concat("/") + filename,
+                        buildTokenPan(item));
             } catch (Exception e) {
                 if (log.isErrorEnabled()) {
                     log.error(e.getMessage(), e);
                 }
             }
+
         }
 
     }
@@ -102,6 +128,12 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     }
 
+    private String buildTokenPan(InboundTransaction inboundTransaction) {
+        return (inboundTransaction.getPan() != null ? inboundTransaction.getPan() : "").concat(";")
+                .concat(inboundTransaction.getCircuitType() != null ? inboundTransaction.getCircuitType() : "").concat(";")
+                .concat(inboundTransaction.getPar() != null ? inboundTransaction.getPar() : "").concat("\n");
+    }
+
     private String buildCsv(InboundTransaction inboundTransaction) {
         return (inboundTransaction.getAcquirerCode() != null ? inboundTransaction.getAcquirerCode() : "").concat(";")
                 .concat(inboundTransaction.getOperationType() != null ? inboundTransaction.getOperationType() : "").concat(";")
@@ -117,7 +149,8 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 .concat(inboundTransaction.getMerchantId() != null ? inboundTransaction.getMerchantId() : "").concat(";")
                 .concat(inboundTransaction.getTerminalId() != null ? inboundTransaction.getTerminalId() : "").concat(";")
                 .concat(inboundTransaction.getBin() != null ? inboundTransaction.getBin() : "").concat(";")
-                .concat(inboundTransaction.getMcc() != null ? inboundTransaction.getMcc() : "").concat("\n");
+                .concat(inboundTransaction.getMcc() != null ? inboundTransaction.getMcc() : "").concat(";")
+                .concat(inboundTransaction.getPar() != null ? inboundTransaction.getPar() : "").concat("\n");
     }
 
 }

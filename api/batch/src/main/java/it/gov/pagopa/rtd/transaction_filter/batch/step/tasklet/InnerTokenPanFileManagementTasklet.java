@@ -34,15 +34,23 @@ import java.util.stream.Collectors;
 
 @Data
 @Slf4j
-public class FileManagementTasklet implements Tasklet, InitializingBean {
+public class InnerTokenPanFileManagementTasklet implements Tasklet, InitializingBean {
 
     private Boolean deleteProcessedFiles;
     private String deleteOutputFiles;
-    private String manageHpanOnSuccess;
+    private String manageBinOnSuccess;
     private String successPath;
     private String errorPath;
-    private String hpanDirectory;
+    private String tempBinDirectory;
+    private String binDirectory;
+    private String tempTokenPanDirectory;
+    private String tokenPanDirectory;
     private String outputDirectory;
+    private String innerOutputDirectory;
+    private Boolean firstSection;
+    private String temporaryOutputPath;
+    private Boolean lastSection;
+    private Boolean isBin;
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -56,7 +64,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                 "directory must be set");
         Assert.notNull(resolver.getResources("file:" + errorPath + "*.pgp"),
                 "directory must be set");
-        Assert.notNull(resolver.getResources(hpanDirectory),
+        Assert.notNull(resolver.getResources(binDirectory),
                 "directory must be set");
     }
 
@@ -71,11 +79,11 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
-        Boolean executionWithErrors = false;
+        boolean executionWithErrors = false;
         List<String> errorFilenames = new ArrayList<>();
-        hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
+        binDirectory = binDirectory.replaceAll("\\\\","/");
 
-        List<String> hpanResources = Arrays.asList(resolver.getResources(hpanDirectory)).stream().map(resource -> {
+        List<String> binResources = Arrays.stream(resolver.getResources(binDirectory)).map(resource -> {
             try {
                 return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
             } catch (IOException e) {
@@ -84,8 +92,19 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
             }
         }).collect(Collectors.toList());
 
-        Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
-                .getStepExecutions();
+        tokenPanDirectory = tokenPanDirectory.replaceAll("\\\\","/");
+
+        List<String> tokenPanResources = Arrays.stream(resolver.getResources(tokenPanDirectory)).map(resource -> {
+            try {
+                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+                return null;
+            }
+        }).collect(Collectors.toList());
+
+        Collection<StepExecution> stepExecutions = chunkContext.getStepContext()
+                .getStepExecution().getJobExecution().getStepExecutions();
         for (StepExecution stepExecution : stepExecutions) {
             if (stepExecution.getExecutionContext().containsKey("fileName")) {
 
@@ -117,14 +136,16 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         }
                     }
 
-                    boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
-                    if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
+                    boolean isBinFile = binResources.contains(path.replaceAll("\\\\","/"));
+                    boolean isTokenPanFile = tokenPanResources.contains(path.replaceAll("\\\\","/"));
+                    if (deleteProcessedFiles || isBinFile || isTokenPanFile || !firstSection) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
-                    } else if (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
+                    } else {
                         log.info("Archiving processed file: {}", file);
                         archiveFile(file, path, isComplete);
                     }
+
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                 }
@@ -134,7 +155,11 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
         if (deleteOutputFiles.equals("ALWAYS") || (deleteOutputFiles.equals("ERROR") && executionWithErrors)) {
             List<Resource> outputDirectoryResources =
-                    Arrays.asList(resolver.getResources(outputDirectory.replaceAll("\\\\", "/") + "/*"));
+                    Arrays.asList(resolver.getResources(outputDirectory
+                            .replaceAll("\\\\", "/") + "/*"));
+            List<Resource> innerOutputDirectoryResources =
+                    Arrays.asList(resolver.getResources(innerOutputDirectory
+                            .replaceAll("\\\\", "/") + "/*"));
             outputDirectoryResources.forEach(outputDirectoryResource ->
             {
                 if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
@@ -154,7 +179,50 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         log.error(e.getMessage(), e);
                     }
                 }
+
             });
+
+            innerOutputDirectoryResources.forEach(innerOutputDirectoryResource ->
+            {
+                if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
+                        errorFilename -> {
+                            try {
+                                return innerOutputDirectoryResource.getFile().getAbsolutePath().contains(errorFilename);
+                            } catch (IOException e) {
+                                log.error(e.getMessage(),e);
+                                return false;
+                        }
+                        }))
+                ) {
+                    try {
+                        log.info("Deleting output file: {}", innerOutputDirectoryResource.getFile());
+                        FileUtils.forceDelete(innerOutputDirectoryResource.getFile());
+                    } catch (IOException e) {
+                        log.error(e.getMessage(), e);
+                    }
+                }
+
+            });
+        }
+
+        if (!isBin && lastSection) {
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+            try {
+                Resource[] resources = resolver.getResources(temporaryOutputPath.concat("/*"));
+                for (Resource resource : resources) {
+                    String file = resource.getFile().getAbsoluteFile().getAbsolutePath()
+                            .replaceAll("\\\\", "/");
+                    String[] filename = file.split("/");
+                    String archivalPath = resolver.getResources(outputDirectory)[0].getFile().getAbsolutePath();
+                    File destFile = FileUtils.getFile(archivalPath + "/" + filename[filename.length - 1]);
+                    if(destFile.exists()) {
+                        destFile.delete();
+                    }
+                    FileUtils.moveFile(FileUtils.getFile(resource.getFile()), destFile);
+                }
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+            }
         }
 
         return RepeatStatus.FINISHED;

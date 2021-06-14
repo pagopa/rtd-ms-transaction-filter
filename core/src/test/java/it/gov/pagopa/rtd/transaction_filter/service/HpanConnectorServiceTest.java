@@ -14,6 +14,8 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 public class HpanConnectorServiceTest {
 
@@ -68,10 +70,10 @@ public class HpanConnectorServiceTest {
     @Test
     public void testList_OK() {
         File file = tempFolder.newFile("testFile");
-        BDDMockito.doReturn(file).when(hpanRestClientMock).getList();
-        File returnedFile = hpanConnectorService.getHpanList();
-        Assert.assertEquals(file, returnedFile);
-        BDDMockito.verify(hpanRestClientMock).getList();
+        BDDMockito.doReturn(Collections.singletonList(file)).when(hpanRestClientMock).getHpanList();
+        List<File> returnedFile = hpanConnectorService.getHpanList();
+        Assert.assertEquals(file, returnedFile.get(0));
+        BDDMockito.verify(hpanRestClientMock).getHpanList();
     }
 
     @SneakyThrows
@@ -80,10 +82,10 @@ public class HpanConnectorServiceTest {
         File file = tempFolder.newFile("testFile");
         BDDMockito.doAnswer(invocationOnMock -> {
             throw new Exception();
-        }).when(hpanRestClientMock).getList();
+        }).when(hpanRestClientMock).getHpanList();
         expectedException.expect(Exception.class);
         hpanConnectorService.getHpanList();
-        BDDMockito.verify(hpanRestClientMock).getList();
+        BDDMockito.verify(hpanRestClientMock).getHpanList();
     }
 
     @After

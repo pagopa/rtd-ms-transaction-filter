@@ -1,6 +1,5 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
-import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -18,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class FileManagementTaskletTest {
+public class TransactionFileManagementTaskletTest {
 
     File successFile;
     File errorFile;
@@ -39,6 +38,7 @@ public class FileManagementTaskletTest {
             tempFolder.newFolder("test1","error");
             tempFolder.newFolder("test1","output");
             tempFolder.newFolder("test1","hpan");
+            tempFolder.newFolder("test1","par");
             tempFolder.newFolder("test1","trxs");
 
             successFile = tempFolder.newFile("test1/trxs/success-trx.pgp");
@@ -51,12 +51,14 @@ public class FileManagementTaskletTest {
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+            TransactionFileManagementTasklet archivalTasklet = new TransactionFileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test1/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
             archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
                     "classpath:/test-encrypt/**/test1/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
+            archivalTasklet.setParDirectory("file:/"+resolver.getResources(
+                    "classpath:/test-encrypt/**/test1/par")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("NEVER");
             archivalTasklet.setManageHpanOnSuccess("DELETE");
@@ -155,6 +157,7 @@ public class FileManagementTaskletTest {
             tempFolder.newFolder("test1","error");
             tempFolder.newFolder("test1","output");
             tempFolder.newFolder("test1","hpan");
+            tempFolder.newFolder("test1","par");
             tempFolder.newFolder("test1","trxs");
 
             successFile = tempFolder.newFile("test1/trxs/success-trx.pgp");
@@ -167,12 +170,14 @@ public class FileManagementTaskletTest {
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+            TransactionFileManagementTasklet archivalTasklet = new TransactionFileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test1/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
             archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
                     "classpath:/test-encrypt/**/test1/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
+            archivalTasklet.setParDirectory("file:/"+resolver.getResources(
+                    "classpath:/test-encrypt/**/test1/par")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("NEVER");
             archivalTasklet.setManageHpanOnSuccess("DELETE");
@@ -272,6 +277,7 @@ public class FileManagementTaskletTest {
             tempFolder.newFolder("test2","error");
             tempFolder.newFolder("test2","output");
             tempFolder.newFolder("test2","hpan");
+            tempFolder.newFolder("test2","par");
             tempFolder.newFolder("test2","trxs");
 
             successFile = tempFolder.newFile("test2/trxs/success-trx.pgp");
@@ -282,11 +288,12 @@ public class FileManagementTaskletTest {
             tempFolder.newFile("test2/output/success-trx-output-file.pgp");
             tempFolder.newFile("test2/output/error-trx-output-file.csv");
 
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+            TransactionFileManagementTasklet archivalTasklet = new TransactionFileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/output");
             archivalTasklet.setHpanDirectory("classpath:/test-encrypt/**/hpan");
+            archivalTasklet.setParDirectory("classpath:/test-encrypt/**/par");
             archivalTasklet.setDeleteProcessedFiles(true);
             archivalTasklet.setDeleteOutputFiles("ALWAYS");
             archivalTasklet.setManageHpanOnSuccess("DELETE");
@@ -381,6 +388,7 @@ public class FileManagementTaskletTest {
             tempFolder.newFolder("test3","error");
             tempFolder.newFolder("test3","output");
             tempFolder.newFolder("test3","hpan");
+            tempFolder.newFolder("test3","par");
             tempFolder.newFolder("test3","trxs");
 
             successFile = tempFolder.newFile("test3/trxs/success-trx.pgp");
@@ -392,12 +400,14 @@ public class FileManagementTaskletTest {
             tempFolder.newFile("test3/output/error-trx-output-file.csv");
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+            TransactionFileManagementTasklet archivalTasklet = new TransactionFileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test3/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test3/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test3/output");
             archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
                     "classpath:/test-encrypt/**/test3/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
+            archivalTasklet.setParDirectory("file:/"+resolver.getResources(
+                    "classpath:/test-encrypt/**/test3/par")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("ERROR");
             archivalTasklet.setManageHpanOnSuccess("DELETE");
@@ -491,6 +501,7 @@ public class FileManagementTaskletTest {
             tempFolder.newFolder("test4","error");
             tempFolder.newFolder("test4","output");
             tempFolder.newFolder("test4","hpan");
+            tempFolder.newFolder("test4","par");
             tempFolder.newFolder("test4","trxs");
 
             successFile = tempFolder.newFile("test4/trxs/success-trx.pgp");
@@ -502,12 +513,14 @@ public class FileManagementTaskletTest {
             tempFolder.newFile("test4/output/error-trx-output-file.csv");
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+            TransactionFileManagementTasklet archivalTasklet = new TransactionFileManagementTasklet();
             archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test4/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test4/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test4/output");
             archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
                     "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
+            archivalTasklet.setParDirectory("file:/"+resolver.getResources(
+                    "classpath:/test-encrypt/**/par")[0].getFile().getAbsolutePath()+"/*.pgp");
             archivalTasklet.setDeleteProcessedFiles(false);
             archivalTasklet.setDeleteOutputFiles("ERROR");
             archivalTasklet.setManageHpanOnSuccess("KEEP");
