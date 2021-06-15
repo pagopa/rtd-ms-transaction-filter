@@ -765,6 +765,8 @@ _"filename"_ property.
 
 Further information about the Spring Batch repository entities, can be found in the
 [Reference Manual](https://docs.spring.io/spring-batch/docs/current/reference/html/schema-appendix.html#metaDataBatchStepExecutionContext)
+	
+Starting from version 2.0.0 the batch process executes a series of jobs to produce the final output, the number of which depens to the configuration regarding the maximum number of records that can be stored in-memory, and the file volume used in the process. The count are to be considered as the grouping of all the executions for a particular file, for the transaction file production the number of records 'written' has to be considered as the difference between the number of filtered records counted in the last execution for a file, and the sum of all the previously written records.	
 
 #### 2. Console Log
 
