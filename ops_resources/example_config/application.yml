@@ -33,10 +33,6 @@ spring:
     web-application-type: none
     allow-bean-definition-overriding: true
   build:
-    artifact: "@project.parent.artifactId@"
-    name: "@project.parent.artifactId@"
-    description: "@project.description@"
-    version: "@project.version@"
   enabled: true
 
 logging:
@@ -44,6 +40,76 @@ logging:
     it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:DEBUG}
 
 batchConfiguration:
+
+  TokenPanFilterBatch:
+    successArchivePath: file:${ACQ_BATCH_SUCCESS_PATH:${ACQ_BATCH_TOKEN_INPUT_PATH:C:/batch-transaction-filter/resources/archive}/success}
+    errorArchivePath: file:${ACQ_BATCH_ERROR_PATH:${ACQ_BATCH_TOKEN_INPUT_PATH:C:/batch-transaction-filter/resources/archive}/error}
+    partitionerMaxPoolSize: ${ACQ_BATCH_INPUT_PART_MAX_POOL_SIZE:5}
+    partitionerCorePoolSize: ${ACQ_BATCH_INPUT_PART_CORE_POOL_SIZE:5}
+    readerMaxPoolSize: ${ACQ_BATCH_INPUT_PART_READ_MAX_POOL_SIZE:5}
+    readerCorePoolSize: ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5}
+    tablePrefix: ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_}
+    tokenPanFilter:
+      tokenPanLogsPath: file:/${ACQ_BATCH_TRX_LOGS_PATH:C:/Users/acialini/Documents/batch-transaction-filter/resources/errorLogs}
+      readers:
+        listener:
+          enableAfterProcessFileLogging: ${ACQ_BATCH_TRX_AFTER_PROCESS_FILE_LOGGING_ENABLED:false}
+          enableAfterReadLogging: ${ACQ_BATCH_TOKEN_AFTER_READ_LOGGING_ENABLED:false}
+          enableAfterWriteLogging: ${ACQ_BATCH_TOKEN_AFTER_WRITE_LOGGING_ENABLED:false}
+          enableAfterProcessLogging: ${ACQ_BATCH_TOKEN_AFTER_PROCESS_FILE_LOGGING_ENABLED:false}
+          loggingFrequency: ${ACQ_BATCH_TOKEN_READ_LOGGING_FREQUENCY:100000}
+      tokenPanValidationEnabled: ${ACQ_BATCH_TOKEN_PAN_VALIDATION:true}
+      transactionDirectoryPath: file:/${ACQ_BATCH_TOKEN_INPUT_PATH:C:/batch-transaction-filter/resources/tokens}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
+      outputDirectoryPath: file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TOKEN_INPUT_PATH:C:/batch-transaction-filter/resources}/output}
+      innerOutputDirectoryPath: file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TOKEN_INPUT_PATH:C:/batch-transaction-filter/resources}/tokens}
+      publicKeyPath: file:/${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:C:/batch-transaction-filter/resources/keys/public.asc}
+      partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
+      chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:10000}
+      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
+      applyHashing: ${ACQ_BATCH_TOKEN_LIST_APPLY_HASHING:false}
+      applyEncrypt: ${ACQ_BATCH_TOKEN_LIST_APPLY_ENCRYPT:true}
+      linesToSkip: ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0}
+      manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:KEEP}
+      deleteProcessedFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:false}
+      deleteOutputFiles: ${ACQ_BATCH_OUTPUT_LOCAL_FILE:ERROR}
+    tokenPanSender:
+      enabled: ${ACQ_BATCH_TOKEN_SENDER_ENABLED:false}
+    tokenPanListRecovery:
+      enabled: ${ACQ_BATCH_TOKEN_PAN_RECOVERY_ENABLED:true}
+      dailyRemoval:
+        enabled: ${ACQ_BATCH_TOKEN_PAN_RECOVERY_DAILY_REM_ENABLED:true}
+      directoryPath: ${ACQ_BATCH_TOKEN_PAN_INPUT_PATH:C:/batch-transaction-filter/resources/enrolledTokens}
+      filename: ${ACQ_BATCH_TOKEN_PAN_LIST_FILENAME:tokenPanList.csv}
+      listFilePattern: ${ACQ_BATCH_TOKEN_PAN_LIST_FILE_PATTERN:.*\\.csv}
+    binListRecovery:
+      enabled: ${ACQ_BATCH_BIN_RECOVERY_ENABLED:true}
+      dailyRemoval:
+        enabled: ${ACQ_BATCH_BIN_RECOVERY_DAILY_REM_ENABLED:true}
+      directoryPath: ${ACQ_BATCH_BIN_INPUT_PATH:C:/batch-transaction-filter/resources/bins}}
+      filename: ${ACQ_BATCH_BIN_LIST_FILE_PATTERN:binList.csv}
+      listFilePattern: ${ACQ_BATCH_BIN_LIST_FILE_PATTERN:.*\\.csv}
+    binList:
+      numberPerFile: ${ACQ_BATCH_WORKER_BIN_NUMBER:5000000}
+    bin:
+      binDirectoryPath: file:/${ACQ_BATCH_BIN_INPUT_PATH:C:/batch-transaction-filter/resources/bins}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
+      secretKeyPath: file:${ACQ_BATCH_INPUT_SECRET_KEYPATH:}
+      passphrase: ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:}
+      partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
+      chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000}
+      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
+      applyDecrypt: ${ACQ_BATCH_BIN_LIST_APPLY_DECRYPT:false}
+    tokenPanList:
+      numberPerFile: ${ACQ_BATCH_WORKER_TOKEN_PAN_NUMBER:5000000}
+      tokenPanDirectoryPath: file:/${ACQ_BATCH_TOKEN_PAN_INPUT_PATH:C:/batch-transaction-filter/resources/enrolledTokens}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
+      secretKeyPath: file:${ACQ_BATCH_INPUT_SECRET_KEYPATH:}
+      passphrase: ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:}
+      partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
+      chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000}
+      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
+      applyDecrypt: ${ACQ_BATCH_TOKEN_PAN_LIST_APPLY_DECRYPT:false}
+      applyHashing: ${ACQ_BATCH_TOKEN_PAN_LIST_APPLY_HASHING:true}
+
+
   TransactionFilterBatch:
     successArchivePath: file:${ACQ_BATCH_SUCCESS_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources/archive}/success}
     errorArchivePath: file:${ACQ_BATCH_ERROR_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources/archive}/error}
@@ -53,6 +119,8 @@ batchConfiguration:
     readerMaxPoolSize: ${ACQ_BATCH_INPUT_PART_READ_MAX_POOL_SIZE:5}
     readerCorePoolSize: ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5}
     tablePrefix: ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_}
+    hpanList:
+      numberPerFile: ${ACQ_BATCH_WORKER_HPAN_NUMBER:8000000}
     panList:
       hpanDirectoryPath: file:${ACQ_BATCH_HPAN_INPUT_PATH:resources/hpans}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
       secretKeyPath: file:${ACQ_BATCH_INPUT_SECRET_KEYPATH:}
@@ -62,7 +130,19 @@ batchConfiguration:
       skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
       applyDecrypt: ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:false}
       applyHashing: ${ACQ_BATCH_PAN_LIST_APPLY_HASHING:false}
+    parList:
+      numberPerFile: ${ACQ_BATCH_WORKER_PAR_NUMBER:8000000}
+      parDirectoryPath: file:/${ACQ_BATCH_PAR_INPUT_PATH:C:/batch-transaction-filter/resources/pars}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
+      secretKeyPath: file:${ACQ_BATCH_INPUT_SECRET_KEYPATH:}
+      passphrase: ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:}
+      partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
+      chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000}
+      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
+      applyDecrypt: ${ACQ_BATCH_PAR_LIST_APPLY_DECRYPT:false}
+      applyHashing: ${ACQ_BATCH_PAR_LIST_APPLY_HASHING:false}
     transactionFilter:
+      parEnabled: ${ACQ_BATCH_TRX_PAR_ENABLED:true}
+      tokenInputPath: ${ACQ_BATCH_TOKEN_INPUT_PATH:file:/C:/batch-transaction-filter/resources/tokens}
       transactionDirectoryPath: file:${ACQ_BATCH_TRX_INPUT_PATH:resources/transactions}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
       outputDirectoryPath: file:${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources}/output}
       publicKeyPath: file:${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:}
@@ -90,6 +170,13 @@ batchConfiguration:
       filename: ${ACQ_BATCH_HPAN_LIST_FILENAME:hpanList}${ACQ_BATCH_INPUT_FILE_PATTERN:.csv}
       attemptExtract: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
       listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
+    parListRecovery:
+      enabled: ${ACQ_BATCH_PAR_RECOVERY_ENABLED:true}
+      directoryPath: C:/batch-transaction-filter/resources/pars
+      filename: ${ACQ_BATCH_PAR_LIST_FILE_PATTERN:parList.csv}
+      attemptExtract: ${ACQ_PAR_LIST_ATTEMPT_EXTRACT:true}
+      listFilePattern: ${ACQ_BATCH_PAR_LIST_FILE_PATTERN:.*\\.csv}
+      dailyRemoval.enabled: ${ACQ_BATCH_PAR_RECOVERY_DAILY_REM_ENABLED:true}
 
 connectors:
   sftpConfigurations:
@@ -137,6 +224,41 @@ rest-client:
       type: ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}}
       algorithm: ${HPAN_SERVICE_TRUST_STORE_ALGORITHM:#{null}}
       password: ${HPAN_SERVICE_TRUST_STORE_PASSWORD:secret}
+  tkm:
+    serviceCode: token-service
+    base-url: ${TKM_SERVICE_URL:https://test.cstar.pagopa.it:${TKM_SERVICE_PORT:443}${TKM_SERVICE_BASE_URL:/tkm/sit/acquirerm}}
+    proxy:
+      enabled: ${TKM_SERVICE_PROXY_ENABLED:false}
+      host: ${TKM_SERVICE_PROXY_HOST:localhost}
+      port: ${TKM_SERVICE_PROXY_PORT:8866}
+    api:
+      key: ${TKM_SERVICE_API_KEY:test}
+    list:
+      url: /hashed-pans
+      attemptExtraction: ${ACQ_BATCH_TKM_LIST_ATTEMPT_EXTRACT:true}
+      checksumValidation: ${ACQ_BATCH_TKM_LIST_CHECKSUM_VALIDATION:false}
+      checksumHeaderName: ${ACQ_BATCH_TKM_LIST_CHECKSUM_HEADER:Checksum-Sha256}
+      dateValidation: ${ACQ_BATCH_TKM_LIST_DATE_VALIDATION:true}
+      dateValidationPattern: ${ACQ_BATCH_TKM_LIST_DATE_VALIDATION_PATTERN:}
+      listFilePattern: ${ACQ_BATCH_TKM_LIST_FILE_PATTERN:.*}
+    mtls:
+      enabled: ${TKM_SERVICE_MTLS_ENABLED:true}
+    key-store:
+      file: file:/${TKM_SERVICE_KEY_STORE_FILE:resources/keys/keystore_cert_1.jks}
+      type: ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}}
+      algorithm: ${HPAN_SERVICE_KEY_STORE_ALGORITHM:#{null}}
+      password: ${HPAN_SERVICE_KEY_STORE_PASSWORD:cstar}
+    trust-store:
+      file: file:/${HPAN_SERVICE_TRUST_STORE_FILE:resources/keys/truststore_cert_1.jks}
+      type: ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}}
+      algorithm: ${HPAN_SERVICE_TRUST_STORE_ALGORITHM:#{null}}
+      password: ${HPAN_SERVICE_TRUST_STORE_PASSWORD:secret}
+    bin:
+      list:
+        url: /binrange/link
+    token:
+      list:
+        url: /htoken/known/link
 
 feign:
   client:

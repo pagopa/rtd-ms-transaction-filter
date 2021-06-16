@@ -201,6 +201,8 @@ public class TransactionFilterBatch {
             execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
+                            .addString("parEnabled",
+                                    String.valueOf(transactionFilterStep.getParEnabled()))
                             .toJobParameters());
 
             Resource[] hpanWorkerResources = resolver.getResources(

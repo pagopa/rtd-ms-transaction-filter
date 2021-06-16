@@ -232,6 +232,8 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Define _batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled_ parameter on _TRUE_ in case
   of daily removal for stored PAN files
+  
+- Configure the property to determine if the transaction file should contain the PAR column or not, the property is _batchConfiguration.TransactionFilterBatch.transactionFilter.parEnabled_. 
 
 - Configure the path to the transaction files to be processed, through the
   _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath_ property, or through the environment variables
@@ -250,6 +252,16 @@ maintained, in order to have the correct setup for the batch execution.
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example: 
 
   >batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath = file:/C:/Development/hpan/*.pgp
+
+- Define a folder for the files containing the PAR list 
+
+- Configure the path to the files containing the pan list, through the
+  _batchConfiguration.TransactionFilterBatch.parList.parDirectoryPath_ property , or through the environment variables
+  _ACQ_BATCH_PAR_INPUT_PATH_ for the folder, and  _ACQ_BATCH_PAR_INPUT_FILE_PATTERN_, for the pattern of files to read.
+ 
+  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example: 
+
+  >batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath = file:/C:/Development/par/*.pgp
 
 - Define a folder for the output files
 
@@ -302,6 +314,126 @@ maintained, in order to have the correct setup for the batch execution.
   
 - To enable the passages related to the jump recovery services, or the pan list through REST services,
   configure the properties following the definitions in the section __Connecting to REST Services__.    
+  
+ - Place on the machine, the files of the public and/or private key for pgp, if one of the file encryption/decryption function is active. 
+
+- Configure the path to the file containing the public key, through the
+  batchConfiguration.TokenPanFilterBatch.tokenPanFilter.publicKeyPath property, or through the environment variable
+  _ACQ_BATCH_INPUT_PUBLIC_KEYPATH_.         
+   
+  __Note:__ The configuration is strictly needed only if the encryption function of the produced files is enabled. 
+  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
+   
+  >batchConfiguration.TokenPanFilterBatch.tokenPanFilter.publicKeyPath = file:/C/:Development/keys/public.asc
+
+- Configure the pointing to the file containing the private key, through the property
+  _batchConfiguration.TokenPanFilterBatch.binList.secretKeyPath_, or through the environment variable
+  _ACQ_BATCH_INPUT_SECRET_KEYPATH_. 
+
+  __Note:__ The configuration is strictly necessary only if the decryption function of the files containing the pan list is enabled. 
+  In the case of configuration on file, the path must be preceded by prefix _file:/_. for example::
+
+  >batchConfiguration.TokenPanFilterBatch.binList.secretKeyPath = file:/C:/Development/keys/secret.asc
+	
+- Configure the passphrase to be applied if the secret key is enabled, through the
+  _batchConfiguration.TokenPanFilterBatch.binList.passphrase_ property , or via the _ACQ_BATCH_INPUT_SECRET_PASSPHRASE_ environment
+  variable.         
+
+- Define a folder where the path files, to be processed, will be placed
+
+- Define _batchConfiguration.TokenPanFilterBatch.binListRecovery.dailyRemoval.enabled_ parameter on _TRUE_ in case
+  of daily removal for stored BIN files
+  
+  - Configure the pointing to the file containing the private key, through the property
+  _batchConfiguration.TokenPanFilterBatch.binList.secretKeyPath_, or through the environment variable
+  _ACQ_BATCH_INPUT_SECRET_KEYPATH_. 
+
+  __Note:__ The configuration is strictly necessary only if the decryption function of the files containing the pan list is enabled. 
+  In the case of configuration on file, the path must be preceded by prefix _file:/_. for example::
+
+  >batchConfiguration.TokenPanFilterBatch.tokenList.secretKeyPath = file:/C:/Development/keys/secret.asc
+	
+- Configure the passphrase to be applied if the secret key is enabled, through the
+  _batchConfiguration.TokenPanFilterBatch.tokenList.passphrase_ property , or via the _ACQ_BATCH_INPUT_SECRET_PASSPHRASE_ environment
+  variable.         
+
+- Define a folder where the path files, to be processed, will be placed
+
+- Define _batchConfiguration.TokenPanFilterBatch.tokenListRecovery.dailyRemoval.enabled_ parameter on _TRUE_ in case
+  of daily removal for stored HTokenPAN files
+  
+- Configure the path to the token files to be processed, through the
+  _batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanDirectoryPath_ property, or through the environment variables
+  _ACQ_BATCH_TOKEN_INPUT_PATH_ for the folder, and _ACQ_BATCH_INPUT_FILE_PATTERN_, for the pattern of files to read. 
+
+  __Note:__  In the case of file configuration, the path must be preceded by the prefix _file:/_. for example: 
+
+  >batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanDirectoryPath = file:/C:/Development/enrolledtokens/*.csv
+
+- Define a folder for the files containing the BIN list 
+
+- Configure the path to the files containing the pan list, through the
+  _batchConfiguration.TokenPanFilterBatch.binList.binDirectoryPath_ property , or through the environment variables
+  _ACQ_BATCH_BIN_INPUT_PATH_ for the folder, and  _ACQ_BATCH_BIN_INPUT_FILE_PATTERN_, for the pattern of files to read.
+ 
+  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example: 
+
+  >batchConfiguration.TokenPanFilterBatch.binList.binDirectoryPath = file:/C:/Development/bin/*.pgp
+
+- Define a folder for the output files
+
+- Configure the pointing to the trace files to be processed, through the property
+  _batchConfiguration.TokenPanFilterBatch.tokenPanFilter.outputDirectoryPath_, or through the environment variable _ACQ_BATCH_OUTPUT_PATH_      
+
+  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
+
+  >batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath = file:/C:/Development/output
+
+- Define a folder for the output files
+
+- Configure the pointing to the directory where records that are either filtered, or that had an error, are stored,
+  through the property _batchConfiguration.TokenPanFilterBatch.tokenPanList.transactionLogsPath_,
+  or through the environment variable _ACQ_BATCH_TOKEN_LOGS_PATH_      
+
+  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
+
+  >batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath = file:/C:/Development/errorLogs    
+
+- Configure for decryption of the file containing the pan list, through the
+  _batchConfiguration.TokenPanFilterBatch.binList.applyDecrypt_ property, or through the environment variable
+  _ACQ_BATCH_BIN_LIST_APPLY_DECRYPT_      
+  
+  - Configure for decryption of the file containing the pan list, through the
+  _batchConfiguration.TokenPanFilterBatch.tokenPanList.applyDecrypt_ property, or through the environment variable
+  _ACQ_BATCH_TOKEN_LIST_APPLY_DECRYPT_         
+
+- Configure the hash application for transactions, through the batchConfiguration.TokenPanFilterBatch.tokenPanFilter.applyHashing
+  property, or through the environment variable _ACQ_BATCH_TOKEN_LIST_APPLY_HASHING_
+
+- Configure for product encryption, through the batchConfiguration.TokenPanFilterBatch.tokenPanFilter.applyEncrypt property, or
+  through the environment variable _ACQ_BATCH_TOKEN_LIST_APPLY_ENCRYPT_
+  
+- To send the product file on SFTP channel, the functionality must be enabled through 
+  _batchConfiguration.TokenPanFilterBatch.tokenPanSender.enabled_ properties,
+  then the configurations related to the host, the user used and the authentication method,
+  password-based, or through certificate must be reported. Configurations for sftp are listed under the 
+  _batchConfiguration.TransactionFilterBatch.tokenPanFilter.sftp_ root in the configuration properties appendix.
+  
+- Define file management options, defining the _batchConfiguration.TokenPanFilterBatch.tokenPanFilter.deleteProcessedFiles_
+  on true/false value to either delete al processed files, or store on the archival directories.
+  
+- Define file management options, defining the _batchConfiguration.TokenPanFilterBatch.tokenPanFilter.manageHpanOnSuccess_
+  on KEEP to always maintain the bin and tokenPAN files in the input directory, ARCHIVE to store them in the configured archive directory,
+  DELETE for removal in case of successful file processing.
+  
+- Define file management options, defining the _batchConfiguration.TokenPanFilterBatch.tokenPanFilter.deleteOutputFiles_
+  on KEEP to always maintain the output files, ERROR to delete them in case of a FAILURE during the process phase, ALWAYS to 
+  delete the files at the end of the execution (option to be used in junction with the sftp internal sender task).  
+  
+- To enable the passages related to the jump recovery services, or the pan list through REST services,
+  configure the properties following the definitions in the section __Connecting to REST Services__.   
+  
+  
 
 - Configure the process scheduling, through a cron rule, through the
   _batchConfiguration.TransactionFilterBatch.cron_ property, or through the environment variable _ACQ_BATCH_INPUT_CRON_
@@ -355,7 +487,7 @@ __batchConfiguration.TransactionFilterBatch.partitionerCorePoolSize__ | Batch pa
 __batchConfiguration.TransactionFilterBatch.readerMaxPoolSize__ | Maximum number of transaction csv file readers | ${ACQ_BATCH_INPUT_PART_READ_MAX_POOL_SIZE:5} | NO
 __batchConfiguration.TransactionFilterBatch.readerCorePoolSize__ | Maximum number of transaction csv file readers | ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5} | NO
 __batchConfiguration.TransactionFilterBatch.tablePrefix__ | Table prefix containing the metadata related to the execution of the batch, if active | ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_} | NO
-__batchConfiguration.TransactionFilterBatch.isolationForCreate_ | Define the isolation level used by the jobRepository on the batch tables | ${ACQ_BATCH_TRX_ISOLATION_FOR_CREATE:ISOLATION_SERIALIZABLE} | NO
+__batchConfiguration.TransactionFilterBatch.isolationForCreate__ | Define the isolation level used by the jobRepository on the batch tables | ${ACQ_BATCH_TRX_ISOLATION_FOR_CREATE:ISOLATION_SERIALIZABLE} | NO
 __batchConfiguration.TransactionFilterBatch.hpanList.numberPerFile__ | Maximum number can be contained in memory concurrently in a phase of the cycle for the hpan files | ${ACQ_BATCH_WORKER_HPAN_NUMBER:5000000} | NO
 __batchConfiguration.TransactionFilterBatch.panList.numberPerFile__ |  batchConfiguration.TransactionFilterBatch.parList.numberPerFile  | ${ACQ_BATCH_WORKER_PAR_NUMBER:5000000} | NO
 __batchConfiguration.TokenPanFilterBatch.successArchivePath__ | Move initial csv to success path| file:/${ACQ_BATCH_SUCCESS_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/success} | YES
@@ -452,27 +584,27 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.parEnabled__ | Ind
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.transactionDirectoryPath__ | Path where the transaction file to be processed is read | file:/${ACQ_BATCH_TOKEN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.outputDirectoryPath__ | Path where the final file is written | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TOKEN_INPUT_PATH:}/output} | YES
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.publicKeyPath__ | Path containing the public key with which to encrypt the result file | file:/${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:} | YES
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.partitionerSize__ | Partitiner size for tokens files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.chunkSize__ | Chunck size for reading tokens files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.applyHashing__ | Flag that drives the hashing to the pan present in the transaction file | ${ACQ_BATCH_TOKEN_LIST_APPLY_HASHING:false} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.applyEncrypt__ | Flag to define whether to encrypt the result file | ${ACQ_BATCH_TOKEN_LIST_APPLY_ENCRYPT:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.linesToSkip__ | Number of lines to skip from the beginning of the file (e.g. to avoid the header ) | ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0} | NO
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.transactionLogsPath__ | Path where the processed transaction records resulting in either an error, or getting filtered, are traced in .csv format |  file:/${ACQ_BATCH_TOKEN_LOGS_PATH:} | YES
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterReadLogging__ | Property to enable logging for the read records | ${ACQ_BATCH_TOKEN_AFTER_READ_LOGGING_ENABLED:false} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorLogging__ | Property to enable logging for the records that had errors on the reading phase | ${ACQ_BATCH_TOKEN_READ_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorFileLogging__ | Property to enable writing the records that had errors on the reading phase | ${ACQ_BATCH_TOKEN_READ_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterProcessLogging__ | Property to enable logging for the processed records | ${ACQ_BATCH_TOKEN_AFTER_PROCESS_LOGGING_ENABLED:false} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterProcessFileLogging__ | Property to enable writing the records that had been filtered | ${ACQ_BATCH_TOKEN_AFTER_PROCESS_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnProcessErrorLogging__ | Property to enable logging for the records that had errors on the processing phase | ${ACQ_BATCH_TOKEN_PROCESS_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnProcessErrorFileLogging__ | Property to enable writing the records that had errors on the processing phase | ${ACQ_BATCH_TOKEN_PROCESS_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableAfterWriteLogging__ | Property to enable logging for the written records | ${ACQ_BATCH_TOKEN_AFTER_WRITE_LOGGING_ENABLED:false} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnWriteErrorLogging__ | Property to enable logging for the records that had errors on the writing phase | ${ACQ_BATCH_TOKEN_WRITE_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.enableOnWriteErrorFileLogging__ | Property to enable writing the records that had errors on the writing phase | ${ACQ_BATCH_TOKEN_WRITE_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.tokenPanFilter.readers.listener.loggingFrequency__ | Logging frequency for transaction records | ${ACQ_BATCH_TRX_READ_LOGGING_FREQUENCY:10000} | YES
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.transactionDirectoryPath__ | Path where the transaction file to be processed is read | file:/${ACQ_BATCH_TOKEN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.outputDirectoryPath__ | Path where the final file is written | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TOKEN_INPUT_PATH:}/output} | YES
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.publicKeyPath__ | Path containing the public key with which to encrypt the result file | file:/${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:} | YES
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.partitionerSize__ | Partitiner size for tokens files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.chunkSize__ | Chunck size for reading tokens files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.applyHashing__ | Flag that drives the hashing to the pan present in the transaction file | ${ACQ_BATCH_TOKEN_LIST_APPLY_HASHING:false} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.applyEncrypt__ | Flag to define whether to encrypt the result file | ${ACQ_BATCH_TOKEN_LIST_APPLY_ENCRYPT:true} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.linesToSkip__ | Number of lines to skip from the beginning of the file (e.g. to avoid the header ) | ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0} | NO
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.transactionLogsPath__ | Path where the processed transaction records resulting in either an error, or getting filtered, are traced in .csv format |  file:/${ACQ_BATCH_TOKEN_LOGS_PATH:} | YES
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableAfterReadLogging__ | Property to enable logging for the read records | ${ACQ_BATCH_TOKEN_AFTER_READ_LOGGING_ENABLED:false} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorLogging__ | Property to enable logging for the records that had errors on the reading phase | ${ACQ_BATCH_TOKEN_READ_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorFileLogging__ | Property to enable writing the records that had errors on the reading phase | ${ACQ_BATCH_TOKEN_READ_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableAfterProcessLogging__ | Property to enable logging for the processed records | ${ACQ_BATCH_TOKEN_AFTER_PROCESS_LOGGING_ENABLED:false} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableAfterProcessFileLogging__ | Property to enable writing the records that had been filtered | ${ACQ_BATCH_TOKEN_AFTER_PROCESS_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnProcessErrorLogging__ | Property to enable logging for the records that had errors on the processing phase | ${ACQ_BATCH_TOKEN_PROCESS_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnProcessErrorFileLogging__ | Property to enable writing the records that had errors on the processing phase | ${ACQ_BATCH_TOKEN_PROCESS_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableAfterWriteLogging__ | Property to enable logging for the written records | ${ACQ_BATCH_TOKEN_AFTER_WRITE_LOGGING_ENABLED:false} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnWriteErrorLogging__ | Property to enable logging for the records that had errors on the writing phase | ${ACQ_BATCH_TOKEN_WRITE_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnWriteErrorFileLogging__ | Property to enable writing the records that had errors on the writing phase | ${ACQ_BATCH_TOKEN_WRITE_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.loggingFrequency__ | Logging frequency for transaction records | ${ACQ_BATCH_TRX_READ_LOGGING_FREQUENCY:10000} | YES
 
 #### 6. Batch properties - SFTP
 
@@ -569,9 +701,9 @@ Key |  Description | Default | Mandatory | Values
 __batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles__ | Enable deletion of any processed file (all files related to a batch computation) | ${ACQ_BATCH_DELETE_LOCAL_FILE:true} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles__ | Define output files management rule | ${ACQ_BATCH_DELETE_OUTPUT_FILE:ERROR} | YES | ALWAYS ERROR KEEP
 __batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess__ | Define HPAN files management rule on success | ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE} | YES | DELETE ARCHIVE KEEP
-__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles__ | Enable deletion of any processed file (all files related to a batch computation) | ${ACQ_BATCH_DELETE_LOCAL_FILE:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles__ | Define output files management rule | ${ACQ_BATCH_DELETE_OUTPUT_FILE:ERROR} | YES | ALWAYS ERROR KEEP
-__batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess__ | Define HPAN files management rule on success | ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE} | YES | DELETE ARCHIVE KEEP
+__batchConfiguration.tokenListRecovery.tokenPanFilter.deleteProcessedFiles__ | Enable deletion of any processed file (all files related to a batch computation) | ${ACQ_BATCH_DELETE_LOCAL_FILE:true} | YES | TRUE FALSE
+__batchConfiguration.tokenListRecovery.tokenPanFilter.deleteOutputFiles__ | Define output files management rule | ${ACQ_BATCH_DELETE_OUTPUT_FILE:ERROR} | YES | ALWAYS ERROR KEEP
+__batchConfiguration.tokenListRecovery.tokenPanFilter.manageHpanOnSuccess__ | Define HPAN files management rule on success | ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE} | YES | DELETE ARCHIVE KEEP
 
 #### 8. Batch properties - Repository
 
@@ -633,6 +765,8 @@ _"filename"_ property.
 
 Further information about the Spring Batch repository entities, can be found in the
 [Reference Manual](https://docs.spring.io/spring-batch/docs/current/reference/html/schema-appendix.html#metaDataBatchStepExecutionContext)
+	
+Starting from version 2.0.0 the batch process executes a series of jobs to produce the final output, the number of which depens to the configuration regarding the maximum number of records that can be stored in-memory, and the file volume used in the process. The count are to be considered as the grouping of all the executions for a particular file, for the transaction file production the number of records 'written' has to be considered as the difference between the number of filtered records counted in the last execution for a file, and the sum of all the previously written records.	
 
 #### 2. Console Log
 
@@ -947,7 +1081,9 @@ The error occurs when using a connection pool that is undersized for the operati
 #### Par Management in the new version: What to do if it's not expected to have this information
 The new version of the batch process, currently in development, will manage a new information within the transaction records, containing the PAR value. Acquirers that does not expect to have this information will have the following options:
 
-- Use the new version that will be provided, and use the configuration to define wheter to use the new version of the record format, or use the one actually in production
+- Use the new version that will be provided, and use the configuration to define wheter to use the new version of the record format, or use the one actually in production. The property to enable/disable the tokenizer from reading the par value is
+ _batchConfiguration.TransactionFilterBatch.transactionFilter.parEnabled_, set to false if it's not required. In case the value is set to false it's not required to execute the download of the par file through the _batchConfiguration.TransactionFilterBatch.parListRecovery.enabled_
+ property, set to false if it's not required to download the file.
 
 - Mantain the legacy version of the batch process, CentroStella will keep managing the legacy version of the transaction file format
 
