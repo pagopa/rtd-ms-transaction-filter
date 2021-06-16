@@ -111,6 +111,7 @@ public class TransactionFilterBatchTest {
     private JobParameters defaultJobParameters() {
         return new JobParametersBuilder()
                 .addDate("startDateTime",  new Date())
+                .addString("parEnabled", "true")
                 .toJobParameters();
     }
 

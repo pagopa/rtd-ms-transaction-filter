@@ -25,6 +25,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import java.io.FileNotFoundException;
+import java.nio.file.Files;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -99,10 +100,12 @@ public class ParReaderStep {
      */
     @Bean
     @JobScope
-    public Partitioner parRecoveryPartitioner() throws Exception {
+    public Partitioner parRecoveryPartitioner(
+            @Value("#{jobParameters['parEnabled']}") Boolean parEnabled) throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(parDirectoryPath));
+        partitioner.setResources(resolver.getResources(parEnabled ? parDirectoryPath : "file:/".concat(
+                Files.createTempDirectory("tempParFolder").toFile().getAbsolutePath()).concat("*.csv")));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -172,7 +175,7 @@ public class ParReaderStep {
                                        WriterTrackerService writerTrackerService) throws Exception {
         return stepBuilderFactory.get("par-recovery-master-step")
                 .partitioner(parRecoveryWorkerStep(parStoreService, writerTrackerService))
-                .partitioner("partition", parRecoveryPartitioner())
+                .partitioner("partition", parRecoveryPartitioner(null))
                 .taskExecutor(batchConfig.partitionerTaskExecutor())
                 .listener(parReaderMasterStepListener(parStoreService, writerTrackerService))
                 .build();

@@ -233,7 +233,7 @@ maintained, in order to have the correct setup for the batch execution.
 - Define _batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled_ parameter on _TRUE_ in case
   of daily removal for stored PAN files
   
-  - Configure the property to determine if the transaction file should contain the PAR column or not, the property is _batchConfiguration.TransactionFilterBatch.transactionFilter.parEnabled_. 
+- Configure the property to determine if the transaction file should contain the PAR column or not, the property is _batchConfiguration.TransactionFilterBatch.transactionFilter.parEnabled_. 
 
 - Configure the path to the transaction files to be processed, through the
   _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath_ property, or through the environment variables
@@ -1081,7 +1081,9 @@ The error occurs when using a connection pool that is undersized for the operati
 #### Par Management in the new version: What to do if it's not expected to have this information
 The new version of the batch process, currently in development, will manage a new information within the transaction records, containing the PAR value. Acquirers that does not expect to have this information will have the following options:
 
-- Use the new version that will be provided, and use the configuration to define wheter to use the new version of the record format, or use the one actually in production
+- Use the new version that will be provided, and use the configuration to define wheter to use the new version of the record format, or use the one actually in production. The property to enable/disable the tokenizer from reading the par value is
+ _batchConfiguration.TransactionFilterBatch.transactionFilter.parEnabled_, set to false if it's not required. In case the value is set to false it's not required to execute the download of the par file through the _batchConfiguration.TransactionFilterBatch.parListRecovery.enabled_
+ property, set to false if it's not required to download the file.
 
 - Mantain the legacy version of the batch process, CentroStella will keep managing the legacy version of the transaction file format
 
