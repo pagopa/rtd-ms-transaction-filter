@@ -119,6 +119,7 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
         List<File> files = new ArrayList<>();
 
         for (String fileLink : tokenPanDataModel.getFileLinks()) {
+            log.info("Downloading bin file: {}", fileLink);
             files.add(fullFileBinRecovery(fileLink));
         }
 
@@ -165,6 +166,7 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
         List<File> files = new ArrayList<>();
 
         for (String fileLink : tokenPanDataModel.getFileLinks()) {
+            log.info("Downloading token file: {}", fileLink);
             files.add(fullFileTokenPanRecovery(fileLink));
         }
 
