@@ -217,7 +217,7 @@ class HpanRestClientImpl implements HpanRestClient {
             if (checksumValidation) {
                 String checksum = Objects.requireNonNull(
                         responseEntity.getHeaders().get(checksumHeaderName)).get(0);
-                if (!checksum.equals(DigestUtils.sha256Hex(Objects.requireNonNull(
+                if (!checksum.equalsIgnoreCase(DigestUtils.sha256Hex(Objects.requireNonNull(
                         responseEntity.getBody()).getInputStream()))) {
                     throw new Exception();
                 }

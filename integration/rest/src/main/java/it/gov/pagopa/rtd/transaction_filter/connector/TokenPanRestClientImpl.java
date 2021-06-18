@@ -203,8 +203,8 @@ class TokenPanRestClientImpl implements TokenPanRestClient {
 
             if (checksumValidation) {
                 String checksum = Objects.requireNonNull(
-                        responseEntity.getHeaders().get(checksumHeaderName)).get(0);
-                if (!checksum.equals(DigestUtils.sha256Hex(Objects.requireNonNull(
+                        responseEntity.getHeaders().get(checksumHeaderName)).get(0).toLowerCase();
+                if (!checksum.equalsIgnoreCase(DigestUtils.sha256Hex(Objects.requireNonNull(
                         responseEntity.getBody()).getInputStream()))) {
                     throw new Exception();
                 }
