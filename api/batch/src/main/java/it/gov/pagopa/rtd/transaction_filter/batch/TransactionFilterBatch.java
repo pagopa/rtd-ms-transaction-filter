@@ -164,14 +164,22 @@ public class TransactionFilterBatch {
     @SneakyThrows
     public JobExecution executeBatchJob(Date startDate) {
         String transactionsPath = transactionFilterStep.getTransactionDirectoryPath();
-        String tempOutputPath = "file:/".concat(
-                Files.createTempDirectory("tempOutTrxFolder").toFile().getAbsolutePath());
-        String innerOutputPath = "file:/".concat(
-                Files.createTempDirectory("tempInTrxFolder").toFile().getAbsolutePath());
-        String workingHpanDirectory = "file:/".concat(
-                Files.createTempDirectory("workingHpanFolder").toFile().getAbsolutePath());
-        String workingParDirectory = "file:/".concat(
-                Files.createTempDirectory("workingParFolder").toFile().getAbsolutePath());
+
+        String tempOutputPath = Files.createTempDirectory("tempOutTrxFolder").toFile().getAbsolutePath();
+        tempOutputPath = "file:/".concat(tempOutputPath.charAt(0) == '/' ?
+                tempOutputPath.replaceFirst("/","") : tempOutputPath);
+
+        String innerOutputPath = Files.createTempDirectory("tempInTrxFolder").toFile().getAbsolutePath();
+        innerOutputPath = "file:/".concat(innerOutputPath.charAt(0) == '/' ?
+                innerOutputPath.replaceFirst("/","") : innerOutputPath);
+
+        String workingHpanDirectory = Files.createTempDirectory("workingHpanFolder").toFile().getAbsolutePath();
+        workingHpanDirectory = "file:/".concat(workingHpanDirectory.charAt(0) == '/' ?
+                workingHpanDirectory.replaceFirst("/","") : workingHpanDirectory);
+
+        String workingParDirectory =  Files.createTempDirectory("workingParFolder").toFile().getAbsolutePath();
+        workingParDirectory = "file:/".concat(workingParDirectory.charAt(0) == '/' ?
+                workingParDirectory.replaceFirst("/","") : workingParDirectory);
 
         Resource[] transactionResources = resolver.getResources(transactionsPath);
         String hpanPath = panReaderStep.getHpanDirectoryPath();
@@ -230,8 +238,10 @@ public class TransactionFilterBatch {
                     String file = hpanResource.getFile().getAbsolutePath();
                     file = file.replaceAll("\\\\", "/");
                     String[] filename = file.split("/");
+                    String[] filenameArr = filename[filename.length-1].split("\\.");
+                    filenameArr[filenameArr.length-1] = "csv";
                     tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                    File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                    File destFile = FileUtils.getFile(tempData + "/" + String.join(".", filenameArr));
                     FileUtils.moveFile(FileUtils.getFile(hpanResource.getFile()), destFile);
                     hpanFilesCounter = hpanFilesCounter + 1;
                 }
@@ -242,8 +252,10 @@ public class TransactionFilterBatch {
                     String file = parResource.getFile().getAbsolutePath();
                     file = file.replaceAll("\\\\", "/");
                     String[] filename = file.split("/");
+                    String[] filenameArr = filename[filename.length-1].split("\\.");
+                    filenameArr[filenameArr.length-1] = "csv";
                     tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                    File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                    File destFile = FileUtils.getFile(tempData + "/" + String.join(".", filenameArr));
                     FileUtils.moveFile(FileUtils.getFile(parResource.getFile()), destFile);
                     parFilesCounter = parFilesCounter + 1;
                 }
@@ -255,8 +267,10 @@ public class TransactionFilterBatch {
                     String file = transactionResource.getFile().getAbsolutePath();
                     file = file.replaceAll("\\\\", "/");
                     String[] filename = file.split("/");
+                    String[] filenameArr = filename[filename.length-1].split("\\.");
+                    filenameArr[filenameArr.length-1] = "csv";
                     tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                    File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                    File destFile = FileUtils.getFile(tempData + "/" + String.join(".", filenameArr));
                     FileUtils.moveFile(FileUtils.getFile(transactionResource.getFile()), destFile);
                 }
 

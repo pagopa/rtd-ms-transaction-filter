@@ -80,7 +80,7 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                     hpan : DigestUtils.sha256Hex(
                             inboundTransaction.getPan() + hpanStoreService.getSalt()));
 
-            return inboundTransaction;
+            return resultTransaction;
         } else {
             if (lastSection) {
                 return null;

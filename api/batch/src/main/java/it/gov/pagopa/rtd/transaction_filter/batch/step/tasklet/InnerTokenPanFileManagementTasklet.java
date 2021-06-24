@@ -103,6 +103,29 @@ public class InnerTokenPanFileManagementTasklet implements Tasklet, Initializing
             }
         }).collect(Collectors.toList());
 
+        tempTokenPanDirectory = tempTokenPanDirectory.replaceAll("\\\\","/");
+
+        List<String> tempTokenPanResources = Arrays.stream(resolver.getResources(tempTokenPanDirectory.concat("/current/*.csv"))).map(resource -> {
+            try {
+                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+                return null;
+            }
+        }).collect(Collectors.toList());
+
+        tempBinDirectory = tempBinDirectory.replaceAll("\\\\","/");
+
+        List<String> tempBinResources = Arrays.stream(resolver.getResources(tempBinDirectory.concat("/current/*.csv"))).map(resource -> {
+            try {
+                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+                return null;
+            }
+        }).collect(Collectors.toList());
+
+
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext()
                 .getStepExecution().getJobExecution().getStepExecutions();
         for (StepExecution stepExecution : stepExecutions) {
@@ -136,8 +159,10 @@ public class InnerTokenPanFileManagementTasklet implements Tasklet, Initializing
                         }
                     }
 
-                    boolean isBinFile = binResources.contains(path.replaceAll("\\\\","/"));
-                    boolean isTokenPanFile = tokenPanResources.contains(path.replaceAll("\\\\","/"));
+                    boolean isBinFile = binResources.contains(path.replaceAll("\\\\","/")) ||
+                            tempBinResources.contains(path.replaceAll("\\\\","/"));
+                    boolean isTokenPanFile = tokenPanResources.contains(path.replaceAll("\\\\","/")) ||
+                            tempTokenPanResources.contains(path.replaceAll("\\\\","/")) ;
                     if (deleteProcessedFiles || isBinFile || isTokenPanFile || !firstSection) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
