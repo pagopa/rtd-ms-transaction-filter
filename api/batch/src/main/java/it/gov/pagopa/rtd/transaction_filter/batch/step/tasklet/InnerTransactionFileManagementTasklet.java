@@ -80,6 +80,7 @@ public class InnerTransactionFileManagementTasklet implements Tasklet, Initializ
 
         boolean executionWithErrors = false;
         List<String> errorFilenames = new ArrayList<>();
+
         hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
 
         List<String> hpanResources = Arrays.stream(resolver.getResources(hpanDirectory)).map(resource -> {
@@ -102,9 +103,9 @@ public class InnerTransactionFileManagementTasklet implements Tasklet, Initializ
             }
         }).collect(Collectors.toList());
 
-        hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
+        tempHpanDirectory = tempHpanDirectory.replaceAll("\\\\","/");
 
-        List<String> tempHpanResources = Arrays.stream(resolver.getResources(tempHpanDirectory)).map(resource -> {
+        List<String> tempHpanResources = Arrays.stream(resolver.getResources(tempHpanDirectory.concat("/current/*.csv"))).map(resource -> {
             try {
                 return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
             } catch (IOException e) {
@@ -113,9 +114,9 @@ public class InnerTransactionFileManagementTasklet implements Tasklet, Initializ
             }
         }).collect(Collectors.toList());
 
-        parDirectory = parDirectory.replaceAll("\\\\","/");
+        tempParDirectory = tempParDirectory.replaceAll("\\\\","/");
 
-        List<String> tempParResources = Arrays.stream(resolver.getResources(tempParDirectory)).map(resource -> {
+        List<String> tempParResources = Arrays.stream(resolver.getResources(tempParDirectory.concat("/current/*.csv"))).map(resource -> {
             try {
                 return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
             } catch (IOException e) {

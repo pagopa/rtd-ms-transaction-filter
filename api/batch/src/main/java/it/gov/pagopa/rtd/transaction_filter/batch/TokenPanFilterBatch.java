@@ -162,14 +162,22 @@ public class TokenPanFilterBatch {
     @SneakyThrows
     public JobExecution executeBatchJob(Date startDate) {
         String transactionsPath = tokenPanFilterStep.getTransactionDirectoryPath();
-        String innerOutputPath = "file:/".concat(
-                Files.createTempDirectory("tempTokenFolder").toFile().getAbsolutePath());
-        String tempOutputPath = "file:/".concat(
-                Files.createTempDirectory("tempTokenPanFolder").toFile().getAbsolutePath());
-        String workingBinDirectory = "file:/".concat(
-                Files.createTempDirectory("workingBinFolder").toFile().getAbsolutePath());
-        String workingTokenPanDirectory = "file:/".concat(
-                Files.createTempDirectory("workingTokenPanFolder").toFile().getAbsolutePath());
+
+        String innerOutputPath = Files.createTempDirectory("tempTokenFolder").toFile().getAbsolutePath();
+        innerOutputPath = "file:/".concat(innerOutputPath.charAt(0) == '/' ?
+                innerOutputPath.replaceFirst("/","") : innerOutputPath);
+
+        String tempOutputPath = Files.createTempDirectory("tempTokenPanFolder").toFile().getAbsolutePath();
+        tempOutputPath = "file:/".concat(tempOutputPath.charAt(0) == '/' ?
+                tempOutputPath.replaceFirst("/","") : tempOutputPath);
+
+        String workingBinDirectory =    Files.createTempDirectory("workingBinFolder").toFile().getAbsolutePath();
+        workingBinDirectory = "file:/".concat(workingBinDirectory.charAt(0) == '/' ?
+                workingBinDirectory.replaceFirst("/","") : workingBinDirectory);
+
+        String workingTokenPanDirectory =  Files.createTempDirectory("workingTokenPanFolder").toFile().getAbsolutePath();
+        workingTokenPanDirectory = "file:/".concat(workingTokenPanDirectory.charAt(0) == '/' ?
+                workingTokenPanDirectory.replaceFirst("/","") : workingTokenPanDirectory);
 
         Resource[] transactionResources = resolver.getResources(transactionsPath);
 
@@ -240,8 +248,10 @@ public class TokenPanFilterBatch {
                 String file = parResource.getFile().getAbsolutePath();
                 file = file.replaceAll("\\\\", "/");
                 String[] filename = file.split("/");
+                String[] filenameArr = filename[filename.length-1].split("\\.");
+                filenameArr[filenameArr.length-1] = "csv";
                 tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                File destFile = FileUtils.getFile(tempData + "/" + String.join(".", filenameArr));
                 FileUtils.moveFile(FileUtils.getFile(parResource.getFile()), destFile);
                 binFilesCounter = binFilesCounter + 1;
 
@@ -254,8 +264,10 @@ public class TokenPanFilterBatch {
                     file = transactionResource.getFile().getAbsolutePath();
                     file = file.replaceAll("\\\\", "/");
                     filename = file.split("/");
+                    filenameArr = filename[filename.length-1].split("\\.");
+                    filenameArr[filenameArr.length-1] = "csv";
                     tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                    destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                    destFile = FileUtils.getFile(tempData + "/" + String.join(".", filenameArr));
                     FileUtils.moveFile(FileUtils.getFile(transactionResource.getFile()), destFile);
                 }
 
@@ -292,8 +304,10 @@ public class TokenPanFilterBatch {
                 String file = tokenPanResource.getFile().getAbsolutePath();
                 file = file.replaceAll("\\\\", "/");
                 String[] filename = file.split("/");
+                String[] filenameArr = filename[filename.length-1].split("\\.");
+                filenameArr[filenameArr.length-1] = "csv";
                 tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                File destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                File destFile = FileUtils.getFile(tempData + "/" + String.join(".", filenameArr));
                 FileUtils.moveFile(FileUtils.getFile(tokenPanResource.getFile()), destFile);
                 tokenPanFilesCounter = tokenPanFilesCounter + 1;
 
@@ -304,8 +318,10 @@ public class TokenPanFilterBatch {
                     file = transactionResource.getFile().getAbsolutePath();
                     file = file.replaceAll("\\\\", "/");
                     filename = file.split("/");
+                    filenameArr = filename[filename.length-1].split("\\.");
+                    filenameArr[filenameArr.length-1] = "csv";
                     tempData = resolver.getResources(tempData)[0].getFile().getAbsolutePath();
-                    destFile = FileUtils.getFile(tempData + "/" + filename[filename.length - 1]);
+                    destFile = FileUtils.getFile(tempData + "/" + String.join(".", filenameArr));
                     FileUtils.moveFile(FileUtils.getFile(transactionResource.getFile()), destFile);
                 }
 
