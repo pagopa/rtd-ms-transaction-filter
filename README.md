@@ -1086,5 +1086,11 @@ The new version of the batch process, currently in development, will manage a ne
  property, set to false if it's not required to download the file.
 
 - Mantain the legacy version of the batch process, CentroStella will keep managing the legacy version of the transaction file format
+	
+#### Could not find placeholder batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanLogsPath	
+	
+_java.lang.IllegalArgumentException: Could not resolve placeholder 'batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanLogsPath' in value "${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanLogsPath}"_
+	
+This error means a configuration property is missing from your application.yml config file, include the property, you can set the value of the property _batchConfiguration.TokenPanFilterBatch.transactionFilter.transactionLogsPath_
 
 
