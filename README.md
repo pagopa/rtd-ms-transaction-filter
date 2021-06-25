@@ -397,7 +397,7 @@ maintained, in order to have the correct setup for the batch execution.
 
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
-  >batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath = file:/C:/Development/errorLogs    
+  >batchConfiguration.TokenPanFilterBatch.tokenPanList.tokenPanLogsPath = file:/C:/Development/errorLogs    
 
 - Configure for decryption of the file containing the pan list, through the
   _batchConfiguration.TokenPanFilterBatch.binList.applyDecrypt_ property, or through the environment variable
