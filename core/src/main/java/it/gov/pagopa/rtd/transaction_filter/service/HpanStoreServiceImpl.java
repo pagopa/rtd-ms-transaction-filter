@@ -64,7 +64,6 @@ class HpanStoreServiceImpl implements HpanStoreService {
         for (BufferedWriter bufferedWriter : bufferedWriterList) {
             bufferedWriter.close();
         }
-        this.salt = "";
     }
 
     @SneakyThrows
