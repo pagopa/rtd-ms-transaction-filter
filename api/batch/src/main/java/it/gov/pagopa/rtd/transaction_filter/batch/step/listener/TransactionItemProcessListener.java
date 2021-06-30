@@ -78,7 +78,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 String[] fileArr = file.split("/");
                 String filename = fileArr[fileArr.length - 1].replaceAll(
                         "TRNLOG", "TKNLST").replaceAll("CSTAR","TKM");
-                if (!filename.contains("TKM")) {
+                if (!filename.contains("TKM.")) {
                     filename = "TKM.".concat(filename);
                 }
                 if (!filename.contains(".csv")) {

@@ -303,6 +303,11 @@ public class TransactionFilterBatch {
 
             }
 
+            jobLauncher().run(senderJob(),
+                    new JobParametersBuilder()
+                            .addDate("startDateTime", new Date())
+                            .toJobParameters());
+
             Resource[] parResourcesToDelete = resolver.getResources(
                     workingParDirectory.concat("/*.csv"));
             for (Resource resource : parResourcesToDelete) {
@@ -400,6 +405,17 @@ public class TransactionFilterBatch {
 
     /**
      *
+     * @return instance of a job for transaction processing
+     */
+    @SneakyThrows
+    @Bean
+    public Job senderJob() {
+        return transactionSenderJobBuilder().build();
+    }
+
+
+    /**
+     *
      * @return bean for a ThreadPoolTaskScheduler
      */
     @Bean
@@ -477,9 +493,19 @@ public class TransactionFilterBatch {
                 .on("FAILED").to(innerFileManagementTask())
                 .from(transactionFilterStep.transactionFilterMasterStep(
                         this.hpanStoreService,this.parStoreService,this.transactionWriterService))
-                .on("*").to(transactionFilterStep.transactionSenderMasterStep(
-                        this.sftpConnectorService))
                 .on("*").to(innerFileManagementTask())
+                .build();
+    }
+
+    @SneakyThrows
+    public FlowJobBuilder transactionSenderJobBuilder() {
+
+        return jobBuilderFactory.get("transaction-sender-filter-job")
+                .repository(getJobRepository())
+                .listener(jobListener())
+                .start(transactionFilterStep.transactionSenderMasterStep(
+                        this.sftpConnectorService))
+                .on("*").to(fileManagementTask())
                 .build();
     }
 
