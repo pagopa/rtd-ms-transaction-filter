@@ -352,6 +352,11 @@ public class TokenPanFilterBatch {
 
             }
 
+            tokenJobLauncher().run(tokenPanJobSender(),
+                    new JobParametersBuilder()
+                            .addDate("startDateTime", new Date())
+                            .toJobParameters());
+
             closeChannels();
             clearTokenPanStoreService();
             clearBinStoreService();
@@ -440,6 +445,17 @@ public class TokenPanFilterBatch {
     public Job tokenPanBinJobInner() {
         return tokenPanInnerJobBuilder().build();
     }
+
+    /**
+     *
+     * @return instance of a job for transaction processing
+     */
+    @SneakyThrows
+    @Bean
+    public Job tokenPanJobSender() {
+        return tokenPanSenderJobBuilder().build();
+    }
+
 
 
     /**
@@ -535,6 +551,18 @@ public class TokenPanFilterBatch {
                 .on("*").to(tokenPanFilterStep.tokenSenderMasterStep(
                         this.sftpConnectorService))
                 .on("*").to(innerTokenPanFileManagementTask())
+                .build();
+    }
+
+    @SneakyThrows
+    public FlowJobBuilder tokenPanSenderJobBuilder() {
+
+        return jobBuilderFactory.get("token-inner-tokenpan-sender-job")
+                .repository(tokenJobRepository())
+                .listener(jobListener())
+                .start(tokenPanFilterStep.tokenSenderMasterStep(
+                        this.sftpConnectorService))
+                .on("*").to(fileTokenManagementTask())
                 .build();
     }
 

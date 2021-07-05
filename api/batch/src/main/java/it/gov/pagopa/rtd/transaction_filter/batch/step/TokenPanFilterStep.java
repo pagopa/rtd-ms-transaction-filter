@@ -9,6 +9,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.*;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundBinTokenPanItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTokenPanItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TokenPanFlatFileItemReader;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TokenSenderTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.BinStoreService;
@@ -510,15 +511,15 @@ public class TokenPanFilterStep {
     @SneakyThrows
     @Bean
     @StepScope
-    public TransactionSenderTasklet tokenSenderTasklet(
+    public TokenSenderTasklet tokenSenderTasklet(
             @Value("#{stepExecutionContext['fileName']}") String file,
             SftpConnectorService sftpConnectorService
     ) {
-        TransactionSenderTasklet transactionSenderTasklet = new TransactionSenderTasklet();
-        transactionSenderTasklet.setResource(new UrlResource(file));
-        transactionSenderTasklet.setSftpConnectorService(sftpConnectorService);
-        transactionSenderTasklet.setTaskletEnabled(tokenSenderEnabled);
-        return transactionSenderTasklet;
+        TokenSenderTasklet tokenSenderTasklet = new TokenSenderTasklet();
+        tokenSenderTasklet.setResource(new UrlResource(file));
+        tokenSenderTasklet.setSftpConnectorService(sftpConnectorService);
+        tokenSenderTasklet.setTaskletEnabled(tokenSenderEnabled);
+        return tokenSenderTasklet;
     }
 
     @Bean

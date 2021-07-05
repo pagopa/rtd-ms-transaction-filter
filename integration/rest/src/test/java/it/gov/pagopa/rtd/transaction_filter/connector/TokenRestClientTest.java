@@ -37,6 +37,7 @@ import static org.junit.Assert.assertNotNull;
                 "rest-client.tkm.mtls.enabled=true",
                 "rest-client.tkm.list.checksumHeaderName=checksum",
                 "rest-client.tkm.dateValidation.enabled=true",
+                "rest-client.tkm.list.dateValidationPattern=",
                 "rest-client.tkm.list.dateValidationHeaderName=date",
                 "rest-client.tkm.key-store.file=classpath:certs/client-keystore.jks",
                 "rest-client.tkm.key-store.password=secret",
