@@ -11,7 +11,6 @@
     <artifactId>rtd-ms-transaction_filter-integration-sftp</artifactId>
     <version>2.0.0-RC3</version>
 
-
     <dependencies>
         <dependency>
             <groupId>org.apache.sshd</groupId>

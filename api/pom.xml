@@ -5,7 +5,6 @@
         <artifactId>rtd-ms-transaction-filter</artifactId>
         <groupId>it.gov.pagopa.rtd.ms</groupId>
         <version>2.0.0-RC3</version>
-
     </parent>
 
     <groupId>it.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
@@ -19,7 +18,6 @@
             <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
             <artifactId>rtd-ms-transaction-filter-core</artifactId>
             <version>2.0.0-RC3</version>
-
         </dependency>
     </dependencies>
 

@@ -239,7 +239,7 @@ rest-client:
       checksumValidation: ${ACQ_BATCH_TKM_LIST_CHECKSUM_VALIDATION:false}
       checksumHeaderName: ${ACQ_BATCH_TKM_LIST_CHECKSUM_HEADER:Checksum-Sha256}
       dateValidation: ${ACQ_BATCH_TKM_LIST_DATE_VALIDATION:true}
-      dateValidationPattern: ${ACQ_BATCH_TKM_LIST_DATE_VALIDATION_PATTERN:}
+      dateValidationPattern: ${ACQ_BATCH_TKM_LIST_DATE_VALIDATION_PATTERN:dd/MM/yyyy[ [HH][:mm][:ss][.SSS]]}
       listFilePattern: ${ACQ_BATCH_TKM_LIST_FILE_PATTERN:.*}
     mtls:
       enabled: ${TKM_SERVICE_MTLS_ENABLED:true}

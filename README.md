@@ -392,12 +392,12 @@ maintained, in order to have the correct setup for the batch execution.
 - Define a folder for the output files
 
 - Configure the pointing to the directory where records that are either filtered, or that had an error, are stored,
-  through the property _batchConfiguration.TokenPanFilterBatch.tokenPanList.transactionLogsPath_,
+  through the property _batchConfiguration.TokenPanFilterBatch.tokenPanList.tokenPanLogsPath_,
   or through the environment variable _ACQ_BATCH_TOKEN_LOGS_PATH_      
 
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
-  >batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath = file:/C:/Development/errorLogs    
+  >batchConfiguration.TokenPanFilterBatch.tokenPanList.tokenPanLogsPath = file:/C:/Development/errorLogs    
 
 - Configure for decryption of the file containing the pan list, through the
   _batchConfiguration.TokenPanFilterBatch.binList.applyDecrypt_ property, or through the environment variable
@@ -593,7 +593,7 @@ __batchConfiguration.TokenPanFilterBatch.tokenPanFilter.skipLimit__ | Maximum nu
 __batchConfiguration.TokenPanFilterBatch.tokenPanFilter.applyHashing__ | Flag that drives the hashing to the pan present in the transaction file | ${ACQ_BATCH_TOKEN_LIST_APPLY_HASHING:false} | YES | TRUE FALSE
 __batchConfiguration.TokenPanFilterBatch.tokenPanFilter.applyEncrypt__ | Flag to define whether to encrypt the result file | ${ACQ_BATCH_TOKEN_LIST_APPLY_ENCRYPT:true} | YES | TRUE FALSE
 __batchConfiguration.TokenPanFilterBatch.tokenPanFilter.linesToSkip__ | Number of lines to skip from the beginning of the file (e.g. to avoid the header ) | ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0} | NO
-__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.transactionLogsPath__ | Path where the processed transaction records resulting in either an error, or getting filtered, are traced in .csv format |  file:/${ACQ_BATCH_TOKEN_LOGS_PATH:} | YES
+__batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanLogsPath__ | Path where the processed transaction records resulting in either an error, or getting filtered, are traced in .csv format |  file:/${ACQ_BATCH_TOKEN_LOGS_PATH:} | YES
 __batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableAfterReadLogging__ | Property to enable logging for the read records | ${ACQ_BATCH_TOKEN_AFTER_READ_LOGGING_ENABLED:false} | YES | TRUE FALSE
 __batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorLogging__ | Property to enable logging for the records that had errors on the reading phase | ${ACQ_BATCH_TOKEN_READ_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
 __batchConfiguration.TokenPanFilterBatch.tokenPanFilter.readers.listener.enableOnReadErrorFileLogging__ | Property to enable writing the records that had errors on the reading phase | ${ACQ_BATCH_TOKEN_READ_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
@@ -1086,5 +1086,11 @@ The new version of the batch process, currently in development, will manage a ne
  property, set to false if it's not required to download the file.
 
 - Mantain the legacy version of the batch process, CentroStella will keep managing the legacy version of the transaction file format
+	
+#### Could not find placeholder batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanLogsPath	
+	
+_java.lang.IllegalArgumentException: Could not resolve placeholder 'batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanLogsPath' in value "${batchConfiguration.TokenPanFilterBatch.tokenPanFilter.tokenPanLogsPath}"_
+	
+This error means a configuration property is missing from your application.yml config file, include the property, you can set the same value of the property _batchConfiguration.TokenPanFilterBatch.transactionFilter.transactionLogsPath_
 
 
