@@ -1,0 +1,50 @@
+trigger: main
+pr:
+  autoCancel: true
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+
+  - task: SonarCloudPrepare@1
+    displayName: 'Prepare SonarCloud analysis configuration'
+    inputs:
+      SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
+      organization: '$(SONARCLOUD_ORG)'
+      scannerMode: Other
+      extraProperties: |
+        sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
+        sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
+
+  - task: Maven@3
+    displayName: Build and Test
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: 'package'
+#      options: '-Dsonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)\CCReport43F6D5EF\jacoco.xml'
+#      publishJUnitResults: true
+#      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      codeCoverageToolOption: 'JaCoCo'
+      codeCoverageClassFilter: '+:eu.sia.meda.**,-:**.*Config,-:**.*Scheduler,-:**.Dummy*,-:**.model.**,-:**.enums.**,-:**.*Constants,-:**.*Application,-:**.*Test,-:**.*Test.**,-:**Base*.**,-:ErrorManagerService.java'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.11'
+      mavenVersionOption: 'Default'
+      mavenOptions: '-Xmx3072m'
+      mavenAuthenticateFeed: true
+      effectivePomSkip: true
+      sonarQubeRunAnalysis: true
+      isJacocoCoverageReportXML: true
+      sqMavenPluginVersionChoice: 'latest'
+  - task: Bash@3
+    displayName: Bash
+    name: Bash
+    inputs:
+      targetType: 'inline'
+      script: |
+        cd $(System.DefaultWorkingDirectory) | ls -lR
+      failOnStderr: true
+  - task: SonarCloudPublish@1
+    displayName: 'Publish SonarCloud results on build summary'
+    inputs:
+      pollingTimeoutSec: '300'
