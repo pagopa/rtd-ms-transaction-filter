@@ -43,7 +43,7 @@ variables:
   deployment: deployment-dev
   selfHostedAgentPool: $(DEV_AGENT_POOL)
   mavenGoals: 'package'
-  settingsXmlsecureFileName: $(SETTINGS_XML_RO_SECURE_FILE_NAME)
+  settingsXmlsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
 
 stages:
   - stage: Release
@@ -55,12 +55,6 @@ stages:
         pool:
           vmImage: $(vmImageNameDefault)
         steps:
-          - task: DownloadSecureFile@1
-            displayName: 'download settings.xml for Maven'
-            name: settingsxml
-            inputs:
-              secureFile: '$(settingsXmlsecureFileName)'
-              retryCount: '2'
           - task: Bash@3
             displayName: Get POM version
             name: getpomversion
@@ -84,17 +78,11 @@ stages:
         pool:
           vmImage: $(vmImageNameDefault)
         steps:
-          - task: DownloadSecureFile@1
-            displayName: 'download settings.xml for Maven'
-            name: settingsxml
-            inputs:
-              secureFile: '$(settingsXmlsecureFileName)'
-              retryCount: '2'
           - task: Maven@3
             inputs:
               mavenPomFile: 'pom.xml'
               goals: '$(mavenGoals)'
-              options: '-B -s $(settingsxml.secureFilePath) -DskipTests=true'
+              options: '-B -DskipTests=true'
               javaHomeOption: 'JDKVersion'
               jdkVersionOption: '1.8'
               mavenVersionOption: 'Default'
