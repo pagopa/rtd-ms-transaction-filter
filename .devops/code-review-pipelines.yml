@@ -37,16 +37,18 @@ steps:
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'
-      goals: 'clean package'
+      goals: 'clean org.jacoco:jacoco-maven-plugin:prepare-agent verify org.jacoco:jacoco-maven-plugin:report org.jacoco:jacoco-maven-plugin:report-aggregate'
       publishJUnitResults: false
       javaHomeOption: 'JDKVersion'
       mavenVersionOption: 'Default'
       mavenAuthenticateFeed: false
       effectivePomSkip: false
       sonarQubeRunAnalysis: false
-      isJacocoCoverageReportXML: false
-      sqMavenPluginVersionChoice: 'latest'
-      
+      isJacocoCoverageReportXML: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+
+      # sqMavenPluginVersionChoice: 'latest'
+
   - task: SonarCloudPublish@1
     inputs:
       pollingTimeoutSec: '300'
