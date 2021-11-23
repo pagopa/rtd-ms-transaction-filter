@@ -43,7 +43,7 @@ variables:
   deployment: deployment-dev
   selfHostedAgentPool: $(DEV_AGENT_POOL)
   mavenGoals: 'package'
-  settingsXmlsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
+  settingsXmlsecureFileName: $(SETTINGS_XML_RO_SECURE_FILE_NAME)
 
 stages:
   - stage: Release
