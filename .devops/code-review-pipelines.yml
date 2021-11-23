@@ -1,4 +1,5 @@
-trigger: main
+trigger: 
+  - master
 pr:
   autoCancel: true
 
