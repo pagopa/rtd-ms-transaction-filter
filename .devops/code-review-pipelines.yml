@@ -1,10 +1,12 @@
-trigger: 
+trigger:
   - master
-pr:
-  autoCancel: true
 
 pool:
   vmImage: 'ubuntu-latest'
+
+#variables:
+#  MAVEN_CACHE_FOLDER: $(Pipeline.Workspace)/.m2/repository
+#  MAVEN_OPTS: '-Dmaven.repo.local=$(MAVEN_CACHE_FOLDER)'
 
 steps:
 
@@ -17,35 +19,34 @@ steps:
       extraProperties: |
         sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
         sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
-
+        sonar.exclusions='**/enums/**, **/model/**, **/*Constant*, **/*Config.java, **/*Scheduler.java, **/*Application.java, **/src/test/**, **/Dummy*.java'
   - task: Maven@3
-    displayName: Build and Test
     inputs:
       mavenPomFile: 'pom.xml'
-      goals: 'package'
-#      options: '-Dsonar.coverage.jacoco.xmlReportPaths=$(System.DefaultWorkingDirectory)\CCReport43F6D5EF\jacoco.xml'
-#      publishJUnitResults: true
-#      testResultsFiles: '**/surefire-reports/TEST-*.xml'
-      codeCoverageToolOption: 'JaCoCo'
-      codeCoverageClassFilter: '+:eu.sia.meda.**,-:**.*Config,-:**.*Scheduler,-:**.Dummy*,-:**.model.**,-:**.enums.**,-:**.*Constants,-:**.*Application,-:**.*Test,-:**.*Test.**,-:**Base*.**,-:ErrorManagerService.java'
+      goals: 'clean org.jacoco:jacoco-maven-plugin:prepare-agent verify org.jacoco:jacoco-maven-plugin:report org.jacoco:jacoco-maven-plugin:report-aggregate '
+      options: '-Dmaven.test.failure.ignore=true'
+      publishJUnitResults: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
       javaHomeOption: 'JDKVersion'
-      jdkVersionOption: '1.11'
       mavenVersionOption: 'Default'
-      mavenOptions: '-Xmx3072m'
-      mavenAuthenticateFeed: true
-      effectivePomSkip: true
-      sonarQubeRunAnalysis: true
-      isJacocoCoverageReportXML: true
-      sqMavenPluginVersionChoice: 'latest'
-  - task: Bash@3
-    displayName: Bash
-    name: Bash
+      mavenAuthenticateFeed: false
+      effectivePomSkip: false
+      sonarQubeRunAnalysis: false
+  - bash: xmlReportPaths=$(find "$(pwd)" -path '*jacoco.xml' | sed 's/.*/&/' | tr '\n' ','); echo "##vso[task.setvariable variable=xmlReportPaths]$xmlReportPaths"
+    displayName: finding jacoco.xml
+  - task: Maven@3
     inputs:
-      targetType: 'inline'
-      script: |
-        cd $(System.DefaultWorkingDirectory) | ls -lR
-      failOnStderr: true
+      mavenPomFile: 'pom.xml'
+      goals: 'sonar:sonar'
+      options: '-Dsonar.coverage.jacoco.xmlReportPaths=$(xmlReportPaths)'
+      publishJUnitResults: false
+      javaHomeOption: 'JDKVersion'
+      mavenVersionOption: 'Default'
+      mavenAuthenticateFeed: false
+      effectivePomSkip: false
+      sonarQubeRunAnalysis: true
+      isJacocoCoverageReportXML: false
+      sqMavenPluginVersionChoice: 'latest'
   - task: SonarCloudPublish@1
-    displayName: 'Publish SonarCloud results on build summary'
     inputs:
       pollingTimeoutSec: '300'
