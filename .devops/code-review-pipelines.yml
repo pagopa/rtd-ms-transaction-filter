@@ -17,7 +17,7 @@ steps:
       extraProperties: |
         sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
         sonar.projectName=$(SONARCLOUD_PROJECT_NAME)
-        sonar.junit.reportPaths=**/target/surefire-reports/
+        sonar.junit.reportPaths=**/target/surefire-reports/TEST-*.xml
         sonar.exclusions='**/enums/**, **/model/**, **/*Constant*, **/*Config.java, **/*Scheduler.java, **/*Application.java, **/src/test/**, **/Dummy*.java'
 
   - task: Maven@3
