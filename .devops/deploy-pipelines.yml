@@ -95,27 +95,27 @@ stages:
               effectivePomSkip: true
               sonarQubeRunAnalysis: false
 
-          # - task: Docker@2
-          #   displayName: 'Publish_image_to_${{ variables.environment }}'
-          #   condition: succeeded()
-          #   inputs:
-          #     containerRegistry: '$(dockerRegistryServiceConnection)'
-          #     repository: '$(imageRepository)'
-          #     command: 'buildAndPush'
-          #     Dockerfile: '$(Build.Repository.LocalPath)/$(dockerfileRelativePath)'
-          #     buildContext: '$(Build.Repository.LocalPath)'
-          #     tags: |
-          #       $(Build.BuildId)
-          #       latest
-          #       $(pomversion)
+          - task: Docker@2
+            displayName: 'Publish_image_to_${{ variables.environment }}'
+            condition: succeeded()
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(imageRepository)'
+              command: 'buildAndPush'
+              Dockerfile: '$(Build.Repository.LocalPath)/$(dockerfileRelativePath)'
+              buildContext: '$(Build.Repository.LocalPath)'
+              tags: |
+                $(Build.BuildId)
+                latest
+                $(pomversion)
       
-          # - task: PublishPipelineArtifact@1
-          #   displayName: 'Publish Atrifact manifests'
-          #   condition: and(succeeded(), eq(variables.isToDeploy, true))
-          #   inputs:
-          #     targetPath: '$(Build.Repository.LocalPath)/manifests'
-          #     artifact: 'manifests'
-          #     publishLocation: 'pipeline'
+          - task: PublishPipelineArtifact@1
+            displayName: 'Publish Atrifact manifests'
+            condition: and(succeeded(), eq(variables.isToDeploy, true))
+            inputs:
+              targetPath: '$(Build.Repository.LocalPath)/manifests'
+              artifact: 'manifests'
+              publishLocation: 'pipeline'
 
   # - stage: 'Deploy'
   #   displayName: 'Deploy_to_${{ variables.environment }}'
