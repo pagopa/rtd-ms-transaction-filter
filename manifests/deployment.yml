@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rtdmstransactionfilter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rtdmstransactionfilter
+  template:
+    metadata:
+      labels:
+        app: rtdmstransactionfilter
+    spec:
+      containers:
+        - name: rtdmstransactionfilter
+          image: cstardacr.azurecr.io/rtdmstransactionfilter
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: jvm
+          resources:
+            limits:
+              cpu: 2
+              memory: 6Gi
+            requests:
+              cpu: 500m
+              memory: 4Gi
+          imagePullPolicy: Always

@@ -110,7 +110,7 @@ stages:
                 $(pomversion)
       
           - task: PublishPipelineArtifact@1
-            displayName: 'Publish Atrifact manifests'
+            displayName: 'Publish Artifact manifests'
             condition: and(succeeded(), eq(variables.isToDeploy, true))
             inputs:
               targetPath: '$(Build.Repository.LocalPath)/manifests'
