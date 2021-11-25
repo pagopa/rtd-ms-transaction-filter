@@ -24,7 +24,6 @@ resources:
   - repo: self
 
 variables:
-  # dockerfileRelativePath: '$(DOCKERFILE)' # DockerfileV1
 
   # Agent VM image name for Build
   vmImageNameDefault: 'ubuntu-latest'
