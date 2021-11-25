@@ -24,7 +24,7 @@ resources:
   - repo: self
 
 variables:
-  dockerfileRelativePath: '$(DOCKERFILE)' # DockerfileV1
+  # dockerfileRelativePath: '$(DOCKERFILE)' # DockerfileV1
 
   # Agent VM image name for Build
   vmImageNameDefault: 'ubuntu-latest'
@@ -102,7 +102,7 @@ stages:
               containerRegistry: '$(dockerRegistryServiceConnection)'
               repository: '$(imageRepository)'
               command: 'buildAndPush'
-              Dockerfile: '$(Build.Repository.LocalPath)/$(dockerfileRelativePath)'
+              Dockerfile: '$(Build.Repository.LocalPath)/Dockerfile'
               buildContext: '$(Build.Repository.LocalPath)'
               tags: |
                 $(Build.BuildId)
