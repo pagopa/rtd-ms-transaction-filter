@@ -12,7 +12,6 @@ steps:
       SonarCloud: '$(SONARCLOUD_SERVICE_CONN)'
       organization: '$(SONARCLOUD_ORG)'
       scannerMode: Other
-      #        sonar.coverage.jacoco.xmlReportPaths=**/target/site/jacoco-aggregate/jacoco.xml
 
       extraProperties: |
         sonar.projectKey=$(SONARCLOUD_PROJECT_KEY)
