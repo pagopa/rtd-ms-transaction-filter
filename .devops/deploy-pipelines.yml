@@ -145,7 +145,7 @@ stages:
                     action: deploy
                     rolloutStatusTimeout: 120
                     kubernetesServiceConnection: ${{ variables.kubernetesServiceConnection }}
-                    namespace: '$(deployNamespace)'
+                    namespace: 'rtd'
                     manifests: |
                       $(Pipeline.Workspace)/manifests/$(deployment).yml
                     containers: '$(containerRegistry)/$(imageRepository):$(pomversion)'
