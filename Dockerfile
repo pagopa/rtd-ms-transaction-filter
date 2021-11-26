@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine
+FROM adoptopenjdk/openjdk11:alpine-jre
 VOLUME /tmp
 RUN mkdir /tmp/input && mkdir /tmp/output && mkdir /tmp/logs && mkdir /tmp/hpans
 WORKDIR /app
