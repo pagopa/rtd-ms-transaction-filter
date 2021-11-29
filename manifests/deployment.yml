@@ -19,7 +19,7 @@ spec:
           image: cstardacr.azurecr.io/rtdmstransactionfilter
           volumeMounts:
             - name: certs-volume
-              mountPath: /tmp
+              mountPath: /app
               readOnly: true
             - name: workdir-volume
               mountPath: /app_workdir
@@ -56,6 +56,6 @@ spec:
             secretName: rtdtransactionfilter
             items:
             - key: HPAN_SERVICE_JKS_CONTENT_BASE64
-              path: certs.jks
+              path: certs.jks.base64
         - name: workdir-volume
           emptyDir: {}
