@@ -1,5 +1,7 @@
 FROM adoptopenjdk/openjdk11:alpine-jre
 
+VOLUME /app_workdir
+
 WORKDIR /app
 
 COPY target/*.jar /app/app.jar

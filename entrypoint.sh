@@ -21,4 +21,5 @@ mkdir -p $ACQ_BATCH_OUTPUT_PATH
 mkdir -p $ACQ_BATCH_TRX_LOGS_PATH
 mkdir -p $ACQ_BATCH_HPAN_INPUT_PATH
 base64 -d $JKS_ENCODED > $JKS_DECODED
-java -jar $APP_BIN --spring.config.location=$APP_CONFIG
+
+cd $APP_WORKDIR && java -jar $APP_BIN --spring.config.location=$APP_CONFIG
