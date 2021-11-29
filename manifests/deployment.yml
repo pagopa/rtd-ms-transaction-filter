@@ -4,6 +4,8 @@ metadata:
   name: rtdmstransactionfilter
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: rtdmstransactionfilter
@@ -15,8 +17,6 @@ spec:
       containers:
         - name: rtdmstransactionfilter
           image: cstardacr.azurecr.io/rtdmstransactionfilter
-          ports:
-            - containerPort: 8080
           volumeMounts:
             - name: certs-volume
               mountPath: /tmp
