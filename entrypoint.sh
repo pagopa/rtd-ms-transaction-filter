@@ -1,4 +1,14 @@
 #!/bin/sh
 
-base64 -d /tmp/certs.jks > /app/certs.jks &&
-	sleep 600
+JKS_ENCODED="/tmp/certs.jks"
+APP_ROOT="/app"
+APP_BIN="$APP_ROOT/app.jar"
+APP_CONFIG="$APP_ROOT/config.yml"
+JKS_DECODED="$APP_ROOT/certs.jks"
+
+# To remove in favor of configmap values
+export HPAN_SERVICE_KEY_STORE_FILE="$APP_ROOT/certs.jks"
+export HPAN_SERVICE_TRUST_STORE_FILE="$APP_ROOT/certs.jks"
+
+base64 -d $JKS_ENCODED > $JKS_DECODED &&
+	java -jar $APP_BIN --spring.config.location=$APP_CONFIG
