@@ -23,6 +23,8 @@ spec:
               readOnly: true
             - name: workdir-volume
               mountPath: /app_workdir
+            - name: tmp-volume
+              mountPath: /tmp
           envFrom:
             - configMapRef:
                 name: rtdtransactionfilter
@@ -58,4 +60,6 @@ spec:
             - key: HPAN_SERVICE_JKS_CONTENT_BASE64
               path: certs.jks
         - name: workdir-volume
+          emptyDir: {}
+        - name: tmp-volume
           emptyDir: {}
