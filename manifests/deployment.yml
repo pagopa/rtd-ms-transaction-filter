@@ -18,9 +18,11 @@ spec:
           ports:
             - containerPort: 8080
           volumeMounts:
-          - name: certs-volume
-            mountPath: /tmp
-            readOnly: true
+            - name: certs-volume
+              mountPath: /tmp
+              readOnly: true
+            - name: workdir-volume
+              mountPath: /app_workdir
           envFrom:
             - configMapRef:
                 name: rtdtransactionfilter
@@ -55,3 +57,5 @@ spec:
             items:
             - key: HPAN_SERVICE_JKS_CONTENT_BASE64
               path: certs.jks
+        - name: workdir-volume
+          emptyDir: {}
