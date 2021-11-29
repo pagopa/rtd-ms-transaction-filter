@@ -1,6 +1,7 @@
 FROM adoptopenjdk/openjdk11:alpine-jre
 
 VOLUME /app_workdir
+VOLUME /app_certs_in
 
 WORKDIR /app
 
