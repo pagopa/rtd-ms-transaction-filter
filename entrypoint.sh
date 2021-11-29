@@ -5,7 +5,7 @@ APP_BIN="$APP_ROOT/app.jar"
 APP_CONFIG="$APP_ROOT/config.yml"
 APP_WORKDIR="/app_workdir"
 APP_TMPDIR="$APP_WORKDIR/tmp"
-JKS_ENCODED="$APP_ROOT/certs.jks.base64"
+JKS_ENCODED="/app_certs_in/certs.jks.base64"
 JKS_DECODED="$APP_ROOT/certs.jks"
 
 # To remove in favor of configmap values

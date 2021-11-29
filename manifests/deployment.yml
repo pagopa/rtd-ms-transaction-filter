@@ -19,7 +19,7 @@ spec:
           image: cstardacr.azurecr.io/rtdmstransactionfilter
           volumeMounts:
             - name: certs-volume
-              mountPath: /app
+              mountPath: /app_certs_in
               readOnly: true
             - name: workdir-volume
               mountPath: /app_workdir
