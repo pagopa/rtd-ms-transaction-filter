@@ -16,6 +16,8 @@ export ACQ_BATCH_TRX_LOGS_PATH="$APP_WORKDIR/logs"
 export ACQ_BATCH_OUTPUT_PATH="$APP_WORKDIR/output"
 export ACQ_BATCH_HPAN_INPUT_PATH="$APP_WORKDIR/hpans"
 export ACQ_BATCH_INPUT_CRON="0 */2 * * * *"
+export LOG_LEVEL_RTD_TRANSACTION_FILTER=DEBUG
+export HPAN_SERVICE_URL="https://api.dev.cstar.pagopa.it"
 
 mkdir -p $ACQ_BATCH_TOKEN_INPUT_PATH
 mkdir -p $ACQ_BATCH_OUTPUT_PATH
