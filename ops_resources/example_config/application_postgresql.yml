@@ -245,7 +245,7 @@ rest-client:
     mtls:
       enabled: ${TKM_SERVICE_MTLS_ENABLED:true}
     key-store:
-      file: file:/${TKM_SERVICE_KEY_STORE_FILE:resources/keys/keystore_cert_1.jks}
+      file: file:/${HPAN_SERVICE_KEY_STORE_FILE:resources/keys/keystore_cert_1.jks}
       type: ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}}
       algorithm: ${HPAN_SERVICE_KEY_STORE_ALGORITHM:#{null}}
       password: ${HPAN_SERVICE_KEY_STORE_PASSWORD:cstar}
