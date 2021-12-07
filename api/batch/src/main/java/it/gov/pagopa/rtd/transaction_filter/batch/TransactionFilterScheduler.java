@@ -22,6 +22,7 @@ public class TransactionFilterScheduler {
      * Scheduled method used to launch the configured batch job for processing transaction from a defined directory.
      * The scheduler is based on a cron execution, based on the provided configuration
      * @throws Exception
+     *  exception description
      */
     @Scheduled(cron = "${batchConfiguration.TransactionFilterBatch.cron}")
     public void launchJob() throws Exception {

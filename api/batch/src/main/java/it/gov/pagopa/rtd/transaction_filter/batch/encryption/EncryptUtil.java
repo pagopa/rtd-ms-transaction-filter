@@ -50,8 +50,11 @@ public class EncryptUtil {
     /**
      * decrypt the passed in message stream
      * @throws IOException
-     * @throws PGPException
+     *  IOException description exception description
      * @throws NoSuchProviderException
+     *  NoSuchProviderException desccription
+     * @throws PGPException
+     *  PGPException description
      */
     public static byte[] decryptFile(InputStream input, InputStream keyInput, char[] passwd)
             throws IOException, NoSuchProviderException, PGPException {
