@@ -5,6 +5,7 @@ spring:
   batch:
     job:
       enabled: false
+      scheduled: ${ACQ_BATCH_SCHEDULED:false}
     initialize-schema: ${ACQ_BATCH_INITIALIZE_SCHEMA:always}
   datasource:
     driver-class-name: ${ACQ_BATCH_DB_CLASS_NAME:org.postgresql.Driver}

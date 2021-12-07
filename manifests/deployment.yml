@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rtdmstransactionfilter
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: rtdmstransactionfilter
+  template:
+    metadata:
+      labels:
+        app: rtdmstransactionfilter
+    spec:
+      containers:
+        - name: rtdmstransactionfilter
+          image: cstardacr.azurecr.io/rtdmstransactionfilter
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app_certs_in
+              readOnly: true
+            - name: workdir-volume
+              mountPath: /app_workdir
+          envFrom:
+            - configMapRef:
+                name: rtdtransactionfilter
+          env:
+            - name: HPAN_SERVICE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rtdtransactionfilter
+                  key: HPAN_SERVICE_API_KEY
+            - name: HPAN_SERVICE_KEY_STORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rtdtransactionfilter
+                  key: HPAN_SERVICE_KEY_STORE_PASSWORD
+            - name: HPAN_SERVICE_TRUST_STORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rtdtransactionfilter
+                  key: HPAN_SERVICE_TRUST_STORE_PASSWORD
+          resources:
+            limits:
+              cpu: 2
+              memory: 6Gi
+            requests:
+              cpu: 500m
+              memory: 4Gi
+          imagePullPolicy: Always
+      volumes:
+        - name: certs-volume
+          secret:
+            secretName: rtdtransactionfilter
+            items:
+            - key: HPAN_SERVICE_JKS_CONTENT_BASE64
+              path: certs.jks.base64
+        - name: workdir-volume
+          emptyDir: {}
