@@ -20,19 +20,19 @@ public interface HpanStoreService {
 
     /**
     * Method used to recover the stored salt
-    * @returns String containing the salt
+    * @return String containing the salt
      */
     String getSalt();
 
     /**
      * Method to be used to store an hpan
-     * @param hpan
+     * @param hpan Hashed PAN
      */
     void store(String hpan);
 
     /**
      * Method to be called for verifying the presence of an hpan in the store
-     * @param hpan
+     * @param hpan Hashed PAN
      * @return Boolean defining if the hpan store contains the input hpan
      */
     Boolean hasHpan(String hpan);

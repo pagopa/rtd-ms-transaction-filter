@@ -40,11 +40,28 @@ import java.nio.file.Files;
 import java.util.Date;
 
 /**
+ * <p>
  * Configuration of a scheduled batch job to read and decrypt .pgp files containing pan lists
  * (possibly recovered from a remote service), and .csv files to be processed in instances of Transaction class,
  * to be filtered by checking transaction pan (eventually hashed with a salt remotely recovered).
  * The output files can be encrypted with a public PGP key, and sent through an SFTP channel
+ * </p>
+ * <img alt="TransactionFilterBatch" src="uml/transactionFilterBatch.svg">
+ * 
+ * @plantUml uml/transactionFilterBatch.svg
+ * <!--
+ * start
+ * :hpanListRecoveryTask;
+ * :saltRecoveryTask;
+ * :panReaderStep;
+ * :transactionFilterStep;
+ * :transactionSenderStep;
+ * :fileManagementTask;
+ * end
+ * 
+ * -->
  */
+ 
 
 @Configuration
 @Data
@@ -158,8 +175,6 @@ public class TransactionFilterBatch {
      *
      * @return Method to start the execution of the transaction filter job
      * @param startDate starting date for the batch job execution
-     * @throws java.io.IOException
-     * @throws  java.lang.Exception
      */
     @SneakyThrows
     public JobExecution executeBatchJob(Date startDate) {
@@ -357,6 +372,7 @@ public class TransactionFilterBatch {
      *
      * @return configured instance of JobRepository
      * @throws Exception
+     *  exception description
      */
     @Bean
     public JobRepository getJobRepository() throws Exception {
@@ -375,6 +391,7 @@ public class TransactionFilterBatch {
      *
      * @return configured instance of JobLauncher
      * @throws Exception
+     *  exception description
      */
     @Bean
     public JobLauncher jobLauncher() throws Exception {
@@ -429,27 +446,31 @@ public class TransactionFilterBatch {
     }
 
     /**
-     * @throws java.lang.Exception
+     * This method builds a flow which can be decomposed in the following  
+     * steps:
+     * <ol>
+     * <li>Attempts panlist recovery, if enabled. In case of a failure in the 
+     * execution, the process is stopped.</li>
+     * <li>Attempts salt recovery, if enabled. In case of a failure in the 
+     * execution, the process is stopped. Otherwise, the panList step is 
+     * executed</li>
+     * <li>The panList step is executed, to store the .csv files including the 
+     * list of active pans. If the step fails, the file archival tasklet is 
+     * called, otherwise the transaction filter step is called.</li>
+     * <li>The transaction filter step checks the records with the stored pans, 
+     * writing the matching records in the output file. If the process fails, 
+     * the file management tasklet is called, otherwise the transaction sender 
+     * step si called.</li>
+     * <li>Attempts sending the output files through an sftp channel, if 
+     * enabled. The file management tasklet is always called, after the step
+     * </li>
+     * <li>After all the possible file management executions, the process is stopped</li>
+     * </ol>
      * @return Instance of {@link FlowJobBuilder}, with the configured steps executed
      * for the pan/transaction processing
      */
     @SneakyThrows
     public FlowJobBuilder transactionJobBuilder() {
-
-        /**
-         * The flow is defined with the followings steps:
-         * 1) Attempts panlist recovery, if enabled. In case of a failure in the execution, the process is stopped.
-         * 2) Attempts salt recovery, if enabled. In case of a failure in the execution, the process is stopped.
-         *    Otherwise, the panList step is executed
-         * 3) The panList step is executed, to store the .csv files including the list of active pans. If the step
-         *    fails, the file archival tasklet is called, otherwise the transaction filter step is called.
-         * 4) The transaction filter step checks the records with the stored pans, writing the matching records in
-         *    the output file. If the process fails, the file management tasklet is called,
-         *    otherwise the transaction sender step si called.
-         * 5) Attempts sending the output files through an sftp channel, if enabled. The file management tasklet
-         *    is always called, after the step
-         * 6) After all the possible file management executions, the process is stopped
-         */
 
         return jobBuilderFactory.get("transaction-filter-job")
                 .repository(getJobRepository())
