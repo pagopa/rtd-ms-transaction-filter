@@ -57,5 +57,7 @@ spec:
             items:
             - key: HPAN_SERVICE_JKS_CONTENT_BASE64
               path: certs.jks.base64
+            - key: HPAN_SERVICE_ENC_PUBLIC_KEY_ARMORED
+              path: publickey.asc
         - name: workdir-volume
           emptyDir: {}
