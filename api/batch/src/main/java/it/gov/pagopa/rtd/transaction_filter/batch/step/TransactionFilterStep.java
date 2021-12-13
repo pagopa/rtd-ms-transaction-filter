@@ -122,7 +122,7 @@ public class TransactionFilterStep {
         delimitedLineTokenizer.setNames(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
-                "bank_identification_number", "MCC");
+                "bank_identification_number", "MCC", "vat");
         return delimitedLineTokenizer;
     }
 
@@ -175,7 +175,7 @@ public class TransactionFilterStep {
         extractor.setNames(new String[] {
                 "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
                 "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
-                "terminalId", "bin", "mcc"});
+                "terminalId", "bin", "mcc", "vat"});
         return extractor;
     }
 

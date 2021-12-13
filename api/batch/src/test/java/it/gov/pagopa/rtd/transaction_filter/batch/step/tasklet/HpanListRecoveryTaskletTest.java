@@ -27,7 +27,6 @@ import java.nio.file.attribute.FileTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 
 public class HpanListRecoveryTaskletTest {
 

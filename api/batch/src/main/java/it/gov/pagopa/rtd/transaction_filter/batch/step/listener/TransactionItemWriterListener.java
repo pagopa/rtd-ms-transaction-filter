@@ -93,7 +93,8 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                 .concat(inboundTransaction.getMerchantId() != null ? inboundTransaction.getMerchantId() : "").concat(";")
                 .concat(inboundTransaction.getTerminalId() != null ? inboundTransaction.getTerminalId() : "").concat(";")
                 .concat(inboundTransaction.getBin() != null ? inboundTransaction.getBin() : "").concat(";")
-                .concat(inboundTransaction.getMcc() != null ? inboundTransaction.getMcc() : "").concat("\n");
+                .concat(inboundTransaction.getMcc() != null ? inboundTransaction.getMcc() : "").concat(";")
+                .concat(inboundTransaction.getVat() != null ? inboundTransaction.getVat() : "").concat("\n");
     }
 
 }

@@ -117,6 +117,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 .concat(inboundTransaction.getMerchantId() != null ? inboundTransaction.getMerchantId() : "").concat(";")
                 .concat(inboundTransaction.getTerminalId() != null ? inboundTransaction.getTerminalId() : "").concat(";")
                 .concat(inboundTransaction.getBin() != null ? inboundTransaction.getBin() : "").concat(";")
+                .concat(inboundTransaction.getVat() != null ? inboundTransaction.getVat() : "").concat(";")
                 .concat(inboundTransaction.getMcc() != null ? inboundTransaction.getMcc() : "").concat("\n");
     }
 

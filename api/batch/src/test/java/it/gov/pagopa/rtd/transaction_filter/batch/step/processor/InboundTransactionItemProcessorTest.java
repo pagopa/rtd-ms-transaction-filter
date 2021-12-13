@@ -12,12 +12,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.test.MetaDataInstanceFactory;
-
-import javax.validation.ConstraintViolationException;
-import java.math.BigDecimal;
-import java.time.OffsetDateTime;
 
 public class InboundTransactionItemProcessorTest  {
 
@@ -197,6 +191,7 @@ public class InboundTransactionItemProcessorTest  {
                 .acquirerId("0")
                 .terminalId("0")
                 .bin("000001")
+                .vat("12345678901")
                 .build();
     }
 }
