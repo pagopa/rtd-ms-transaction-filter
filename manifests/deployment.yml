@@ -18,7 +18,13 @@ spec:
         - name: rtdmstransactionfilter-init
           image: busybox:1.34.1
           command: ["/bin/sh"]
-          args: ["-c", "base64 -d /app_certs_in/publickey.asc.base64 > /app/publickey.asc"]
+          args: ["-c", "base64 -d /app_certs_in/publickey.asc.base64 > /app_workdir/publickey.asc"]
+          volumeMounts:
+            - name: certs-volume
+              mountPath: /app_certs_in
+              readOnly: true
+            - name: workdir-volume
+              mountPath: /app_workdir
       containers:
         - name: rtdmstransactionfilter
           image: cstardacr.azurecr.io/rtdmstransactionfilter
