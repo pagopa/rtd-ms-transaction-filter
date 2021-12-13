@@ -14,6 +14,11 @@ spec:
       labels:
         app: rtdmstransactionfilter
     spec:
+      initContainers:
+        - name: rtdmstransactionfilter-init
+          image: busybox:1.34.1
+          command: ["/bin/sh"]
+          args: ["-c", "base64 -d /app_certs_in/publickey.asc.base64 > /app/publickey.asc"]
       containers:
         - name: rtdmstransactionfilter
           image: cstardacr.azurecr.io/rtdmstransactionfilter
@@ -58,6 +63,6 @@ spec:
             - key: HPAN_SERVICE_JKS_CONTENT_BASE64
               path: certs.jks.base64
             - key: HPAN_SERVICE_ENC_PUBLIC_KEY_ARMORED
-              path: publickey.asc
+              path: publickey.asc.base64
         - name: workdir-volume
           emptyDir: {}
