@@ -20,7 +20,7 @@ import java.util.Set;
 public class InboundTransactionItemProcessor implements ItemProcessor<InboundTransaction, InboundTransaction> {
 
     private final HpanStoreService hpanStoreService;
-    private final Boolean applyHashing;
+    private final boolean applyHashing;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static final Validator validator = factory.getValidator();

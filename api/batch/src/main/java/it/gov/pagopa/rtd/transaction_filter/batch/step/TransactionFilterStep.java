@@ -280,18 +280,16 @@ public class TransactionFilterStep {
      *
      * @return worker step, defined as a standard reader/processor/writer process,
      * using chunk processing for scalability
-     * @throws Exception
      */
     @Bean
-    public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService)
-            throws Exception {
+    public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
         return simpleWorkerStep(hpanStoreService, transactionWriterService, executionDate);
     }
 
 
-    public Step simpleWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService, String executionDate) throws Exception {
+    public Step simpleWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService, String executionDate) {
             return stepBuilderFactory.get("transaction-filter-worker-step")
                     .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                     .reader(transactionItemReader(null))

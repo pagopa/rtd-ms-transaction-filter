@@ -27,9 +27,9 @@ public interface HpanStoreService {
     /**
      * Method to be called for verifying the presence of an hpan in the store
      * @param hpan Hashed PAN
-     * @return Boolean defining if the hpan store contains the input hpan
+     * @return boolean defining if the hpan store contains the input hpan
      */
-    Boolean hasHpan(String hpan);
+    boolean hasHpan(String hpan);
 
     /**
     * Method explicitly used to clear the stored hpans and salt
