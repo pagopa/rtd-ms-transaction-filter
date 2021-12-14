@@ -55,7 +55,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
         }
 
-        if (enableAfterProcessFileLogging && result == null) {
+        if (Boolean.TRUE.equals(enableAfterProcessFileLogging) && result == null) {
             try {
                 String file = item.getFilename().replaceAll("\\\\", "/");
                 String[] fileArr = file.split("/");
