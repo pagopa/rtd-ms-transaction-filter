@@ -96,6 +96,7 @@ InboundTransaction {
     /** Identifier for the merchant VAT */
     @NotNull
     @NotBlank
+    @Size(max = 50)
     String vat;
 
     /** Internal fields, describing the lineNumber and filename for the record used to extract the other fields */
