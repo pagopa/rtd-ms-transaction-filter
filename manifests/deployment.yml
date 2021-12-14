@@ -18,7 +18,11 @@ spec:
         - name: rtdmstransactionfilter-init
           image: busybox:1.34.1
           command: ["/bin/sh"]
-          args: ["-c", "base64 -d /app_certs_in/publickey.asc.base64 > /app_workdir/publickey.asc"]
+          args:
+          - -c
+          - >-
+            base64 -d /app_certs_in/publickey.asc.base64 > /app_workdir/publickey.asc &&
+            base64 -d /app_certs_in/certs.jks.base64 > /app_workdir/certs.jks
           volumeMounts:
             - name: certs-volume
               mountPath: /app_certs_in
@@ -40,6 +44,10 @@ spec:
           env:
             - name: ACQ_BATCH_INPUT_PUBLIC_KEYPATH
               value: /app_workdir/publickey.asc
+            - name: HPAN_SERVICE_KEY_STORE_FILE
+              value: /app_workdir/certs.jks
+            - name: HPAN_SERVICE_TRUST_STORE_FILE
+              value: /app_workdir/certs.jks
             - name: HPAN_SERVICE_API_KEY
               valueFrom:
                 secretKeyRef:
