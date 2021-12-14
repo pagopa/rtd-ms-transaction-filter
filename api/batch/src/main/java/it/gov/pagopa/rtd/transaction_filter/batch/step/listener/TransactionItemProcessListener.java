@@ -8,6 +8,8 @@ import org.springframework.batch.core.ItemProcessListener;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.lang.Nullable;
 
+import java.util.Optional;
+
 /**
  * Implementation of {@link ItemProcessListener}, to be used to log and/or store records
  * filtered or that have produced an error during a record processing phase
@@ -103,22 +105,22 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     }
 
     private String buildCsv(InboundTransaction inboundTransaction) {
-        return (inboundTransaction.getAcquirerCode() != null ? inboundTransaction.getAcquirerCode() : "").concat(";")
-                .concat(inboundTransaction.getOperationType() != null ? inboundTransaction.getOperationType() : "").concat(";")
-                .concat(inboundTransaction.getCircuitType() != null ? inboundTransaction.getCircuitType() : "").concat(";")
-                .concat(inboundTransaction.getPan() != null ? inboundTransaction.getPan() : "").concat(";")
-                .concat(inboundTransaction.getTrxDate() != null ? inboundTransaction.getTrxDate() : "").concat(";")
-                .concat(inboundTransaction.getIdTrxAcquirer() != null ? inboundTransaction.getIdTrxAcquirer() : "").concat(";")
-                .concat(inboundTransaction.getIdTrxIssuer() != null ? inboundTransaction.getIdTrxIssuer() : "").concat(";")
-                .concat(inboundTransaction.getCorrelationId() != null ? inboundTransaction.getCorrelationId() : "").concat(";")
+        return (Optional.ofNullable(inboundTransaction.getAcquirerCode()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getOperationType()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getCircuitType()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getPan()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getTrxDate()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getIdTrxAcquirer()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getIdTrxIssuer()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getCorrelationId()).orElse("")).concat(";")
                 .concat(inboundTransaction.getAmount() != null ? inboundTransaction.getAmount().toString() : "").concat(";")
-                .concat(inboundTransaction.getAmountCurrency() != null ? inboundTransaction.getAmountCurrency() : "").concat(";")
-                .concat(inboundTransaction.getAcquirerId() != null ? inboundTransaction.getAcquirerId() : "").concat(";")
-                .concat(inboundTransaction.getMerchantId() != null ? inboundTransaction.getMerchantId() : "").concat(";")
-                .concat(inboundTransaction.getTerminalId() != null ? inboundTransaction.getTerminalId() : "").concat(";")
-                .concat(inboundTransaction.getBin() != null ? inboundTransaction.getBin() : "").concat(";")
-                .concat(inboundTransaction.getMcc() != null ? inboundTransaction.getMcc() : "").concat(";")
-                .concat(inboundTransaction.getVat() != null ? inboundTransaction.getVat() : "").concat("\n");
+                .concat(Optional.ofNullable(inboundTransaction.getAmountCurrency()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getAcquirerId()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getMerchantId()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getTerminalId()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getBin()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getMcc()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getVat()).orElse("")).concat("\n");
     }
 
 }
