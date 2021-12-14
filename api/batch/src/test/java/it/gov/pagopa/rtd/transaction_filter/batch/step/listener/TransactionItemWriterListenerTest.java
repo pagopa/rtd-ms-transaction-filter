@@ -46,9 +46,7 @@ public class TransactionItemWriterListenerTest {
     @SneakyThrows
     @Test
     public void onWriteError_OK() {
-
         File folder = tempFolder.newFolder("testWriter");
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
@@ -64,18 +62,15 @@ public class TransactionItemWriterListenerTest {
         transactionItemWriterListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemWriterListener.onWriteError(new Exception(), Collections.singletonList(InboundTransaction
                 .builder().filename("test").lineNumber(1).build()));
+        transactionItemWriterListener.afterWrite(Collections.singletonList(InboundTransaction.builder().filename("test").lineNumber(1).build()));
 
         BDDMockito.verify(transactionWriterService).write(Mockito.any(),Mockito.any());
-
-
     }
 
     @SneakyThrows
     @Test
     public void onWriteError_OK_NoFileWritten() {
-
         File folder = tempFolder.newFolder("testWriter");
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
@@ -91,9 +86,9 @@ public class TransactionItemWriterListenerTest {
         transactionItemWriterListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemWriterListener.onWriteError(new Exception(), Collections.singletonList(InboundTransaction
                 .builder().filename("test").lineNumber(1).build()));
+        transactionItemWriterListener.afterWrite(Collections.singletonList(InboundTransaction.builder().filename("test").lineNumber(1).build()));
 
         BDDMockito.verify(transactionWriterService, Mockito.times(0)).write(Mockito.any(),Mockito.any());
-
     }
 
     @After
