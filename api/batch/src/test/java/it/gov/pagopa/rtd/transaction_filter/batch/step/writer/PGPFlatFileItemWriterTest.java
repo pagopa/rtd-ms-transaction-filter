@@ -22,9 +22,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.math.BigDecimal;
 import java.nio.file.Files;
-import java.time.OffsetDateTime;
 import java.util.Collections;
 
 public class PGPFlatFileItemWriterTest {

@@ -1,15 +1,11 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.model;
 
 import lombok.*;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.OffsetDateTime;
 
 /**
  * Model for the processed lines in the batch, described in the RTD_Acquirer_Interface document, obtainable
@@ -72,7 +68,7 @@ InboundTransaction {
     @Size(max = 3)
     String amountCurrency;
 
-    /** Merchant category code where the transaction occured */
+    /** Merchant category code where the transaction occurred */
     @NotNull
     @NotBlank
     String mcc;
@@ -82,12 +78,12 @@ InboundTransaction {
     @NotBlank
     String acquirerId;
 
-    /** Merchant identifier where the transaction occured */
+    /** Merchant identifier where the transaction occurred */
     @NotNull
     @NotBlank
     String merchantId;
 
-    /** Identifier for the terminal where the transaction occured */
+    /** Identifier for the terminal where the transaction occurred */
     @NotNull
     @NotBlank
     String terminalId;
@@ -96,6 +92,12 @@ InboundTransaction {
     @NotNull
     @Pattern(regexp = "([0-9]{6}|[0-9]{8})")
     String bin;
+
+    /** Identifier for the merchant VAT */
+    @NotNull
+    @NotBlank
+    @Size(max = 50)
+    String vat;
 
     /** Internal fields, describing the lineNumber and filename for the record used to extract the other fields */
     Integer lineNumber;

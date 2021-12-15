@@ -7,15 +7,12 @@ import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.springframework.batch.item.file.FlatFileParseException;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.File;

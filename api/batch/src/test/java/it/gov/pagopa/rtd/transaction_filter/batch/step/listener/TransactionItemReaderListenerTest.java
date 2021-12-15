@@ -3,7 +3,6 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.SneakyThrows;
-import org.apache.commons.io.FileUtils;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.BDDMockito;

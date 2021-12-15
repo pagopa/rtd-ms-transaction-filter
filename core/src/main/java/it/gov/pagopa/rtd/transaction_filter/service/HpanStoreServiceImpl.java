@@ -34,7 +34,7 @@ class HpanStoreServiceImpl implements HpanStoreService {
     }
 
     @Override
-    public Boolean hasHpan(String hpan) {
+    public boolean hasHpan(String hpan) {
         return hpanSet.contains(hpan);
     }
 

@@ -11,9 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 
-import java.math.BigDecimal;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class LineAwareMapperTest {
@@ -43,7 +41,7 @@ public class LineAwareMapperTest {
         delimitedLineTokenizer.setNames(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
-                "bank_identification_number", "MCC");
+                "bank_identification_number", "MCC", "vat");
         lineAwareMapper.setTokenizer(delimitedLineTokenizer);
         lineAwareMapper.setFieldSetMapper(new InboundTransactionFieldSetMapper("MM/dd/yyyy HH:mm:ss"));
     }
@@ -53,7 +51,7 @@ public class LineAwareMapperTest {
 
         try {
             InboundTransaction inboundTransaction = lineAwareMapper.mapLine(
-                    "13131;00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422",
+                    "13131;00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901",
                     1);
             Assert.assertEquals(getInboundTransaction(), inboundTransaction);
             Assert.assertEquals((Integer) 1, inboundTransaction.getLineNumber());
@@ -71,13 +69,12 @@ public class LineAwareMapperTest {
 
         expectedException.expect(FlatFileParseException.class);
         lineAwareMapper.mapLine(
-                "13131;00;00;pan1;03/20/2020T10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422",
+                "13131;00;00;pan1;03/20/2020T10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901",
                 1);
 
     }
 
     public InboundTransaction getInboundTransaction() {
-        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("MM/dd/yyyy HH:mm:ss").withZone(ZoneId.systemDefault());
         return InboundTransaction.builder()
                 .acquirerCode("13131")
                 .operationType("00")
@@ -96,6 +93,7 @@ public class LineAwareMapperTest {
                 .mcc("5422")
                 .filename("test.csv")
                 .lineNumber(1)
+                .vat("12345678901")
                 .build();
     }
 

@@ -5,10 +5,6 @@ import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.annotation.BeforeStep;
-import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemProcessor;
 
 import javax.validation.*;
@@ -24,7 +20,7 @@ import java.util.Set;
 public class InboundTransactionItemProcessor implements ItemProcessor<InboundTransaction, InboundTransaction> {
 
     private final HpanStoreService hpanStoreService;
-    private final Boolean applyHashing;
+    private final boolean applyHashing;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static final Validator validator = factory.getValidator();
@@ -72,6 +68,7 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                             .acquirerCode(inboundTransaction.getAcquirerCode())
                             .amount(inboundTransaction.getAmount())
                             .trxDate(inboundTransaction.getTrxDate())
+                            .vat(inboundTransaction.getVat())
                             .build();
 
             resultTransaction.setPan(applyHashing ?
