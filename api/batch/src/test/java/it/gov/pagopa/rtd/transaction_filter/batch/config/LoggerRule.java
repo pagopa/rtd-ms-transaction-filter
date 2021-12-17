@@ -8,8 +8,6 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class LoggerRule implements TestRule {
 
@@ -38,10 +36,4 @@ public class LoggerRule implements TestRule {
         listAppender.list.clear();
         logger.detachAppender(listAppender);
     }
-
-    public List<String> getFormattedMessages() {
-        return listAppender.list.stream().map(e -> e.getFormattedMessage()).collect(Collectors.toList());
-    }
-
-
 }
