@@ -11,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 
 public class LineAwareMapperTest {
 
@@ -41,7 +39,7 @@ public class LineAwareMapperTest {
         delimitedLineTokenizer.setNames(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
-                "bank_identification_number", "MCC", "vat");
+                "bank_identification_number", "MCC", "vat", "pos_type");
         lineAwareMapper.setTokenizer(delimitedLineTokenizer);
         lineAwareMapper.setFieldSetMapper(new InboundTransactionFieldSetMapper("MM/dd/yyyy HH:mm:ss"));
     }
@@ -51,7 +49,7 @@ public class LineAwareMapperTest {
 
         try {
             InboundTransaction inboundTransaction = lineAwareMapper.mapLine(
-                    "13131;00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901",
+                    "13131;00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00",
                     1);
             Assert.assertEquals(getInboundTransaction(), inboundTransaction);
             Assert.assertEquals((Integer) 1, inboundTransaction.getLineNumber());
@@ -69,7 +67,7 @@ public class LineAwareMapperTest {
 
         expectedException.expect(FlatFileParseException.class);
         lineAwareMapper.mapLine(
-                "13131;00;00;pan1;03/20/2020T10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901",
+                "13131;00;00;pan1;03/20/2020T10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00",
                 1);
 
     }
@@ -94,6 +92,7 @@ public class LineAwareMapperTest {
                 .filename("test.csv")
                 .lineNumber(1)
                 .vat("12345678901")
+                .posType("00")
                 .build();
     }
 

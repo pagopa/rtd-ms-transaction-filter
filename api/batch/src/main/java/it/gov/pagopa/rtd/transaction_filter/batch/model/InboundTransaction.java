@@ -99,6 +99,13 @@ InboundTransaction {
     @Size(max = 50)
     String vat;
 
+    /** POS type */
+    @NotNull
+    @NotBlank
+    @Size(min = 2, max = 2)
+    @Pattern(regexp = "[0-9]{2}")
+    String posType;
+
     /** Internal fields, describing the lineNumber and filename for the record used to extract the other fields */
     Integer lineNumber;
     String filename;
