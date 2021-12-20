@@ -17,7 +17,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.ConstraintViolationException;
 
 public class InboundTransactionItemProcessorTest {
 
@@ -45,86 +44,6 @@ public class InboundTransactionItemProcessorTest {
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
-
-    @Test
-    public void processTransactionWithEmptyVatThrowsException() {
-        InboundTransaction transaction = fakeInboundTransaction();
-        transaction.setVat("");
-        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, true);
-        expectedException.expect(ConstraintViolationException.class);
-        expectedException.expectMessage("vat: must not be blank");
-        processor.process(transaction);
-    }
-
-    @Test
-    public void processTransactionWithSpaceVatThrowsException() {
-        InboundTransaction transaction = fakeInboundTransaction();
-        transaction.setVat(" ");
-        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, true);
-        expectedException.expect(ConstraintViolationException.class);
-        expectedException.expectMessage("vat: must not be blank");
-        processor.process(transaction);
-    }
-
-    @Test
-    public void processTransactionWithVatTooLongThrowsException() {
-        InboundTransaction transaction = fakeInboundTransaction();
-        transaction.setVat("123456789012345678901234567890123456789012345678901");
-        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, true);
-        expectedException.expect(ConstraintViolationException.class);
-        expectedException.expectMessage("vat: size must be between 0 and 50");
-        processor.process(transaction);
-    }
-
-    @Test
-    public void processTransactionWithEmptyPosTypeThrowsException() {
-        InboundTransaction transaction = fakeInboundTransaction();
-        transaction.setPosType("");
-        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, true);
-        expectedException.expect(ConstraintViolationException.class);
-        expectedException.expectMessage("posType: must match \"[0-9]{2}\"");
-        processor.process(transaction);
-    }
-
-    @Test
-    public void processTransactionWithSpacePosTypeThrowsException() {
-        InboundTransaction transaction = fakeInboundTransaction();
-        transaction.setPosType(" ");
-        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, true);
-        expectedException.expect(ConstraintViolationException.class);
-        expectedException.expectMessage("posType: must match \"[0-9]{2}\"");
-        processor.process(transaction);
-    }
-
-    @Test
-    public void processTransactionWithPosTypeTooLongThrowsException() {
-        InboundTransaction transaction = fakeInboundTransaction();
-        transaction.setPosType("010");
-        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, true);
-        expectedException.expect(ConstraintViolationException.class);
-        expectedException.expectMessage("posType: must match \"[0-9]{2}\"");
-        processor.process(transaction);
-    }
-
-    @Test
-    public void processTransactionWithPosTypeNotNumericThrowsException() {
-        InboundTransaction transaction = fakeInboundTransaction();
-        transaction.setPosType("AA");
-        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, true);
-        expectedException.expect(ConstraintViolationException.class);
-        expectedException.expectMessage("posType: must match \"[0-9]{2}\"");
-        processor.process(transaction);
-    }
-
-    @Test
-    public void processTransactionWithParTooLongThrowsException() {
-        InboundTransaction transaction = fakeInboundTransaction();
-        transaction.setPar(new String(new char[256]).replace("\0", " "));
-        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, true);
-        expectedException.expect(ConstraintViolationException.class);
-        expectedException.expectMessage("par: size must be between 0 and 255");
-        processor.process(transaction);
-    }
 
     @Test
     public void processTransactionWithHashingDisabled() {
