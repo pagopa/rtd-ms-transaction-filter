@@ -38,14 +38,14 @@ public class LineAwareMapperTest {
         delimitedLineTokenizer.setNames(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
-                "bank_identification_number", "MCC", "vat", "pos_type");
+                "bank_identification_number", "MCC", "vat", "pos_type", "par");
         lineAwareMapper.setTokenizer(delimitedLineTokenizer);
         lineAwareMapper.setFieldSetMapper(new InboundTransactionFieldSetMapper("MM/dd/yyyy HH:mm:ss"));
     }
 
     @Test
     public void testMapper() {
-        String line = "13131;00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00";
+        String line = "13131;00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00;";
         InboundTransaction expected = InboundTransaction.builder()
                 .acquirerCode("13131")
                 .operationType("00")
@@ -75,7 +75,7 @@ public class LineAwareMapperTest {
 
     @Test
     public void testMapperThrowExceptionWhenSuperiorNumberOfColumns() {
-        String line = "12;13131;00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00";
+        String line = "12;13131;00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00;par1";
         thrown.expect(FlatFileParseException.class);
         thrown.expectMessage("Parsing error at line: 1");
         lineAwareMapper.mapLine(line, 1);
@@ -91,7 +91,7 @@ public class LineAwareMapperTest {
 
     @Test
     public void testMapperThrowExceptionWhenDatetimeIsInvalid() {
-        String line = "13131;00;00;pan1;03/20/2020T10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00";
+        String line = "13131;00;00;pan1;03/20/2020T10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00;";
         thrown.expect(FlatFileParseException.class);
         lineAwareMapper.mapLine(line, 1);
     }

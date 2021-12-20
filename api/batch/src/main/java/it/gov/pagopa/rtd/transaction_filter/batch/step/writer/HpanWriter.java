@@ -4,10 +4,6 @@ import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.annotation.BeforeStep;
-import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.ItemWriter;
 
 import java.util.List;

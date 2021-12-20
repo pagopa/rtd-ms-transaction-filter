@@ -6,13 +6,12 @@ import lombok.Data;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
-import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.repeat.RepeatStatus;
 
 
 /**
  * implementation of the {@link Tasklet}, recovers the salt from a REST service,
- * when eneabled
+ * when enabled
  */
 
 @Data
