@@ -253,7 +253,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  ", "123456"})
+    @ValueSource(strings = {"", " ", "  "})
     public void processTransactionWithInvalidMccThrowsException(String mcc) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setMcc(mcc);
