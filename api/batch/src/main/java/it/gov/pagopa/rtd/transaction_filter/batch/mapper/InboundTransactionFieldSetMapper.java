@@ -23,21 +23,19 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
     private final String timestampParser;
 
     /**
-     *
-     * @param fieldSet
-     *          instance of FieldSet containing fields related to an {@link InboundTransaction}
+     * @param fieldSet instance of FieldSet containing fields related to an {@link InboundTransaction}
      * @return instance of  {@link InboundTransaction}, mapped from a FieldSet
      * @throws BindException
      */
     @Override
-    public InboundTransaction mapFieldSet(@Nullable FieldSet fieldSet) throws BindException {
+    public InboundTransaction mapFieldSet(@Nullable FieldSet fieldSet) {
 
         if (fieldSet == null) {
             return null;
         }
 
         DateTimeFormatter dtf = timestampParser != null && !timestampParser.isEmpty() ?
-                DateTimeFormatter.ofPattern(timestampParser).withZone(ZoneId.systemDefault()): null;
+                DateTimeFormatter.ofPattern(timestampParser).withZone(ZoneId.systemDefault()) : null;
 
         /*
            Building the {@link InboundTransaction} instance from the record data, defined within
@@ -62,6 +60,7 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .mcc("0000")
                         .vat(fieldSet.readString("vat"))
                         .posType(fieldSet.readString("pos_type"))
+                        .par(fieldSet.readString("par"))
                         .build();
 
         OffsetDateTime dateTime = dtf != null ?
