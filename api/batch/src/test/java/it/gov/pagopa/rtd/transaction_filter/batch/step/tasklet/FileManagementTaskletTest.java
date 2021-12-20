@@ -1,6 +1,5 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
-import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;

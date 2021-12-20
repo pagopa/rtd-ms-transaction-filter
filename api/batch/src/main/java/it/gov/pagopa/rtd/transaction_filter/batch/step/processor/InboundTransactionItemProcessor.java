@@ -69,6 +69,7 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                             .amount(inboundTransaction.getAmount())
                             .trxDate(inboundTransaction.getTrxDate())
                             .vat(inboundTransaction.getVat())
+                            .posType(inboundTransaction.getPosType())
                             .build();
 
             resultTransaction.setPan(applyHashing ?

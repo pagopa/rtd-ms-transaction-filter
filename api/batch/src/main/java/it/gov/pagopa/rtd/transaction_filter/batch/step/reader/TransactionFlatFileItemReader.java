@@ -3,7 +3,6 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.reader;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ReaderNotOpenException;
 import org.springframework.batch.item.file.*;
 import org.springframework.batch.item.file.separator.RecordSeparatorPolicy;

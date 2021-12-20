@@ -105,7 +105,7 @@ public class TransactionFilterBatchTest {
 
     private JobParameters defaultJobParameters() {
         return new JobParametersBuilder()
-                .addDate("startDateTime",  new Date())
+                .addDate("startDateTime", new Date())
                 .toJobParameters();
     }
 
@@ -123,12 +123,12 @@ public class TransactionFilterBatchTest {
                 this.getClass().getResource("/test-encrypt/pan").getFile() + "/pan.csv",
                 EncryptUtil.readPublicKey(
                         this.getClass().getResourceAsStream("/test-encrypt/publicKey.asc")),
-                false,false);
+                false, false);
 
         panPgpFOS.close();
 
         File file = new File(resolver.getResource("classpath:/test-encrypt/output")
-                .getFile().getAbsolutePath()+"/test-trx.csv");
+                .getFile().getAbsolutePath() + "/test-trx.csv");
 
         if (!file.exists()) {
             file.createNewFile();
@@ -143,7 +143,7 @@ public class TransactionFilterBatchTest {
         Assert.assertEquals(1,
                 FileUtils.listFiles(
                         resolver.getResources("classpath:/test-encrypt/output")[0].getFile(),
-                        new String[]{"pgp"},false).size());
+                        new String[]{"pgp"}, false).size());
 
     }
 
@@ -160,7 +160,7 @@ public class TransactionFilterBatchTest {
                 this.getClass().getResource("/test-encrypt/pan").getFile() + "/pan.csv",
                 EncryptUtil.readPublicKey(
                         this.getClass().getResourceAsStream("/test-encrypt/otherPublicKey.asc")),
-                false,false);
+                false, false);
 
         panPgpFOS.close();
 

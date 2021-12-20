@@ -4,13 +4,9 @@ import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.springframework.batch.core.ItemReadListener;
 import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-import java.io.File;
-import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Optional;
 
@@ -95,7 +91,8 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                 .concat(Optional.ofNullable(inboundTransaction.getTerminalId()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getBin()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getMcc()).orElse("")).concat(";")
-                .concat(Optional.ofNullable(inboundTransaction.getVat()).orElse("")).concat("\n");
+                .concat(Optional.ofNullable(inboundTransaction.getVat()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getPosType()).orElse("")).concat("\n");
     }
 
 }

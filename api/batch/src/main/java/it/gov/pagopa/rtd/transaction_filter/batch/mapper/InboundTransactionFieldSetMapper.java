@@ -61,6 +61,7 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .bin(fieldSet.readString("bank_identification_number"))
                         .mcc("0000")
                         .vat(fieldSet.readString("vat"))
+                        .posType(fieldSet.readString("pos_type"))
                         .build();
 
         OffsetDateTime dateTime = dtf != null ?

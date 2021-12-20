@@ -9,7 +9,7 @@ import org.springframework.context.annotation.FilterType;
  */
 
 @ComponentScan(basePackages = {"it.gov.pagopa"}, excludeFilters = {
-        @ComponentScan.Filter(type= FilterType.ASSIGNABLE_TYPE, value= TransactionFilterBatchJpaConfig.class)
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, value = TransactionFilterBatchJpaConfig.class)
 })
 public class TestConfig {
 }

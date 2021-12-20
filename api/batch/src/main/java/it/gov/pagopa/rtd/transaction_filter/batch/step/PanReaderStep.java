@@ -22,7 +22,6 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-import javax.validation.ConstraintViolationException;
 import java.io.FileNotFoundException;
 
 @Configuration
