@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundTransaction> {
 
     private final String timestampParser;
+    private static final String TIMESTAMP_FIELD = "timestamp";
 
     /**
      * @param fieldSet instance of FieldSet containing fields related to an {@link InboundTransaction}
@@ -28,7 +29,7 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
      * @throws BindException
      */
     @Override
-    public InboundTransaction mapFieldSet(@Nullable FieldSet fieldSet) {
+    public InboundTransaction mapFieldSet(@Nullable FieldSet fieldSet) throws BindException {
 
         if (fieldSet == null) {
             return null;
@@ -57,18 +58,18 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .merchantId(fieldSet.readString("merchantID"))
                         .terminalId(fieldSet.readString("terminal_id"))
                         .bin(fieldSet.readString("bank_identification_number"))
-                        .mcc("0000")
+                        .mcc(fieldSet.readString("MCC"))
                         .vat(fieldSet.readString("vat"))
                         .posType(fieldSet.readString("pos_type"))
                         .par(fieldSet.readString("par"))
                         .build();
 
         OffsetDateTime dateTime = dtf != null ?
-                ZonedDateTime.parse(fieldSet.readString("timestamp"), dtf).toOffsetDateTime() :
-                OffsetDateTime.parse(fieldSet.readString("timestamp"));
+                ZonedDateTime.parse(fieldSet.readString(TIMESTAMP_FIELD), dtf).toOffsetDateTime() :
+                OffsetDateTime.parse(fieldSet.readString(TIMESTAMP_FIELD));
 
         if (dateTime != null) {
-            inboundTransaction.setTrxDate(fieldSet.readString("timestamp"));
+            inboundTransaction.setTrxDate(fieldSet.readString(TIMESTAMP_FIELD));
         }
 
         return inboundTransaction;
