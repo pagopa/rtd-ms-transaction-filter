@@ -8,8 +8,9 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
 /**
- * Model for the processed lines in the batch, described in the RTD_Acquirer_Interface document, obtainable
- * from /opt_resources
+ * Model for the processed lines in the batch.
+ * Documentation: https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration/standard-pagopa-file-transactions
+ * Example files in /opt_resources/example_files
  */
 @Data
 @Builder
@@ -24,6 +25,7 @@ InboundTransaction {
      */
     @NotNull
     @NotBlank
+    @Size(max = 255)
     String idTrxAcquirer;
 
     /**
@@ -69,6 +71,9 @@ InboundTransaction {
     /**
      * Issuer Authorization identifier code for the transaction
      */
+    @NotNull
+    @NotBlank
+    @Size(max = 255)
     String idTrxIssuer;
 
     /**

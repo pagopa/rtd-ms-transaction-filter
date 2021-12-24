@@ -159,7 +159,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  "})
+    @ValueSource(strings = {"", " ", "  ", STRING_LEN_256})
     public void processTransactionWithInvalidIdTrxAcquirerThrowsException(String idTrxAcquirer) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setIdTrxAcquirer(idTrxAcquirer);
@@ -181,7 +181,16 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", "fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058"})
+    @ValueSource(strings = {"", " ", "  ", STRING_LEN_256})
+    public void processTransactionWithInvalidIdTrxIssuerThrowsException(String idTrxIssuer) {
+        InboundTransaction transaction = fakeInboundTransaction();
+        transaction.setIdTrxIssuer(idTrxIssuer);
+        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, false);
+        Assertions.assertThrows(ConstraintViolationException.class, () -> processor.process(transaction));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
     public void processTransactionWithValidIdTrxIssuer(String idTrxIssuer) {
         BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
         BDDMockito.doReturn(FAKE_SALT).when(hpanStoreServiceMock).getSalt();
