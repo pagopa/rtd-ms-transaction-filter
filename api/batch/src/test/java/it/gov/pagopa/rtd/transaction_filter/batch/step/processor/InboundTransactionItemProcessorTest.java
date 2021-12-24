@@ -143,33 +143,25 @@ public class InboundTransactionItemProcessorTest {
 
     @Test
     public void process_OK_validForReturn() {
-        try {
-            BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
-            BDDMockito.doReturn(FAKE_SALT).when(hpanStoreServiceMock).getSalt();
-            InboundTransactionItemProcessor inboundTransactionItemProcessor =
-                    new InboundTransactionItemProcessor(hpanStoreServiceMock, false);
+        BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        BDDMockito.doReturn(FAKE_SALT).when(hpanStoreServiceMock).getSalt();
+        InboundTransactionItemProcessor inboundTransactionItemProcessor = new InboundTransactionItemProcessor(hpanStoreServiceMock, false);
 
-            InboundTransaction inboundTransaction = fakeInboundTransaction();
-            inboundTransaction.setOperationType("01");
-            inboundTransaction.setIdTrxIssuer("");
-            InboundTransaction outboundTransaction =
-                    inboundTransactionItemProcessor.process(fakeInboundTransaction());
-            Assert.assertNotNull(outboundTransaction);
-            Assert.assertEquals(fakeInboundTransaction(), outboundTransaction);
-            BDDMockito.verify(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        InboundTransaction inboundTransaction = fakeInboundTransaction();
+        inboundTransaction.setOperationType("01");
+        inboundTransaction.setIdTrxIssuer("A03");
+        InboundTransaction outboundTransaction = inboundTransactionItemProcessor.process(fakeInboundTransaction());
+        Assert.assertNotNull(outboundTransaction);
+        Assert.assertEquals(fakeInboundTransaction(), outboundTransaction);
+        BDDMockito.verify(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
 
-            inboundTransaction = fakeInboundTransaction();
-            inboundTransaction.setOperationType("01");
-            inboundTransaction.setIdTrxIssuer(null);
-            outboundTransaction = inboundTransactionItemProcessor.process(inboundTransaction);
-            Assert.assertNotNull(outboundTransaction);
-            Assert.assertEquals(fakeInboundTransaction(), outboundTransaction);
-            BDDMockito.verify(hpanStoreServiceMock, Mockito.times(2)).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
-
-        } catch (Exception e) {
-            Assert.fail();
-            e.printStackTrace();
-        }
+        inboundTransaction = fakeInboundTransaction();
+        inboundTransaction.setOperationType("01");
+        inboundTransaction.setIdTrxIssuer("02");
+        outboundTransaction = inboundTransactionItemProcessor.process(inboundTransaction);
+        Assert.assertNotNull(outboundTransaction);
+        Assert.assertEquals(fakeInboundTransaction(), outboundTransaction);
+        BDDMockito.verify(hpanStoreServiceMock, Mockito.times(2)).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
     }
 
     private InboundTransaction fakeInboundTransaction() {
