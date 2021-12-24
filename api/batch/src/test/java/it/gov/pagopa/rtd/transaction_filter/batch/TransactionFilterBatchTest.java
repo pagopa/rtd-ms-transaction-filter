@@ -37,9 +37,6 @@ import java.util.Date;
 
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
-/**
- * Class for testing the CsvTransactionReaderBatch class
- */
 @RunWith(SpringRunner.class)
 @SpringBatchTest
 @EnableAutoConfiguration

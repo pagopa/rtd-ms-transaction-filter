@@ -25,6 +25,8 @@ public class InboundTransactionItemProcessorValidatorTest {
     private static final String FAKE_SALT = "testSalt";
     private static final String STRING_LEN_20 = "12345678901234567890";
     private static final String STRING_LEN_21 = STRING_LEN_20 + "1";
+    private static final String STRING_LEN_50 = "12345678901234567890123456789012345678901234567890";
+    private static final String STRING_LEN_51 = STRING_LEN_50 + "1";
     private static final String STRING_LEN_255 = "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345";
     private static final String STRING_LEN_256 = STRING_LEN_255 + "6";
 
@@ -357,7 +359,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  ", "123456789012345678901234567890123456789012345678901"})
+    @ValueSource(strings = {STRING_LEN_51})
     public void processTransactionWithInvalidVatThrowsException(String vat) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setVat(vat);
@@ -366,7 +368,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"15376371009", "DE256610065"})
+    @ValueSource(strings = {"", "15376371009", "DE256610065", STRING_LEN_50})
     public void processTransactionWithValidVat(String vat) {
         BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
         BDDMockito.doReturn(FAKE_SALT).when(hpanStoreServiceMock).getSalt();
