@@ -69,15 +69,12 @@ public class InboundTransactionItemProcessorTest {
     }
 
     @Test
-    public void process_OK_NoPan_DisabledLogging() {
+    public void processTransactionPanNotMatching() {
         BDDMockito.doReturn(false).when(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
         BDDMockito.doReturn(FAKE_SALT).when(hpanStoreServiceMock).getSalt();
-        InboundTransactionItemProcessor inboundTransactionItemProcessor =
-                new InboundTransactionItemProcessor(hpanStoreServiceMock, false);
-        InboundTransaction inboundTransaction =
-                inboundTransactionItemProcessor.process(fakeInboundTransaction());
-        Assert.assertNull(inboundTransaction);
-        BDDMockito.verify(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, false);
+        InboundTransaction outboundTransaction = processor.process(fakeInboundTransaction());
+        Assert.assertNull(outboundTransaction);
     }
 
     @Test

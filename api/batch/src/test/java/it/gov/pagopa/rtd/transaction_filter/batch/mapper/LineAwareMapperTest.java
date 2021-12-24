@@ -3,7 +3,11 @@ package it.gov.pagopa.rtd.transaction_filter.batch.mapper;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.Assert;
 import org.junit.rules.ExpectedException;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
@@ -12,6 +16,9 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 
 
 public class LineAwareMapperTest {
+
+    private static final String DATETIME_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX";
+    private static final String FILENAME = "test.csv";
 
     public LineAwareMapperTest() {
         MockitoAnnotations.initMocks(this);
@@ -32,7 +39,7 @@ public class LineAwareMapperTest {
     @Before
     public void setUp() {
         lineAwareMapper = new LineAwareMapper<>();
-        lineAwareMapper.setFilename("test.csv");
+        lineAwareMapper.setFilename(FILENAME);
         DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
         delimitedLineTokenizer.setDelimiter(";");
         delimitedLineTokenizer.setNames(
@@ -40,18 +47,18 @@ public class LineAwareMapperTest {
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
                 "bank_identification_number", "MCC", "vat", "pos_type", "par");
         lineAwareMapper.setTokenizer(delimitedLineTokenizer);
-        lineAwareMapper.setFieldSetMapper(new InboundTransactionFieldSetMapper("MM/dd/yyyy HH:mm:ss"));
+        lineAwareMapper.setFieldSetMapper(new InboundTransactionFieldSetMapper(DATETIME_FORMAT));
     }
 
     @Test
-    public void testMapper() {
-        String line = "13131;00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00;";
+    public void testMapperValidLine() {
+        String line = "13131;00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00;";
         InboundTransaction expected = InboundTransaction.builder()
                 .acquirerCode("13131")
                 .operationType("00")
                 .circuitType("00")
                 .pan("pan1")
-                .trxDate("03/20/2020 10:50:33")
+                .trxDate("2011-12-03T10:15:30.000+00:00")
                 .idTrxAcquirer("1111111111")
                 .idTrxIssuer("5555")
                 .correlationId("")
@@ -62,7 +69,7 @@ public class LineAwareMapperTest {
                 .terminalId("1")
                 .bin("000002")
                 .mcc("5422")
-                .filename("test.csv")
+                .filename(FILENAME)
                 .lineNumber(1)
                 .vat("12345678901")
                 .posType("00")
@@ -70,12 +77,12 @@ public class LineAwareMapperTest {
         InboundTransaction inboundTransaction = lineAwareMapper.mapLine(line, 1);
         Assert.assertEquals(expected, inboundTransaction);
         Assert.assertEquals((Integer) 1, inboundTransaction.getLineNumber());
-        Assert.assertEquals("test.csv", inboundTransaction.getFilename());
+        Assert.assertEquals(FILENAME, inboundTransaction.getFilename());
     }
 
     @Test
     public void testMapperThrowExceptionWhenSuperiorNumberOfColumns() {
-        String line = "12;13131;00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00;par1";
+        String line = "12;13131;00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00;par1";
         thrown.expect(FlatFileParseException.class);
         thrown.expectMessage("Parsing error at line: 1");
         lineAwareMapper.mapLine(line, 1);
@@ -83,7 +90,7 @@ public class LineAwareMapperTest {
 
     @Test
     public void testMapperThrowExceptionWhenInferiorNumberOfColumns() {
-        String line = "00;00;pan1;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00";
+        String line = "00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00";
         thrown.expect(FlatFileParseException.class);
         thrown.expectMessage("Parsing error at line: 1");
         lineAwareMapper.mapLine(line, 1);
