@@ -131,8 +131,6 @@ InboundTransaction {
     /**
      * Identifier for the merchant VAT
      */
-    @NotNull
-    @NotBlank
     @Size(max = 50)
     String vat;
 
