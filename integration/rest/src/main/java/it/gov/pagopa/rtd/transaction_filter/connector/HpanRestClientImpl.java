@@ -14,6 +14,7 @@ import org.springframework.util.StreamUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +26,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Enumeration;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -153,6 +156,11 @@ class HpanRestClientImpl implements HpanRestClient {
                         File newFile = new File(
                                 tempDirWithPrefix.toFile().getAbsolutePath() +
                                         File.separator + zipEntry.getName());
+
+                        if(!isFilenameValidInZipFile(zipEntry.getName())) {
+                            throw new IOException("Illegal filename in archive: " + zipEntry.getName());
+                        }
+
                         new File(newFile.getParent()).mkdirs();
 
                         tempFileFOS = new FileOutputStream(newFile);
@@ -204,6 +212,12 @@ class HpanRestClientImpl implements HpanRestClient {
             log.error(e.getMessage(),e);
         }
 
+    }
+
+    private boolean isFilenameValidInZipFile(String filename) throws IOException {
+        Pattern pattern = Pattern.compile("^[a-z0-9_]+\\.csv$", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(filename);
+        return matcher.find();
     }
 
 }
