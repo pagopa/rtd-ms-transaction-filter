@@ -178,6 +178,7 @@ public class InboundTransactionItemProcessorTest {
                 .terminalId("0")
                 .bin("000001")
                 .mcc("813")
+                .fiscalCode("fc123456")
                 .vat("12345678901")
                 .posType("00")
                 .build();

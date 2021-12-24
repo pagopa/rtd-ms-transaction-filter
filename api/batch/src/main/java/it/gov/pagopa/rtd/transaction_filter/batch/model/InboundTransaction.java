@@ -129,6 +129,14 @@ InboundTransaction {
     String bin;
 
     /**
+     * Fiscal code
+     */
+    @NotNull
+    @NotBlank
+    @Size(max = 50)
+    String fiscalCode;
+
+    /**
      * Identifier for the merchant VAT
      */
     @Size(max = 50)

@@ -359,6 +359,28 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"", " ", "    ", STRING_LEN_51})
+    public void processTransactionWithInvalidFiscalCodeThrowsException(String fiscalCode) {
+        InboundTransaction transaction = fakeInboundTransaction();
+        transaction.setFiscalCode(fiscalCode);
+        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, false);
+        Assertions.assertThrows(ConstraintViolationException.class, () -> processor.process(transaction));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"15376371009", "DE256610065", STRING_LEN_50})
+    public void processTransactionWithValidFiscalCode(String fiscalCode) {
+        BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        BDDMockito.doReturn(FAKE_SALT).when(hpanStoreServiceMock).getSalt();
+        InboundTransaction transaction = fakeInboundTransaction();
+        transaction.setFiscalCode(fiscalCode);
+        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, false);
+        InboundTransaction outbound = processor.process(transaction);
+        Assertions.assertNotNull(outbound);
+        Assertions.assertEquals(fiscalCode, outbound.getFiscalCode());
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {STRING_LEN_51})
     public void processTransactionWithInvalidVatThrowsException(String vat) {
         InboundTransaction transaction = fakeInboundTransaction();
@@ -441,6 +463,7 @@ public class InboundTransactionItemProcessorValidatorTest {
                 .terminalId("0")
                 .bin("000001")
                 .mcc("813")
+                .fiscalCode("fc123456")
                 .vat("12345678901")
                 .posType("00")
                 .build();
