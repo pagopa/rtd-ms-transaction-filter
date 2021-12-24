@@ -59,6 +59,7 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
                         .terminalId(fieldSet.readString("terminal_id"))
                         .bin(fieldSet.readString("bank_identification_number"))
                         .mcc(fieldSet.readString("MCC"))
+                        .fiscalCode(fieldSet.readString("fiscal_code"))
                         .vat(fieldSet.readString("vat"))
                         .posType(fieldSet.readString("pos_type"))
                         .par(fieldSet.readString("par"))

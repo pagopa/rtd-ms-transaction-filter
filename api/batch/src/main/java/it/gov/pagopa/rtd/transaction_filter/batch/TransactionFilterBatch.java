@@ -85,6 +85,8 @@ public class TransactionFilterBatch {
     private final HpanConnectorService hpanConnectorService;
     private final SftpConnectorService sftpConnectorService;
 
+    private final static String FAILED = "FAILED";
+
     @Value("${batchConfiguration.TransactionFilterBatch.isolationForCreate}")
     private String isolationForCreate;
     @Value("${batchConfiguration.TransactionFilterBatch.successArchivePath}")
@@ -282,16 +284,16 @@ public class TransactionFilterBatch {
                 .repository(getJobRepository())
                 .listener(jobListener())
                 .start(hpanListRecoveryTask())
-                .on("FAILED").end()
+                .on(FAILED).end()
                 .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.hpanStoreService))
-                .on("FAILED").end()
+                .on(FAILED).end()
                 .from(saltRecoveryTask(this.hpanStoreService)).on("*")
                 .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
-                .on("FAILED").to(fileManagementTask())
+                .on(FAILED).to(fileManagementTask())
                 .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
                 .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
-                .on("FAILED").to(fileManagementTask())
+                .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionSenderMasterStep(
                         this.sftpConnectorService))
@@ -301,8 +303,7 @@ public class TransactionFilterBatch {
 
     @Bean
     public JobListener jobListener() {
-        JobListener jobListener = new JobListener();
-        return jobListener;
+        return new JobListener();
     }
 
     @Bean

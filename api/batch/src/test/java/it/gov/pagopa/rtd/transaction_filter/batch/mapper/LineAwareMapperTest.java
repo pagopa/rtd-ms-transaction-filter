@@ -45,14 +45,14 @@ public class LineAwareMapperTest {
         delimitedLineTokenizer.setNames(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
-                "bank_identification_number", "MCC", "vat", "pos_type", "par");
+                "bank_identification_number", "MCC", "fiscal_code", "vat", "pos_type", "par");
         lineAwareMapper.setTokenizer(delimitedLineTokenizer);
         lineAwareMapper.setFieldSetMapper(new InboundTransactionFieldSetMapper(DATETIME_FORMAT));
     }
 
     @Test
-    public void testMapperValidLine() {
-        String line = "13131;00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00;";
+    public void testMapperValidLineWithOnlyMandatoryFields() {
+        String line = "13131;00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;;22222;0000;1;000002;5422;fc123543;;00;";
         InboundTransaction expected = InboundTransaction.builder()
                 .acquirerCode("13131")
                 .operationType("00")
@@ -61,18 +61,17 @@ public class LineAwareMapperTest {
                 .trxDate("2011-12-03T10:15:30.000+00:00")
                 .idTrxAcquirer("1111111111")
                 .idTrxIssuer("5555")
-                .correlationId("")
                 .amount(1111L)
-                .amountCurrency("896")
                 .acquirerId("22222")
                 .merchantId("0000")
                 .terminalId("1")
                 .bin("000002")
                 .mcc("5422")
-                .filename(FILENAME)
-                .lineNumber(1)
+                .fiscalCode("fc123543")
                 .vat("12345678901")
                 .posType("00")
+                .filename(FILENAME)
+                .lineNumber(1)
                 .build();
         InboundTransaction inboundTransaction = lineAwareMapper.mapLine(line, 1);
         Assert.assertEquals(expected, inboundTransaction);
@@ -82,7 +81,7 @@ public class LineAwareMapperTest {
 
     @Test
     public void testMapperThrowExceptionWhenSuperiorNumberOfColumns() {
-        String line = "12;13131;00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00;par1";
+        String line = "12;13131;00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;896;22222;0000;1;000002;5422;fc123543;12345678901;00;par1";
         thrown.expect(FlatFileParseException.class);
         thrown.expectMessage("Parsing error at line: 1");
         lineAwareMapper.mapLine(line, 1);
@@ -90,7 +89,7 @@ public class LineAwareMapperTest {
 
     @Test
     public void testMapperThrowExceptionWhenInferiorNumberOfColumns() {
-        String line = "00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00";
+        String line = "00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;896;22222;0000;1;000002;5422;fc123543;12345678901;00";
         thrown.expect(FlatFileParseException.class);
         thrown.expectMessage("Parsing error at line: 1");
         lineAwareMapper.mapLine(line, 1);
@@ -98,7 +97,7 @@ public class LineAwareMapperTest {
 
     @Test
     public void testMapperThrowExceptionWhenDatetimeIsInvalid() {
-        String line = "13131;00;00;pan1;03/20/2020T10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;12345678901;00;";
+        String line = "13131;00;00;pan1;03/20/2020T10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;fc123543;12345678901;00;";
         thrown.expect(FlatFileParseException.class);
         lineAwareMapper.mapLine(line, 1);
     }

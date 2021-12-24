@@ -29,8 +29,8 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
     /**
      * Validates the input {@link InboundTransaction}, and filters the model, if the pan is not available
      * in the {@link HpanStoreService}. Optionally applies the hashing function to the transaction PAN
-     * @param inboundTransaction
-     *              instance of {@link InboundTransaction} from the read phase of the step
+     *
+     * @param inboundTransaction instance of {@link InboundTransaction} from the read phase of the step
      * @return instance of  {@link InboundTransaction}
      * @throws ConstraintViolationException
      */
@@ -44,7 +44,7 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
         }
 
         String hpan = applyHashing ?
-                DigestUtils.sha256Hex(inboundTransaction.getPan()+hpanStoreService.getSalt()) :
+                DigestUtils.sha256Hex(inboundTransaction.getPan() + hpanStoreService.getSalt()) :
                 inboundTransaction.getPan();
 
         if (hpanStoreService.hasHpan(hpan)) {
@@ -68,6 +68,7 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                             .acquirerCode(inboundTransaction.getAcquirerCode())
                             .amount(inboundTransaction.getAmount())
                             .trxDate(inboundTransaction.getTrxDate())
+                            .fiscalCode(inboundTransaction.getFiscalCode())
                             .vat(inboundTransaction.getVat())
                             .posType(inboundTransaction.getPosType())
                             .par(inboundTransaction.getPar())
@@ -75,7 +76,7 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
 
             resultTransaction.setPan(applyHashing ?
                     hpan : DigestUtils.sha256Hex(
-                    resultTransaction.getPan()+hpanStoreService.getSalt()));
+                    resultTransaction.getPan() + hpanStoreService.getSalt()));
 
             return resultTransaction;
         } else {

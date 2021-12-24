@@ -120,6 +120,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 .concat(Optional.ofNullable(inboundTransaction.getTerminalId()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getBin()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getMcc()).orElse("")).concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getFiscalCode()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getVat()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getPosType()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getPar()).orElse("")).concat("\n");

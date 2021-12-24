@@ -5,7 +5,11 @@ import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.junit.*;
+import org.junit.Test;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
@@ -98,6 +102,18 @@ public class TransactionFilterBatchTest {
         Mockito.reset(hpanStoreServiceSpy);
     }
 
+    @SneakyThrows
+    @After
+    public void tearDown() {
+        Resource[] resources = resolver.getResources("classpath:/test-encrypt/output/*.pgp");
+        if (resources.length > 1) {
+            for (Resource resource : resources) {
+                resource.getFile().delete();
+            }
+        }
+        tempFolder.delete();
+    }
+
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     private JobParameters defaultJobParameters() {
@@ -105,7 +121,6 @@ public class TransactionFilterBatchTest {
                 .addDate("startDateTime", new Date())
                 .toJobParameters();
     }
-
 
     @SneakyThrows
     @Test
@@ -164,18 +179,6 @@ public class TransactionFilterBatchTest {
         jobLauncherTestUtils.launchStep("hpan-recovery-master-step");
         BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(0)).store(Mockito.any());
 
-    }
-
-    @SneakyThrows
-    @After
-    public void tearDown() {
-        Resource[] resources = resolver.getResources("classpath:/test-encrypt/output/*.pgp");
-        if (resources.length > 1) {
-            for (Resource resource : resources) {
-                resource.getFile().delete();
-            }
-        }
-        tempFolder.delete();
     }
 
 }
