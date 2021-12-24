@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -72,6 +71,8 @@ class HpanRestClientImpl implements HpanRestClient {
 
     @Value("${rest-client.hpan.list.dateValidationZone}")
     private String dateValidationZone;
+
+    private static final String VALID_FILENAMES_PATTERN = "^[a-z0-9_]+\\.csv$";
 
     private final HpanRestConnector hpanRestConnector;
 
@@ -216,7 +217,7 @@ class HpanRestClientImpl implements HpanRestClient {
     }
 
     private boolean isFilenameValidInZipFile(String filename) {
-        Pattern pattern = Pattern.compile("^[a-z0-9_]+\\.csv$", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile(VALID_FILENAMES_PATTERN, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(filename);
         return matcher.find();
     }
