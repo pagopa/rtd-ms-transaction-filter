@@ -14,23 +14,25 @@ import org.springframework.util.StreamUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Enumeration;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
-* Implementation for {@link HpanRestClient}
-*/
+ * Implementation for {@link HpanRestClient}
+ */
 
 @Service
 @RequiredArgsConstructor
@@ -70,6 +72,8 @@ class HpanRestClientImpl implements HpanRestClient {
     @Value("${rest-client.hpan.list.dateValidationZone}")
     private String dateValidationZone;
 
+    private static final String VALID_FILENAMES_PATTERN = "^[a-z0-9_]+\\.csv$";
+
     private final HpanRestConnector hpanRestConnector;
 
     private LocalDateTime validationDate;
@@ -78,7 +82,7 @@ class HpanRestClientImpl implements HpanRestClient {
     private Path tempDirWithPrefix;
 
     /**
-    * Method used for recovering the list, if the properties are enabled, an attempt of validating
+     * Method used for recovering the list, if the properties are enabled, an attempt of validating
      * the checksum recovered from the configured header name, and eventually extracting the .csv or .pgp
      * file from the compressed file obtained through the request
      */
@@ -94,12 +98,13 @@ class HpanRestClientImpl implements HpanRestClient {
             String dateString = Objects.requireNonNull(responseEntity.getHeaders()
                     .get(dateValidationHeaderName)).get(0);
             DateTimeFormatter dtf = dateValidationPattern != null && !dateValidationPattern.isEmpty() ?
-                    DateTimeFormatter.ofPattern(dateValidationPattern).withZone(ZoneId.systemDefault()):
+                    DateTimeFormatter.ofPattern(dateValidationPattern).withZone(ZoneId.systemDefault()) :
                     DateTimeFormatter.RFC_1123_DATE_TIME;
 
             ZonedDateTime fileCreationDateTime = LocalDateTime.parse(dateString, dtf)
                     .atZone(ZoneId.of(dateValidationZone));
-;           ZonedDateTime currentDate = validationDate != null ?
+            ;
+            ZonedDateTime currentDate = validationDate != null ?
                     validationDate.atZone(ZoneId.of(dateValidationZone)) :
                     LocalDateTime.now().atZone(ZoneId.of(dateValidationZone));
 
@@ -108,9 +113,9 @@ class HpanRestClientImpl implements HpanRestClient {
             log.debug("currentDate is: {}", dayFormat.format(currentDate));
             log.debug("fileCreationTime is {}", dayFormat.format(fileCreationDateTime));
 
-            boolean sameYear = ChronoUnit.YEARS.between(fileCreationDateTime,currentDate) == 0;
-            boolean sameMonth = ChronoUnit.MONTHS.between(fileCreationDateTime,currentDate) == 0;
-            boolean sameDay =  ChronoUnit.DAYS.between(fileCreationDateTime,currentDate) == 0;
+            boolean sameYear = ChronoUnit.YEARS.between(fileCreationDateTime, currentDate) == 0;
+            boolean sameMonth = ChronoUnit.MONTHS.between(fileCreationDateTime, currentDate) == 0;
+            boolean sameDay = ChronoUnit.DAYS.between(fileCreationDateTime, currentDate) == 0;
 
             if (!sameYear | !sameMonth | !sameDay) {
                 throw new Exception("Recovered PAN list exceeding a day");
@@ -153,6 +158,11 @@ class HpanRestClientImpl implements HpanRestClient {
                         File newFile = new File(
                                 tempDirWithPrefix.toFile().getAbsolutePath() +
                                         File.separator + zipEntry.getName());
+
+                        if (!isFilenameValidInZipFile(zipEntry.getName())) {
+                            throw new IOException("Illegal filename in archive: " + zipEntry.getName());
+                        }
+
                         new File(newFile.getParent()).mkdirs();
 
                         tempFileFOS = new FileOutputStream(newFile);
@@ -195,15 +205,21 @@ class HpanRestClientImpl implements HpanRestClient {
         try {
             FileUtils.forceDelete(tempFile);
         } catch (Exception e) {
-            log.error(e.getMessage(),e);
+            log.error(e.getMessage(), e);
         }
 
         try {
             FileUtils.deleteDirectory(tempDirWithPrefix.toFile());
         } catch (Exception e) {
-            log.error(e.getMessage(),e);
+            log.error(e.getMessage(), e);
         }
 
+    }
+
+    private boolean isFilenameValidInZipFile(String filename) {
+        Pattern pattern = Pattern.compile(VALID_FILENAMES_PATTERN, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(filename);
+        return matcher.find();
     }
 
 }
