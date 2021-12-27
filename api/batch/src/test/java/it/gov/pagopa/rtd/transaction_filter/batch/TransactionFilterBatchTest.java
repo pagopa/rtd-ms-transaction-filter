@@ -37,6 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.file.Files;
+import java.util.Collection;
 import java.util.Date;
 
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
@@ -157,6 +159,14 @@ public class TransactionFilterBatchTest {
                         resolver.getResources("classpath:/test-encrypt/output")[0].getFile(),
                         new String[]{"pgp"}, false).size());
 
+        Collection<File> outputFiles = FileUtils.listFiles(
+                resolver.getResources("classpath:/test-encrypt/output")[0].getFile(),
+                new String[]{"csv"}, false);
+
+        Assert.assertEquals(1, outputFiles.size());
+
+        File outputFile = outputFiles.iterator().next();
+        Assert.assertEquals(3, Files.lines(outputFile.toPath().toAbsolutePath()).count());
     }
 
     @SneakyThrows
@@ -180,5 +190,4 @@ public class TransactionFilterBatchTest {
         BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(0)).store(Mockito.any());
 
     }
-
 }

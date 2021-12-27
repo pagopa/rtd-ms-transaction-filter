@@ -6,8 +6,12 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.sshd.common.file.virtualfs.VirtualFileSystemFactory;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
-import org.apache.sshd.server.subsystem.sftp.SftpSubsystemFactory;
-import org.junit.*;
+import org.apache.sshd.sftp.server.SftpSubsystemFactory;
+import org.junit.Before;
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,7 +64,7 @@ public class TransactionSftpConnectorTest {
         );
         server.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(
                 new File(Files.createTempDirectory("SFTP_TEMP_KEY").toFile()
-                        .getAbsolutePath()+"/hostkey.ser").toPath()));
+                        .getAbsolutePath() + "/hostkey.ser").toPath()));
         server.setSubsystemFactories(Collections.singletonList(
                 new SftpSubsystemFactory()));
         server.setFileSystemFactory(new VirtualFileSystemFactory(folderPath));
@@ -80,8 +84,7 @@ public class TransactionSftpConnectorTest {
             RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, publicExponent);
             return KeyFactory.getInstance("RSA").generatePublic(spec);
 
-        }
-        else {
+        } else {
             throw new IllegalArgumentException("Only supports RSA");
         }
     }
