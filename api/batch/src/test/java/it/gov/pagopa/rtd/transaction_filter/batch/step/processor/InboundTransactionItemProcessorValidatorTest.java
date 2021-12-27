@@ -27,6 +27,8 @@ public class InboundTransactionItemProcessorValidatorTest {
     private static final String STRING_LEN_21 = STRING_LEN_20 + "1";
     private static final String STRING_LEN_50 = "12345678901234567890123456789012345678901234567890";
     private static final String STRING_LEN_51 = STRING_LEN_50 + "1";
+    private static final String STRING_LEN_64 = "1234567890123456789012345678901234567890123456789012345678901234";
+    private static final String STRING_LEN_65 = STRING_LEN_64 + 1;
     private static final String STRING_LEN_255 = "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345";
     private static final String STRING_LEN_256 = STRING_LEN_255 + "6";
 
@@ -116,7 +118,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  "})
+    @ValueSource(strings = {"", " ", "  ", STRING_LEN_65})
     public void processTransactionWithInvalidPanThrowsException(String pan) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setPan(pan);
@@ -125,7 +127,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
+    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_64})
     public void processTransactionWithValidPan(String pan) {
         BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(pan));
         BDDMockito.doReturn(FAKE_SALT).when(hpanStoreServiceMock).getSalt();
@@ -205,7 +207,16 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058"})
+    @ValueSource(strings = {STRING_LEN_256})
+    public void processTransactionWithInvalidCorrelationIdThrowsException(String correlationId) {
+        InboundTransaction transaction = fakeInboundTransaction();
+        transaction.setCorrelationId(correlationId);
+        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(hpanStoreServiceMock, false);
+        Assertions.assertThrows(ConstraintViolationException.class, () -> processor.process(transaction));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
     public void processTransactionWithValidCorrelationId(String correlationId) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setCorrelationId(correlationId);
@@ -249,7 +260,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  "})
+    @ValueSource(strings = {"", " ", "  ", STRING_LEN_256})
     public void processTransactionWithInvalidAcquirerIdThrowsException(String acquirerId) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setAcquirerId(acquirerId);
@@ -258,7 +269,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058"})
+    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
     public void processTransactionWithValidAcquirerId(String acquirerId) {
         BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
         BDDMockito.doReturn(FAKE_SALT).when(hpanStoreServiceMock).getSalt();
@@ -271,7 +282,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  "})
+    @ValueSource(strings = {"", " ", "  ", STRING_LEN_256})
     public void processTransactionWithInvalidMerchantIdThrowsException(String merchantId) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setMerchantId(merchantId);
@@ -280,7 +291,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058"})
+    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
     public void processTransactionWithValidMerchantId(String merchantId) {
         BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
         BDDMockito.doReturn(FAKE_SALT).when(hpanStoreServiceMock).getSalt();
@@ -293,7 +304,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  "})
+    @ValueSource(strings = {"", " ", "  ", STRING_LEN_256})
     public void processTransactionWithInvalidTerminalIdThrowsException(String terminalId) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setTerminalId(terminalId);
@@ -302,7 +313,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058"})
+    @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
     public void processTransactionWithValidTerminalId(String terminalId) {
         BDDMockito.doReturn(true).when(hpanStoreServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
         BDDMockito.doReturn(FAKE_SALT).when(hpanStoreServiceMock).getSalt();
@@ -337,7 +348,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  "})
+    @ValueSource(strings = {"", " ", "  ", "123456"})
     public void processTransactionWithInvalidMccThrowsException(String mcc) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setMcc(mcc);
