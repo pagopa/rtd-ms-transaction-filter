@@ -48,6 +48,7 @@ InboundTransaction {
      */
     @NotNull
     @NotBlank
+    @Size(max = 64)
     String pan;
 
     /**
@@ -79,6 +80,7 @@ InboundTransaction {
     /**
      * Identifier correlating to a previous transaction
      */
+    @Size(max = 255)
     String correlationId;
 
     /**
@@ -98,6 +100,7 @@ InboundTransaction {
      */
     @NotNull
     @NotBlank
+    @Size(max = 5)
     String mcc;
 
     /**
@@ -105,6 +108,7 @@ InboundTransaction {
      */
     @NotNull
     @NotBlank
+    @Size(max = 255)
     String acquirerId;
 
     /**
@@ -112,6 +116,7 @@ InboundTransaction {
      */
     @NotNull
     @NotBlank
+    @Size(max = 255)
     String merchantId;
 
     /**
@@ -119,6 +124,7 @@ InboundTransaction {
      */
     @NotNull
     @NotBlank
+    @Size(max = 255)
     String terminalId;
 
     /**
