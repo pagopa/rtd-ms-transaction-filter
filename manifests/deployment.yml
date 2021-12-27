@@ -42,12 +42,6 @@ spec:
             - configMapRef:
                 name: rtdtransactionfilter
           env:
-            - name: ACQ_BATCH_INPUT_PUBLIC_KEYPATH
-              value: /app_workdir/publickey.asc
-            - name: HPAN_SERVICE_KEY_STORE_FILE
-              value: /app_workdir/certs.jks
-            - name: HPAN_SERVICE_TRUST_STORE_FILE
-              value: /app_workdir/certs.jks
             - name: HPAN_SERVICE_API_KEY
               valueFrom:
                 secretKeyRef:
