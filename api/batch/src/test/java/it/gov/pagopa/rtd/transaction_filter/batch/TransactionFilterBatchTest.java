@@ -154,7 +154,7 @@ public class TransactionFilterBatchTest {
         BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).store(Mockito.any());
         BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).hasHpan(Mockito.any());
 
-        Assert.assertEquals(1,
+        Assert.assertEquals(2,
                 FileUtils.listFiles(
                         resolver.getResources("classpath:/test-encrypt/output")[0].getFile(),
                         new String[]{"pgp"}, false).size());
@@ -163,10 +163,12 @@ public class TransactionFilterBatchTest {
                 resolver.getResources("classpath:/test-encrypt/output")[0].getFile(),
                 new String[]{"csv"}, false);
 
-        Assert.assertEquals(1, outputFiles.size());
+        Assert.assertEquals(2, outputFiles.size());
 
         File outputFile = outputFiles.iterator().next();
         Assert.assertEquals(3, Files.lines(outputFile.toPath().toAbsolutePath()).count());
+
+        // TODO
     }
 
     @SneakyThrows

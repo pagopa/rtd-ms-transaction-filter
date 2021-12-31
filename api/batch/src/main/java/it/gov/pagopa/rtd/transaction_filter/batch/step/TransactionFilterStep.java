@@ -210,6 +210,25 @@ public class TransactionFilterStep {
     }
 
     /**
+     * TODO
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public PGPFlatFileItemWriter transactionAdeItemWriter(
+            @Value("#{stepExecutionContext['fileName']}") String file) {
+        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKeyPath, applyEncrypt);
+        flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
+        file = file.replaceAll("\\\\", "/");
+        String[] filename = file.split("/");
+        String newFilename = "ADE_" + filename[filename.length-1];
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        flatFileItemWriter.setResource(
+                resolver.getResource(outputDirectoryPath.concat("/".concat(newFilename))));
+        return flatFileItemWriter;
+    }
+
+    /**
      *
      * @param file
      *          Late-Binding parameter to be used as the resource for the reader instance
@@ -258,6 +277,47 @@ public class TransactionFilterStep {
         partitioner.setResources(resolver.getResources(transactionDirectoryPath));
         partitioner.partition(partitionerSize);
         return partitioner;
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    public Step transactionFilterAdeMasterStep()
+            throws Exception {
+        return stepBuilderFactory
+                .get("transaction-filter-ade-master-step")
+                .partitioner(transactionFilterAdeWorkerStep())
+                .partitioner("partition", transactionFilterPartitioner())
+                .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    public Step transactionFilterAdeWorkerStep() {
+//        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+//        String executionDate = OffsetDateTime.now().format(fmt);
+        return stepBuilderFactory.get("transaction-filter-ade-worker-step")
+                .<InboundTransaction, InboundTransaction>chunk(chunkSize)
+                .reader(transactionItemReader(null))
+                .writer(transactionAdeItemWriter(null))
+                .faultTolerant()
+                .skipLimit(skipLimit)
+                .noSkip(FileNotFoundException.class)
+                .noSkip(SkipLimitExceededException.class)
+                .skip(Exception.class)
+                .noRetry(DateTimeParseException.class)
+                .noRollback(DateTimeParseException.class)
+                .noRetry(ConstraintViolationException.class)
+                .noRollback(ConstraintViolationException.class)
+//                .listener(transactionItemReaderListener(transactionWriterService,executionDate))
+//                .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
+//                .listener(transactionsItemWriteListener(transactionWriterService,executionDate))
+//                .listener(transactionStepListener(transactionWriterService, executionDate))
+                .taskExecutor(batchConfig.readerTaskExecutor())
+                .build();
     }
 
     /**
