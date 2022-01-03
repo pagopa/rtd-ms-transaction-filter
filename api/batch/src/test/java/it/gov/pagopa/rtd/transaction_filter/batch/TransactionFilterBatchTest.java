@@ -143,16 +143,21 @@ public class TransactionFilterBatchTest {
 
         File file = new File(resolver.getResource("classpath:/test-encrypt/output")
                 .getFile().getAbsolutePath() + "/test-trx.csv");
+        File file2 = new File(resolver.getResource("classpath:/test-encrypt/output")
+                .getFile().getAbsolutePath() + "/ADE_test-trx.csv");
 
         if (!file.exists()) {
             file.createNewFile();
+        }
+        if (!file2.exists()) {
+            file2.createNewFile();
         }
 
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(defaultJobParameters());
         Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
 
         BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).store(Mockito.any());
-        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).hasHpan(Mockito.any());
+        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(4)).hasHpan(Mockito.any());
 
         Assert.assertEquals(2,
                 FileUtils.listFiles(

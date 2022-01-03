@@ -181,10 +181,36 @@ public class TransactionFilterStep {
      * @return instance of the LineTokenizer to be used in the itemReader configured for the job
      */
     @Bean
+    public BeanWrapperFieldExtractor<InboundTransaction> transactionAdeWriterFieldExtractor() {
+        BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
+        extractor.setNames(new String[] {
+                "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
+                "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
+                "terminalId", "bin", "mcc", "fiscalCode", "vat", "posType", "par"});
+        return extractor;
+    }
+
+    /**
+     *
+     * @return instance of the LineTokenizer to be used in the itemReader configured for the job
+     */
+    @Bean
     public LineAggregator<InboundTransaction> transactionWriterAggregator() {
         DelimitedLineAggregator<InboundTransaction> delimitedLineTokenizer = new DelimitedLineAggregator<>();
         delimitedLineTokenizer.setDelimiter(";");
         delimitedLineTokenizer.setFieldExtractor(transactionWriterFieldExtractor());
+        return delimitedLineTokenizer;
+    }
+
+    /**
+     *
+     * @return instance of the LineTokenizer to be used in the itemReader configured for the job
+     */
+    @Bean
+    public LineAggregator<InboundTransaction> transactionAdeWriterAggregator() {
+        DelimitedLineAggregator<InboundTransaction> delimitedLineTokenizer = new DelimitedLineAggregator<>();
+        delimitedLineTokenizer.setDelimiter(";");
+        delimitedLineTokenizer.setFieldExtractor(transactionAdeWriterFieldExtractor());
         return delimitedLineTokenizer;
     }
 
@@ -218,7 +244,7 @@ public class TransactionFilterStep {
     public PGPFlatFileItemWriter transactionAdeItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String file) {
         PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKeyPath, applyEncrypt);
-        flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
+        flatFileItemWriter.setLineAggregator(transactionAdeWriterAggregator());
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
         String newFilename = "ADE_" + filename[filename.length-1];
@@ -283,11 +309,11 @@ public class TransactionFilterStep {
      * TODO
      */
     @Bean
-    public Step transactionFilterAdeMasterStep()
+    public Step transactionFilterAdeMasterStep(TransactionWriterService transactionWriterService)
             throws Exception {
         return stepBuilderFactory
                 .get("transaction-filter-ade-master-step")
-                .partitioner(transactionFilterAdeWorkerStep())
+                .partitioner(transactionFilterAdeWorkerStep(transactionWriterService))
                 .partitioner("partition", transactionFilterPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
@@ -296,9 +322,9 @@ public class TransactionFilterStep {
      * TODO
      */
     @Bean
-    public Step transactionFilterAdeWorkerStep() {
-//        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-//        String executionDate = OffsetDateTime.now().format(fmt);
+    public Step transactionFilterAdeWorkerStep(TransactionWriterService transactionWriterService) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        String executionDate = OffsetDateTime.now().format(fmt);
         return stepBuilderFactory.get("transaction-filter-ade-worker-step")
                 .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                 .reader(transactionItemReader(null))
@@ -312,10 +338,10 @@ public class TransactionFilterStep {
                 .noRollback(DateTimeParseException.class)
                 .noRetry(ConstraintViolationException.class)
                 .noRollback(ConstraintViolationException.class)
-//                .listener(transactionItemReaderListener(transactionWriterService,executionDate))
-//                .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
-//                .listener(transactionsItemWriteListener(transactionWriterService,executionDate))
-//                .listener(transactionStepListener(transactionWriterService, executionDate))
+                .listener(transactionItemReaderListener(transactionWriterService,executionDate))
+                .listener(transactionsItemProcessListener(transactionWriterService,executionDate))
+                .listener(transactionsItemWriteListener(transactionWriterService,executionDate))
+                .listener(transactionStepListener(transactionWriterService, executionDate))
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
     }
