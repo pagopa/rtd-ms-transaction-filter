@@ -298,9 +298,7 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
-                .on("*").to(transactionFilterStep.transactionSenderMasterStep(
-                        this.sftpConnectorService))
-                // TODO: verificare fileManagementTask rispetto al nuovo file
+                .on("*").to(transactionFilterStep.transactionSenderMasterStep(this.sftpConnectorService))
                 .on("*").to(fileManagementTask())
                 .build();
     }

@@ -38,8 +38,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.ADE_OUTPUT_FILE_PREFIX;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
@@ -127,7 +130,7 @@ public class TransactionFilterBatchTest {
 
     @SneakyThrows
     @Test
-    public void panReaderStep_testCoreSteps_OK() {
+    public void jobExecutionProducesExpectedFiles() {
 
         tempFolder.newFolder("hpan");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");
@@ -142,44 +145,68 @@ public class TransactionFilterBatchTest {
 
         panPgpFOS.close();
 
-        File file = new File(resolver.getResource("classpath:/test-encrypt/output")
+        File outputFileTrn = new File(resolver.getResource("classpath:/test-encrypt/output")
                 .getFile().getAbsolutePath() + "/test-trx.csv");
-        File file2 = new File(resolver.getResource("classpath:/test-encrypt/output")
+        File outputFileAde = new File(resolver.getResource("classpath:/test-encrypt/output")
                 .getFile().getAbsolutePath() + "/" + ADE_OUTPUT_FILE_PREFIX + "test-trx.csv");
 
-        if (!file.exists()) {
-            file.createNewFile();
+        if (!outputFileTrn.exists()) {
+            outputFileTrn.createNewFile();
         }
-        if (!file2.exists()) {
-            file2.createNewFile();
+        if (!outputFileAde.exists()) {
+            outputFileAde.createNewFile();
         }
 
+        // Check that the job exited with the right exit status
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(defaultJobParameters());
         Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
 
+        // Check that the HPAN store has been accessed as expected
         BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).store(Mockito.any());
         BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(4)).hasHpan(Mockito.any());
 
-        Assert.assertEquals(2,
-                FileUtils.listFiles(
-                        resolver.getResources("classpath:/test-encrypt/output")[0].getFile(),
-                        new String[]{"pgp"}, false).size());
+        // Check that output folder contains expected files, and only those
+        Collection<File> outputPgpFiles = FileUtils.listFiles(
+                resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[]{"pgp"}, false);
+        Assert.assertEquals(2, outputPgpFiles.size());
 
-        Collection<File> outputFiles = FileUtils.listFiles(
-                resolver.getResources("classpath:/test-encrypt/output")[0].getFile(),
-                new String[]{"csv"}, false);
+        List<String> outputPgpFilenames = outputPgpFiles.stream().map(p -> p.getName()).collect(Collectors.toList());
+        List<String> expectedPgpFilenames = new ArrayList<>();
+        expectedPgpFilenames.add("test-trx.csv.pgp");
+        expectedPgpFilenames.add("ADE.test-trx.csv.pgp");
+        Assert.assertEquals(expectedPgpFilenames, outputPgpFilenames);
 
-        Assert.assertEquals(2, outputFiles.size());
+        Collection<File> outputCsvFiles = FileUtils.listFiles(
+            resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[]{"csv"}, false);
+        Assert.assertEquals(2, outputCsvFiles.size());
 
-        File outputFile = outputFiles.iterator().next();
-        Assert.assertEquals(3, Files.lines(outputFile.toPath().toAbsolutePath()).count());
+        List<String> outputCsvFilenames = outputCsvFiles.stream().map(p -> p.getName()).collect(Collectors.toList());
+        List<String> expectedCsvFilenames = new ArrayList<>();
+        expectedCsvFilenames.add("test-trx.csv");
+        expectedCsvFilenames.add("ADE.test-trx.csv");
+        Assert.assertEquals(expectedCsvFilenames, outputCsvFilenames);
 
-        // TODO
+        List<String> outputFileTrnContent = Files.readAllLines(outputFileTrn.toPath().toAbsolutePath());
+        List<String> outputFileAdeContent = Files.readAllLines(outputFileAde.toPath().toAbsolutePath());
+
+        // Check that output files contains the expected number of lines
+        Assert.assertEquals(3, outputFileTrnContent.size());
+        Assert.assertEquals(4, outputFileAdeContent.size());
+
+        // Check that output files contains expected lines
+        Assert.assertTrue(outputFileTrnContent.contains("13131;00;00;28aa47c8c6cd1a6b0a86ebe18471295796c88269868825b4cd41f94f0a07e88e;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(outputFileTrnContent.contains("131331;00;01;e2df0a82ac0aa12921c398e1eba9119772db868650ebef22b8919fa0fb7642ed;03/20/2020 11:23:00;333333333;7777;;3333;896;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(outputFileTrnContent.contains("13131;01;00;805f89015f85948f7d7bdd57a0a81e4cd95fc81bdd1195a69c4ab139f0ebed7b;03/20/2020 11:04:53;2222222222;6666;;2222;896;3333;0000;1;000002;5422;fis123;12345678901;00;"));
+
+        Assert.assertTrue(outputFileAdeContent.contains("13131;00;00;03/20/2020 10:50:33;1111111111;5555;;1111;896;22222;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(outputFileAdeContent.contains("13131;01;00;03/20/2020 11:04:53;2222222222;6666;;2222;896;3333;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(outputFileAdeContent.contains("131331;00;01;03/20/2020 11:23:00;333333333;7777;;3333;896;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(outputFileAdeContent.contains("131331;00;01;03/20/2020 13:23:00;4444444444;8888;;3333;896;4444;0000;1;000002;5422;fis123;12345678901;00;"));
     }
 
     @SneakyThrows
     @Test
-    public void panReaderStep_testCoreSteps_KO() {
+    public void jobExecutionFails() {
 
         tempFolder.newFolder("hpan");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");

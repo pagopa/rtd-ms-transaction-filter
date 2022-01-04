@@ -25,10 +25,13 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.core.step.skip.SkipLimitExceededException;
-import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
-import org.springframework.batch.item.file.transform.*;
+import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
+import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.item.file.transform.LineTokenizer;
+import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
+import org.springframework.batch.item.file.transform.LineAggregator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,6 +43,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import javax.validation.ConstraintViolationException;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -181,7 +185,7 @@ public class TransactionFilterStep {
     public BeanWrapperFieldExtractor<InboundTransaction> transactionAdeWriterFieldExtractor() {
         BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
         extractor.setNames(new String[]{
-                "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
+                "acquirerCode", "operationType", "circuitType", "trxDate", "idTrxAcquirer",
                 "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
                 "terminalId", "bin", "mcc", "fiscalCode", "vat", "posType", "par"});
         return extractor;
@@ -229,44 +233,25 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Create the ItemWriter to be used in the step 'transaction-filter-ade-worker-step'
+     *
+     * @param file name of the file being processed
+     * @return an instance of ItemWriter
      */
     @SneakyThrows
     @Bean
     @StepScope
     public PGPFlatFileItemWriter transactionAdeItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String file) {
-        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKeyPath, applyEncrypt);
-        flatFileItemWriter.setLineAggregator(transactionAdeWriterAggregator());
+        PGPFlatFileItemWriter itemWriter = new PGPFlatFileItemWriter(publicKeyPath, applyEncrypt);
+        itemWriter.setLineAggregator(transactionAdeWriterAggregator());
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
         String newFilename = ADE_OUTPUT_FILE_PREFIX + filename[filename.length - 1];
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        flatFileItemWriter.setResource(
-                resolver.getResource(outputDirectoryPath.concat("/".concat(newFilename))));
-        return flatFileItemWriter;
+        itemWriter.setResource(resolver.getResource(outputDirectoryPath.concat("/".concat(newFilename))));
+        return itemWriter;
     }
-
-    /**
-     * @param file Late-Binding parameter to be used as the resource for the reader instance
-     * @return instance of the itemReader to be used in the first step of the configured job
-     */
-    @SneakyThrows
-    @Bean
-    @StepScope
-    public FlatFileItemWriter<InboundTransaction> transactionFilteredItemWriter(
-            @Value("#{stepExecutionContext['fileName']}") String file) {
-        FlatFileItemWriter<InboundTransaction> flatFileItemWriter = new FlatFileItemWriter<>();
-        flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
-        file = file.replaceAll("\\\\", "/");
-        String[] filename = file.split("/");
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        flatFileItemWriter.setResource(
-                resolver.getResource(transactionLogsPath.concat("/"
-                        .concat("FilteredRecords_" + filename[filename.length - 1]))));
-        return flatFileItemWriter;
-    }
-
 
     /**
      * @return instance of the itemProcessor to be used in the first step of the configured job
@@ -286,7 +271,7 @@ public class TransactionFilterStep {
      */
     @Bean
     @JobScope
-    public Partitioner transactionFilterPartitioner() throws Exception {
+    public Partitioner transactionFilterPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         partitioner.setResources(resolver.getResources(transactionDirectoryPath));
@@ -295,11 +280,14 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Build the master step for AdE batch processing.
+     *
+     * @param transactionWriterService an instance of TransactionWriterService shared between steps
+     * @return the AdE batch master step
+     * @throws IOException
      */
     @Bean
-    public Step transactionFilterAdeMasterStep(TransactionWriterService transactionWriterService)
-            throws Exception {
+    public Step transactionFilterAdeMasterStep(TransactionWriterService transactionWriterService) throws IOException {
         return stepBuilderFactory
                 .get("transaction-filter-ade-master-step")
                 .partitioner(transactionFilterAdeWorkerStep(transactionWriterService))
@@ -308,7 +296,10 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Build the worker step for AdE batch processing.
+     *
+     * @param transactionWriterService an instance of TransactionWriterService shared between steps
+     * @return the AdE batch worker step
      */
     @Bean
     public Step transactionFilterAdeWorkerStep(TransactionWriterService transactionWriterService) {
@@ -337,14 +328,12 @@ public class TransactionFilterStep {
     /**
      * @return master step to be used as the formal main step in the reading phase of the job,
      * partitioned for scalability on multiple file reading
-     * @throws Exception
+     * @throws IOException
      */
     @Bean
-    public Step transactionFilterMasterStep(HpanStoreService hpanStoreService,
-                                            TransactionWriterService transactionWriterService)
-            throws Exception {
-        return stepBuilderFactory.get("transaction-filter-master-step").partitioner(
-                        transactionFilterWorkerStep(hpanStoreService, transactionWriterService))
+    public Step transactionFilterMasterStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService) throws IOException {
+        return stepBuilderFactory.get("transaction-filter-master-step")
+                .partitioner(transactionFilterWorkerStep(hpanStoreService, transactionWriterService))
                 .partitioner("partition", transactionFilterPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
@@ -357,11 +346,6 @@ public class TransactionFilterStep {
     public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
-        return simpleWorkerStep(hpanStoreService, transactionWriterService, executionDate);
-    }
-
-
-    public Step simpleWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService, String executionDate) {
         return stepBuilderFactory.get("transaction-filter-worker-step")
                 .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                 .reader(transactionItemReader(null))
@@ -504,8 +488,8 @@ public class TransactionFilterStep {
      */
     @Bean
     public Step transactionSenderMasterStep(SftpConnectorService sftpConnectorService) throws Exception {
-        return stepBuilderFactory.get("transaction-sender-master-step").partitioner(
-                        transactionSenderWorkerStep(sftpConnectorService))
+        return stepBuilderFactory.get("transaction-sender-master-step")
+                .partitioner(transactionSenderWorkerStep(sftpConnectorService))
                 .partitioner("partition", transactionSenderPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
