@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Date;
 
+import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.ADE_OUTPUT_FILE_PREFIX;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 @RunWith(SpringRunner.class)
@@ -144,7 +145,7 @@ public class TransactionFilterBatchTest {
         File file = new File(resolver.getResource("classpath:/test-encrypt/output")
                 .getFile().getAbsolutePath() + "/test-trx.csv");
         File file2 = new File(resolver.getResource("classpath:/test-encrypt/output")
-                .getFile().getAbsolutePath() + "/ADE_test-trx.csv");
+                .getFile().getAbsolutePath() + "/" + ADE_OUTPUT_FILE_PREFIX + "test-trx.csv");
 
         if (!file.exists()) {
             file.createNewFile();

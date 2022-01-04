@@ -26,6 +26,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     private Boolean enableAfterReadLogging;
     private Long loggingFrequency;
     private TransactionWriterService transactionWriterService;
+    private String prefix;
     String filename;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -62,7 +63,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()
                         .concat("/".concat(executionDate))
-                        + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",
+                        + "_" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",
                         (lineArray.length > 1 ? lineArray[1] : lineArray[0]).concat("\n"));
             } catch (Exception e) {
                 log.error(e.getMessage(),e);

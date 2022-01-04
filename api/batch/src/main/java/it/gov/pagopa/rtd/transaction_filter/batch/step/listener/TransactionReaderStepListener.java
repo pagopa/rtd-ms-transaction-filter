@@ -21,6 +21,7 @@ public class TransactionReaderStepListener implements StepExecutionListener {
     private TransactionWriterService transactionWriterService;
     private String errorTransactionsLogsPath;
     private String executionDate;
+    private String prefix;
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
@@ -33,11 +34,11 @@ public class TransactionReaderStepListener implements StepExecutionListener {
             transactionWriterService.openFileChannel(
                     resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                             .concat("/".concat(executionDate))
-                    + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv");
+                    + "_" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv");
             transactionWriterService.openFileChannel(
                     resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                             .concat("/".concat(executionDate))
-                            + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv");
+                            + "_" + prefix + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv");
         } catch (IOException e) {
             log.error(e.getMessage(),e);
         }
