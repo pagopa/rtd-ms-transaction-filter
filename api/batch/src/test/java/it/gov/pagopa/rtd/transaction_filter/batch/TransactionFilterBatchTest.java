@@ -38,10 +38,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.ADE_OUTPUT_FILE_PREFIX;
@@ -170,8 +167,8 @@ public class TransactionFilterBatchTest {
                 resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[]{"pgp"}, false);
         Assert.assertEquals(2, outputPgpFiles.size());
 
-        List<String> outputPgpFilenames = outputPgpFiles.stream().map(p -> p.getName()).collect(Collectors.toList());
-        List<String> expectedPgpFilenames = new ArrayList<>();
+        Set<String> outputPgpFilenames = outputPgpFiles.stream().map(p -> p.getName()).collect(Collectors.toSet());
+        Set<String> expectedPgpFilenames = new HashSet<>();
         expectedPgpFilenames.add("test-trx.csv.pgp");
         expectedPgpFilenames.add("ADE.test-trx.csv.pgp");
         Assert.assertEquals(expectedPgpFilenames, outputPgpFilenames);
@@ -180,8 +177,8 @@ public class TransactionFilterBatchTest {
             resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[]{"csv"}, false);
         Assert.assertEquals(2, outputCsvFiles.size());
 
-        List<String> outputCsvFilenames = outputCsvFiles.stream().map(p -> p.getName()).collect(Collectors.toList());
-        List<String> expectedCsvFilenames = new ArrayList<>();
+        Set<String> outputCsvFilenames = outputCsvFiles.stream().map(p -> p.getName()).collect(Collectors.toSet());
+        Set<String> expectedCsvFilenames = new HashSet<>();
         expectedCsvFilenames.add("test-trx.csv");
         expectedCsvFilenames.add("ADE.test-trx.csv");
         Assert.assertEquals(expectedCsvFilenames, outputCsvFilenames);
