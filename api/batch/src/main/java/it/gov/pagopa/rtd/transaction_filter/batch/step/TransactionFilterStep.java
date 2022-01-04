@@ -108,9 +108,10 @@ public class TransactionFilterStep {
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize}")
     private Integer writerPoolSize;
 
-    public final static String ADE_OUTPUT_FILE_PREFIX = "ADE.";
-    private final static String LOG_PREFIX_TRN = "Trn_";
-    private final static String LOG_PREFIX_ADE = "Ade_";
+    public static final String ADE_OUTPUT_FILE_PREFIX = "ADE.";
+    private static final String LOG_PREFIX_TRN = "Trn_";
+    private static final String LOG_PREFIX_ADE = "Ade_";
+    private static final String PARTITIONER_WORKER_STEP_NAME = "partition";
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
@@ -291,7 +292,7 @@ public class TransactionFilterStep {
         return stepBuilderFactory
                 .get("transaction-filter-ade-master-step")
                 .partitioner(transactionFilterAdeWorkerStep(transactionWriterService))
-                .partitioner("partition", transactionFilterPartitioner())
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -334,7 +335,7 @@ public class TransactionFilterStep {
     public Step transactionFilterMasterStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService) throws IOException {
         return stepBuilderFactory.get("transaction-filter-master-step")
                 .partitioner(transactionFilterWorkerStep(hpanStoreService, transactionWriterService))
-                .partitioner("partition", transactionFilterPartitioner())
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -490,7 +491,7 @@ public class TransactionFilterStep {
     public Step transactionSenderMasterStep(SftpConnectorService sftpConnectorService) throws Exception {
         return stepBuilderFactory.get("transaction-sender-master-step")
                 .partitioner(transactionSenderWorkerStep(sftpConnectorService))
-                .partitioner("partition", transactionSenderPartitioner())
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
