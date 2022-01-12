@@ -86,10 +86,24 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
                 .getStepExecutions();
+
+        // Since more steps can process the same input file we must keep track
+        // of already processed files to avoid trying to archive/delete twice
+        // the same one (and thus failing the second time).
+        List<String> alreadyProcessedFiles = new ArrayList<>();
+
         for (StepExecution stepExecution : stepExecutions) {
             if (stepExecution.getExecutionContext().containsKey("fileName")) {
 
                 String file = stepExecution.getExecutionContext().getString("fileName");
+
+                if(alreadyProcessedFiles.contains(file)) {
+                    log.info("Already managed file: {}", file);
+                    continue;
+                } else {
+                    alreadyProcessedFiles.add(file);
+                }
+
                 String path = null;
 
                 try {

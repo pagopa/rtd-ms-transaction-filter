@@ -158,8 +158,8 @@ public class TransactionFilterBatch {
         if (transactionResources.length > 0 &&
                 (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
 
-            log.info("Found {}. Starting filtering process",
-                    transactionResources.length + (transactionResources.length > 1 ? "resources" : "resource")
+            log.info("Found {} {}. Starting filtering process",
+                    transactionResources.length, (transactionResources.length > 1 ? "resources" : "resource")
             );
 
             if (transactionWriterService == null) {
@@ -291,12 +291,14 @@ public class TransactionFilterBatch {
                 .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
                 .on(FAILED).to(fileManagementTask())
                 .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
+                .on("*").to(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
+                .from(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
-                .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
-                .on("*").to(transactionFilterStep.transactionSenderMasterStep(
-                        this.sftpConnectorService))
+                .on("*").to(transactionFilterStep.transactionSenderMasterStep(this.sftpConnectorService))
                 .on("*").to(fileManagementTask())
                 .build();
     }

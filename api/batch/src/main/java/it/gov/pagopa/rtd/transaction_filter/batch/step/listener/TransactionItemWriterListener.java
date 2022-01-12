@@ -26,6 +26,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
     private Boolean enableAfterWriteLogging;
     private Long loggingFrequency;
     private TransactionWriterService transactionWriterService;
+    private String prefix;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
@@ -63,7 +64,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                     transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                             .getFile().getAbsolutePath()
                             .concat("/".concat(executionDate))
-                            + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(inboundTransaction));
+                            + "+" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(inboundTransaction));
 
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);

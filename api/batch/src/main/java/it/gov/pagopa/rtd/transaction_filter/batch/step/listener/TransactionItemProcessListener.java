@@ -25,6 +25,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     private Boolean enableAfterProcessLogging;
     private Boolean enableAfterProcessFileLogging;
     private Long loggingFrequency;
+    private String prefix;
     private TransactionWriterService transactionWriterService;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -64,7 +65,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()
                         .concat("/".concat(executionDate))
-                        + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
+                        + "_" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
             } catch (Exception e) {
                 if (log.isErrorEnabled()) {
                     log.error(e.getMessage(), e);
@@ -96,7 +97,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()
                         .concat("/".concat(executionDate))
-                        + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
+                        + "_" + prefix + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
