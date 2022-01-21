@@ -60,7 +60,7 @@ import java.util.Date;
  * :saltRecoveryTask;
  * :panReaderStep;
  * :transactionFilterStep;
- * :transactionSenderStep;
+ * :transactionSenderFtpStep;
  * :fileManagementTask;
  * end
  * 
@@ -298,7 +298,7 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
-                .on("*").to(transactionFilterStep.transactionSenderMasterStep(this.sftpConnectorService))
+                .on("*").to(transactionFilterStep.transactionSenderFtpMasterStep(this.sftpConnectorService))
                 .on("*").to(fileManagementTask())
                 .build();
     }

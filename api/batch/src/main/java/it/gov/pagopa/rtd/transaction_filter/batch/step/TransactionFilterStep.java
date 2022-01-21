@@ -10,7 +10,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderFtpTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
@@ -79,8 +79,8 @@ public class TransactionFilterStep {
     private Boolean applyEncrypt;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory}")
     private String localdirectory;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionSender.enabled}")
-    private Boolean transactionSenderEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled}")
+    private Boolean transactionSenderFtpEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath}")
     private String transactionLogsPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterReadLogging}")
@@ -473,11 +473,11 @@ public class TransactionFilterStep {
      */
     @Bean
     @JobScope
-    public Partitioner transactionSenderPartitioner() throws Exception {
+    public Partitioner transactionSenderFtpPartitioner() throws Exception {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] emptyList = {};
-        partitioner.setResources(transactionSenderEnabled ? resolver.getResources(localdirectory) : emptyList);
+        partitioner.setResources(transactionSenderFtpEnabled ? resolver.getResources(localdirectory) : emptyList);
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -488,10 +488,10 @@ public class TransactionFilterStep {
      * @throws Exception
      */
     @Bean
-    public Step transactionSenderMasterStep(SftpConnectorService sftpConnectorService) throws Exception {
-        return stepBuilderFactory.get("transaction-sender-master-step")
-                .partitioner(transactionSenderWorkerStep(sftpConnectorService))
-                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderPartitioner())
+    public Step transactionSenderFtpMasterStep(SftpConnectorService sftpConnectorService) throws Exception {
+        return stepBuilderFactory.get("transaction-sender-ftp-master-step")
+                .partitioner(transactionSenderFtpWorkerStep(sftpConnectorService))
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderFtpPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -500,24 +500,24 @@ public class TransactionFilterStep {
      */
     @SneakyThrows
     @Bean
-    public Step transactionSenderWorkerStep(SftpConnectorService sftpConnectorService) {
+    public Step transactionSenderFtpWorkerStep(SftpConnectorService sftpConnectorService) {
 
-        return stepBuilderFactory.get("transaction-filter-send-step").tasklet(
-                transactionSenderTasklet(null, sftpConnectorService)).build();
+        return stepBuilderFactory.get("transaction-sender-ftp-worker-step").tasklet(
+                transactionSenderFtpTasklet(null, sftpConnectorService)).build();
     }
 
     @SneakyThrows
     @Bean
     @StepScope
-    public TransactionSenderTasklet transactionSenderTasklet(
+    public TransactionSenderFtpTasklet transactionSenderFtpTasklet(
             @Value("#{stepExecutionContext['fileName']}") String file,
             SftpConnectorService sftpConnectorService
     ) {
-        TransactionSenderTasklet transactionSenderTasklet = new TransactionSenderTasklet();
-        transactionSenderTasklet.setResource(new UrlResource(file));
-        transactionSenderTasklet.setSftpConnectorService(sftpConnectorService);
-        transactionSenderTasklet.setTaskletEnabled(transactionSenderEnabled);
-        return transactionSenderTasklet;
+        TransactionSenderFtpTasklet transactionSenderFtpTasklet = new TransactionSenderFtpTasklet();
+        transactionSenderFtpTasklet.setResource(new UrlResource(file));
+        transactionSenderFtpTasklet.setSftpConnectorService(sftpConnectorService);
+        transactionSenderFtpTasklet.setTaskletEnabled(transactionSenderFtpEnabled);
+        return transactionSenderFtpTasklet;
     }
 
     /**

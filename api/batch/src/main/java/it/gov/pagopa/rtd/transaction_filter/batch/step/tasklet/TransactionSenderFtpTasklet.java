@@ -17,7 +17,7 @@ import org.springframework.util.Assert;
  */
 
 @Data
-public class TransactionSenderTasklet implements Tasklet, InitializingBean {
+public class TransactionSenderFtpTasklet implements Tasklet, InitializingBean {
 
     private SftpConnectorService sftpConnectorService;
     private Resource resource;

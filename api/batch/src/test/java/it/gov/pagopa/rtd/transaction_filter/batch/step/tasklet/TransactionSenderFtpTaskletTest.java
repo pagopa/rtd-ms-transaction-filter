@@ -21,9 +21,9 @@ import org.springframework.core.io.UrlResource;
 
 import java.io.File;
 
-public class TransactionSenderTaskletTest {
+public class TransactionSenderFtpTaskletTest {
 
-    public TransactionSenderTaskletTest(){
+    public TransactionSenderFtpTaskletTest(){
         MockitoAnnotations.initMocks(this);
     }
 
@@ -54,14 +54,14 @@ public class TransactionSenderTaskletTest {
     @Test
     public void testSendFile_OK() {
         File fileToSend = tempFolder.newFile("test");
-        TransactionSenderTasklet transactionSenderTasklet = new TransactionSenderTasklet();
-        transactionSenderTasklet.setSftpConnectorService(sftpConnectorServiceMock);
-        transactionSenderTasklet.setResource(new UrlResource("file:/"+fileToSend.getPath()));
+        TransactionSenderFtpTasklet transactionSenderFtpTasklet = new TransactionSenderFtpTasklet();
+        transactionSenderFtpTasklet.setSftpConnectorService(sftpConnectorServiceMock);
+        transactionSenderFtpTasklet.setResource(new UrlResource("file:/"+fileToSend.getPath()));
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
-        transactionSenderTasklet.setTaskletEnabled(true);
-        transactionSenderTasklet.execute(new StepContribution(execution),chunkContext);
+        transactionSenderFtpTasklet.setTaskletEnabled(true);
+        transactionSenderFtpTasklet.execute(new StepContribution(execution),chunkContext);
         BDDMockito.verify(sftpConnectorServiceMock).transferFile(Mockito.eq(fileToSend));
     }
 
@@ -72,15 +72,15 @@ public class TransactionSenderTaskletTest {
         BDDMockito.doAnswer(invocationOnMock -> {
             throw new Exception();
         }).when(sftpConnectorServiceMock).transferFile(Mockito.eq(fileToSend));
-        TransactionSenderTasklet transactionSenderTasklet = new TransactionSenderTasklet();
-        transactionSenderTasklet.setSftpConnectorService(sftpConnectorServiceMock);
-        transactionSenderTasklet.setResource(new UrlResource("file:/"+fileToSend.getPath()));
-        transactionSenderTasklet.setTaskletEnabled(true);
+        TransactionSenderFtpTasklet transactionSenderFtpTasklet = new TransactionSenderFtpTasklet();
+        transactionSenderFtpTasklet.setSftpConnectorService(sftpConnectorServiceMock);
+        transactionSenderFtpTasklet.setResource(new UrlResource("file:/"+fileToSend.getPath()));
+        transactionSenderFtpTasklet.setTaskletEnabled(true);
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
         expectedException.expect(Exception.class);
-        transactionSenderTasklet.execute(new StepContribution(execution),chunkContext);
+        transactionSenderFtpTasklet.execute(new StepContribution(execution),chunkContext);
         BDDMockito.verify(sftpConnectorServiceMock).transferFile(Mockito.eq(fileToSend));
     }
 
