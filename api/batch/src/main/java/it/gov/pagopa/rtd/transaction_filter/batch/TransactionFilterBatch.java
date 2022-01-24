@@ -298,6 +298,12 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
+                .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
+                .on("*").to(transactionFilterStep.transactionSenderCstarMasterStep(this.hpanConnectorService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.transactionSenderCstarMasterStep(this.hpanConnectorService))
                 .on("*").to(transactionFilterStep.transactionSenderFtpMasterStep(this.sftpConnectorService))
                 .on("*").to(fileManagementTask())
                 .build();

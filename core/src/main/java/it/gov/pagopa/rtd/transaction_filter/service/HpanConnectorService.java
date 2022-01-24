@@ -1,6 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
+
 import java.io.File;
+import java.nio.file.Path;
 
 /**
  *  Inteface for the service to be called for recovering the hpan list and salt from remote endpoints
@@ -21,8 +24,19 @@ public interface HpanConnectorService {
     String getSalt();
 
     /**
+     * TODO
+     * @return
+     */
+    SasResponse getSasToken(String scope);
+
+    /**
+     * TODO
+     */
+    Void uploadFile(File fileToUpload, String sas, String authorizedContainer);
+
+    /**
      * Method to clean all temp files
      */
-    public void cleanAllTempFiles();
+    void cleanAllTempFiles();
 
 }

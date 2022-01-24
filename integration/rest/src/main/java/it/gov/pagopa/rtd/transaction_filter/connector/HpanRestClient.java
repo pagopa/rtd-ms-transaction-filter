@@ -11,6 +11,10 @@ public interface HpanRestClient {
 
       String getSalt();
 
+      SasResponse getSasToken(String scope);
+
+      Void uploadFile(File fileToUpload, String sas, String authorizedContainer);
+
       void cleanTempFile();
 
 }

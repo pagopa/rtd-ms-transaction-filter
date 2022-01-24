@@ -5,7 +5,6 @@ import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestConnector;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -76,7 +75,7 @@ public class HpanRestConnectorConfig {
             SSLSocketFactory sslSocketFactory = null;
 
             if (mtlsEnabled) {
-                sslSocketFactory = getSSLSocketFactory();
+                sslSocketFactory = getSSLContext().getSocketFactory();
                 log.debug("enabled socket factory: {}", sslSocketFactory);
             }
 
@@ -102,12 +101,12 @@ public class HpanRestConnectorConfig {
             }
         } catch (Exception e) {
             log.error(e.getMessage(),e);
-            throw new Exception("Error occured while initializing feign client", e);
+            throw new Exception("Error occurred while initializing feign client", e);
         }
     }
 
     @SneakyThrows
-    private SSLSocketFactory getSSLSocketFactory() {
+    public SSLContext getSSLContext() {
 
         SSLContext sslContext = SSLContext.getInstance("TLS");
         KeyStore trustKeyStore = KeyStore.getInstance(trustStoreType != null ?
@@ -135,11 +134,11 @@ public class HpanRestConnectorConfig {
         }
 
         if (keyManagers == null) {
-            keyManagers = new KeyManager[] {};
+            keyManagers = new KeyManager[]{};
         }
 
         sslContext.init(keyManagers, trustManagerFactory.getTrustManagers(), null);
-        return sslContext.getSocketFactory();
+        return sslContext;
     }
 
 }

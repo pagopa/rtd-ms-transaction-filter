@@ -10,8 +10,10 @@ import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderFtpTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
+import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
@@ -81,6 +83,10 @@ public class TransactionFilterStep {
     private String localdirectory;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled}")
     private Boolean transactionSenderFtpEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled}")
+    private Boolean transactionSenderAdeEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderCstar.enabled}")
+    private Boolean transactionSenderCstarEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath}")
     private String transactionLogsPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterReadLogging}")
@@ -108,6 +114,7 @@ public class TransactionFilterStep {
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize}")
     private Integer writerPoolSize;
 
+    public static final String CSTAR_OUTPUT_FILE_PREFIX = "CSTAR.";
     public static final String ADE_OUTPUT_FILE_PREFIX = "ADE.";
     private static final String LOG_PREFIX_TRN = "Trn_";
     private static final String LOG_PREFIX_ADE = "Ade_";
@@ -518,6 +525,118 @@ public class TransactionFilterStep {
         transactionSenderFtpTasklet.setSftpConnectorService(sftpConnectorService);
         transactionSenderFtpTasklet.setTaskletEnabled(transactionSenderFtpEnabled);
         return transactionSenderFtpTasklet;
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    @JobScope
+    public Partitioner transactionSenderAdePartitioner() throws Exception {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        // TODO: it is important to prevent the copy of non encrypted files to remote endpoints
+        // thus this partitioner IMHO must enforce the .pgp extension, refusing so to copy
+        // files generated without encryption enabled
+        String pathMatcher = outputDirectoryPath + "/" + ADE_OUTPUT_FILE_PREFIX + "*.pgp";
+        partitioner.setResources(resolver.getResources(pathMatcher));
+        partitioner.partition(partitionerSize);
+        return partitioner;
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    public Step transactionSenderAdeMasterStep(HpanConnectorService hpanConnectorService) throws Exception {
+        return stepBuilderFactory.get("transaction-sender-ade-master-step")
+                .partitioner(transactionSenderAdeWorkerStep(hpanConnectorService))
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderAdePartitioner())
+                .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * TODO
+     */
+    @SneakyThrows
+    @Bean
+    public Step transactionSenderAdeWorkerStep(HpanConnectorService hpanConnectorService) {
+        return stepBuilderFactory.get("transaction-sender-ade-worker-step").tasklet(
+                transactionSenderAdeTasklet(null, hpanConnectorService)).build();
+    }
+
+    /**
+     * TODO
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public TransactionSenderRestTasklet transactionSenderAdeTasklet(
+            @Value("#{stepExecutionContext['fileName']}") String file,
+            HpanConnectorService hpanConnectorService
+    ) {
+        TransactionSenderRestTasklet transactionSenderRestTasklet = new TransactionSenderRestTasklet();
+        transactionSenderRestTasklet.setHpanConnectorService(hpanConnectorService);
+        transactionSenderRestTasklet.setResource(new UrlResource(file));
+        transactionSenderRestTasklet.setTaskletEnabled(transactionSenderAdeEnabled);
+        transactionSenderRestTasklet.setScope("ade");
+        return transactionSenderRestTasklet;
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    @JobScope
+    public Partitioner transactionSenderCstarPartitioner() throws Exception {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        // TODO: it is important to prevent the copy of non encrypted files to remote endpoints
+        // thus this partitioner IMHO must enforce the .pgp extension, refusing so to copy
+        // files generated without encryption enabled
+        String pathMatcher = outputDirectoryPath + "/" + CSTAR_OUTPUT_FILE_PREFIX + "*.pgp";
+        partitioner.setResources(resolver.getResources(pathMatcher));
+        partitioner.partition(partitionerSize);
+        return partitioner;
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    public Step transactionSenderCstarMasterStep(HpanConnectorService hpanConnectorService) throws Exception {
+        return stepBuilderFactory.get("transaction-sender-cstar-master-step")
+                .partitioner(transactionSenderCstarWorkerStep(hpanConnectorService))
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderCstarPartitioner())
+                .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * TODO
+     */
+    @SneakyThrows
+    @Bean
+    public Step transactionSenderCstarWorkerStep(HpanConnectorService hpanConnectorService) {
+        return stepBuilderFactory.get("transaction-sender-cstar-worker-step").tasklet(
+                transactionSenderCstarTasklet(null, hpanConnectorService)).build();
+    }
+
+    /**
+     * TODO
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public TransactionSenderRestTasklet transactionSenderCstarTasklet(
+            @Value("#{stepExecutionContext['fileName']}") String file,
+            HpanConnectorService hpanConnectorService
+    ) {
+        TransactionSenderRestTasklet transactionSenderRestTasklet = new TransactionSenderRestTasklet();
+        transactionSenderRestTasklet.setHpanConnectorService(hpanConnectorService);
+        transactionSenderRestTasklet.setResource(new UrlResource(file));
+        transactionSenderRestTasklet.setTaskletEnabled(transactionSenderCstarEnabled);
+        transactionSenderRestTasklet.setScope("cstar");
+        return transactionSenderRestTasklet;
     }
 
     /**
