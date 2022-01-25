@@ -20,6 +20,7 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.PrintWriter;
 import java.util.Objects;
 
 public class HpanConnectorServiceTest {
@@ -131,6 +132,20 @@ public class HpanConnectorServiceTest {
         expectedException.expect(Exception.class);
         hpanConnectorService.getSasToken(HpanRestClient.SasScope.CSTAR);
         BDDMockito.verify(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.CSTAR);
+    }
+
+    @Test
+    @SneakyThrows
+    public void testUploadFile() {
+        File fileToUpload = tempFolder.newFile("testFile");
+        hpanConnectorService.uploadFile(fileToUpload, "sas-token", "authorized-container");
+        BDDMockito.verify(hpanRestClientMock).uploadFile(fileToUpload, "sas-token", "authorized-container");
+    }
+
+    @Test
+    public void testCleanAllTempFiles() {
+        hpanConnectorService.cleanAllTempFiles();
+        BDDMockito.verify(hpanRestClientMock).cleanTempFile();
     }
 
     @After
