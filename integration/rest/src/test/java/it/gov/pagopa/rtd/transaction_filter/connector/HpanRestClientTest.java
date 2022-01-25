@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,8 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 
 @RunWith(SpringRunner.class)
@@ -140,7 +140,7 @@ public class HpanRestClientTest {
     @Test
     public void uploadFile() throws IOException {
         File fileToUpload = tempFolder.newFile("testFile");
-        hpanRestClient.uploadFile(fileToUpload, "sas-token", "authorized-container");
+        assertNull(hpanRestClient.uploadFile(fileToUpload, "sas-token", "authorized-container"));
     }
 
     @Test

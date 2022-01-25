@@ -22,7 +22,7 @@ public class TransactionSenderRestTasklet implements Tasklet, InitializingBean {
 
     private HpanConnectorService hpanConnectorService;
     private Resource resource;
-    private Boolean taskletEnabled = false;
+    private boolean taskletEnabled = false;
     private HpanRestClient.SasScope scope;
 
     @Override

@@ -45,6 +45,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import javax.validation.ConstraintViolationException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -539,7 +540,7 @@ public class TransactionFilterStep {
     public Partitioner transactionSenderAdePartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        String pathMatcher = outputDirectoryPath + "/" + ADE_OUTPUT_FILE_PREFIX + "*.pgp";
+        String pathMatcher = outputDirectoryPath + File.separator + ADE_OUTPUT_FILE_PREFIX + "*.pgp";
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
@@ -606,7 +607,7 @@ public class TransactionFilterStep {
     public Partitioner transactionSenderCstarPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        String pathMatcher = outputDirectoryPath + "/" + CSTAR_OUTPUT_FILE_PREFIX + "*.pgp";
+        String pathMatcher = outputDirectoryPath + File.separator + CSTAR_OUTPUT_FILE_PREFIX + "*.pgp";
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
