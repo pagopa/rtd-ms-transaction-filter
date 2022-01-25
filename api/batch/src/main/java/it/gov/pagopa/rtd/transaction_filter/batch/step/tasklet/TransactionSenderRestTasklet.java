@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
+import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import lombok.Data;
@@ -22,7 +23,7 @@ public class TransactionSenderRestTasklet implements Tasklet, InitializingBean {
     private HpanConnectorService hpanConnectorService;
     private Resource resource;
     private Boolean taskletEnabled = false;
-    private String scope;
+    private HpanRestClient.SasScope scope;
 
     @Override
     @SneakyThrows

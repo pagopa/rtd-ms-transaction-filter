@@ -1,9 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 
 import java.io.File;
-import java.nio.file.Path;
 
 /**
  *  Inteface for the service to be called for recovering the hpan list and salt from remote endpoints
@@ -27,7 +27,7 @@ public interface HpanConnectorService {
      * TODO
      * @return
      */
-    SasResponse getSasToken(String scope);
+    SasResponse getSasToken(HpanRestClient.SasScope scope);
 
     /**
      * TODO

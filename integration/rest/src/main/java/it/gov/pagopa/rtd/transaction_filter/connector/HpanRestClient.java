@@ -7,11 +7,13 @@ import java.io.File;
  */
 public interface HpanRestClient {
 
+      enum SasScope { ADE, CSTAR }
+
       File getList();
 
       String getSalt();
 
-      SasResponse getSasToken(String scope);
+      SasResponse getSasToken(HpanRestClientImpl.SasScope scope);
 
       Void uploadFile(File fileToUpload, String sas, String authorizedContainer);
 

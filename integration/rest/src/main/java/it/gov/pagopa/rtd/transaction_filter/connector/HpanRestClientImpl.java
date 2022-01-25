@@ -214,10 +214,10 @@ class HpanRestClientImpl implements HpanRestClient {
     }
 
     @Override
-    public SasResponse getSasToken(String scope) {
-        if (scope.equals("ade")) {
+    public SasResponse getSasToken(SasScope scope) {
+        if (scope.equals(SasScope.ADE)) {
             return hpanRestConnector.postAdeSas(apiKey, "");
-        } else if (scope.equals("cstar")) {
+        } else if (scope.equals(SasScope.CSTAR)) {
             return hpanRestConnector.postCstarSas(apiKey, "");
         } else {
             throw new InvalidParameterException();

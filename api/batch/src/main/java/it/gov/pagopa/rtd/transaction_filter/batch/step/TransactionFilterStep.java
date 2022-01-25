@@ -13,6 +13,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFil
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderFtpTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
+import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
@@ -579,7 +580,7 @@ public class TransactionFilterStep {
         transactionSenderRestTasklet.setHpanConnectorService(hpanConnectorService);
         transactionSenderRestTasklet.setResource(new UrlResource(file));
         transactionSenderRestTasklet.setTaskletEnabled(transactionSenderAdeEnabled);
-        transactionSenderRestTasklet.setScope("ade");
+        transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.ADE);
         return transactionSenderRestTasklet;
     }
 
@@ -635,7 +636,7 @@ public class TransactionFilterStep {
         transactionSenderRestTasklet.setHpanConnectorService(hpanConnectorService);
         transactionSenderRestTasklet.setResource(new UrlResource(file));
         transactionSenderRestTasklet.setTaskletEnabled(transactionSenderCstarEnabled);
-        transactionSenderRestTasklet.setScope("cstar");
+        transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.CSTAR);
         return transactionSenderRestTasklet;
     }
 

@@ -29,7 +29,7 @@ public class HpanConnectorServiceImpl implements HpanConnectorService {
     }
 
     @Override
-    public SasResponse getSasToken(String scope) {
+    public SasResponse getSasToken(HpanRestClient.SasScope scope) {
         return hpanRestClient.getSasToken(scope);
     }
 

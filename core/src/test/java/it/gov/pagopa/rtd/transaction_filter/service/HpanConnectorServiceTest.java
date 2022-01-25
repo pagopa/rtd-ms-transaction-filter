@@ -3,8 +3,14 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 import lombok.SneakyThrows;
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Before;
+import org.junit.After;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.Assert;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.BDDMockito;
@@ -14,10 +20,11 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Objects;
 
 public class HpanConnectorServiceTest {
 
-    public HpanConnectorServiceTest(){
+    public HpanConnectorServiceTest() {
         MockitoAnnotations.initMocks(this);
     }
 
@@ -25,7 +32,6 @@ public class HpanConnectorServiceTest {
     public static void configTest() {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.INFO);
-        ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
     }
 
     @Mock
@@ -44,10 +50,10 @@ public class HpanConnectorServiceTest {
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
-            new File(getClass().getResource("/").getFile()));
+            new File(Objects.requireNonNull(getClass().getResource("/")).getFile()));
 
     @Test
-    public void testSalt_OK() {
+    public void testGetSaltReturnsSaltString() {
         BDDMockito.doReturn("testSalt").when(hpanRestClientMock).getSalt();
         String salt = hpanConnectorService.getSalt();
         Assert.assertEquals("testSalt", salt);
@@ -55,7 +61,7 @@ public class HpanConnectorServiceTest {
     }
 
     @Test
-    public void testSalt_KO() {
+    public void testGetSaltRaisesExceptionOnFailure() {
         BDDMockito.doAnswer(invocationOnMock -> {
             throw new Exception();
         }).when(hpanRestClientMock).getSalt();
@@ -66,7 +72,7 @@ public class HpanConnectorServiceTest {
 
     @SneakyThrows
     @Test
-    public void testList_OK() {
+    public void testGetListReturnsHpanListFile() {
         File file = tempFolder.newFile("testFile");
         BDDMockito.doReturn(file).when(hpanRestClientMock).getList();
         File returnedFile = hpanConnectorService.getHpanList();
@@ -76,14 +82,55 @@ public class HpanConnectorServiceTest {
 
     @SneakyThrows
     @Test
-    public void testList_KO() {
-        File file = tempFolder.newFile("testFile");
+    public void testGetListRaisesExceptionOnFailure() {
         BDDMockito.doAnswer(invocationOnMock -> {
             throw new Exception();
         }).when(hpanRestClientMock).getList();
         expectedException.expect(Exception.class);
         hpanConnectorService.getHpanList();
         BDDMockito.verify(hpanRestClientMock).getList();
+    }
+
+    @Test
+    public void testGetSasTokenOnAdeScopeReturnsSasResponse() {
+        SasResponse fakeSasResponse = new SasResponse();
+        fakeSasResponse.setSas("sig=1FKx%2F7lrOhV4YidvHmuW8rMP4lCG%2BqJ1pri%2FEpjXJtz%3D&st=2022-01-25T07:17Z&se=2022-01-25T08:17Z&spr=https&sp=rcw&sr=c&sv=2020-12-06");
+        fakeSasResponse.setAuthorizedContainer("ade-transactions-tf6fecdd129fa27327d00bfbb11ece53e9c1d007123");
+        BDDMockito.doReturn(fakeSasResponse).when(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.ADE);
+        SasResponse sas = hpanConnectorService.getSasToken(HpanRestClient.SasScope.ADE);
+        Assert.assertEquals(sas, fakeSasResponse);
+        BDDMockito.verify(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.ADE);
+    }
+
+    @Test
+    public void testGetSasTokenOnAdeScopeRaisesExceptionOnFailure() {
+        BDDMockito.doAnswer(invocationOnMock -> {
+            throw new Exception();
+        }).when(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.ADE);
+        expectedException.expect(Exception.class);
+        hpanConnectorService.getSasToken(HpanRestClient.SasScope.ADE);
+        BDDMockito.verify(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.ADE);
+    }
+
+    @Test
+    public void testGetSasTokenOnCstarScopeReturnsSasResponse() {
+        SasResponse fakeSasResponse = new SasResponse();
+        fakeSasResponse.setSas("sig=1FKx%2F7lrOhV4YidvHmuW8rMP4lCG%2BqJ1pri%2FEpjXJtz%3D&st=2022-01-25T07:17Z&se=2022-01-25T08:17Z&spr=https&sp=rcw&sr=c&sv=2020-12-06");
+        fakeSasResponse.setAuthorizedContainer("ade-transactions-tf6fecdd129fa27327d00bfbb11ece53e9c1d007123");
+        BDDMockito.doReturn(fakeSasResponse).when(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.CSTAR);
+        SasResponse sas = hpanConnectorService.getSasToken(HpanRestClient.SasScope.CSTAR);
+        Assert.assertEquals(sas, fakeSasResponse);
+        BDDMockito.verify(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.CSTAR);
+    }
+
+    @Test
+    public void testGetSasTokenOnCstarScopeRaisesExceptionOnFailure() {
+        BDDMockito.doAnswer(invocationOnMock -> {
+            throw new Exception();
+        }).when(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.CSTAR);
+        expectedException.expect(Exception.class);
+        hpanConnectorService.getSasToken(HpanRestClient.SasScope.CSTAR);
+        BDDMockito.verify(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.CSTAR);
     }
 
     @After
