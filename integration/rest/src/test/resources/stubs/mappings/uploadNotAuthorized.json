@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "PUT",
+    "urlPath": "/pagopastorage/not-authorized-container/testFile"
+  },
+  "response": {
+    "status": "404"
+  }
+}

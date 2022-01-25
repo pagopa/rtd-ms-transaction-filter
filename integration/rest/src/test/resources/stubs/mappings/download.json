@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPath": "/hpan/download"
+    "urlPath": "/pagopastorage/download"
   },
   "response": {
     "status": "200",

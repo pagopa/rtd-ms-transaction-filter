@@ -7,6 +7,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
@@ -20,19 +21,24 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
+
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @TestPropertySource(
         locations = "classpath:config/rest-client.properties",
         properties = {
-                "rest-client.hpan.list.url=/list",
-                "rest-client.hpan.salt.url=/salt",
+                "rest-client.hpan.list.url=/rtd/payment-instrument-manager/hashed-pans",
+                "rest-client.hpan.salt.url=/rtd/payment-instrument-manager/salt",
+                "rest-client.hpan.adesas.url=/rtd/csv-transaction/ade/sas",
                 "rest-client.hpan.mtls.enabled=true",
                 "rest-client.hpan.list.checksumHeaderName=checksum",
                 "rest-client.hpan.dateValidation.enabled=true",
@@ -61,6 +67,10 @@ public class HpanRestClientTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder(
+            new File(Objects.requireNonNull(getClass().getResource("/")).getFile()));
+
     @ClassRule
     public static WireMockClassRule wireMockRule = new WireMockClassRule(wireMockConfig()
             .dynamicHttpsPort()
@@ -70,7 +80,7 @@ public class HpanRestClientTest {
             .keystorePassword("secret")
             .trustStorePath("src/test/resources/certs/server-truststore.jks")
             .trustStorePassword("secret")
-            .usingFilesUnderClasspath("stubs/hpan")
+            .usingFilesUnderClasspath("stubs")
     );
 
     @Test
@@ -91,7 +101,7 @@ public class HpanRestClientTest {
 
     @SneakyThrows
     @Test
-    public void getList_OK_TimeEdge() {
+    public void getListOnTimeEdge() {
         ((HpanRestClientImpl) hpanRestClient).setValidationDate(LocalDateTime
                 .parse("Mon, 22 Jun 2020 00:00:00 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
@@ -101,12 +111,43 @@ public class HpanRestClientTest {
 
     @SneakyThrows
     @Test
-    public void getList_KO_TimeExceeding() {
+    public void getListRaisesExceptionWhenTimeExceeding() {
         ((HpanRestClientImpl) hpanRestClient).setValidationDate(LocalDateTime
                 .parse("Tue, 23 Jun 2020 00:00:01 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
         expectedException.expect(Exception.class);
         hpanRestClient.getList();
+    }
+
+    @Test
+    public void getSasTokenForAdeScope() {
+        SasResponse sas = hpanRestClient.getSasToken(HpanRestClient.SasScope.ADE);
+        SasResponse expectedSas = new SasResponse();
+        expectedSas.setSas("sig=1FKx%2F7lrOhV4YidvHmuW8rMP4lCG%2BqX1pri%2FApjXJok%3D&st=2022-01-25T07:17Z&se=2022-01-25T08:17Z&spr=https&sp=rcw&sr=c&sv=2020-12-06");
+        expectedSas.setAuthorizedContainer("ade-transactions-116fecdd119fa27327d00bfbb975ece53e9c1d007a7e");
+        assertEquals(expectedSas, sas);
+    }
+
+    @Test
+    public void getSasTokenForCstarScope() {
+        SasResponse sas = hpanRestClient.getSasToken(HpanRestClient.SasScope.CSTAR);
+        SasResponse expectedSas = new SasResponse();
+        expectedSas.setSas("sig=2GKx%2F7lrOhV4YidvHmuW8rMP4lCG%2BqX1pri%2FApjXJok%3D&st=2022-01-25T07:17Z&se=2022-01-25T08:17Z&spr=https&sp=rcw&sr=c&sv=2020-12-06");
+        expectedSas.setAuthorizedContainer("cstar-transactions-216fecdd119fa27327d00bfbb975ece53e9c1d007a7e");
+        assertEquals(expectedSas, sas);
+    }
+
+    @Test
+    public void uploadFile() throws IOException {
+        File fileToUpload = tempFolder.newFile("testFile");
+        hpanRestClient.uploadFile(fileToUpload, "sas-token", "authorized-container");
+    }
+
+    @Test
+    public void uploadFileRaisesExceptionWhenSignatureDoesntMatch() throws IOException {
+        File fileToUpload = tempFolder.newFile("testFile");
+        expectedException.expect(IOException.class);
+        hpanRestClient.uploadFile(fileToUpload, "sas-token", "not-authorized-container");
     }
 
     public static class RandomPortInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
@@ -115,7 +156,7 @@ public class HpanRestClientTest {
         public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertySourceUtils
                     .addInlinedPropertiesToEnvironment(applicationContext,
-                            String.format("rest-client.hpan.base-url=https://localhost:%d/hpan",
+                            String.format("rest-client.hpan.base-url=https://localhost:%d/",
                                     wireMockRule.httpsPort())
                     );
         }

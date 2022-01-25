@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
@@ -247,6 +248,9 @@ class HpanRestClientImpl implements HpanRestClient {
         FileEntity entity = new FileEntity(fileToUpload, ContentType.create("application/octet-stream"));
         httpput.setEntity(entity);
         final HttpResponse response = httpclient.execute(httpput);
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
+            throw new IOException("Upload failed for file " + fileToUpload.getName() + " (status was: " + response.getStatusLine().getStatusCode() + ")");
+        }
         log.info("File " + fileToUpload.getName() + " uploaded with success (status was: " + response.getStatusLine().getStatusCode() + ")");
         return null;
     }

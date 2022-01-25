@@ -1,0 +1,9 @@
+{
+  "request": {
+    "method": "PUT",
+    "urlPath": "/pagopastorage/authorized-container/testFile"
+  },
+  "response": {
+    "status": "201"
+  }
+}

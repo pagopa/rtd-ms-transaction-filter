@@ -1,12 +1,12 @@
 {
   "request": {
     "method": "GET",
-    "urlPath": "/hpan/list"
+    "urlPath": "/rtd/payment-instrument-manager/hashed-pans"
   },
   "response": {
     "status": "302",
     "headers": {
-      "Location": "/hpan/download"
+      "Location": "/pagopastorage/download"
     }
   }
 }

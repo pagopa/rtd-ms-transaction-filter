@@ -13,7 +13,7 @@ public interface HpanRestClient {
 
       String getSalt();
 
-      SasResponse getSasToken(HpanRestClientImpl.SasScope scope);
+      SasResponse getSasToken(SasScope scope);
 
       Void uploadFile(File fileToUpload, String sas, String authorizedContainer);
 
