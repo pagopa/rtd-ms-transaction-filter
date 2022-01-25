@@ -1,9 +1,17 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@EqualsAndHashCode
 public class SasResponse {
+
+    @Getter
+    @Setter
     private String sas;
+
+    @Getter
+    @Setter
     private String authorizedContainer;
 }
