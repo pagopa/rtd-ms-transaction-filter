@@ -83,7 +83,7 @@ public class TransactionFilterStep {
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory}")
     private String localdirectory;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled}")
-    private Boolean transactionSenderFtpEnabled;
+    private boolean transactionSenderFtpEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled}")
     private Boolean transactionSenderAdeEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderCstar.enabled}")
@@ -276,7 +276,7 @@ public class TransactionFilterStep {
 
     /**
      * @return instance of a partitioner to be used for processing multiple files from a single directory
-     * @throws Exception
+     * @throws IOException
      */
     @Bean
     @JobScope
@@ -477,11 +477,11 @@ public class TransactionFilterStep {
 
     /**
      * @return instance of a partitioner to be used for processing multiple files from a single directory
-     * @throws Exception
+     * @throws IOException
      */
     @Bean
     @JobScope
-    public Partitioner transactionSenderFtpPartitioner() throws Exception {
+    public Partitioner transactionSenderFtpPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] emptyList = {};
@@ -493,10 +493,10 @@ public class TransactionFilterStep {
     /**
      * @return master step to be used as the formal main step in the reading phase of the job,
      * partitioned for scalability on multiple file reading
-     * @throws Exception
+     * @throws IOException
      */
     @Bean
-    public Step transactionSenderFtpMasterStep(SftpConnectorService sftpConnectorService) throws Exception {
+    public Step transactionSenderFtpMasterStep(SftpConnectorService sftpConnectorService) throws IOException {
         return stepBuilderFactory.get("transaction-sender-ftp-master-step")
                 .partitioner(transactionSenderFtpWorkerStep(sftpConnectorService))
                 .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderFtpPartitioner())
@@ -529,16 +529,16 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Partitioning strategy for the upload of AdE transaction files.
+     *
+     * @return a partitioner instance
+     * @throws IOException
      */
     @Bean
     @JobScope
-    public Partitioner transactionSenderAdePartitioner() throws Exception {
+    public Partitioner transactionSenderAdePartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        // TODO: it is important to prevent the copy of non encrypted files to remote endpoints
-        // thus this partitioner IMHO must enforce the .pgp extension, refusing so to copy
-        // files generated without encryption enabled
         String pathMatcher = outputDirectoryPath + "/" + ADE_OUTPUT_FILE_PREFIX + "*.pgp";
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
@@ -546,10 +546,14 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Master step for the upload of AdE transaction files.
+     *
+     * @param hpanConnectorService
+     * @return the AdE batch master step
+     * @throws IOException
      */
     @Bean
-    public Step transactionSenderAdeMasterStep(HpanConnectorService hpanConnectorService) throws Exception {
+    public Step transactionSenderAdeMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
         return stepBuilderFactory.get("transaction-sender-ade-master-step")
                 .partitioner(transactionSenderAdeWorkerStep(hpanConnectorService))
                 .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderAdePartitioner())
@@ -557,7 +561,10 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Worker step for the upload of AdE transaction files.
+     *
+     * @param hpanConnectorService
+     * @return the AdE batch worker step
      */
     @SneakyThrows
     @Bean
@@ -567,7 +574,11 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Tasklet responsible for the upload of AdE transaction files via REST endpoints.
+     *
+     * @param file the file to upload remotely via REST
+     * @param hpanConnectorService
+     * @return an instance configured for the upload of a specified file
      */
     @SneakyThrows
     @Bean
@@ -585,16 +596,16 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Partitioning strategy for the upload of CSTAR transaction files.
+     *
+     * @return a partitioner instance
+     * @throws IOException
      */
     @Bean
     @JobScope
-    public Partitioner transactionSenderCstarPartitioner() throws Exception {
+    public Partitioner transactionSenderCstarPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        // TODO: it is important to prevent the copy of non encrypted files to remote endpoints
-        // thus this partitioner IMHO must enforce the .pgp extension, refusing so to copy
-        // files generated without encryption enabled
         String pathMatcher = outputDirectoryPath + "/" + CSTAR_OUTPUT_FILE_PREFIX + "*.pgp";
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
@@ -602,10 +613,14 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Master step for the upload of CSTAR transaction files.
+     *
+     * @param hpanConnectorService
+     * @return the CSTAR batch master step
+     * @throws IOException
      */
     @Bean
-    public Step transactionSenderCstarMasterStep(HpanConnectorService hpanConnectorService) throws Exception {
+    public Step transactionSenderCstarMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
         return stepBuilderFactory.get("transaction-sender-cstar-master-step")
                 .partitioner(transactionSenderCstarWorkerStep(hpanConnectorService))
                 .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderCstarPartitioner())
@@ -613,7 +628,10 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Worker step for the upload of CSTAR transaction files.
+     *
+     * @param hpanConnectorService
+     * @return the CSTAR batch worker step
      */
     @SneakyThrows
     @Bean
@@ -623,7 +641,11 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Tasklet responsible for the upload of CSTAR transaction files via REST endpoints.
+     *
+     * @param file the file to upload remotely via REST
+     * @param hpanConnectorService
+     * @return an instance configured for the upload of a specified file
      */
     @SneakyThrows
     @Bean
