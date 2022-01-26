@@ -34,11 +34,11 @@ public class TransactionReaderStepListener implements StepExecutionListener {
             transactionWriterService.openFileChannel(
                     resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                             .concat("/".concat(executionDate))
-                    + "_" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv");
+                    + "_" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1]);
             transactionWriterService.openFileChannel(
                     resolver.getResource(errorTransactionsLogsPath).getFile().getAbsolutePath()
                             .concat("/".concat(executionDate))
-                            + "_" + prefix + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv");
+                            + "_" + prefix + "_ErrorRecords_"+fileArr[fileArr.length-1]);
         } catch (IOException e) {
             log.error(e.getMessage(),e);
         }

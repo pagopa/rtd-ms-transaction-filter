@@ -238,19 +238,19 @@ public class TransactionFilterBatchTest {
                 resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), new String[]{"csv"}, false);
         Assert.assertEquals(4, outputLogsFiles.size());
 
-        FileFilter fileFilter = new WildcardFileFilter("*_Trn__FilteredRecords_test-trx.csv.csv");
+        FileFilter fileFilter = new WildcardFileFilter("*_Trn__FilteredRecords_test-trx.csv");
         Collection<File> trxFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, trxFilteredFiles.size());
 
-        fileFilter = new WildcardFileFilter("*_Trn__ErrorRecords_test-trx.csv.csv");
+        fileFilter = new WildcardFileFilter("*_Trn__ErrorRecords_test-trx.csv");
         Collection<File> trxErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, trxErrorFiles.size());
 
-        fileFilter = new WildcardFileFilter("*_Ade__FilteredRecords_test-trx.csv.csv");
+        fileFilter = new WildcardFileFilter("*_Ade__FilteredRecords_test-trx.csv");
         Collection<File> adeFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, adeFilteredFiles.size());
 
-        fileFilter = new WildcardFileFilter("*_Ade__ErrorRecords_test-trx.csv.csv");
+        fileFilter = new WildcardFileFilter("*_Ade__ErrorRecords_test-trx.csv");
         Collection<File> adeErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, adeErrorFiles.size());
 

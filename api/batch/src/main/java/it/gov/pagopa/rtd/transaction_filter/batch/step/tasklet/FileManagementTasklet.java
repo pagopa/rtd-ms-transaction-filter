@@ -47,7 +47,6 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     /**
-     *
      * @throws Exception
      */
     @Override
@@ -63,6 +62,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     /**
      * Method that contains the logic for file archival, based on the exit status of each step obtained from the
      * ChunkContext that contains a filename key in the {@link ExecutionContext}
+     *
      * @param stepContribution
      * @param chunkContext
      * @return Status of the tasklet execution
@@ -71,15 +71,15 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
-        Boolean executionWithErrors = false;
+        boolean executionWithErrors = false;
         List<String> errorFilenames = new ArrayList<>();
-        hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
+        hpanDirectory = hpanDirectory.replaceAll("\\\\", "/");
 
         List<String> hpanResources = Arrays.asList(resolver.getResources(hpanDirectory)).stream().map(resource -> {
             try {
-                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+                return resource.getFile().getAbsolutePath().replaceAll("\\\\", "/");
             } catch (IOException e) {
-                log.error(e.getMessage(),e);
+                log.error(e.getMessage(), e);
                 return null;
             }
         }).collect(Collectors.toList());
@@ -97,20 +97,27 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
                 String file = stepExecution.getExecutionContext().getString("fileName");
 
-                if(alreadyProcessedFiles.contains(file)) {
+                if (alreadyProcessedFiles.contains(file)) {
                     log.info("Already managed file: {}", file);
                     continue;
                 } else {
                     alreadyProcessedFiles.add(file);
                 }
 
-                String path = null;
-
+                String path;
                 try {
                     path = resolver.getResource(file).getFile().getAbsolutePath();
                 } catch (Exception e) {
-                    log.error(e.getMessage(),e);
+                    log.error(e.getMessage(), e);
                     path = file.replace("file:/", "");
+                }
+
+                // We want to avoid taht file management suited for input files
+                // will be applied also on output files. This could happen if output files are
+                // 'input' files on subsequent steps (e.g. file transfer).
+                // To avoid that we simply skip files whose path contains outputDirectory.
+                if (path.contains(outputDirectory.replaceAll("file:", ""))) {
+                    continue;
                 }
 
                 try {
@@ -124,14 +131,14 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         if (filePartsArray.size() == 1) {
                             errorFilenames.add(filePartsArray.get(0));
                         } else {
-                            filePartsArray.remove(filePartsArray.size()-1);
+                            filePartsArray.remove(filePartsArray.size() - 1);
                             String[] fileParts = new String[0];
                             fileParts = filePartsArray.toArray(fileParts);
                             errorFilenames.add(String.join(".", fileParts));
                         }
                     }
 
-                    boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
+                    boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\", "/"));
                     if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
@@ -156,7 +163,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                             try {
                                 return outputDirectoryResource.getFile().getAbsolutePath().contains(errorFilename);
                             } catch (IOException e) {
-                                log.error(e.getMessage(),e);
+                                log.error(e.getMessage(), e);
                                 return false;
                             }
                         }))

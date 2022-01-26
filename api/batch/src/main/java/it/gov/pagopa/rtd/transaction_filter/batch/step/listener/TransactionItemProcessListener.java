@@ -65,7 +65,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()
                         .concat("/".concat(executionDate))
-                        + "_" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
+                        + "_" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1],buildCsv(item));
             } catch (Exception e) {
                 if (log.isErrorEnabled()) {
                     log.error(e.getMessage(), e);
