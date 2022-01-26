@@ -46,25 +46,13 @@ import java.util.Date;
 
 /**
  * <p>
- * Configuration of a scheduled batch job to read and decrypt .pgp files containing pan lists
- * (possibly recovered from a remote service), and .csv files to be processed in instances of Transaction class,
- * to be filtered by checking transaction pan (eventually hashed with a salt remotely recovered).
- * The output files can be encrypted with a public PGP key, and sent through an SFTP channel
+ * Batch responsible for the filtering and secure transmission of transaction files provided by the acquirers.
+ * @see TransactionFilterBatch#transactionJobBuilder() for the actual flow definition.
  * </p>
+ *
  * <img alt="TransactionFilterBatch" src="uml/transactionFilterBatch.svg">
  * 
  * @plantUml uml/transactionFilterBatch.svg
- * <!--
- * start
- * :hpanListRecoveryTask;
- * :saltRecoveryTask;
- * :panReaderStep;
- * :transactionFilterStep;
- * :transactionSenderFtpStep;
- * :fileManagementTask;
- * end
- * 
- * -->
  */
  
 
@@ -257,6 +245,9 @@ public class TransactionFilterBatch {
      * This method builds a flow which can be decomposed in the following  
      * steps:
      * <ol>
+     * <li>Input transactions are filtered from unneeded fields (e.g. hashpan)
+     * and an output file for AdE is produced.</li>
+     * <li>The output file for AdE is sent remotely via REST, if enabled.</li>
      * <li>Attempts panlist recovery, if enabled. In case of a failure in the 
      * execution, the process is stopped.</li>
      * <li>Attempts salt recovery, if enabled. In case of a failure in the 
@@ -269,7 +260,7 @@ public class TransactionFilterBatch {
      * writing the matching records in the output file. If the process fails, 
      * the file management tasklet is called, otherwise the transaction sender 
      * step si called.</li>
-     * <li>Attempts sending the output files through an sftp channel, if 
+     * <li>Attempts sending the output files through an REST channel, if
      * enabled. The file management tasklet is always called, after the step
      * </li>
      * <li>After all the possible file management executions, the process is stopped</li>
@@ -283,24 +274,23 @@ public class TransactionFilterBatch {
         return jobBuilderFactory.get("transaction-filter-job")
                 .repository(getJobRepository())
                 .listener(jobListener())
-                .start(hpanListRecoveryTask())
-                .on(FAILED).end()
+                .start(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
+                .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
+                .on("*").to(hpanListRecoveryTask())
+                .on(FAILED).to(fileManagementTask())
                 .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.hpanStoreService))
-                .on(FAILED).end()
+                .on(FAILED).to(fileManagementTask())
                 .from(saltRecoveryTask(this.hpanStoreService)).on("*")
                 .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
                 .on(FAILED).to(fileManagementTask())
                 .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
-                .on("*").to(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
-                .from(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
-                .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
                 .on("*").to(transactionFilterStep.transactionSenderCstarMasterStep(this.hpanConnectorService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderCstarMasterStep(this.hpanConnectorService))
