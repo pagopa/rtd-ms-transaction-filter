@@ -19,18 +19,20 @@ import org.springframework.util.Assert;
 @Slf4j
 public class TransactionSenderRestTasklet implements Tasklet, InitializingBean {
 
+    private static final int RETRY_MAX_ATTEMPTS = 3;
+    private static final int INITIAL_DELAY_SECS = 2;
+
     private HpanConnectorService hpanConnectorService;
     private Resource resource;
-    private boolean taskletEnabled = false;
     private HpanRestClient.SasScope scope;
+    private boolean taskletEnabled = false;
 
     @Override
     @SneakyThrows
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
         if (taskletEnabled) {
-            int maxAttempts = 3;
-            int remainingAttempts = maxAttempts;
-            int delay = 2;
+            int remainingAttempts = RETRY_MAX_ATTEMPTS;
+            int delay = INITIAL_DELAY_SECS;
             boolean uploadSucceeded = false;
 
             SasResponse sasResponse;
@@ -47,7 +49,7 @@ public class TransactionSenderRestTasklet implements Tasklet, InitializingBean {
                     delay = (int) Math.pow(delay, 2);
                     log.error(e.getMessage());
                     log.info("Retrying after " + delay + " seconds (remaining attempts: " + remainingAttempts + ")");
-                    Thread.sleep(delay * 1000l);
+                    Thread.sleep(delay * 1000L);
                 }
             }
         }
@@ -56,7 +58,9 @@ public class TransactionSenderRestTasklet implements Tasklet, InitializingBean {
 
     @Override
     public void afterPropertiesSet() {
+        Assert.notNull(hpanConnectorService, "hpanConnectorService must be not null");
         Assert.notNull(resource, "resource must be not null");
+        Assert.notNull(scope, "scope must be not null");
     }
 
 }
