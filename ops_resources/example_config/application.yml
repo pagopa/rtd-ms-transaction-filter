@@ -5,6 +5,7 @@ spring:
   batch:
     job:
       enabled: false
+      scheduled: ${ACQ_BATCH_SCHEDULED:false}
     initialize-schema: ${ACQ_BATCH_INITIALIZE_SCHEMA:always}
   datasource:
     driver-class-name: ${ACQ_BATCH_DB_CLASS_NAME:org.postgresql.Driver}
@@ -80,8 +81,12 @@ batchConfiguration:
       transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
       sftp:
         localdirectory: file:${SFTP_LOCAL_DIR:resources/output}/${SFTP_FILE_PATTERN:*}
-    transactionSender:
-      enabled: ${ACQ_BATCH_TRX_SENDER_ENABLED:false}
+    transactionSenderFtp:
+      enabled: ${ACQ_BATCH_TRX_SENDER_FTP_ENABLED:false}
+    transactionSenderAde:
+      enabled: ${ACQ_BATCH_TRX_SENDER_ADE_ENABLED:true}
+    transactionSenderCstar:
+      enabled: ${ACQ_BATCH_TRX_SENDER_CSTAR_ENABLED:true}
     saltRecovery:
       enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:true}
     hpanListRecovery:
