@@ -1,29 +1,42 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
+import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.FileEntity;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicHeader;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
+import javax.net.ssl.SSLContext;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,6 +51,9 @@ import java.util.zip.ZipFile;
 @RequiredArgsConstructor
 @Slf4j
 class HpanRestClientImpl implements HpanRestClient {
+
+    @Autowired
+    ApplicationContext context;
 
     @Value("${rest-client.hpan.base-url}")
     private String baseUrl;
@@ -73,6 +89,9 @@ class HpanRestClientImpl implements HpanRestClient {
     private String dateValidationZone;
 
     private static final String VALID_FILENAMES_PATTERN = "^[a-z0-9_]+\\.csv$";
+    private static final String STORAGE_NAME = "pagopastorage";
+    private static final String HEADER_X_MS_BLOB_TYPE = "BlockBlob";
+    private static final String HEADER_X_MS_VERSION = "2020-12-06";
 
     private final HpanRestConnector hpanRestConnector;
 
@@ -193,6 +212,47 @@ class HpanRestClientImpl implements HpanRestClient {
     @Override
     public String getSalt() {
         return hpanRestConnector.getSalt(apiKey);
+    }
+
+    @Override
+    public SasResponse getSasToken(SasScope scope) {
+        if (scope.equals(SasScope.ADE)) {
+            return hpanRestConnector.postAdeSas(apiKey, "");
+        } else if (scope.equals(SasScope.CSTAR)) {
+            return hpanRestConnector.postCstarSas(apiKey, "");
+        } else {
+            throw new InvalidParameterException();
+        }
+    }
+
+    @Override
+    @SneakyThrows
+    public Void uploadFile(File fileToUpload, String sas, String authorizedContainer) {
+
+        List<Header> headers = new ArrayList<>();
+        headers.add(new BasicHeader("Ocp-Apim-Subscription-Key", apiKey));
+        headers.add(new BasicHeader("x-ms-blob-type", HEADER_X_MS_BLOB_TYPE));
+        headers.add(new BasicHeader("x-ms-version", HEADER_X_MS_VERSION));
+
+        HpanRestConnectorConfig config = context.getBean(HpanRestConnectorConfig.class);
+        SSLContext sslContext = config.getSSLContext();
+
+        HttpClient httpclient = HttpClients.custom()
+                .setSSLContext(sslContext)
+                .setDefaultHeaders(headers)
+                .build();
+
+        String uri = baseUrl + "/" + STORAGE_NAME + "/" + authorizedContainer + "/" + fileToUpload.getName() + "?" + sas;
+        final HttpPut httpput = new HttpPut(uri);
+
+        FileEntity entity = new FileEntity(fileToUpload, ContentType.create("application/octet-stream"));
+        httpput.setEntity(entity);
+        final HttpResponse response = httpclient.execute(httpput);
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
+            throw new IOException("Upload failed for file " + fileToUpload.getName() + " (status was: " + response.getStatusLine().getStatusCode() + ")");
+        }
+        log.info("File " + fileToUpload.getName() + " uploaded with success (status was: " + response.getStatusLine().getStatusCode() + ")");
+        return null;
     }
 
     public void setValidationDate(LocalDateTime now) {

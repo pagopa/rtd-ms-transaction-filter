@@ -7,9 +7,15 @@ import java.io.File;
  */
 public interface HpanRestClient {
 
+      enum SasScope { ADE, CSTAR }
+
       File getList();
 
       String getSalt();
+
+      SasResponse getSasToken(SasScope scope);
+
+      Void uploadFile(File fileToUpload, String sas, String authorizedContainer);
 
       void cleanTempFile();
 

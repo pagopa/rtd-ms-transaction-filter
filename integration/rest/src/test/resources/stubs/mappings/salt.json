@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPath": "/hpan/salt"
+    "urlPath": "/rtd/payment-instrument-manager/salt"
   },
   "response": {
     "status": "200",

@@ -249,7 +249,7 @@ maintained, in order to have the correct setup for the batch execution.
   through the environment variable _ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT_
   
 - To send the product file on SFTP channel, the functionality must be enabled through 
-  _batchConfiguration.TransactionFilterBatch.transactionSender.enabled_ properties,
+  _batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled_ properties,
   then the configurations related to the host, the user used and the authentication method,
   password-based, or through certificate must be reported. Configurations for sftp are listed under the 
   _batchConfiguration.TransactionFilterBatch.transactionFilter.sftp_ root in the configuration properties appendix.
@@ -365,7 +365,7 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.l
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionSender.enabled__ | Indicates whether the sending to the sftp channel is active or not | ${ACQ_BATCH_TRX_SENDER_ENABLED:true} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled__ | Indicates whether the sending to the sftp channel is active or not | ${ACQ_BATCH_TRX_SENDER_FTP_ENABLED:true} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory__ |Local directory from which to get the file to be sent on remote SFTP | ${SFTP_LOCAL_DIR:} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.remotedirectory__ | Remote SFTP directory to copy the file to | ${SFTP_DIRECTORY:} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filenamepattern__ | Name / pattern of the file to be moved to remote SFTP | ${SFTP_FILE_PATTERN:} | YES

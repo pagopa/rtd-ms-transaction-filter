@@ -10,8 +10,11 @@ import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
+import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
+import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
@@ -42,6 +45,7 @@ import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import javax.validation.ConstraintViolationException;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -79,8 +83,12 @@ public class TransactionFilterStep {
     private Boolean applyEncrypt;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory}")
     private String localdirectory;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionSender.enabled}")
-    private Boolean transactionSenderEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled}")
+    private boolean transactionSenderFtpEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled}")
+    private Boolean transactionSenderAdeEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderCstar.enabled}")
+    private Boolean transactionSenderCstarEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath}")
     private String transactionLogsPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterReadLogging}")
@@ -108,6 +116,7 @@ public class TransactionFilterStep {
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize}")
     private Integer writerPoolSize;
 
+    public static final String CSTAR_OUTPUT_FILE_PREFIX = "CSTAR.";
     public static final String ADE_OUTPUT_FILE_PREFIX = "ADE.";
     private static final String LOG_PREFIX_TRN = "Trn_";
     private static final String LOG_PREFIX_ADE = "Ade_";
@@ -268,7 +277,7 @@ public class TransactionFilterStep {
 
     /**
      * @return instance of a partitioner to be used for processing multiple files from a single directory
-     * @throws Exception
+     * @throws IOException
      */
     @Bean
     @JobScope
@@ -320,7 +329,7 @@ public class TransactionFilterStep {
                 .noRetry(ConstraintViolationException.class)
                 .noRollback(ConstraintViolationException.class)
                 .listener(transactionAdeItemReaderListener(transactionWriterService, executionDate))
-                .listener(transactionsAdeItemWriteListener(transactionWriterService, executionDate))
+                .listener(transactionAdeItemWriteListener(transactionWriterService, executionDate))
                 .listener(transactionAdeStepListener(transactionWriterService, executionDate))
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
@@ -362,8 +371,8 @@ public class TransactionFilterStep {
                 .noRetry(ConstraintViolationException.class)
                 .noRollback(ConstraintViolationException.class)
                 .listener(transactionItemReaderListener(transactionWriterService, executionDate))
-                .listener(transactionsItemProcessListener(transactionWriterService, executionDate))
-                .listener(transactionsItemWriteListener(transactionWriterService, executionDate))
+                .listener(transactionItemProcessListener(transactionWriterService, executionDate))
+                .listener(transactionItemWriteListener(transactionWriterService, executionDate))
                 .listener(transactionStepListener(transactionWriterService, executionDate))
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
@@ -422,37 +431,37 @@ public class TransactionFilterStep {
     }
 
     @Bean
-    public TransactionItemWriterListener transactionsItemWriteListener(
+    public TransactionItemWriterListener transactionItemWriteListener(
             TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemWriterListener transactionsItemWriteListener = new TransactionItemWriterListener();
-        transactionsItemWriteListener.setExecutionDate(executionDate);
-        transactionsItemWriteListener.setTransactionWriterService(transactionWriterService);
-        transactionsItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
-        transactionsItemWriteListener.setEnableAfterWriteLogging(enableAfterWriteLogging);
-        transactionsItemWriteListener.setLoggingFrequency(loggingFrequency);
-        transactionsItemWriteListener.setEnableOnErrorFileLogging(enableOnWriteErrorFileLogging);
-        transactionsItemWriteListener.setEnableOnErrorLogging(enableOnWriteErrorLogging);
-        transactionsItemWriteListener.setPrefix(LOG_PREFIX_TRN);
-        return transactionsItemWriteListener;
+        TransactionItemWriterListener transactionItemWriteListener = new TransactionItemWriterListener();
+        transactionItemWriteListener.setExecutionDate(executionDate);
+        transactionItemWriteListener.setTransactionWriterService(transactionWriterService);
+        transactionItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionItemWriteListener.setEnableAfterWriteLogging(enableAfterWriteLogging);
+        transactionItemWriteListener.setLoggingFrequency(loggingFrequency);
+        transactionItemWriteListener.setEnableOnErrorFileLogging(enableOnWriteErrorFileLogging);
+        transactionItemWriteListener.setEnableOnErrorLogging(enableOnWriteErrorLogging);
+        transactionItemWriteListener.setPrefix(LOG_PREFIX_TRN);
+        return transactionItemWriteListener;
     }
 
     @Bean
-    public TransactionItemWriterListener transactionsAdeItemWriteListener(
+    public TransactionItemWriterListener transactionAdeItemWriteListener(
             TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemWriterListener transactionsItemWriteListener = new TransactionItemWriterListener();
-        transactionsItemWriteListener.setExecutionDate(executionDate);
-        transactionsItemWriteListener.setTransactionWriterService(transactionWriterService);
-        transactionsItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
-        transactionsItemWriteListener.setEnableAfterWriteLogging(enableAfterWriteLogging);
-        transactionsItemWriteListener.setLoggingFrequency(loggingFrequency);
-        transactionsItemWriteListener.setEnableOnErrorFileLogging(enableOnWriteErrorFileLogging);
-        transactionsItemWriteListener.setEnableOnErrorLogging(enableOnWriteErrorLogging);
-        transactionsItemWriteListener.setPrefix(LOG_PREFIX_ADE);
-        return transactionsItemWriteListener;
+        TransactionItemWriterListener transactionItemWriteListener = new TransactionItemWriterListener();
+        transactionItemWriteListener.setExecutionDate(executionDate);
+        transactionItemWriteListener.setTransactionWriterService(transactionWriterService);
+        transactionItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionItemWriteListener.setEnableAfterWriteLogging(enableAfterWriteLogging);
+        transactionItemWriteListener.setLoggingFrequency(loggingFrequency);
+        transactionItemWriteListener.setEnableOnErrorFileLogging(enableOnWriteErrorFileLogging);
+        transactionItemWriteListener.setEnableOnErrorLogging(enableOnWriteErrorLogging);
+        transactionItemWriteListener.setPrefix(LOG_PREFIX_ADE);
+        return transactionItemWriteListener;
     }
 
     @Bean
-    public TransactionItemProcessListener transactionsItemProcessListener(
+    public TransactionItemProcessListener transactionItemProcessListener(
             TransactionWriterService transactionWriterService, String executionDate) {
         TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
         transactionItemProcessListener.setExecutionDate(executionDate);
@@ -469,15 +478,15 @@ public class TransactionFilterStep {
 
     /**
      * @return instance of a partitioner to be used for processing multiple files from a single directory
-     * @throws Exception
+     * @throws IOException
      */
     @Bean
     @JobScope
-    public Partitioner transactionSenderPartitioner() throws Exception {
+    public Partitioner transactionSenderFtpPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] emptyList = {};
-        partitioner.setResources(transactionSenderEnabled ? resolver.getResources(localdirectory) : emptyList);
+        partitioner.setResources(transactionSenderFtpEnabled ? resolver.getResources(localdirectory) : emptyList);
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -485,13 +494,13 @@ public class TransactionFilterStep {
     /**
      * @return master step to be used as the formal main step in the reading phase of the job,
      * partitioned for scalability on multiple file reading
-     * @throws Exception
+     * @throws IOException
      */
     @Bean
-    public Step transactionSenderMasterStep(SftpConnectorService sftpConnectorService) throws Exception {
-        return stepBuilderFactory.get("transaction-sender-master-step")
-                .partitioner(transactionSenderWorkerStep(sftpConnectorService))
-                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderPartitioner())
+    public Step transactionSenderFtpMasterStep(SftpConnectorService sftpConnectorService) throws IOException {
+        return stepBuilderFactory.get("transaction-sender-ftp-master-step")
+                .partitioner(transactionSenderFtpWorkerStep(sftpConnectorService))
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderFtpPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -500,24 +509,158 @@ public class TransactionFilterStep {
      */
     @SneakyThrows
     @Bean
-    public Step transactionSenderWorkerStep(SftpConnectorService sftpConnectorService) {
+    public Step transactionSenderFtpWorkerStep(SftpConnectorService sftpConnectorService) {
 
-        return stepBuilderFactory.get("transaction-filter-send-step").tasklet(
-                transactionSenderTasklet(null, sftpConnectorService)).build();
+        return stepBuilderFactory.get("transaction-sender-ftp-worker-step").tasklet(
+                transactionSenderFtpTasklet(null, sftpConnectorService)).build();
     }
 
     @SneakyThrows
     @Bean
     @StepScope
-    public TransactionSenderTasklet transactionSenderTasklet(
+    public TransactionSenderTasklet transactionSenderFtpTasklet(
             @Value("#{stepExecutionContext['fileName']}") String file,
             SftpConnectorService sftpConnectorService
     ) {
         TransactionSenderTasklet transactionSenderTasklet = new TransactionSenderTasklet();
         transactionSenderTasklet.setResource(new UrlResource(file));
         transactionSenderTasklet.setSftpConnectorService(sftpConnectorService);
-        transactionSenderTasklet.setTaskletEnabled(transactionSenderEnabled);
+        transactionSenderTasklet.setTaskletEnabled(transactionSenderFtpEnabled);
         return transactionSenderTasklet;
+    }
+
+    /**
+     * Partitioning strategy for the upload of AdE transaction files.
+     *
+     * @return a partitioner instance
+     * @throws IOException
+     */
+    @Bean
+    @JobScope
+    public Partitioner transactionSenderAdePartitioner() throws IOException {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        String pathMatcher = outputDirectoryPath + File.separator + ADE_OUTPUT_FILE_PREFIX + "*.pgp";
+        partitioner.setResources(resolver.getResources(pathMatcher));
+        partitioner.partition(partitionerSize);
+        return partitioner;
+    }
+
+    /**
+     * Master step for the upload of AdE transaction files.
+     *
+     * @param hpanConnectorService
+     * @return the AdE batch master step
+     * @throws IOException
+     */
+    @Bean
+    public Step transactionSenderAdeMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
+        return stepBuilderFactory.get("transaction-sender-ade-master-step")
+                .partitioner(transactionSenderAdeWorkerStep(hpanConnectorService))
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderAdePartitioner())
+                .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * Worker step for the upload of AdE transaction files.
+     *
+     * @param hpanConnectorService
+     * @return the AdE batch worker step
+     */
+    @SneakyThrows
+    @Bean
+    public Step transactionSenderAdeWorkerStep(HpanConnectorService hpanConnectorService) {
+        return stepBuilderFactory.get("transaction-sender-ade-worker-step").tasklet(
+                transactionSenderAdeTasklet(null, hpanConnectorService)).build();
+    }
+
+    /**
+     * Tasklet responsible for the upload of AdE transaction files via REST endpoints.
+     *
+     * @param file the file to upload remotely via REST
+     * @param hpanConnectorService
+     * @return an instance configured for the upload of a specified file
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public TransactionSenderRestTasklet transactionSenderAdeTasklet(
+            @Value("#{stepExecutionContext['fileName']}") String file,
+            HpanConnectorService hpanConnectorService
+    ) {
+        TransactionSenderRestTasklet transactionSenderRestTasklet = new TransactionSenderRestTasklet();
+        transactionSenderRestTasklet.setHpanConnectorService(hpanConnectorService);
+        transactionSenderRestTasklet.setResource(new UrlResource(file));
+        transactionSenderRestTasklet.setTaskletEnabled(transactionSenderAdeEnabled);
+        transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.ADE);
+        return transactionSenderRestTasklet;
+    }
+
+    /**
+     * Partitioning strategy for the upload of CSTAR transaction files.
+     *
+     * @return a partitioner instance
+     * @throws IOException
+     */
+    @Bean
+    @JobScope
+    public Partitioner transactionSenderCstarPartitioner() throws IOException {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        String pathMatcher = outputDirectoryPath + File.separator + CSTAR_OUTPUT_FILE_PREFIX + "*.pgp";
+        partitioner.setResources(resolver.getResources(pathMatcher));
+        partitioner.partition(partitionerSize);
+        return partitioner;
+    }
+
+    /**
+     * Master step for the upload of CSTAR transaction files.
+     *
+     * @param hpanConnectorService
+     * @return the CSTAR batch master step
+     * @throws IOException
+     */
+    @Bean
+    public Step transactionSenderCstarMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
+        return stepBuilderFactory.get("transaction-sender-cstar-master-step")
+                .partitioner(transactionSenderCstarWorkerStep(hpanConnectorService))
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderCstarPartitioner())
+                .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * Worker step for the upload of CSTAR transaction files.
+     *
+     * @param hpanConnectorService
+     * @return the CSTAR batch worker step
+     */
+    @SneakyThrows
+    @Bean
+    public Step transactionSenderCstarWorkerStep(HpanConnectorService hpanConnectorService) {
+        return stepBuilderFactory.get("transaction-sender-cstar-worker-step").tasklet(
+                transactionSenderCstarTasklet(null, hpanConnectorService)).build();
+    }
+
+    /**
+     * Tasklet responsible for the upload of CSTAR transaction files via REST endpoints.
+     *
+     * @param file the file to upload remotely via REST
+     * @param hpanConnectorService
+     * @return an instance configured for the upload of a specified file
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public TransactionSenderRestTasklet transactionSenderCstarTasklet(
+            @Value("#{stepExecutionContext['fileName']}") String file,
+            HpanConnectorService hpanConnectorService
+    ) {
+        TransactionSenderRestTasklet transactionSenderRestTasklet = new TransactionSenderRestTasklet();
+        transactionSenderRestTasklet.setHpanConnectorService(hpanConnectorService);
+        transactionSenderRestTasklet.setResource(new UrlResource(file));
+        transactionSenderRestTasklet.setTaskletEnabled(transactionSenderCstarEnabled);
+        transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.CSTAR);
+        return transactionSenderRestTasklet;
     }
 
     /**

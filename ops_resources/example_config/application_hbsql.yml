@@ -58,8 +58,12 @@ batchConfiguration:
       transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
       sftp:
         localdirectory: file:${SFTP_LOCAL_DIR:resources/output}/${SFTP_FILE_PATTERN:*}
-    transactionSender:
-      enabled: ${ACQ_BATCH_TRX_SENDER_ENABLED:false}
+    transactionSenderFtp:
+      enabled: ${ACQ_BATCH_TRX_SENDER_FTP_ENABLED:false}
+    transactionSenderAde:
+      enabled: ${ACQ_BATCH_TRX_SENDER_ADE_ENABLED:true}
+    transactionSenderCstar:
+      enabled: ${ACQ_BATCH_TRX_SENDER_CSTAR_ENABLED:true}
     saltRecovery:
       enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:true}
     hpanListRecovery:
@@ -85,7 +89,7 @@ connectors:
 rest-client:
   hpan:
     serviceCode: hpan-service
-    base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}/rtd/payment-instrument-manager
+    base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}
     proxy:
       enabled: ${HPAN_SERVICE_PROXY_ENABLED:false}
       host: ${HPAN_SERVICE_PROXY_HOST:localhost}
@@ -93,7 +97,7 @@ rest-client:
     api:
       key: ${HPAN_SERVICE_API_KEY:test}
     list:
-      url: /hashed-pans
+      url: /rtd/payment-instrument-manager/hashed-pans
       attemptExtraction: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
       checksumValidation: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_VALIDATION:true}
       checksumHeaderName: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_HEADER:x-ms-meta-sha256}
@@ -102,7 +106,11 @@ rest-client:
       dateValidationHeaderName: ${ACQ_BATCH_HPAN_LIST_DATEVAL_HEADER:last-modified}
       dateValidationPattern: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION_PATTERN:}
     salt:
-      url: /salt
+      url: /rtd/payment-instrument-manager/salt
+    adesas:
+      url: /rtd/csv-transaction/ade/sas
+    cstarsas:
+      url: /rtd/csv-transaction/cstar/sas
     mtls:
       enabled: ${HPAN_SERVICE_MTLS_ENABLED:true}
     key-store:

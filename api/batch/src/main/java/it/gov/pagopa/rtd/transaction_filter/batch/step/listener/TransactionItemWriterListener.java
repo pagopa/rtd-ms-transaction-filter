@@ -64,7 +64,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                     transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                             .getFile().getAbsolutePath()
                             .concat("/".concat(executionDate))
-                            + "+" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(inboundTransaction));
+                            + "+" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1],buildCsv(inboundTransaction));
 
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
