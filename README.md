@@ -13,7 +13,7 @@ To install and run the batch, it's required:
 - _batch-transaction-filter.jar_ artifact
 
 For the application of PGP encryption to the result file, produced by the batch, there will also need a file containing the public key to be used, reported in __Appendix 1 - PGP public key__.
-For the application of decryption of the PGP pan file, it must provided a file containing the secret key to be applied for the operation.
+For the application of decryption of the PGP pan file, it must be provided a file containing the secret key to be applied for the operation.
 To produce the artifact from the source code it will be necessary to have an installation of Maven and a java compiler (jdk1.8+).
 
 ### Generating artifact from source
@@ -22,24 +22,24 @@ To obtain a version of the artifact produced directly from the source code, a Ma
 machine to use via the command line. Once the source has been downloaded, run the following command from the root directory:
 
 > mvn clean package __<execution_options>__
-	
+
 If the command is executed without other options, the artifact will be produced once the unit tests (declared in the module) have been
 performed. To perform the operation without waiting for the execution and validation of the tests, run the command in the following
 form:
 
 >mvn clean package -DskipTests
-	
+
 The artifact will be created into the target folder at root level
 
 ### Database connection
 
-Spring Batch uses a repository on which you can track the executions performed by the service. 
-If there is no particular configuration: an in- memory instance will be executed to allow the batch to be executed. 
+Spring Batch uses a repository on which you can track the executions performed by the service.
+If there is no particular configuration: an in- memory instance will be executed to allow the batch to be executed.
 Please refer to the properties in __Appendix 2 - Configuration properties__ to define the usage of a persistent database.
 
 __Note:__ As of today, Oracle RDBMS are subject to potential issues regarding the isolation level, as reported
 in the following [Issue Thread](https://github.com/spring-projects/spring-batch/issues/1127), the general approach to
-attempt to avoid similar problems, is to reduce the isolation level defined in the Spring Batch jobRepository 
+attempt to avoid similar problems, is to reduce the isolation level defined in the Spring Batch jobRepository
 to either _ISOLATION_READ_COMMITTED_, or _ISOLATION_READ_UNCOMMITTED_. this is doable using the configuration property
 _batchConfiguration.TransactionFilterBatch.isolationForCreate_.
 
@@ -53,12 +53,12 @@ the cron expression defined in the property _batchConfiguration.TransactionFilte
 __Note__: The property _spring.batch.job.enabled_ must as to be configured to false, when overriding the default
 property configurations.
 
-### Minimun Parameters Batch Acquirer
-  
-With regard to the Batch Acquirer, the minimun parameters related to the jvm's assigned memory provide a sizing of at least 4GB, therefore it is necessary to add -Xms4g -Xmx4g to the java command.
+### Minimum Parameters Batch Acquirer
+
+With regard to the Batch Acquirer, the minimum parameters related to the jvm's assigned memory provide a sizing of at least 4GB, therefore it is necessary to add -Xms4g -Xmx4g to the java command.
 Please note that the parameter that controls the hash file date must always be set. In particular, it is necessary to set athe following configuration property: 
 rest-client.hpan.list.dateValidation: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION:true}
-                                                                                    
+
 ### Logging Configurations
 
 By default, only records that are either filtered, or have been stopped due to an error are logged, while records that
@@ -68,11 +68,11 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.e
 __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging__
 __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterWriteLogging__
 
-The frequency at which the normally processed records are logged is set up by the 
-__batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency__, above a frequency 
+The frequency at which the normally processed records are logged is set up by the
+__batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency__, above a frequency
 of one record, the logs will be at the INFO level, while at 1 the log will be at DEBUG level.
 
-If is necessary to set-up this logging, if there are constraints in term of data volume, or performance, a suggested
+If is necessary to set up this logging, if there are constraints in terms of data volume, or performance, a suggested
 value of frequency would be around 10% of the normal record volume per file.
 
 Active logging/file writing in case of filtered records, or errors, can be disabled through the properties reported
@@ -80,21 +80,21 @@ in __Appendix 2, Paragraph 4 - Batch properties - Transaction list reading__.
 
 ### REST Services Connection
 
-The Batch Acquirer is configurabile for contacting the salt recovery service, to be applied for the PAN hashing,
+The Batch Acquirer is configurable for contacting the salt recovery service, to be applied for the PAN hashing,
 and the hpan list recovery service, to be used for filtering the transaction records.
-To enabled this services, the following configuration properties must be enabled:
-_batchConfiguration.TransactionFilterBatch.saltRecovery.enabled_ 
-and _batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled_. 
+To enable this services, the following configuration properties must be enabled:
+_batchConfiguration.TransactionFilterBatch.saltRecovery.enabled_
+and _batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled_.
 
 Endpoint configurations are through the properties _rest-client.hpan.base-url_, for the base configuration
-, and the endpoint properties for the two services respectively _rest-client.hpan.list.url_ and _rest-client.hpan.salt.url_. 
-The client read and connection timeouts are defined through the properties _feign.client.config.hpan-service.connectTimeout__ 
+, and the endpoint properties for the two services respectively _rest-client.hpan.list.url_ and _rest-client.hpan.salt.url_.
+The client read and connection timeouts are defined through the properties _feign.client.config.hpan-service.connectTimeout_
 and _feign.client.config.hpan-service.readTimeout_.
 
-If the client is to be configured for TLS 1.2 protocol usage, the configuration property 
+If the client is to be configured for TLS 1.2 protocol usage, the configuration property
 _rest-client.hpan.mtls.enabled_ is to be used, and the keystore and trust-store files for the client, to be applied
 in the certificate exchange, respectively through the _rest-client.hpan.key-store.file_ and
-_rest-client.hpan.trust-store.file_ properties. 
+_rest-client.hpan.trust-store.file_ properties.
 
 Other applicable configurations are those related to passwords to be applied for certificates,
 identified by the _rest-client.hpan.key-store.password_ and _rest-client.hpan.trust-store.password_ configurations.
@@ -107,11 +107,11 @@ To use a proxy configuration for the rest client, either use the standard env co
 the internal configuration through the property _rest-client.hpan.proxy.enabled_, and the related configurations
 for the proxy host, port, username and password.
 
-Services hosted through Azure will require a subscription key, this can be configured using the property 
-__rest-client.hpan.api.key__. 
+Services hosted through Azure will require a subscription key, this can be configured using the property
+__rest-client.hpan.api.key__.
 
 For the list recovery service additional configurations are considered for extracting the resource through a compressed file
-(default setting for the exposed Azure enviroment), enabled through the property __rest-client.hpan.list.attemptExtraction__,
+(default setting for the exposed Azure environment), enabled through the property __rest-client.hpan.list.attemptExtraction__,
 the resource matching __rest-client.hpan.list.listFilePattern__ is considered to be a valid
 hpan list file.
 
@@ -144,10 +144,10 @@ To include the Entrust CA Chain ([Entrust Root Certification Authority](https://
 Explanations on how to use the java keytool commands are in the
 [official guidelines](https://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html).
 
-References for introducing the Azure truststore key in your system, is in the official 
+References for introducing the Azure truststore key in your system, is in the official
 [Azure Reference Guidelines](https://docs.microsoft.com/it-it/azure/developer/java/sdk/java-sdk-add-certificate-ca-store)
 
-For references to the services displayed through Azure's API service, you can find the corresponding links in 
+For references to the services displayed through Azure's API service, you can find the corresponding links in
 __Appendix 4 - RTD Acquirer Interface__.
 
 ### Minimal Configuration on Override
@@ -159,7 +159,7 @@ maintained, in order to have the correct setup for the batch execution.
 
 ### Execution guidelines
 
-- Install and configure the environment so that the Java 1.8+ version is available, as indicated in the prerequisites                
+- Install and configure the environment so that the Java 1.8+ version is available, as indicated in the prerequisites
 
 - Produce a version of the artifact via source code, as indicated in the corresponding
   paragraph of the manual. Prepare a configuration application.yml file and, if needed, other files .yml or .properties to be used for
@@ -169,29 +169,29 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Place in a location of your choice, the configuration files
 
-- Place on the machine, the files of the public and/or private key for pgp, if one of the file encryption/decryption function is active. 
+- Place on the machine, the files of the public and/or private key for pgp, if one of the file encryption/decryption function is active.
 
 - Configure the path to the file containing the public key, through the
   batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath property, or through the environment variable
-  _ACQ_BATCH_INPUT_PUBLIC_KEYPATH_.         
-   
-  __Note:__ The configuration is strictly needed only if the encryption function of the produced files is enabled. 
+  _ACQ_BATCH_INPUT_PUBLIC_KEYPATH_.
+
+  __Note:__ The configuration is strictly needed only if the encryption function of the produced files is enabled.
   In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
-   
+
   >batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath = file:/C/:Development/keys/public.asc
 
 - Configure the pointing to the file containing the private key, through the property
   _batchConfiguration.TransactionFilterBatch.panList.secretKeyPath_, or through the environment variable
-  _ACQ_BATCH_INPUT_SECRET_KEYPATH_. 
+  _ACQ_BATCH_INPUT_SECRET_KEYPATH_.
 
-  __Note:__ The configuration is strictly necessary only if the decryption function of the files containing the pan list is enabled. 
+  __Note:__ The configuration is strictly necessary only if the decryption function of the files containing the pan list is enabled.
   In the case of configuration on file, the path must be preceded by prefix _file:/_. for example::
 
   >batchConfiguration.TransactionFilterBatch.panList.secretKeyPath = file:/C:/Development/keys/secret.asc
-	
+
 - Configure the passphrase to be applied if the secret key is enabled, through the
   _batchConfiguration.TransactionFilterBatch.panList.passphrase_ property , or via the _ACQ_BATCH_INPUT_SECRET_PASSPHRASE_ environment
-  variable.         
+  variable.
 
 - Define a folder where the path files, to be processed, will be placed
 
@@ -200,26 +200,26 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Configure the path to the transaction files to be processed, through the
   _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath_ property, or through the environment variables
-  _ACQ_BATCH_TRX_INPUT_PATH_ for the folder, and _ACQ_BATCH_INPUT_FILE_PATTERN_, for the pattern of files to read. 
+  _ACQ_BATCH_TRX_INPUT_PATH_ for the folder, and _ACQ_BATCH_INPUT_FILE_PATTERN_, for the pattern of files to read.
 
-  __Note:__  In the case of file configuration, the path must be preceded by the prefix _file:/_. for example: 
+  __Note:__  In the case of file configuration, the path must be preceded by the prefix _file:/_. for example:
 
   >batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath = file:/C:/Development/transactions/*.csv
 
-- Define a folder for the files containing the PAN list 
+- Define a folder for the files containing the PAN list
 
 - Configure the path to the files containing the pan list, through the
   _batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath_ property , or through the environment variables
   _ACQ_BATCH_HPAN_INPUT_PATH_ for the folder, and  _ACQ_BATCH_HPAN_INPUT_FILE_PATTERN_, for the pattern of files to read.
- 
-  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example: 
+
+  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
   >batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath = file:/C:/Development/hpan/*.pgp
 
 - Define a folder for the output files
 
 - Configure the pointing to the trace files to be processed, through the property
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_, or through the environment variable _ACQ_BATCH_OUTPUT_PATH_      
+  _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_, or through the environment variable _ACQ_BATCH_OUTPUT_PATH_
 
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
@@ -229,51 +229,51 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Configure the pointing to the directory where records that are either filtered, or that had an error, are stored,
   through the property _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath_,
-  or through the environment variable _ACQ_BATCH_TRX_LOGS_PATH_      
+  or through the environment variable _ACQ_BATCH_TRX_LOGS_PATH_
 
   __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
 
   >batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath = file:/C:/Development/errorLogs
 
 - Configure the hashing application for the pan list, through the _batchConfiguration.TransactionFilterBatch.panList.applyHashing_
-  property, or through the environment variable _ACQ_BATCH_PAN_LIST_APPLY_HASHING_        
+  property, or through the environment variable _ACQ_BATCH_PAN_LIST_APPLY_HASHING_
 
 - Configure for decryption of the file containing the pan list, through the
   _batchConfiguration.TransactionFilterBatch.panList.applyDecrypt_ property, or through the environment variable
-  _ACQ_BATCH_PAN_LIST_APPLY_DECRYPT_         
+  _ACQ_BATCH_PAN_LIST_APPLY_DECRYPT_
 
 - Configure the hash application for transactions, through the batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing
   property, or through the environment variable _ACQ_BATCH_TRX_LIST_APPLY_HASHING_
 
 - Configure for product encryption, through the batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt property, or
   through the environment variable _ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT_
-  
-- To send the product file on SFTP channel, the functionality must be enabled through 
+
+- To send the product file on SFTP channel, the functionality must be enabled through
   _batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled_ properties,
   then the configurations related to the host, the user used and the authentication method,
-  password-based, or through certificate must be reported. Configurations for sftp are listed under the 
+  password-based, or through certificate must be reported. Configurations for sftp are listed under the
   _batchConfiguration.TransactionFilterBatch.transactionFilter.sftp_ root in the configuration properties appendix.
-  
+
 - Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles_
   on true/false value to either delete al processed files, or store on the archival directories.
-  
+
 - Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess_
   on KEEP to always maintain the hpan files in the input directory, ARCHIVE to store them in the configured archive directory,
   DELETE for removal in case of successful file processing.
-  
+
 - Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles_
-  on KEEP to always maintain the output files, ERROR to delete them in case of a FAILURE during the process phase, ALWAYS to 
-  delete the files at the end of the execution (option to be used in junction with the sftp internal sender task).  
-  
+  on KEEP to always maintain the output files, ERROR to delete them in case of a FAILURE during the process phase, ALWAYS to
+  delete the files at the end of the execution (option to be used in junction with the sftp internal sender task).
+
 - To enable the passages related to the jump recovery services, or the pan list through REST services,
-  configure the properties following the definitions in the section __Connecting to REST Services__.    
+  configure the properties following the definitions in the section __Connecting to REST Services__.
 
 - Configure the process scheduling, through a cron rule, through the
   _batchConfiguration.TransactionFilterBatch.cron_ property, or through the environment variable _ACQ_BATCH_INPUT_CRON_
 
 - To configure the batch process for the usage of a persisted database, define the configuration parameters under the
   path prefix _spring.datasource_, refer to the command later defined to add the appropriate driver .jar to the process
-  classpath, in order to use the chosen database.  
+  classpath, in order to use the chosen database.
 
 - Apply any other changes to the configuration parameters, the full list of properties is described in __Appendix 2 - Configuration
   properties__
@@ -285,31 +285,31 @@ maintained, in order to have the correct setup for the batch execution.
   __Note:__ replace with the path to the proper configuration directory
 
   >java -jar batch-transaction-filter.jar --spring.config.location=C:\Development\batch-transaction-file\property\
-                
+
   For a batch process that does not use the default in-memory database, execute the following command:
-  
+
   >java -cp "batch-transaction-filter.jar;<vendor_jar>" -Dloader.main=RtdTransactionFilterApplication org.springframework.boot.loader.PropertiesLauncher -jar .\batch-transaction-filter.jar --spring.config.location=file:config\
-  
-                                                                                                                                                                                                                                                                                                                                          
+
+
 ### Appendix 1 - Public PGP Key
 
 For any problem relating to the use of the public key and for the release of the specifications and / or updates relating to the public
 key to be used to encrypt the file, it is mandatory to contact the structure delegated by PagoPA  (ref. SIA OPE Innovative Payments -
-[sistemisti_bigdata@sia.eu](mailto:sistemisti_bigdata@sia.eu)). 
+[sistemisti_bigdata@sia.eu](mailto:sistemisti_bigdata@sia.eu)).
 
 ### Appendix 2 - Configuration properties
 
 #### 1. Logging properties
 
 Key |  Description | Default | Mandatory | Values
---- | ------------ | ------- | ------------ | ------ 
+--- | ------------ | ------- | ------------ | ------
 __logging.file__ | Location where the log files will be written || NO
 __logging.level.root__ | Log level | INFO | NO | TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF
 
 #### 2. Batch properties - General
 
 Key |  Description | Default | Mandatory | Values
---- | ------------ | ------- | ------------ | ------ 
+--- | ------------ | ------- | ------------ | ------
 __spring.batch.job.enabled__ | To avoid unmanaged executions, must be at false | FALSE | YES | FALSE
 __spring.batch.job.scheduled__ | To define if the process will remain active with scheduled executions | FALSE | YES | TRUE/FALSE
 __batchConfiguration.TransactionFilterBatch.successArchivePath__ | Move initial csv to success path| file:/${ACQ_BATCH_SUCCESS_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/success} | YES
@@ -325,14 +325,14 @@ __batchConfiguration.TransactionFilterBatch.isolationForCreate_ | Define the iso
 #### 3. Batch properties - PAN List reading
 
 Key |  Description | Default | Mandatory | Values
---- | ------------ | ------- | ------------ | ------ 
+--- | ------------ | ------- | ------------ | ------
 __batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath__ | The path where you saved the file pgp containing HPAN | file:/${ACQ_BATCH_HPAN_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
 __batchConfiguration.TransactionFilterBatch.panList.secretKeyPath__ | Path where the private key is saved | file:/${ACQ_BATCH_INPUT_SECRET_KEYPATH:} | YES
 __batchConfiguration.TransactionFilterBatch.panList.passphrase__ | Passphrase for the private key | ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:} | YES
 __batchConfiguration.TransactionFilterBatch.panList.partitionerSize__ | Size of the partitioner used to read the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
 __batchConfiguration.TransactionFilterBatch.panList.chunkSize__ | Size of the chunks used for reading the file | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:1} | NO
 __batchConfiguration.TransactionFilterBatch.panList.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
-__batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the hpan file | ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE	
+__batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag indicating whether or not to apply the decrypt at the hpan file | ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:true} | YES | TRUE FALSE
 
 #### 4. Batch properties - Transaction list reading
 
@@ -363,55 +363,57 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.l
 
 #### 5. Batch properties - SFTP
 
-Key |  Description | Default | Mandatory | Values
---- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled__ | Indicates whether the sending to the sftp channel is active or not | ${ACQ_BATCH_TRX_SENDER_FTP_ENABLED:true} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory__ |Local directory from which to get the file to be sent on remote SFTP | ${SFTP_LOCAL_DIR:} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.remotedirectory__ | Remote SFTP directory to copy the file to | ${SFTP_DIRECTORY:} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filenamepattern__ | Name / pattern of the file to be moved to remote SFTP | ${SFTP_FILE_PATTERN:} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filextension__ | File extension to copy to remote SFTP | ${SFTP_FILE_EXTENSION:} | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.host__ | SFTP Host | ${SFTP_HOST:} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.port__ | SFTP Port | ${SFTP_PORT:22} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.user__ | User for access to SFTP | ${SFTP_USER:} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.password__ | Password for access to SFTP | ${SFTP_PASSWORD:} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.timeout__ | Timeout related to connection with SFTP | ${SFTP_SOCKET_TIMEOUT:0:} | YES
-__connectors.sftpConfigurations.connection.privateKey__ | Indicates the file for channel authentication will take place via a private key | file:/${SFTP_PRIVATE_KEY:} | NO
-__connectors.sftpConfigurations.connection.passphrase__ | Indicates the passphrase associated with the private key | ${SFTP_PASSPHRASE:} | NO
+Key |  Description | Default                                   | Mandatory | Values
+--- | ------------ |-------------------------------------------| ------------ | ------
+__batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled__ | Indicates whether the sending to the sftp channel is active or not | ${ACQ_BATCH_TRX_SENDER_FTP_ENABLED:false} | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory__ |Local directory from which to get the file to be sent on remote SFTP | ${SFTP_LOCAL_DIR:}                        | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.remotedirectory__ | Remote SFTP directory to copy the file to | ${SFTP_DIRECTORY:}                        | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filenamepattern__ | Name / pattern of the file to be moved to remote SFTP | ${SFTP_FILE_PATTERN:}                     | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filextension__ | File extension to copy to remote SFTP | ${SFTP_FILE_EXTENSION:}                   | NO
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.host__ | SFTP Host | ${SFTP_HOST:}                             | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.port__ | SFTP Port | ${SFTP_PORT:22}                           | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.user__ | User for access to SFTP | ${SFTP_USER:}                             | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.password__ | Password for access to SFTP | ${SFTP_PASSWORD:}                         | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.timeout__ | Timeout related to connection with SFTP | ${SFTP_SOCKET_TIMEOUT:0:}                 | YES
+__connectors.sftpConfigurations.connection.privateKey__ | Indicates the file for channel authentication will take place via a private key | file:/${SFTP_PRIVATE_KEY:}                | NO
+__connectors.sftpConfigurations.connection.passphrase__ | Indicates the passphrase associated with the private key | ${SFTP_PASSPHRASE:}                       | NO
 
 #### 6. Batch properties - REST services
 
-Key |  Description | Default | Mandatory | Values
---- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.saltRecovery.enabled__ | Enable the recovery service for the salt | ${ACQ_BATCH_SALT_RECOVERY_ENABLED:false} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled__ | Enable the recovery service for the hpan list | ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath__ | Location where the file containing the list of files will be saved | ${ACQ_BATCH_HPAN_INPUT_PATH:} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Name assigned to the recovered file | ${CSV_TRX_BATCH_HPAN_LIST_FILENAME:} | NO
-__batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved hpan files | ${ACQ_BATCH_HPAN_RECOVERY_DAILY_REM_ENABLED:false} | NO | TRUE FALSE
-__rest-client.hpan.base-url__ | Base url for REST services | ${HPAN_SERVICE_URL} | NO
-__rest-client.hpan.api.key__ | Subscription key to be used if calling Azure-hosted API methods | ${HPAN_API_KEY} | NO
-__rest-client.hpan.list.attemptExtraction__ | Considers the downloaded file as compressed, and attempts an estraction | TRUE | NO | TRUE FALSE
-__rest-client.hpan.list.checksumValidation__ | Attempts to validate the downloaded file using a checksum | TRUE | NO | TRUE FALSE 
-__rest-client.hpan.list.checksumHeaderName__ | Response header containing the file's checksum | x-ms-meta-sha256 | NO
-__rest-client.hpan.list.listFilePattern__ | Pattern to be used for extracting the correct file from the compressed resource | *\\.csv | NO
-__rest-client.hpan.list.dateValidation__ | Enables date validation for the recovered resource | TRUE | NO | TRUE FALSE
-__rest-client.hpan.list.dateValidationHeaderName__ | Response header containing the file's creation/update date | last-modified | NO
-__rest-client.hpan.list.dateValidationPattern__ | Response header date timestamp pattern (defaults to RFC-1123) | | NO
-__rest-client.hpan.list.dateValidationZone__ | Zone to consider when validating the creation date for the downloaded file | Europe/Rome | NO
-__rest-client.hpan.proxy.enabled__ | Use a Proxied Client | ${HPAN_SERVICE_PROXY_ENABLED:false} | NO
-__rest-client.hpan.proxy.host__ | Proxy host | ${HPAN_SERVICE_PROXY_HOST:} | NO
-__rest-client.hpan.proxy.port__ | Proxy port | ${HPAN_SERVICE_PROXY_PORT:} | NO
-__rest-client.hpan.proxy.username__ | Proxy username | ${HPAN_SERVICE_PROXY_USERNAME:} | NO
-__rest-client.hpan.proxy.password__ | Proxy password | ${HPAN_SERVICE_PROXY_PASSWORD:} | NO
-__rest-client.hpan.mtls.enabled__ | Enable MTLS for salt and pan list services | ${HPAN_SERVICE_MTLS_ENABLED:true} | NO
-__rest-client.hpan.key-store.file__ | Path to key-store | file:/${HPAN_SERVICE_KEY_STORE_FILE:} | NO
-__rest-client.hpan.key-store.type__ | Key-store type | ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}} | NO
-__rest-client.hpan.key-store.algorithm__ | Key-store algorithm | ${HPAN_SERVICE_KEY_STORE_ALGORITHM:#{null}} | NO
-__rest-client.hpan.key-store.password__ | Key-store password | ${HPAN_SERVICE_KEY_STORE_PASSWORD:} | NO
-__rest-client.hpan.trust-store.file__ | Path to trust-store | file:/${HPAN_SERVICE_TRUST_STORE_FILE:} | NO
-__rest-client.hpan.trust-store.type__ | Trust-store type | ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}} | NO
-__rest-client.hpan.trust-store.password__ | Trust-store password | ${HPAN_SERVICE_TRUST_STORE_PASSWORD:} | NO
-__feign.client.config.hpan-service.connectTimeout__ | Rest client connection timeout, defined in milliseconds | ${REST_CLIENT_CONNECT_TIMEOUT:${HPAN_REST_CLIENT_CONNECT_TIMEOUT:5000}} | NO
-__feign.client.config.hpan-service.readTimeout__ | Rest client read timeout, defined in milliseconds | ${REST_CLIENT_READ_TIMEOUT:${HPAN_REST_CLIENT_READ_TIMEOUT:5000}} | NO
+Key | Description                                                                                     | Default                                                                 | Mandatory | Values
+--- |-------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------| ------------ | ------
+__batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled__ | Indicates whether the sending of AdE filtered transactions to the rest channel is active or not | ${ACQ_BATCH_TRX_SENDER_ADE_ENABLED:true}                                | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.transactionSenderCstar.enabled__ | Indicates whether the sending of filtered transactions to the rest channel is active or not     | ${ACQ_BATCH_TRX_SENDER_CSTAR_ENABLED:true}                              | YES | TRUE FALSE
+__batchConfiguration.TransactionFilterBatch.saltRecovery.enabled__ | Enable the recovery service for the salt                                                        | ${ACQ_BATCH_SALT_RECOVERY_ENABLED:false}                                | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled__ | Enable the recovery service for the hpan list                                                   | ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true}                                 | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath__ | Location where the file containing the list of files will be saved                              | ${ACQ_BATCH_HPAN_INPUT_PATH:}                                           | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.filename__ | Name assigned to the recovered file                                                             | ${CSV_TRX_BATCH_HPAN_LIST_FILENAME:}                                    | NO
+__batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled__ | Enable daily removal of retrieved hpan files                                                    | ${ACQ_BATCH_HPAN_RECOVERY_DAILY_REM_ENABLED:false}                      | NO | TRUE FALSE
+__rest-client.hpan.base-url__ | Base url for REST services                                                                      | ${HPAN_SERVICE_URL}                                                     | NO
+__rest-client.hpan.api.key__ | Subscription key to be used if calling Azure-hosted API methods                                 | ${HPAN_API_KEY}                                                         | NO
+__rest-client.hpan.list.attemptExtraction__ | Considers the downloaded file as compressed, and attempts an estraction                         | TRUE                                                                    | NO | TRUE FALSE
+__rest-client.hpan.list.checksumValidation__ | Attempts to validate the downloaded file using a checksum                                       | TRUE                                                                    | NO | TRUE FALSE
+__rest-client.hpan.list.checksumHeaderName__ | Response header containing the file's checksum                                                  | x-ms-meta-sha256                                                        | NO
+__rest-client.hpan.list.listFilePattern__ | Pattern to be used for extracting the correct file from the compressed resource                 | *\\.csv                                                                 | NO
+__rest-client.hpan.list.dateValidation__ | Enables date validation for the recovered resource                                              | TRUE                                                                    | NO | TRUE FALSE
+__rest-client.hpan.list.dateValidationHeaderName__ | Response header containing the file's creation/update date                                      | last-modified                                                           | NO
+__rest-client.hpan.list.dateValidationPattern__ | Response header date timestamp pattern (defaults to RFC-1123)                                   |                                                                         | NO
+__rest-client.hpan.list.dateValidationZone__ | Zone to consider when validating the creation date for the downloaded file                      | Europe/Rome                                                             | NO
+__rest-client.hpan.proxy.enabled__ | Use a Proxied Client                                                                            | ${HPAN_SERVICE_PROXY_ENABLED:false}                                     | NO
+__rest-client.hpan.proxy.host__ | Proxy host                                                                                      | ${HPAN_SERVICE_PROXY_HOST:}                                             | NO
+__rest-client.hpan.proxy.port__ | Proxy port                                                                                      | ${HPAN_SERVICE_PROXY_PORT:}                                             | NO
+__rest-client.hpan.proxy.username__ | Proxy username                                                                                  | ${HPAN_SERVICE_PROXY_USERNAME:}                                         | NO
+__rest-client.hpan.proxy.password__ | Proxy password                                                                                  | ${HPAN_SERVICE_PROXY_PASSWORD:}                                         | NO
+__rest-client.hpan.mtls.enabled__ | Enable MTLS for salt and pan list services                                                      | ${HPAN_SERVICE_MTLS_ENABLED:true}                                       | NO
+__rest-client.hpan.key-store.file__ | Path to key-store                                                                               | file:/${HPAN_SERVICE_KEY_STORE_FILE:}                                   | NO
+__rest-client.hpan.key-store.type__ | Key-store type                                                                                  | ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}}                                  | NO
+__rest-client.hpan.key-store.algorithm__ | Key-store algorithm                                                                             | ${HPAN_SERVICE_KEY_STORE_ALGORITHM:#{null}}                             | NO
+__rest-client.hpan.key-store.password__ | Key-store password                                                                              | ${HPAN_SERVICE_KEY_STORE_PASSWORD:}                                     | NO
+__rest-client.hpan.trust-store.file__ | Path to trust-store                                                                             | file:/${HPAN_SERVICE_TRUST_STORE_FILE:}                                 | NO
+__rest-client.hpan.trust-store.type__ | Trust-store type                                                                                | ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}}                                | NO
+__rest-client.hpan.trust-store.password__ | Trust-store password                                                                            | ${HPAN_SERVICE_TRUST_STORE_PASSWORD:}                                   | NO
+__feign.client.config.hpan-service.connectTimeout__ | Rest client connection timeout, defined in milliseconds                                         | ${REST_CLIENT_CONNECT_TIMEOUT:${HPAN_REST_CLIENT_CONNECT_TIMEOUT:5000}} | NO
+__feign.client.config.hpan-service.readTimeout__ | Rest client read timeout, defined in milliseconds                                               | ${REST_CLIENT_READ_TIMEOUT:${HPAN_REST_CLIENT_READ_TIMEOUT:5000}}       | NO
 
 
 #### 7. Batch properties - File Handling
@@ -437,24 +439,24 @@ __spring.jpa.database-platform__ | Database dialect | ${ACQ_BATCH_DB_DIALECT:} |
 
 #### 1. Batch Tables
 
-The process provides varied information to refer to in case of the need to check the results of an execution, 
+The process provides varied information to refer to in case of the need to check the results of an execution,
 for debugging or decision purposes. The first tool at disposal is to refer to the data automatically provided from
 Spring Batch, through its internal repository tables, where a series of information regarding the executions are
-stored. 
+stored.
 
 An execution can be identified through the table __batch_job_execution__,
-which defines an instance of execution of the whole batch, the _job_execution_id will_ be important to search the 
+which defines an instance of execution of the whole batch, the _job_execution_id will_ be important to search the
 related steps, and the properties _status_ and _exit_code_ defines if the job successfully completed.
 In this particular case the codes will generally be on __COMPLETED__ after a job execution is ended,
 unless an error outside the scope of the single steps outcomes occurs.
 
 ![example of jo execution in DB](/readme_screens/JobExec_DB_Screen.PNG)
 
-To check for the information involving the reading of a file, the table __batch_step_execution__ contains 
+To check for the information involving the reading of a file, the table __batch_step_execution__ contains
 the information regarding the single steps of the processes identified by a _job_execution_id_, the steps useful for debugging the file processing steps are the ones containing
-in the _step_name_ column, the values _"hpan-recovery"_ or _"transaction-filter"_. The steps with the name containing 
+in the _step_name_ column, the values _"hpan-recovery"_ or _"transaction-filter"_. The steps with the name containing
 _"master-step"_ as a suffix define the general status of all the related files processed during the execution,
-while the ones with the _"worker-step_partion"_ suffix are related to a single file.
+while the ones with the _"worker-step"_ suffix are related to a single file.
 
 The _status_ and _exit_code_ are useful to determine the general outcome for a step, the first one simply refers to
 the general outcome, generally either referring to a __COMPLETED__ or __FAILED__ status, while the second property might
@@ -467,15 +469,15 @@ selected fault-tolerance policy. similarly, the _write_count_, _write_skip_count
 a similar purpose in the filtering process and writing phases for the record. All the records that are in an error state,
 are included in the value for the _rollback_count_.
 
-For the transaction filtering, the _filter_count_ record is useful to keep track of how many transactions have 
-been filtered, due to not matching the stored HPAN records. Filtered records are by default not included in the rollback 
+For the transaction filtering, the _filter_count_ record is useful to keep track of how many transactions have
+been filtered, due to not matching the stored HPAN records. Filtered records are by default not included in the rollback
 count, as it's part of the business logic.
 
 ![example of execution with skips in DB](/readme_screens/Skips_DB_Screen.PNG)
 
 With the _step_execution_id_ value, we can match the information for the related step in the
 __batch_step_execution_context__ table, that contains the execution parameters in the _shor_context_
-column. The workers steps context contains the processed file inside the JSON structure, under the 
+column. The workers steps context contains the processed file inside the JSON structure, under the
 _"filename"_ property.
 
 ![example of execution context_in_DB](/readme_screens/Step_Exec_Context_Screen.PNG)
@@ -487,7 +489,7 @@ Further information about the Spring Batch repository entities, can be found in 
 
 To have a more detailed view for the state of the executions, a series of log entries are provided to trace the execution
 instances, defined either by the standard batch logs, or by custom entries to provide some extra details. A general log
-regarding the execution of the scheduled polling check can be found as of the provided example, eventually reporting 
+regarding the execution of the scheduled polling check can be found as of the provided example, eventually reporting
 the lack of a proper execution, due to missing files in the provided source directory.
 
 ![example of console_log_no_file_screen](/readme_screens/ConLog_NoFile_Screen.PNG)
@@ -499,7 +501,7 @@ the related filename.
 
 During the file processing, logs regarding the single records are produced to keep track of any errors,
 or filtering occurred. Every log comes with the file name, and line of the record that produced the log entry,
-with any additional information. 
+with any additional information.
 
 ![example of console_log_trx_filter_screen](/readme_screens/ConLog_FilteredTrx_Screen.PNG)
 
@@ -510,12 +512,12 @@ status and time of completion, this particular information is also reported with
 
 #### 3. Logback Configurations
 
-Spring uses default configurations to produce its logs, either using __Log4J2__ or __Logback__, through internal 
+Spring uses default configurations to produce its logs, either using __Log4J2__ or __Logback__, through internal
 configurations it can provide the functionality to use the appenders to produce logs on the stdout channel, or on
 a file. This can be achieved using the configuration properties exposed for this purpose, the details of which can
 be found in the [Reference Documentation](https://docs.spring.io/spring-boot/docs/2.1.9.RELEASE/reference/html/boot-features-logging.html).
 
-As an example, a simple way to route all the produced logs from the console to a specific file, can be easly done 
+As an example, a simple way to route all the produced logs from the console to a specific file, can be easily done
 by inserting a simple configuration within the _application.yaml_ file, using the following configuration properties
 
 >logging.file="<path_to_log>/application.log"
@@ -539,7 +541,7 @@ To use this configuration in spring, this property must be used within the _appl
 > logging.config=<path_to_config_file>
 
 In order to use this appender, the tables reported in the documentation are required before any execution. The main table,
-where the log records are inserted is thhe __logging_event__ table.
+where the log records are inserted is the __logging_event__ table.
 
 ![Logback_Event_DB_Screen](readme_screens/Logback_DB_Table_Screen.PNG)
 
@@ -578,7 +580,7 @@ d. BPD service withdrawal option
 #### Errors reporting
 
 In the event of a potential error detected and/or failure to view a transaction, you can open an “issue” by clicking on the question mark icon at the top right of every page and then click on the "Segnala un Bug" button.
-In order to idenitify and give priority to your reports, please report, in the body of the message, the “TEST_INTERNO_BPD” tag.
+In order to identify and give priority to your reports, please report, in the body of the message, the “TEST_INTERNO_BPD” tag.
 
 #### Points of attention
 We kindly ask you to pay attention to the following notes:
@@ -591,7 +593,7 @@ We kindly ask you to pay attention to the following notes:
 
 ### FAQ & Troubleshooting
 
-The following section contains answers regarding common or noteworthy errors or questions, 
+The following section contains answers regarding common or noteworthy errors or questions,
 occurred during the configuration/execution process.
 
 #### Are there any example files?
@@ -611,8 +613,8 @@ The tested version for the batch acquirer is the latest patch for the 1.8, with 
 >java.io.FileNotFoundException: /20200730141145327_transactionsErrorRecords.csv (Permission denied)
 
 This error occurs when reading/writing a file that is placed in a location for which the process does not have
-permissions. Usually this is due to a lack in the configuration properties related to the file. Some of the misconfigured
-properties that may produce this events are: 
+permissions. Usually this is due to a lack in the configuration properties related to the file. Some misconfigured
+properties that may produce these events are:
 
 - _batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath_
 - _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath_
@@ -638,7 +640,7 @@ The stacktrace following the exception indicates the cause of the error that exc
 > bin: must match "([0-9]{6}|[0-9]{8})"
 
 This occurs when inserting a bank identification number that does not match the expected length (the standard value is 8,
-but 6 is at the moment also allowed). In cases where the value does has less characters, the value must be juxtaposed 
+but 6 is at the moment also allowed). In cases where the value has fewer characters, the value must be juxtaposed
 with Zero-Padding. Refer to [ops_resources/RTD_Acquirer_Interface_V3.pdf](ops_resources/RTD_Acquirer_Interface_V3.pdf).
 
 #### Missing Datasource
@@ -666,14 +668,14 @@ release the drivers for any specific vendor has to be included when starting the
 >      at ch.qos.logback.classic.Logger.log(Logger.java:765)
 >      at org.apache.commons.logging.LogAdapter$Slf4jLocationAwareLog.info(LogAdapter.java:454)
 
-This error occurs when using an Oracle Database, and it's related to the usage of a driver version that does not 
+This error occurs when using an Oracle Database, and it's related to the usage of a driver version that does not
 match the one required for the database and java versions. Check the list of available drivers, and refer to the
 [Logback Appenders Documentation](http://dev.cs.ovgu.de/java/logback/manual/appenders.html#DBAppender).
 
 #### Oracle Error ORA-08177
 
 > java.sql.SQLException: ORA-08177: can't serialize access for this transaction
-  
+
 This is a known issue for the Spring Batch Framework. Refer to the note in the __Database connection__ paragraph,
 and the official [Issue Thread](https://github.com/spring-projects/spring-batch/issues/1127).
 
@@ -691,7 +693,7 @@ This error occurs when configuring a scheduled execution, with an invalid cron e
 > ***************************
 > APPLICATION FAILED TO START
 > ***************************
-> 
+>
 > Description:
 >
 > The bean 'jobLauncher', defined in class path resource [it/gov/pagopa/rtd/transaction_filter/batch/TransactionFilterBatch.class], could not
@@ -721,13 +723,13 @@ Please refer to the example in _ops_resources/example_config_
 >at com.sun.proxy.$Proxy91.getList(Unknown Source) ~[na:na]
 
 As of 24/09/2020 the Baltimore CyberTrust Root, defined as the CA certificate within the
-[Microsoft documentation](https://docs.microsoft.com/it-it/azure/developer/java/sdk/java-sdk-add-certificate-ca-store), 
+[Microsoft documentation](https://docs.microsoft.com/it-it/azure/developer/java/sdk/java-sdk-add-certificate-ca-store),
 may result in failures of the SSL handshake. Either add the [DigiCert Global Root G2 CA certificate](https://cacerts.digicert.com/DigiCertGlobalRootG2.crt)
 within the truststore .jks file, or configure to load the cacerts file, available within the JRE/JDK distributions (default password: changeme).
 
 #### Where can be found the instructions regarding the generation of the Certificates?
 
-All the necessary information and instructions can be found in the following path: https://github.com/pagopa/rtd-ms-transaction-filter in the document “Acquirer Interface Agreement_v3.pdf” in the section "Appendice 6 - Autenticazione Servizi Acquirer". 
+All the necessary information and instructions can be found in the following path: https://github.com/pagopa/rtd-ms-transaction-filter in the document “Acquirer Interface Agreement_v3.pdf” in the section "Appendice 6 - Autenticazione Servizi Acquirer".
 
 #### Where can be found the instructions regarding the generation of the subscription key?
 
@@ -742,11 +744,11 @@ Regarding the tests in the SIT environment, the client certificate can be self-s
 
 After completing the subscription, the Client can invoke the services by inserting the key obtained "Ocp-Apim-Subscription-Key" as a parameter in the request header.
 
-#### Where is it possible to find the PGP Key necessary for the test (SIT and UAT) Environment? 
+#### Where is it possible to find the PGP Key necessary for the test (SIT and UAT) Environment?
 
 The PGP Key can be found in the Appendice 1 of the document "RTD Acquirer Interface_v3" (link: https://github.com/pagopa/rtd-ms-transaction-filter/blob/master/ops_resources/RTD_Acquirer_Interface_V3.pdf)
 
-#### Where is it possible to find the PGP Key necessary for the Production Environment? 
+#### Where is it possible to find the PGP Key necessary for the Production Environment?
 
 The PGP Key can be found in the Appendice 9 of the document "RTD Acquirer Interface_v3" (link: https://github.com/pagopa/rtd-ms-transaction-filter/blob/master/ops_resources/RTD_Acquirer_Interface_V3.pdf)
 
@@ -757,7 +759,7 @@ The PGP Key can be found in the Appendice 9 of the document "RTD Acquirer Interf
 When encountering this message, there is a failure in the validation process for the downloaded PAN list, indicating
 that the file has a creation date that the daily procedure to update the file has not been executed.
 
-It is possible that there is a misleading errore, due to the set-up for the timezone, try changing the property 
+It is possible that there is a misleading errore, due to the set-up for the timezone, try changing the property
 __rest-client.hpan.list.dateValidationZone__.
 
 #### Feign Error: Read timeout
@@ -766,7 +768,7 @@ This error occurs generally during the download phase when calling the endpoint 
 
 #### TOKENIZED CARDS
 
-#### Should the Acquirer include in the transactions flow sent to the Batch Acquirer, besides the PAN also the TokenPan/s in order to obtain both hashed values (HashPAN and hashTokenPAN)? 
+#### Should the Acquirer include in the transactions flow sent to the Batch Acquirer, besides the PAN also the TokenPan/s in order to obtain both hashed values (HashPAN and hashTokenPAN)?
 Yes, it should.
 
 #### Should the Acquirer pass the PAR, if applicable, for both the PAN and the TokenPAN?
@@ -784,11 +786,11 @@ No, it should be produced only by the Acquirers that can manage tokenized transa
 #### If an Acquirer can process transactions made also with Tokenized Cards wallet, what should it do?
 This Acquirer should feed the Batch Acquirer with transactions executed with Physical Cards as well as with Tokenized ones and, for both transactions typologies, it should provide the PAR if available.
 
-#### When and how the new Batch Acquirer files will be released? 
+#### When and how the new Batch Acquirer files will be released?
 The new Batch Acquirer file will be released gradually in a date TBD. The current Batch Acquirer version will coexist with the new one in order to manage correctly the new and the old version of the transactions flow.
 
 #### Out of memory errors
-The error occurs when trying to proces the hpan files without enough space reserved for the java process. As of right now the suggested heap space is of 6 Gigabytes
+The error occurs when trying to process the hpan files without enough space reserved for the java process. As of right now the suggested heap space is of 6 Gigabytes
 
 #### JDBC Error: Unable to acquire JDBC Connection
 The error occurs when using a connection pool that is undersized for the operations to be executed inside the database. In case this error occurs, the suggested action is to extend the connection pool, using the config property _spring.datasource.hikari.maximumPoolSize_
