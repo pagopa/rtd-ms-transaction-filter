@@ -6,6 +6,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
@@ -101,7 +102,8 @@ public class TransactionFilterBatch {
     private Boolean hpanListRecoveryEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled}")
     private Boolean hpanListDailyRemovalEnabled;
-
+    @Value("${batchConfiguration.TransactionFilterBatch.publicKeyRecovery.enabled}")
+    private Boolean publicKeyRecoveryEnabled;
 
     private DataSource dataSource;
     private HpanStoreService hpanStoreService;
@@ -274,9 +276,11 @@ public class TransactionFilterBatch {
         return jobBuilderFactory.get("transaction-filter-job")
                 .repository(getJobRepository())
                 .listener(jobListener())
-                .start(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
+                .start(pagopaPublicKeyRecoveryTask(this.hpanStoreService))
+                .on(FAILED).end()
+                .on("*").to(transactionFilterStep.transactionFilterAdeMasterStep(this.hpanStoreService, this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
+                .from(transactionFilterStep.transactionFilterAdeMasterStep(this.hpanStoreService, this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
@@ -326,6 +330,16 @@ public class TransactionFilterBatch {
         saltRecoveryTasklet.setTaskletEnabled(saltRecoveryEnabled);
         return stepBuilderFactory.get("transaction-filter-salt-recovery-step")
                 .tasklet(saltRecoveryTasklet).build();
+    }
+
+    @Bean
+    public Step pagopaPublicKeyRecoveryTask(HpanStoreService hpanStoreService) {
+        PagopaPublicKeyRecoveryTasklet pagopaPublicKeyRecoveryTasklet = new PagopaPublicKeyRecoveryTasklet();
+        pagopaPublicKeyRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
+        pagopaPublicKeyRecoveryTasklet.setHpanStoreService(hpanStoreService);
+        pagopaPublicKeyRecoveryTasklet.setTaskletEnabled(publicKeyRecoveryEnabled);
+        return stepBuilderFactory.get("transaction-filter-public-key-recovery-step")
+                .tasklet(pagopaPublicKeyRecoveryTasklet).build();
     }
 
     /**

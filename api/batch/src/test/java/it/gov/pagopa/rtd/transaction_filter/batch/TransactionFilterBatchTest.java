@@ -7,6 +7,7 @@ import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.junit.Test;
@@ -16,11 +17,9 @@ import org.junit.Rule;
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
-import org.mockito.BDDMockito;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
@@ -42,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.util.*;
@@ -86,6 +86,7 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.successArchivePath=classpath:/test-encrypt/success",
                 "batchConfiguration.TransactionFilterBatch.errorArchivePath=classpath:/test-encrypt/error",
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
+                "batchConfiguration.TransactionFilterBatch.publicKeyRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
@@ -118,8 +119,9 @@ public class TransactionFilterBatchTest {
     HpanStoreService hpanStoreServiceSpy;
 
     @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder(
-            new File(getClass().getResource("/test-encrypt").getFile()));
+    public TemporaryFolder tempFolder = new TemporaryFolder(new File(getClass().getResource("/test-encrypt").getFile()));
+
+    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @SneakyThrows
     @Before
@@ -143,17 +145,16 @@ public class TransactionFilterBatchTest {
         tempFolder.delete();
     }
 
-    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-
-    private JobParameters defaultJobParameters() {
-        return new JobParametersBuilder()
-                .addDate("startDateTime", new Date())
-                .toJobParameters();
-    }
-
     @SneakyThrows
     @Test
     public void jobExecutionProducesExpectedFiles() {
+
+        String publicKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/publicKey.asc";
+        Resource publicKeyResource = resolver.getResource(publicKeyPath);
+        FileInputStream publicKeyFilePathIS = new FileInputStream(publicKeyResource.getFile());
+        String publicKey = IOUtils.toString(publicKeyFilePathIS, "UTF-8");
+
+        BDDMockito.doReturn(publicKey).when(hpanStoreServiceSpy).getKey(Mockito.eq("pagopa"));
 
         tempFolder.newFolder("hpan");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");
@@ -181,7 +182,9 @@ public class TransactionFilterBatchTest {
         }
 
         // Check that the job exited with the right exit status
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob(defaultJobParameters());
+        JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
+                .addDate("startDateTime", new Date())
+                .toJobParameters());
 
         // IMPORTANT: file handlers used by listeners must be closed explicitly, otherwise
         // being unbuffered the log files will be created but there won't be any content inside
@@ -193,6 +196,7 @@ public class TransactionFilterBatchTest {
         // Check that the HPAN store has been accessed as expected
         BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).store(Mockito.any());
         BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(4)).hasHpan(Mockito.any());
+        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(2)).getKey(Mockito.any());
 
         // Check that output folder contains expected files, and only those
         Collection<File> outputPgpFiles = FileUtils.listFiles(

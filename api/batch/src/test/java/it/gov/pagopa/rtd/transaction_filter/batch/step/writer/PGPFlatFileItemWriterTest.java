@@ -4,11 +4,19 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.junit.*;
+import org.apache.commons.io.IOUtils;
+import org.junit.BeforeClass;
+import org.junit.Before;
+import org.junit.After;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.Assert;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ExecutionContext;
@@ -22,20 +30,40 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.util.List;
 
 public class PGPFlatFileItemWriterTest {
 
-    public PGPFlatFileItemWriterTest(){
+    public PGPFlatFileItemWriterTest() {
         MockitoAnnotations.initMocks(this);
     }
+
+    private PathMatchingResourcePatternResolver resolver;
+    private String publicKey;
 
     @BeforeClass
     public static void configTest() {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.INFO);
-        ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
+    }
+
+    @SneakyThrows
+    @Before
+    public void setUp() {
+        resolver = new PathMatchingResourcePatternResolver();
+
+        String publicKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/publicKey.asc";
+        Resource publicKeyResource = resolver.getResource(publicKeyPath);
+        FileInputStream publicKeyFilePathIS = new FileInputStream(publicKeyResource.getFile());
+        publicKey = IOUtils.toString(publicKeyFilePathIS, "UTF-8");
+    }
+
+    @After
+    public void tearDown() {
+        tempFolder.delete();
     }
 
     @Rule
@@ -47,9 +75,10 @@ public class PGPFlatFileItemWriterTest {
 
     public BeanWrapperFieldExtractor transactionWriterFieldExtractor() {
         BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
-        extractor.setNames(new String[] {
+        extractor.setNames(new String[]{
                 "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
-                "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId", "mcc"});
+                "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
+                "terminalId", "bin", "mcc", "fiscalCode", "vat", "posType", "par"});
         return extractor;
     }
 
@@ -62,11 +91,8 @@ public class PGPFlatFileItemWriterTest {
 
     @SneakyThrows
     @Test
-    public void testWriter_OK_EmptyList() {
-        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
-                "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/secretKey.asc", false
-        );
+    public void testWriterWithEncryptionDisabledAndEmptyContent() {
+        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKey, false);
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
@@ -75,16 +101,15 @@ public class PGPFlatFileItemWriterTest {
         flatFileItemWriter.update(executionContext);
         flatFileItemWriter.write(Collections.emptyList());
         flatFileItemWriter.close();
-        Assert.assertEquals(0, Files.readAllLines(resource.getFile().toPath()).size());
+
+        List<String> fileContentLines = Files.readAllLines(resource.getFile().toPath());
+        Assert.assertEquals(0, fileContentLines.size());
     }
 
     @SneakyThrows
     @Test
-    public void testWriter_OK_MonoList() {
-        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
-                "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/secretKey.asc", false
-        );
+    public void testWriterWithEncryptionDisabledAndSingleTransaction() {
+        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKey, false);
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
@@ -93,16 +118,16 @@ public class PGPFlatFileItemWriterTest {
         flatFileItemWriter.update(executionContext);
         flatFileItemWriter.write(Collections.singletonList(getInboundTransaction()));
         flatFileItemWriter.close();
-        Assert.assertEquals(1, Files.readAllLines(resource.getFile().toPath()).size());
+
+        List<String> fileContentLines = Files.readAllLines(resource.getFile().toPath());
+        Assert.assertEquals(1, fileContentLines.size());
+        Assert.assertEquals("13131;00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;;22222;0000;1;000002;5422;fc123543;12345678901;00;", fileContentLines.get(0));
     }
 
     @SneakyThrows
     @Test
-    public void testWriter_OK_MultiList() {
-        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
-                "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/secretKey.asc", false
-        );
+    public void testWriterWithEncryptionDisabledAndMultipleTransactions() {
+        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKey, false);
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
@@ -111,16 +136,18 @@ public class PGPFlatFileItemWriterTest {
         flatFileItemWriter.update(executionContext);
         flatFileItemWriter.write(Collections.nCopies(5, getInboundTransaction()));
         flatFileItemWriter.close();
-        Assert.assertEquals(5, Files.readAllLines(resource.getFile().toPath()).size());
+
+        List<String> fileContentLines = Files.readAllLines(resource.getFile().toPath());
+        Assert.assertEquals(5, fileContentLines.size());
+        for (String line : fileContentLines) {
+            Assert.assertEquals("13131;00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;;22222;0000;1;000002;5422;fc123543;12345678901;00;", line);
+        }
     }
 
     @SneakyThrows
     @Test
-    public void testWriter_OK_Encrypt() {
-        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
-                "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/publicKey.asc", true
-        );
+    public void testWriterWithEncryptionEnabledAndSingleTransaction() {
+        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKey, true);
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         UrlResource encryptedFile = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv.pgp");
         UrlResource decryptedFile = new UrlResource(tempFolder.getRoot().toURI() + "/decrypted/FilteredRecords_test-trx.csv");
@@ -134,36 +161,27 @@ public class PGPFlatFileItemWriterTest {
 
         FileInputStream fileToProcessIS = new FileInputStream(encryptedFile.getFile());
 
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        Resource secretKeyResource = resolver.getResource("file:/"+
-                this.getClass().getResource("/test-encrypt").getFile() +
-                "/secretKey.asc");
+        String secretKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/secretKey.asc";
+        Resource secretKeyResource = resolver.getResource(secretKeyPath);
         FileInputStream secretFilePathIS = new FileInputStream(secretKeyResource.getFile());
         try {
-            byte[] decryptFileData = EncryptUtil.decryptFile(
-                    fileToProcessIS,
-                    secretFilePathIS,
-                    "test".toCharArray()
-            );
-            FileUtils.writeByteArrayToFile(
-                    decryptedFile.getFile(), decryptFileData);
-            Assert.assertEquals(1,Files.readAllLines(decryptedFile.getFile().toPath()).size());
+            byte[] decryptFileData = EncryptUtil.decryptFile(fileToProcessIS, secretFilePathIS, "test".toCharArray());
+            FileUtils.writeByteArrayToFile(decryptedFile.getFile(), decryptFileData);
+            List<String> fileContentLines = Files.readAllLines(decryptedFile.getFile().toPath());
+            Assert.assertEquals(1, fileContentLines.size());
+            Assert.assertEquals("13131;00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;;22222;0000;1;000002;5422;fc123543;12345678901;00;", fileContentLines.get(0));
         } catch (Exception e) {
             Assert.fail();
         } finally {
             fileToProcessIS.close();
             secretFilePathIS.close();
         }
-
     }
 
     @SneakyThrows
     @Test
-    public void testWriter_KO_Encrypt() {
-        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
-                "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/wrongKey.asc", true
-        );
+    public void testWriterWithEncryptionEnabledFailsWhenPublicKeyIsEmptyString() {
+        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter("", true);
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
@@ -171,51 +189,61 @@ public class PGPFlatFileItemWriterTest {
         flatFileItemWriter.open(executionContext);
         flatFileItemWriter.update(executionContext);
         flatFileItemWriter.write(Collections.singletonList(getInboundTransaction()));
-        exceptionRule.expect(Exception.class);
+        exceptionRule.expect(IllegalArgumentException.class);
         flatFileItemWriter.close();
-
     }
 
     @SneakyThrows
     @Test
-    public void testWriter_KO_NullList() {
-        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(
-                "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
-                        "/wrongKey.asc", false
-        );
+    public void testWriterWithEncryptionEnabledFailsWhenPublicKeyIsMalformed() {
+        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter("sfjkl24rjkldjfklsf", true);
         UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
         flatFileItemWriter.setResource(resource);
         flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
         ExecutionContext executionContext = MetaDataInstanceFactory.createStepExecution().getExecutionContext();
         flatFileItemWriter.open(executionContext);
         flatFileItemWriter.update(executionContext);
-        exceptionRule.expect(Exception.class);
+        flatFileItemWriter.write(Collections.singletonList(getInboundTransaction()));
+        exceptionRule.expect(IOException.class);
+        flatFileItemWriter.close();
+    }
+
+    @SneakyThrows
+    @Test
+    public void testWriterWithEncryptionEnabledFailsWhenItemsIsNull() {
+        PGPFlatFileItemWriter flatFileItemWriter = new PGPFlatFileItemWriter(publicKey, false);
+        UrlResource resource = new UrlResource(tempFolder.getRoot().toURI() + "FilteredRecords_test-trx.csv");
+        flatFileItemWriter.setResource(resource);
+        flatFileItemWriter.setLineAggregator(transactionWriterAggregator());
+        ExecutionContext executionContext = MetaDataInstanceFactory.createStepExecution().getExecutionContext();
+        flatFileItemWriter.open(executionContext);
+        flatFileItemWriter.update(executionContext);
+        exceptionRule.expect(NullPointerException.class);
         flatFileItemWriter.write(null);
         flatFileItemWriter.close();
-
     }
 
     protected InboundTransaction getInboundTransaction() {
         return InboundTransaction.builder()
-                .idTrxAcquirer("1")
-                .acquirerCode("001")
-                .trxDate("2020-04-09T16:22:45.304Z")
-                .amount(1000L)
+                .acquirerCode("13131")
                 .operationType("00")
-                .pan("pan")
-                .merchantId("0")
                 .circuitType("00")
-                .mcc("813")
-                .idTrxIssuer("0")
-                .amountCurrency("833")
-                .correlationId("1")
-                .acquirerId("0")
+                .pan("pan1")
+                .trxDate("2011-12-03T10:15:30.000+00:00")
+                .idTrxAcquirer("1111111111")
+                .idTrxIssuer("5555")
+                .amount(1111L)
+                .acquirerId("22222")
+                .merchantId("0000")
+                .terminalId("1")
+                .bin("000002")
+                .mcc("5422")
+                .fiscalCode("fc123543")
+                .vat("12345678901")
+                .posType("00")
+                .filename("filename")
+                .lineNumber(1)
                 .build();
-    }
-
-    @After
-    public void tearDown() {
-        tempFolder.delete();
     }
 
 }

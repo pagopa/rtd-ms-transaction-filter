@@ -15,6 +15,8 @@ public interface HpanRestClient {
 
       SasResponse getSasToken(SasScope scope);
 
+      String getPublicKey();
+
       Void uploadFile(File fileToUpload, String sas, String authorizedContainer);
 
       void cleanTempFile();

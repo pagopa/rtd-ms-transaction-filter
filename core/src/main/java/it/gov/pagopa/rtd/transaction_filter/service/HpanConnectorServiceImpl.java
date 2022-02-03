@@ -34,6 +34,11 @@ public class HpanConnectorServiceImpl implements HpanConnectorService {
     }
 
     @Override
+    public String getPublicKey() {
+        return hpanRestClient.getPublicKey();
+    }
+
+    @Override
     public Void uploadFile(File fileToUpload, String sas, String authorizedContainer) {
         return hpanRestClient.uploadFile(fileToUpload, sas, authorizedContainer);
     }

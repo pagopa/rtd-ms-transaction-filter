@@ -12,6 +12,11 @@ public interface HpanStoreService {
      */
     void storeSalt(String salt);
 
+    String getKey(String identifier);
+
+    // TODO
+    void storeKey(String identifier, String key);
+
     /**
     * Method used to recover the stored salt
     * @return String containing the salt
