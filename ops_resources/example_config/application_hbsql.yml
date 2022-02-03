@@ -66,6 +66,8 @@ batchConfiguration:
       enabled: ${ACQ_BATCH_TRX_SENDER_CSTAR_ENABLED:true}
     saltRecovery:
       enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:true}
+    pagopaPublicKeyRecovery:
+      enabled: ${ACQ_BATCH_PAGOPA_PUBLIC_KEY_RECOVERY_ENABLED:true}
     hpanListRecovery:
       enabled: ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true}
       directoryPath: ${ACQ_BATCH_HPAN_INPUT_PATH:C:/batch-transaction-filter/resources/hpans}

@@ -102,8 +102,8 @@ public class TransactionFilterBatch {
     private Boolean hpanListRecoveryEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled}")
     private Boolean hpanListDailyRemovalEnabled;
-    @Value("${batchConfiguration.TransactionFilterBatch.publicKeyRecovery.enabled}")
-    private Boolean publicKeyRecoveryEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled}")
+    private Boolean pagopaPublicKeyRecoveryEnabled;
 
     private DataSource dataSource;
     private StoreService storeService;
@@ -337,7 +337,7 @@ public class TransactionFilterBatch {
         PagopaPublicKeyRecoveryTasklet pagopaPublicKeyRecoveryTasklet = new PagopaPublicKeyRecoveryTasklet();
         pagopaPublicKeyRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
         pagopaPublicKeyRecoveryTasklet.setStoreService(storeService);
-        pagopaPublicKeyRecoveryTasklet.setTaskletEnabled(publicKeyRecoveryEnabled);
+        pagopaPublicKeyRecoveryTasklet.setTaskletEnabled(pagopaPublicKeyRecoveryEnabled);
         return stepBuilderFactory.get("transaction-filter-public-key-recovery-step")
                 .tasklet(pagopaPublicKeyRecoveryTasklet).build();
     }
