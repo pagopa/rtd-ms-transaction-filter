@@ -118,6 +118,7 @@ public class TransactionFilterStep {
 
     public static final String CSTAR_OUTPUT_FILE_PREFIX = "CSTAR.";
     public static final String ADE_OUTPUT_FILE_PREFIX = "ADE.";
+    public static final String PAGOPA_PGP_PUBLIC_KEY_ID = "pagopa";
     private static final String LOG_PREFIX_TRN = "Trn_";
     private static final String LOG_PREFIX_ADE = "Ade_";
     private static final String PARTITIONER_WORKER_STEP_NAME = "partition";
@@ -232,7 +233,7 @@ public class TransactionFilterStep {
     @StepScope
     public PGPFlatFileItemWriter transactionItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
-        PGPFlatFileItemWriter itemWriter = new PGPFlatFileItemWriter(storeService.getKey("pagopa"), applyEncrypt);
+        PGPFlatFileItemWriter itemWriter = new PGPFlatFileItemWriter(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
         itemWriter.setLineAggregator(transactionWriterAggregator());
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
@@ -252,7 +253,7 @@ public class TransactionFilterStep {
     @StepScope
     public PGPFlatFileItemWriter transactionAdeItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
-        PGPFlatFileItemWriter itemWriter = new PGPFlatFileItemWriter(storeService.getKey("pagopa"), applyEncrypt);
+        PGPFlatFileItemWriter itemWriter = new PGPFlatFileItemWriter(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
         itemWriter.setLineAggregator(transactionAdeWriterAggregator());
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");

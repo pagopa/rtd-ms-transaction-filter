@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -152,7 +153,7 @@ public class TransactionFilterBatchTest {
         String publicKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/publicKey.asc";
         Resource publicKeyResource = resolver.getResource(publicKeyPath);
         FileInputStream publicKeyFilePathIS = new FileInputStream(publicKeyResource.getFile());
-        String publicKey = IOUtils.toString(publicKeyFilePathIS, "UTF-8");
+        String publicKey = IOUtils.toString(publicKeyFilePathIS, StandardCharsets.UTF_8);
 
         BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
 
@@ -236,6 +237,38 @@ public class TransactionFilterBatchTest {
 
         Assert.assertEquals(expectedOutputFileTrnContent, new HashSet<>(outputFileTrnContent));
         Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
+
+        // Check that encrypted output files have the same content of unencrypted ones
+        File trxEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("test-trx.csv.pgp")).collect(Collectors.toList()).iterator().next();
+        File adeEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("ADE.test-trx.csv.pgp")).collect(Collectors.toList()).iterator().next();
+
+        FileInputStream trxEncFileIS = new FileInputStream(trxEncFile);
+        FileInputStream adeEncFileIS = new FileInputStream(adeEncFile);
+        FileInputStream secretFilePathIS = null;
+        try {
+            String secretKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/secretKey.asc";
+            Resource secretKeyResource = resolver.getResource(secretKeyPath);
+
+            secretFilePathIS = new FileInputStream(secretKeyResource.getFile());
+            byte[] trxEncFileDecryptedFileData = EncryptUtil.decryptFile(trxEncFileIS, secretFilePathIS, "test".toCharArray());
+            File trxEncFileDecryptedFile = tempFolder.newFile("trxEncFileDecrypted.csv");
+            FileUtils.writeByteArrayToFile(trxEncFileDecryptedFile, trxEncFileDecryptedFileData);
+
+            List<String> trxEncFileDecryptedFileContent = Files.readAllLines(trxEncFileDecryptedFile.toPath().toAbsolutePath());
+            Assert.assertEquals(expectedOutputFileTrnContent, new HashSet<>(trxEncFileDecryptedFileContent));
+
+            secretFilePathIS = new FileInputStream(secretKeyResource.getFile());
+            byte[] adeEncFileDecryptedFileData = EncryptUtil.decryptFile(adeEncFileIS, secretFilePathIS, "test".toCharArray());
+            File adeEncFileDecryptedFile = tempFolder.newFile("adeEncFileDecrypted.csv");
+            FileUtils.writeByteArrayToFile(adeEncFileDecryptedFile, adeEncFileDecryptedFileData);
+
+            List<String> adeEncFileDecryptedFileContent = Files.readAllLines(adeEncFileDecryptedFile.toPath().toAbsolutePath());
+            Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(adeEncFileDecryptedFileContent));
+        } finally {
+            trxEncFileIS.close();
+            adeEncFileIS.close();
+            secretFilePathIS.close();
+        }
 
         // Check that logs folder contains expected files
         Collection<File> outputLogsFiles = FileUtils.listFiles(
