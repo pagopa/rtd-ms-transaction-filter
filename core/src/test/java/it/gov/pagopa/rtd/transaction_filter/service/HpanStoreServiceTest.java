@@ -2,7 +2,11 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import org.junit.*;
+import org.junit.BeforeClass;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.Rule;
+import org.junit.Assert;
 import org.junit.rules.ExpectedException;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
@@ -11,7 +15,10 @@ import java.util.TreeSet;
 
 public class HpanStoreServiceTest {
 
-    public HpanStoreServiceTest(){
+    private TreeSet<String> storeSet;
+    private HpanStoreService hpanStoreService;
+
+    public HpanStoreServiceTest() {
         MockitoAnnotations.initMocks(this);
     }
 
@@ -19,11 +26,7 @@ public class HpanStoreServiceTest {
     public static void configTest() {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.INFO);
-        ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
     }
-
-    private TreeSet<String> storeSet;
-    private HpanStoreService hpanStoreService;
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -35,54 +38,60 @@ public class HpanStoreServiceTest {
     }
 
     @Test
-    public void hasHpan_NoPan() {
-        Assert.assertEquals(0, storeSet.size());
-        Assert.assertFalse(hpanStoreService.hasHpan("pan"));
+    public void hasHpanReturnsTrueWhenPreviouslyStored() {
+        String hpan = "SyIC2A1MZNoXLd1I";
+        hpanStoreService.store(hpan);
+        Assert.assertTrue(hpanStoreService.hasHpan(hpan));
     }
 
     @Test
-    public void hasHpan() {
-        storeSet.add("pan");
-        Assert.assertEquals(1, storeSet.size());
-        Assert.assertFalse(hpanStoreService.hasHpan("wrongPan"));
-        Assert.assertTrue(hpanStoreService.hasHpan("pan"));
+    public void hasHpanReturnsFalseWhenMissing() {
+        String hpan = "SyIC2A1MZNoXLd1I";
+        Assert.assertFalse(hpanStoreService.hasHpan(hpan));
     }
 
     @Test
-    public void store() {
-        Assert.assertEquals(0, storeSet.size());
-        hpanStoreService.store("pan");
-        Assert.assertEquals(1, storeSet.size());
-        Assert.assertTrue(storeSet.contains("pan"));
-    }
-
-    @Test
-    public void store_KO() {
-        Assert.assertEquals(0, storeSet.size());
-        expectedException.expect(NullPointerException.class);
-        hpanStoreService.store(null);
-        Assert.assertEquals(0, storeSet.size());
-    }
-
-    @Test
-    public void hasHpan_KO() {
-        Assert.assertEquals(0, storeSet.size());
+    public void hasHpanNullThrowsNullPointerException() {
         expectedException.expect(NullPointerException.class);
         hpanStoreService.hasHpan(null);
     }
 
     @Test
-    public void storeSalt_OK() {
-        Assert.assertEquals("", hpanStoreService.getSalt());
-
+    public void storeHpanNullThrowsNullPointerException() {
+        expectedException.expect(NullPointerException.class);
+        hpanStoreService.store(null);
     }
 
     @Test
-    public void clearAll() {
+    public void getSaltBeforeStoreSaltReturnsEmptyString() {
+        Assert.assertEquals("", hpanStoreService.getSalt());
+    }
+
+    @Test
+    public void getSaltAfterStoreSaltReturnsStoredValue() {
+        String salt = "11SALT555";
+        hpanStoreService.storeSalt(salt);
+        Assert.assertEquals(salt, hpanStoreService.getSalt());
+    }
+
+    @Test
+    public void getKeyBeforeStoreSaltReturnsNull() {
+        Assert.assertNull(hpanStoreService.getKey("keyName"));
+    }
+
+    @Test
+    public void getKeyAfterStoreSaltReturnStoredValue() {
+        hpanStoreService.storeKey("keyName", "keyValue");
+        Assert.assertEquals("keyValue", hpanStoreService.getKey("keyName"));
+    }
+
+    @Test
+    public void clearAllEmptiesDataStructures() {
         Assert.assertEquals(0, storeSet.size());
         storeSet.add("test");
         hpanStoreService.clearAll();
         Assert.assertEquals(0, storeSet.size());
+        Assert.assertEquals("", hpanStoreService.getSalt());
     }
 
 }
