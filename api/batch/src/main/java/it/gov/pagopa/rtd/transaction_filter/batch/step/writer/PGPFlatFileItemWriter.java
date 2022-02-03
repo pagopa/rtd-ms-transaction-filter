@@ -25,7 +25,7 @@ import java.util.Locale;
 public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction> {
 
     private final String publicKey;
-    private final Boolean applyEncrypt;
+    private final boolean applyEncrypt;
     private Resource resource;
     private Boolean isClosed = false;
 
@@ -45,12 +45,12 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
             try {
                 publicKeyIS = new ByteArrayInputStream(publicKey.getBytes());
                 outputFOS = new FileOutputStream(resource.getFile().getAbsolutePath().concat(".pgp"));
-                PGPPublicKey publicKey = EncryptUtil.readPublicKey(publicKeyIS);
-                String fingerprint = new String(Hex.encode(publicKey.getFingerprint())).toUpperCase(Locale.ROOT);
+                PGPPublicKey pgpPublicKey = EncryptUtil.readPublicKey(publicKeyIS);
+                String fingerprint = new String(Hex.encode(pgpPublicKey.getFingerprint())).toUpperCase(Locale.ROOT);
                 log.info("Encrypting file " + resource.getFilename() + " with PGP key " + fingerprint);
                 EncryptUtil.encryptFile(outputFOS,
                         this.resource.getFile().getAbsolutePath(),
-                        publicKey,
+                        pgpPublicKey,
                         false, true);
                 isClosed = true;
             } finally {

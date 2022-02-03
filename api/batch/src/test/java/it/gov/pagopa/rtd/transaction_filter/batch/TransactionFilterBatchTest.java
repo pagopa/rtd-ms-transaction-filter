@@ -154,7 +154,7 @@ public class TransactionFilterBatchTest {
         FileInputStream publicKeyFilePathIS = new FileInputStream(publicKeyResource.getFile());
         String publicKey = IOUtils.toString(publicKeyFilePathIS, "UTF-8");
 
-        BDDMockito.doReturn(publicKey).when(hpanStoreServiceSpy).getKey(Mockito.eq("pagopa"));
+        BDDMockito.doReturn(publicKey).when(hpanStoreServiceSpy).getKey("pagopa");
 
         tempFolder.newFolder("hpan");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");

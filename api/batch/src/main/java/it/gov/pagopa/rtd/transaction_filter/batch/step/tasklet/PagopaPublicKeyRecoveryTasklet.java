@@ -18,7 +18,7 @@ public class PagopaPublicKeyRecoveryTasklet implements Tasklet {
 
     private HpanConnectorService hpanConnectorService;
     private HpanStoreService hpanStoreService;
-    private Boolean taskletEnabled = false;
+    private boolean taskletEnabled = false;
 
     /**
      * Recovers the PagoPA public key via remote endpoint.
