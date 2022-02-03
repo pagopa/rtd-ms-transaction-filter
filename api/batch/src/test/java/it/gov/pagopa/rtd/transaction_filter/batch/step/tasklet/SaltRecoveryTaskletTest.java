@@ -3,7 +3,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -38,12 +38,12 @@ public class SaltRecoveryTaskletTest {
     private HpanConnectorService hpanConnectorServiceMock;
 
     @Mock
-    private HpanStoreService hpanStoreServiceMock;
+    private StoreService storeServiceMock;
 
     @SneakyThrows
     @Before
     public void setUp() {
-        Mockito.reset(hpanConnectorServiceMock,hpanStoreServiceMock);
+        Mockito.reset(hpanConnectorServiceMock, storeServiceMock);
     }
 
     @Rule
@@ -53,17 +53,17 @@ public class SaltRecoveryTaskletTest {
     @Test
     public void testSalt_Ok() {
         BDDMockito.doReturn("testSalt").when(hpanConnectorServiceMock).getSalt();
-        BDDMockito.doNothing().when(hpanStoreServiceMock).storeSalt(Mockito.eq("testSalt"));
+        BDDMockito.doNothing().when(storeServiceMock).storeSalt(Mockito.eq("testSalt"));
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
         SaltRecoveryTasklet saltRecoveryTasklet = new SaltRecoveryTasklet();
         saltRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
-        saltRecoveryTasklet.setHpanStoreService(hpanStoreServiceMock);
+        saltRecoveryTasklet.setStoreService(storeServiceMock);
         saltRecoveryTasklet.setTaskletEnabled(true);
         saltRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
         BDDMockito.verify(hpanConnectorServiceMock).getSalt();
-        BDDMockito.verify(hpanStoreServiceMock).storeSalt(Mockito.eq("testSalt"));
+        BDDMockito.verify(storeServiceMock).storeSalt(Mockito.eq("testSalt"));
     }
 
     @SneakyThrows

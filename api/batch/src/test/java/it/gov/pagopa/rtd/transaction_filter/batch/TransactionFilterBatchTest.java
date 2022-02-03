@@ -2,7 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.SneakyThrows;
@@ -116,7 +116,7 @@ public class TransactionFilterBatchTest {
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
     @SpyBean
-    HpanStoreService hpanStoreServiceSpy;
+    StoreService storeServiceSpy;
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(new File(getClass().getResource("/test-encrypt").getFile()));
@@ -126,7 +126,7 @@ public class TransactionFilterBatchTest {
     @SneakyThrows
     @Before
     public void setUp() {
-        Mockito.reset(hpanStoreServiceSpy);
+        Mockito.reset(storeServiceSpy);
 
         for (Resource resource : resolver.getResources("classpath:/test-encrypt/errorLogs/*.csv")) {
             resource.getFile().delete();
@@ -154,7 +154,7 @@ public class TransactionFilterBatchTest {
         FileInputStream publicKeyFilePathIS = new FileInputStream(publicKeyResource.getFile());
         String publicKey = IOUtils.toString(publicKeyFilePathIS, "UTF-8");
 
-        BDDMockito.doReturn(publicKey).when(hpanStoreServiceSpy).getKey("pagopa");
+        BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
 
         tempFolder.newFolder("hpan");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");
@@ -194,9 +194,9 @@ public class TransactionFilterBatchTest {
         Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
 
         // Check that the HPAN store has been accessed as expected
-        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).store(Mockito.any());
-        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(4)).hasHpan(Mockito.any());
-        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(2)).getKey(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, Mockito.times(3)).store(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, Mockito.times(4)).hasHpan(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, Mockito.times(2)).getKey(Mockito.any());
 
         // Check that output folder contains expected files, and only those
         Collection<File> outputPgpFiles = FileUtils.listFiles(
@@ -297,7 +297,7 @@ public class TransactionFilterBatchTest {
         panPgpFOS.close();
 
         jobLauncherTestUtils.launchStep("hpan-recovery-master-step");
-        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(0)).store(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, Mockito.times(0)).store(Mockito.any());
 
     }
 }

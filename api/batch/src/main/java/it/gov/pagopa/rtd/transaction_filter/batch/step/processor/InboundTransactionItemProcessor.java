@@ -1,7 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -19,7 +19,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class InboundTransactionItemProcessor implements ItemProcessor<InboundTransaction, InboundTransaction> {
 
-    private final HpanStoreService hpanStoreService;
+    private final StoreService storeService;
     private final boolean applyHashing;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
@@ -28,7 +28,7 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
 
     /**
      * Validates the input {@link InboundTransaction}, and filters the model, if the pan is not available
-     * in the {@link HpanStoreService}. Optionally applies the hashing function to the transaction PAN
+     * in the {@link StoreService}. Optionally applies the hashing function to the transaction PAN
      *
      * @param inboundTransaction instance of {@link InboundTransaction} from the read phase of the step
      * @return instance of  {@link InboundTransaction}
@@ -44,10 +44,10 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
         }
 
         String hpan = applyHashing ?
-                DigestUtils.sha256Hex(inboundTransaction.getPan() + hpanStoreService.getSalt()) :
+                DigestUtils.sha256Hex(inboundTransaction.getPan() + storeService.getSalt()) :
                 inboundTransaction.getPan();
 
-        if (hpanStoreService.hasHpan(hpan)) {
+        if (storeService.hasHpan(hpan)) {
             InboundTransaction resultTransaction =
                     InboundTransaction
                             .builder()
@@ -76,7 +76,7 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
 
             resultTransaction.setPan(applyHashing ?
                     hpan : DigestUtils.sha256Hex(
-                    resultTransaction.getPan() + hpanStoreService.getSalt()));
+                    resultTransaction.getPan() + storeService.getSalt()));
 
             return resultTransaction;
         } else {

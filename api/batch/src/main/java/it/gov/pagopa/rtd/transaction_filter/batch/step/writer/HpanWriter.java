@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.writer;
 
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -16,14 +16,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HpanWriter implements ItemWriter<String> {
 
-    private final HpanStoreService hpanStoreService;
+    private final StoreService storeService;
     private final Boolean applyHashing;
 
     @Override
     public void write(List<? extends String> hpanList) {
         hpanList.stream().forEach(hpan-> {
-            hpanStoreService.store(applyHashing ?
-                    DigestUtils.sha256Hex(hpan+hpanStoreService.getSalt()) : hpan);
+            storeService.store(applyHashing ?
+                    DigestUtils.sha256Hex(hpan+ storeService.getSalt()) : hpan);
         });
     }
 

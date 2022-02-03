@@ -8,14 +8,12 @@ import java.util.HashMap;
 import java.util.TreeSet;
 
 /**
-* Implementation of {@link HpanStoreService}
+* Implementation of {@link StoreService}
  */
-
-// TODO: refactoring - rename the class in a more generic manner e.g. StoreService
 @Service
 @RequiredArgsConstructor
 @Slf4j
-class HpanStoreServiceImpl implements HpanStoreService {
+class StoreServiceImpl implements StoreService {
 
     private final TreeSet<String> hpanSet;
     private final HashMap<String, String> keyMap = new HashMap<>();

@@ -27,7 +27,7 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
     private final String publicKey;
     private final boolean applyEncrypt;
     private Resource resource;
-    private Boolean isClosed = false;
+    private boolean isClosed = false;
 
     @Override
     public void setResource(Resource resource) {

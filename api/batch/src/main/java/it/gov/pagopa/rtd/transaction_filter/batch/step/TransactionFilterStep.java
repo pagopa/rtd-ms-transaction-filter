@@ -15,7 +15,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSender
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
@@ -231,8 +231,8 @@ public class TransactionFilterStep {
     @Bean
     @StepScope
     public PGPFlatFileItemWriter transactionItemWriter(
-            @Value("#{stepExecutionContext['fileName']}") String file, HpanStoreService hpanStoreService) {
-        PGPFlatFileItemWriter itemWriter = new PGPFlatFileItemWriter(hpanStoreService.getKey("pagopa"), applyEncrypt);
+            @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
+        PGPFlatFileItemWriter itemWriter = new PGPFlatFileItemWriter(storeService.getKey("pagopa"), applyEncrypt);
         itemWriter.setLineAggregator(transactionWriterAggregator());
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
@@ -251,8 +251,8 @@ public class TransactionFilterStep {
     @Bean
     @StepScope
     public PGPFlatFileItemWriter transactionAdeItemWriter(
-            @Value("#{stepExecutionContext['fileName']}") String file, HpanStoreService hpanStoreService) {
-        PGPFlatFileItemWriter itemWriter = new PGPFlatFileItemWriter(hpanStoreService.getKey("pagopa"), applyEncrypt);
+            @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
+        PGPFlatFileItemWriter itemWriter = new PGPFlatFileItemWriter(storeService.getKey("pagopa"), applyEncrypt);
         itemWriter.setLineAggregator(transactionAdeWriterAggregator());
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
@@ -268,9 +268,9 @@ public class TransactionFilterStep {
     @Bean
     @StepScope
     public InboundTransactionItemProcessor transactionItemProcessor(
-            HpanStoreService hpanStoreService) {
+            StoreService storeService) {
         return new InboundTransactionItemProcessor(
-                hpanStoreService,
+                storeService,
                 this.applyTrxHashing);
     }
 
@@ -296,10 +296,10 @@ public class TransactionFilterStep {
      * @throws IOException
      */
     @Bean
-    public Step transactionFilterAdeMasterStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService) throws IOException {
+    public Step transactionFilterAdeMasterStep(StoreService storeService, TransactionWriterService transactionWriterService) throws IOException {
         return stepBuilderFactory
                 .get("transaction-filter-ade-master-step")
-                .partitioner(transactionFilterAdeWorkerStep(hpanStoreService, transactionWriterService))
+                .partitioner(transactionFilterAdeWorkerStep(storeService, transactionWriterService))
                 .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
@@ -311,13 +311,13 @@ public class TransactionFilterStep {
      * @return the AdE batch worker step
      */
     @Bean
-    public Step transactionFilterAdeWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService) {
+    public Step transactionFilterAdeWorkerStep(StoreService storeService, TransactionWriterService transactionWriterService) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
         return stepBuilderFactory.get("transaction-filter-ade-worker-step")
                 .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                 .reader(transactionItemReader(null))
-                .writer(transactionAdeItemWriter(null, hpanStoreService))
+                .writer(transactionAdeItemWriter(null, storeService))
                 .faultTolerant()
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
@@ -340,9 +340,9 @@ public class TransactionFilterStep {
      * @throws IOException
      */
     @Bean
-    public Step transactionFilterMasterStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService) throws IOException {
+    public Step transactionFilterMasterStep(StoreService storeService, TransactionWriterService transactionWriterService) throws IOException {
         return stepBuilderFactory.get("transaction-filter-master-step")
-                .partitioner(transactionFilterWorkerStep(hpanStoreService, transactionWriterService))
+                .partitioner(transactionFilterWorkerStep(storeService, transactionWriterService))
                 .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
@@ -352,14 +352,14 @@ public class TransactionFilterStep {
      * using chunk processing for scalability
      */
     @Bean
-    public Step transactionFilterWorkerStep(HpanStoreService hpanStoreService, TransactionWriterService transactionWriterService) {
+    public Step transactionFilterWorkerStep(StoreService storeService, TransactionWriterService transactionWriterService) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
         return stepBuilderFactory.get("transaction-filter-worker-step")
                 .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                 .reader(transactionItemReader(null))
-                .processor(transactionItemProcessor(hpanStoreService))
-                .writer(transactionItemWriter(null, hpanStoreService))
+                .processor(transactionItemProcessor(storeService))
+                .writer(transactionItemWriter(null, storeService))
                 .faultTolerant()
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)

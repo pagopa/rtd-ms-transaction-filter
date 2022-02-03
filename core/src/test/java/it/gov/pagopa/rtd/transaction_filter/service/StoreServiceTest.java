@@ -13,12 +13,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.TreeSet;
 
-public class HpanStoreServiceTest {
+public class StoreServiceTest {
 
     private TreeSet<String> storeSet;
-    private HpanStoreService hpanStoreService;
+    private StoreService storeService;
 
-    public HpanStoreServiceTest() {
+    public StoreServiceTest() {
         MockitoAnnotations.initMocks(this);
     }
 
@@ -34,64 +34,64 @@ public class HpanStoreServiceTest {
     @Before
     public void setUp() {
         storeSet = new TreeSet<>();
-        hpanStoreService = new HpanStoreServiceImpl(storeSet);
+        storeService = new StoreServiceImpl(storeSet);
     }
 
     @Test
     public void hasHpanReturnsTrueWhenPreviouslyStored() {
         String hpan = "SyIC2A1MZNoXLd1I";
-        hpanStoreService.store(hpan);
-        Assert.assertTrue(hpanStoreService.hasHpan(hpan));
+        storeService.store(hpan);
+        Assert.assertTrue(storeService.hasHpan(hpan));
     }
 
     @Test
     public void hasHpanReturnsFalseWhenMissing() {
         String hpan = "SyIC2A1MZNoXLd1I";
-        Assert.assertFalse(hpanStoreService.hasHpan(hpan));
+        Assert.assertFalse(storeService.hasHpan(hpan));
     }
 
     @Test
     public void hasHpanNullThrowsNullPointerException() {
         expectedException.expect(NullPointerException.class);
-        hpanStoreService.hasHpan(null);
+        storeService.hasHpan(null);
     }
 
     @Test
     public void storeHpanNullThrowsNullPointerException() {
         expectedException.expect(NullPointerException.class);
-        hpanStoreService.store(null);
+        storeService.store(null);
     }
 
     @Test
     public void getSaltBeforeStoreSaltReturnsEmptyString() {
-        Assert.assertEquals("", hpanStoreService.getSalt());
+        Assert.assertEquals("", storeService.getSalt());
     }
 
     @Test
     public void getSaltAfterStoreSaltReturnsStoredValue() {
         String salt = "11SALT555";
-        hpanStoreService.storeSalt(salt);
-        Assert.assertEquals(salt, hpanStoreService.getSalt());
+        storeService.storeSalt(salt);
+        Assert.assertEquals(salt, storeService.getSalt());
     }
 
     @Test
     public void getKeyBeforeStoreSaltReturnsNull() {
-        Assert.assertNull(hpanStoreService.getKey("keyName"));
+        Assert.assertNull(storeService.getKey("keyName"));
     }
 
     @Test
     public void getKeyAfterStoreSaltReturnStoredValue() {
-        hpanStoreService.storeKey("keyName", "keyValue");
-        Assert.assertEquals("keyValue", hpanStoreService.getKey("keyName"));
+        storeService.storeKey("keyName", "keyValue");
+        Assert.assertEquals("keyValue", storeService.getKey("keyName"));
     }
 
     @Test
     public void clearAllEmptiesDataStructures() {
         Assert.assertEquals(0, storeSet.size());
         storeSet.add("test");
-        hpanStoreService.clearAll();
+        storeService.clearAll();
         Assert.assertEquals(0, storeSet.size());
-        Assert.assertEquals("", hpanStoreService.getSalt());
+        Assert.assertEquals("", storeService.getSalt());
     }
 
 }

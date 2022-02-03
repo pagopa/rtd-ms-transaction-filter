@@ -1,7 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.Data;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -16,7 +16,7 @@ import org.springframework.batch.repeat.RepeatStatus;
 public class SaltRecoveryTasklet implements Tasklet {
 
     private HpanConnectorService hpanConnectorService;
-    private HpanStoreService hpanStoreService;
+    private StoreService storeService;
     private Boolean taskletEnabled = false;
 
     /**
@@ -29,7 +29,7 @@ public class SaltRecoveryTasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
         if (taskletEnabled) {
-            hpanStoreService.storeSalt(hpanConnectorService.getSalt());
+            storeService.storeSalt(hpanConnectorService.getSalt());
         }
         return RepeatStatus.FINISHED;
     }
