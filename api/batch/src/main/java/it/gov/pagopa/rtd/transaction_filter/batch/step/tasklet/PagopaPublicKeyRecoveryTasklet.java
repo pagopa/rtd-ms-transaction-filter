@@ -10,9 +10,9 @@ import org.springframework.batch.repeat.RepeatStatus;
 
 
 /**
- * TODO
+ * {@link Tasklet} implementations responsible for the retrieval of PGP public keys
+ * exposed via authenticated PagoPA webservices.
  */
-
 @Data
 public class PagopaPublicKeyRecoveryTasklet implements Tasklet {
 
@@ -21,10 +21,14 @@ public class PagopaPublicKeyRecoveryTasklet implements Tasklet {
     private Boolean taskletEnabled = false;
 
     /**
-     * TODO
+     * Recovers the PagoPA public key via remote endpoint.
+     *
+     * @param stepContribution
+     * @param chunkContext
+     * @return the {@link Tasklet} execution status
      */
     @Override
-    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
         if (taskletEnabled) {
             this.hpanStoreService.storeKey("pagopa", hpanConnectorService.getPublicKey());
         }

@@ -12,9 +12,20 @@ public interface HpanStoreService {
      */
     void storeSalt(String salt);
 
+    /**
+     * Get a previously stored PGP key.
+     *
+     * @param identifier the key identifier
+     * @return a String containing the PGP key
+     */
     String getKey(String identifier);
 
-    // TODO
+    /**
+     * Stores a PGP key.
+     *
+     * @param identifier the identifier of the key
+     * @param key a String containing the PGP key
+     */
     void storeKey(String identifier, String key);
 
     /**
