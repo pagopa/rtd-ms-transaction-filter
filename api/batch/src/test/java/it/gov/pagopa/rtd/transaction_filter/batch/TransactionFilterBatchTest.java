@@ -74,7 +74,7 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.panList.linesToSkip=0",
                 "batchConfiguration.TransactionFilterBatch.panList.applyDecrypt=true",
                 "batchConfiguration.TransactionFilterBatch.panList.applyHashing=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath=classpath:/test-encrypt/**/transactions/*trx*.csv",
+                "batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath=classpath:/test-encrypt/**/transactions/",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath=classpath:/test-encrypt/output",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath=classpath:/test-encrypt/errorLogs",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath=classpath:/test-encrypt/publicKey.asc",
@@ -169,9 +169,9 @@ public class TransactionFilterBatchTest {
         panPgpFOS.close();
 
         File outputFileTrn = new File(resolver.getResource("classpath:/test-encrypt/output")
-                .getFile().getAbsolutePath() + "/test-trx.csv");
+                .getFile().getAbsolutePath() + "/CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         File outputFileAde = new File(resolver.getResource("classpath:/test-encrypt/output")
-                .getFile().getAbsolutePath() + "/" + ADE_OUTPUT_FILE_PREFIX + "test-trx.csv");
+                .getFile().getAbsolutePath() + "/" + ADE_OUTPUT_FILE_PREFIX + "CSTAR.99999.TRNLOG.20220204.094652.001.csv");
 
         if (!outputFileTrn.exists()) {
             outputFileTrn.createNewFile();
@@ -201,8 +201,8 @@ public class TransactionFilterBatchTest {
 
         Set<String> outputPgpFilenames = outputPgpFiles.stream().map(p -> p.getName()).collect(Collectors.toSet());
         Set<String> expectedPgpFilenames = new HashSet<>();
-        expectedPgpFilenames.add("test-trx.csv.pgp");
-        expectedPgpFilenames.add("ADE.test-trx.csv.pgp");
+        expectedPgpFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp");
+        expectedPgpFilenames.add("ADE.CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp");
         Assert.assertEquals(expectedPgpFilenames, outputPgpFilenames);
 
         Collection<File> outputCsvFiles = FileUtils.listFiles(
@@ -211,8 +211,8 @@ public class TransactionFilterBatchTest {
 
         Set<String> outputCsvFilenames = outputCsvFiles.stream().map(p -> p.getName()).collect(Collectors.toSet());
         Set<String> expectedCsvFilenames = new HashSet<>();
-        expectedCsvFilenames.add("test-trx.csv");
-        expectedCsvFilenames.add("ADE.test-trx.csv");
+        expectedCsvFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+        expectedCsvFilenames.add("ADE.CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Assert.assertEquals(expectedCsvFilenames, outputCsvFilenames);
 
         List<String> outputFileTrnContent = Files.readAllLines(outputFileTrn.toPath().toAbsolutePath());
@@ -238,19 +238,19 @@ public class TransactionFilterBatchTest {
                 resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), new String[]{"csv"}, false);
         Assert.assertEquals(4, outputLogsFiles.size());
 
-        FileFilter fileFilter = new WildcardFileFilter("*_Trn__FilteredRecords_test-trx.csv");
+        FileFilter fileFilter = new WildcardFileFilter("*_Trn__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, trxFilteredFiles.size());
 
-        fileFilter = new WildcardFileFilter("*_Trn__ErrorRecords_test-trx.csv");
+        fileFilter = new WildcardFileFilter("*_Trn__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, trxErrorFiles.size());
 
-        fileFilter = new WildcardFileFilter("*_Ade__FilteredRecords_test-trx.csv");
+        fileFilter = new WildcardFileFilter("*_Ade__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> adeFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, adeFilteredFiles.size());
 
-        fileFilter = new WildcardFileFilter("*_Ade__ErrorRecords_test-trx.csv");
+        fileFilter = new WildcardFileFilter("*_Ade__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> adeErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, adeErrorFiles.size());
 

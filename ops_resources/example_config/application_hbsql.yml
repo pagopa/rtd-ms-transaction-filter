@@ -41,7 +41,7 @@ batchConfiguration:
       applyDecrypt: ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:false}
       applyHashing: ${ACQ_BATCH_PAN_LIST_APPLY_HASHING:false}
     transactionFilter:
-      transactionDirectoryPath: file:${ACQ_BATCH_TRX_INPUT_PATH:resources/transactions}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
+      transactionDirectoryPath: file:${ACQ_BATCH_TRX_INPUT_PATH:resources/transactions}/
       outputDirectoryPath: file:${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources}/output}
       publicKeyPath: file:${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:}
       partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}

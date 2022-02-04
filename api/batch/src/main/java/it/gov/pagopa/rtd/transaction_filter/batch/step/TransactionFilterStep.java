@@ -121,6 +121,9 @@ public class TransactionFilterStep {
     private static final String LOG_PREFIX_TRN = "Trn_";
     private static final String LOG_PREFIX_ADE = "Ade_";
     private static final String PARTITIONER_WORKER_STEP_NAME = "partition";
+    // [service].[ABI].[filetype].[date].[time].[nnn].csv
+    // see: https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration/standard-pagopa-file-transactions
+    private static final String TRX_FILENAME_PATTERN = "CSTAR.?????.TRNLOG.????????.??????.???.csv";
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
@@ -284,7 +287,7 @@ public class TransactionFilterStep {
     public Partitioner transactionFilterPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(transactionDirectoryPath));
+        partitioner.setResources(resolver.getResources(inputTrxPattern()));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -672,6 +675,15 @@ public class TransactionFilterStep {
             writerExecutor = Executors.newFixedThreadPool(writerPoolSize);
         }
         return writerExecutor;
+    }
+
+    /**
+     * Returns the Ant-style pattern matching input transactions.
+     *
+     * @return a path in ant-style format
+     */
+    public String inputTrxPattern() {
+        return transactionDirectoryPath + "/" + TRX_FILENAME_PATTERN;
     }
 
 }
