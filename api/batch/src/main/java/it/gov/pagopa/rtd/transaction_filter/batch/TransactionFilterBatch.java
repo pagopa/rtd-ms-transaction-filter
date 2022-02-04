@@ -102,7 +102,6 @@ public class TransactionFilterBatch {
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled}")
     private Boolean hpanListDailyRemovalEnabled;
 
-
     private DataSource dataSource;
     private HpanStoreService hpanStoreService;
     private TransactionWriterServiceImpl transactionWriterService;
@@ -131,7 +130,8 @@ public class TransactionFilterBatch {
      */
     @SneakyThrows
     public JobExecution executeBatchJob(Date startDate) {
-        Resource[] transactionResources = resolver.getResources(transactionFilterStep.inputTrxPattern());
+        Resource[] transactionResources = resolver.getResources(transactionFilterStep.getTransactionDirectoryPath() + "/*.csv");
+        transactionResources = transactionFilterStep.filterValidFilenames(transactionResources);
 
         String hpanPath = panReaderStep.getHpanDirectoryPath();
         Resource[] hpanResources = resolver.getResources(hpanPath);
