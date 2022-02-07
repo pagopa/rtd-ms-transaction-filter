@@ -2,7 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.SneakyThrows;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
@@ -104,7 +104,7 @@ public class TransactionFilterBatchWrongInputTest {
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
     @SpyBean
-    HpanStoreService hpanStoreServiceSpy;
+    StoreService hpanStoreServiceSpy;
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(

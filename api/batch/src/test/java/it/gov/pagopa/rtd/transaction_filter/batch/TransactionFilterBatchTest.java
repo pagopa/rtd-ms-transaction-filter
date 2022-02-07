@@ -243,8 +243,8 @@ public class TransactionFilterBatchTest {
         Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
 
         // Check that encrypted output files have the same content of unencrypted ones
-        File trxEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("test-trx.csv.pgp")).collect(Collectors.toList()).iterator().next();
-        File adeEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("ADE.test-trx.csv.pgp")).collect(Collectors.toList()).iterator().next();
+        File trxEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp")).collect(Collectors.toList()).iterator().next();
+        File adeEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("ADE.CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp")).collect(Collectors.toList()).iterator().next();
 
         FileInputStream trxEncFileIS = new FileInputStream(trxEncFile);
         FileInputStream adeEncFileIS = new FileInputStream(adeEncFile);
