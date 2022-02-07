@@ -2,11 +2,12 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.junit.Test;
@@ -16,11 +17,9 @@ import org.junit.Rule;
 import org.junit.Assert;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
-import org.mockito.BDDMockito;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
@@ -42,7 +41,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -86,6 +87,7 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.successArchivePath=classpath:/test-encrypt/success",
                 "batchConfiguration.TransactionFilterBatch.errorArchivePath=classpath:/test-encrypt/error",
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
+                "batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
@@ -115,16 +117,17 @@ public class TransactionFilterBatchTest {
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
     @SpyBean
-    HpanStoreService hpanStoreServiceSpy;
+    StoreService storeServiceSpy;
 
     @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder(
-            new File(getClass().getResource("/test-encrypt").getFile()));
+    public TemporaryFolder tempFolder = new TemporaryFolder(new File(getClass().getResource("/test-encrypt").getFile()));
+
+    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @SneakyThrows
     @Before
     public void setUp() {
-        Mockito.reset(hpanStoreServiceSpy);
+        Mockito.reset(storeServiceSpy);
 
         for (Resource resource : resolver.getResources("classpath:/test-encrypt/errorLogs/*.csv")) {
             resource.getFile().delete();
@@ -143,17 +146,16 @@ public class TransactionFilterBatchTest {
         tempFolder.delete();
     }
 
-    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-
-    private JobParameters defaultJobParameters() {
-        return new JobParametersBuilder()
-                .addDate("startDateTime", new Date())
-                .toJobParameters();
-    }
-
     @SneakyThrows
     @Test
     public void jobExecutionProducesExpectedFiles() {
+
+        String publicKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/publicKey.asc";
+        Resource publicKeyResource = resolver.getResource(publicKeyPath);
+        FileInputStream publicKeyFilePathIS = new FileInputStream(publicKeyResource.getFile());
+        String publicKey = IOUtils.toString(publicKeyFilePathIS, StandardCharsets.UTF_8);
+
+        BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
 
         tempFolder.newFolder("hpan");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");
@@ -181,7 +183,9 @@ public class TransactionFilterBatchTest {
         }
 
         // Check that the job exited with the right exit status
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob(defaultJobParameters());
+        JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
+                .addDate("startDateTime", new Date())
+                .toJobParameters());
 
         // IMPORTANT: file handlers used by listeners must be closed explicitly, otherwise
         // being unbuffered the log files will be created but there won't be any content inside
@@ -191,8 +195,9 @@ public class TransactionFilterBatchTest {
         Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
 
         // Check that the HPAN store has been accessed as expected
-        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(3)).store(Mockito.any());
-        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(4)).hasHpan(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, Mockito.times(3)).store(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, Mockito.times(4)).hasHpan(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, Mockito.times(2)).getKey(Mockito.any());
 
         // Check that output folder contains expected files, and only those
         Collection<File> outputPgpFiles = FileUtils.listFiles(
@@ -232,6 +237,38 @@ public class TransactionFilterBatchTest {
 
         Assert.assertEquals(expectedOutputFileTrnContent, new HashSet<>(outputFileTrnContent));
         Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
+
+        // Check that encrypted output files have the same content of unencrypted ones
+        File trxEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("test-trx.csv.pgp")).collect(Collectors.toList()).iterator().next();
+        File adeEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("ADE.test-trx.csv.pgp")).collect(Collectors.toList()).iterator().next();
+
+        FileInputStream trxEncFileIS = new FileInputStream(trxEncFile);
+        FileInputStream adeEncFileIS = new FileInputStream(adeEncFile);
+        FileInputStream secretFilePathIS = null;
+        try {
+            String secretKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/secretKey.asc";
+            Resource secretKeyResource = resolver.getResource(secretKeyPath);
+
+            secretFilePathIS = new FileInputStream(secretKeyResource.getFile());
+            byte[] trxEncFileDecryptedFileData = EncryptUtil.decryptFile(trxEncFileIS, secretFilePathIS, "test".toCharArray());
+            File trxEncFileDecryptedFile = tempFolder.newFile("trxEncFileDecrypted.csv");
+            FileUtils.writeByteArrayToFile(trxEncFileDecryptedFile, trxEncFileDecryptedFileData);
+
+            List<String> trxEncFileDecryptedFileContent = Files.readAllLines(trxEncFileDecryptedFile.toPath().toAbsolutePath());
+            Assert.assertEquals(expectedOutputFileTrnContent, new HashSet<>(trxEncFileDecryptedFileContent));
+
+            secretFilePathIS = new FileInputStream(secretKeyResource.getFile());
+            byte[] adeEncFileDecryptedFileData = EncryptUtil.decryptFile(adeEncFileIS, secretFilePathIS, "test".toCharArray());
+            File adeEncFileDecryptedFile = tempFolder.newFile("adeEncFileDecrypted.csv");
+            FileUtils.writeByteArrayToFile(adeEncFileDecryptedFile, adeEncFileDecryptedFileData);
+
+            List<String> adeEncFileDecryptedFileContent = Files.readAllLines(adeEncFileDecryptedFile.toPath().toAbsolutePath());
+            Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(adeEncFileDecryptedFileContent));
+        } finally {
+            trxEncFileIS.close();
+            adeEncFileIS.close();
+            secretFilePathIS.close();
+        }
 
         // Check that logs folder contains expected files
         Collection<File> outputLogsFiles = FileUtils.listFiles(
@@ -293,7 +330,7 @@ public class TransactionFilterBatchTest {
         panPgpFOS.close();
 
         jobLauncherTestUtils.launchStep("hpan-recovery-master-step");
-        BDDMockito.verify(hpanStoreServiceSpy, Mockito.times(0)).store(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, Mockito.times(0)).store(Mockito.any());
 
     }
 }

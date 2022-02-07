@@ -9,7 +9,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
-import org.mockito.BDDMockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -141,6 +140,12 @@ public class HpanRestClientTest {
     public void uploadFile() throws IOException {
         File fileToUpload = tempFolder.newFile("testFile");
         assertNull(hpanRestClient.uploadFile(fileToUpload, "sas-token", "authorized-container"));
+    }
+
+    @Test
+    public void getPublicKey() {
+        String publicKey = hpanRestClient.getPublicKey();
+        assertEquals("keycontent", publicKey);
     }
 
     @Test

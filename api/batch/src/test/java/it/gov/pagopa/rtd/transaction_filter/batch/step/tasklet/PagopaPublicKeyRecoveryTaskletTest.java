@@ -21,9 +21,9 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.test.MetaDataInstanceFactory;
 
-public class SaltRecoveryTaskletTest {
+public class PagopaPublicKeyRecoveryTaskletTest {
 
-    public SaltRecoveryTaskletTest(){
+    public PagopaPublicKeyRecoveryTaskletTest(){
         MockitoAnnotations.initMocks(this);
     }
 
@@ -31,7 +31,6 @@ public class SaltRecoveryTaskletTest {
     public static void configTest() {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
         root.setLevel(Level.INFO);
-        ((Logger)LoggerFactory.getLogger("eu.sia")).setLevel(Level.DEBUG);
     }
 
     @Mock
@@ -51,36 +50,34 @@ public class SaltRecoveryTaskletTest {
 
     @SneakyThrows
     @Test
-    public void testSalt_Ok() {
-        BDDMockito.doReturn("testSalt").when(hpanConnectorServiceMock).getSalt();
-        BDDMockito.doNothing().when(storeServiceMock).storeSalt(Mockito.eq("testSalt"));
+    public void testExecuteTaskletWhenEnabled() {
+        BDDMockito.doReturn("keyContent").when(hpanConnectorServiceMock).getPublicKey();
+        BDDMockito.doNothing().when(storeServiceMock).storeKey("pagopa", "keyContent");
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
-        SaltRecoveryTasklet saltRecoveryTasklet = new SaltRecoveryTasklet();
-        saltRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
-        saltRecoveryTasklet.setStoreService(storeServiceMock);
-        saltRecoveryTasklet.setTaskletEnabled(true);
-        saltRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
-        BDDMockito.verify(hpanConnectorServiceMock).getSalt();
-        BDDMockito.verify(storeServiceMock).storeSalt(Mockito.eq("testSalt"));
+        PagopaPublicKeyRecoveryTasklet pagopaPublicKeyRecoveryTasklet = new PagopaPublicKeyRecoveryTasklet();
+        pagopaPublicKeyRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
+        pagopaPublicKeyRecoveryTasklet.setStoreService(storeServiceMock);
+        pagopaPublicKeyRecoveryTasklet.setTaskletEnabled(true);
+        pagopaPublicKeyRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
+        BDDMockito.verify(hpanConnectorServiceMock).getPublicKey();
+        BDDMockito.verify(storeServiceMock).storeKey("pagopa", "keyContent");
     }
 
     @SneakyThrows
     @Test
-    public void testSalt_KO() {
-        BDDMockito.doAnswer(invocationOnMock -> {
-            throw new Exception();
-        }).when(hpanConnectorServiceMock).getSalt();
+    public void testExecuteTaskletWhenDisabled() {
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
-        SaltRecoveryTasklet saltRecoveryTasklet = new SaltRecoveryTasklet();
-        saltRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
-        saltRecoveryTasklet.setTaskletEnabled(true);
-        expectedException.expect(Exception.class);
-        saltRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
-        BDDMockito.verify(hpanConnectorServiceMock).getSalt();
+        PagopaPublicKeyRecoveryTasklet pagopaPublicKeyRecoveryTasklet = new PagopaPublicKeyRecoveryTasklet();
+        pagopaPublicKeyRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
+        pagopaPublicKeyRecoveryTasklet.setStoreService(storeServiceMock);
+        pagopaPublicKeyRecoveryTasklet.setTaskletEnabled(false);
+        pagopaPublicKeyRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
+        BDDMockito.verify(hpanConnectorServiceMock, Mockito.times(0)).getPublicKey();
+        BDDMockito.verify(storeServiceMock, Mockito.times(0)).storeKey("pagopa", "keyContent");
     }
 
 }

@@ -72,7 +72,7 @@ batchConfiguration:
       skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:1000}
       timestampPattern: ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX}
       applyHashing: ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:true}
-      applyEncrypt: ${ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT:false}
+      applyEncrypt: ${ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT:true}
       saveHashing: ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:true}
       linesToSkip: ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0}
       deleteProcessedFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:false}
@@ -89,6 +89,8 @@ batchConfiguration:
       enabled: ${ACQ_BATCH_TRX_SENDER_CSTAR_ENABLED:true}
     saltRecovery:
       enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:true}
+    pagopaPublicKeyRecovery:
+      enabled: ${ACQ_BATCH_PAGOPA_PUBLIC_KEY_RECOVERY_ENABLED:true}
     hpanListRecovery:
       enabled: ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true}
       directoryPath: ${ACQ_BATCH_HPAN_INPUT_PATH:C:/batch-transaction-filter/resources/hpans}
