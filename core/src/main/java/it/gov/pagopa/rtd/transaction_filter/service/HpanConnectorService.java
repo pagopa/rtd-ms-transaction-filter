@@ -34,6 +34,8 @@ public interface HpanConnectorService {
      */
     SasResponse getSasToken(HpanRestClient.SasScope scope);
 
+    String getPublicKey();
+
     /**
      * Method to be called to upload a transaction to a remote storage exposed via REST.
      *

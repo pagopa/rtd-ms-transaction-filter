@@ -20,7 +20,6 @@ import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.util.Objects;
 
 public class HpanConnectorServiceTest {
@@ -38,7 +37,6 @@ public class HpanConnectorServiceTest {
     @Mock
     private HpanRestClient hpanRestClientMock;
     private HpanConnectorService hpanConnectorService;
-
 
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
@@ -69,6 +67,24 @@ public class HpanConnectorServiceTest {
         expectedException.expect(Exception.class);
         hpanConnectorService.getSalt();
         BDDMockito.verify(hpanRestClientMock).getSalt();
+    }
+
+    @Test
+    public void testGetPublicKeyReturnsKeyString() {
+        BDDMockito.doReturn("keyValue").when(hpanRestClientMock).getPublicKey();
+        String publicKey = hpanConnectorService.getPublicKey();
+        Assert.assertEquals("keyValue", publicKey);
+        BDDMockito.verify(hpanRestClientMock).getPublicKey();
+    }
+
+    @Test
+    public void testGetPublicKeyRaisesExceptionOnFailure() {
+        BDDMockito.doAnswer(invocationOnMock -> {
+            throw new Exception();
+        }).when(hpanRestClientMock).getPublicKey();
+        expectedException.expect(Exception.class);
+        hpanConnectorService.getPublicKey();
+        BDDMockito.verify(hpanRestClientMock).getPublicKey();
     }
 
     @SneakyThrows

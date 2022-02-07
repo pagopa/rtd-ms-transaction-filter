@@ -3,7 +3,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step;
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.PGPFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.HpanWriter;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -76,8 +76,8 @@ public class PanReaderStep {
      */
     @Bean
     @StepScope
-    public HpanWriter hpanItemWriter(HpanStoreService hpanStoreService) {
-        return new HpanWriter(hpanStoreService, this.applyPanListHashing);
+    public HpanWriter hpanItemWriter(StoreService storeService) {
+        return new HpanWriter(storeService, this.applyPanListHashing);
     }
 
     /**
@@ -102,8 +102,8 @@ public class PanReaderStep {
      * @throws Exception
      */
     @Bean
-    public Step hpanRecoveryMasterStep(HpanStoreService hpanStoreService) throws Exception {
-        return stepBuilderFactory.get("hpan-recovery-master-step").partitioner(hpanRecoveryWorkerStep(hpanStoreService))
+    public Step hpanRecoveryMasterStep(StoreService storeService) throws Exception {
+        return stepBuilderFactory.get("hpan-recovery-master-step").partitioner(hpanRecoveryWorkerStep(storeService))
                 .partitioner("partition", hpanRecoveryPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
@@ -115,11 +115,11 @@ public class PanReaderStep {
      * @throws Exception
      */
     @Bean
-    public Step hpanRecoveryWorkerStep(HpanStoreService hpanStoreService) throws Exception {
+    public Step hpanRecoveryWorkerStep(StoreService storeService) throws Exception {
         return stepBuilderFactory.get("hpan-recovery-worker-step")
                 .<String, String>chunk(chunkSize)
                 .reader(hpanItemReader(null))
-                .writer(hpanItemWriter(hpanStoreService))
+                .writer(hpanItemWriter(storeService))
                 .faultTolerant()
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)

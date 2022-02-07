@@ -6,9 +6,10 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
-import it.gov.pagopa.rtd.transaction_filter.service.HpanStoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.Data;
@@ -101,9 +102,11 @@ public class TransactionFilterBatch {
     private Boolean hpanListRecoveryEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled}")
     private Boolean hpanListDailyRemovalEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled}")
+    private Boolean pagopaPublicKeyRecoveryEnabled;
 
     private DataSource dataSource;
-    private HpanStoreService hpanStoreService;
+    private StoreService storeService;
     private TransactionWriterServiceImpl transactionWriterService;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -115,12 +118,12 @@ public class TransactionFilterBatch {
         transactionWriterService.closeAll();
     }
 
-    public void createHpanStoreService() {
-        this.hpanStoreService = batchHpanStoreService();
+    public void createStoreService() {
+        this.storeService = batchStoreService();
     }
 
-    public void clearHpanStoreService() {
-        hpanStoreService.clearAll();
+    public void clearStoreService() {
+        storeService.clearAll();
     }
 
     /**
@@ -153,13 +156,13 @@ public class TransactionFilterBatch {
             if (transactionWriterService == null) {
                 transactionWriterService();
             }
-            createHpanStoreService();
+            createStoreService();
             execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
             closeChannels();
-            clearHpanStoreService();
+            clearStoreService();
 
         } else {
             if (transactionResources.length == 0) {
@@ -274,23 +277,25 @@ public class TransactionFilterBatch {
         return jobBuilderFactory.get("transaction-filter-job")
                 .repository(getJobRepository())
                 .listener(jobListener())
-                .start(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
+                .start(pagopaPublicKeyRecoveryTask(this.storeService))
+                .on(FAILED).end()
+                .on("*").to(transactionFilterStep.transactionFilterAdeMasterStep(this.storeService, this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterAdeMasterStep(this.transactionWriterService))
+                .from(transactionFilterStep.transactionFilterAdeMasterStep(this.storeService, this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
                 .on("*").to(hpanListRecoveryTask())
                 .on(FAILED).to(fileManagementTask())
-                .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.hpanStoreService))
+                .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.storeService))
                 .on(FAILED).to(fileManagementTask())
-                .from(saltRecoveryTask(this.hpanStoreService)).on("*")
-                .to(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
+                .from(saltRecoveryTask(this.storeService)).on("*")
+                .to(panReaderStep.hpanRecoveryMasterStep(this.storeService))
                 .on(FAILED).to(fileManagementTask())
-                .from(panReaderStep.hpanRecoveryMasterStep(this.hpanStoreService))
-                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
+                .from(panReaderStep.hpanRecoveryMasterStep(this.storeService))
+                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.storeService,this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterMasterStep(this.hpanStoreService,this.transactionWriterService))
+                .from(transactionFilterStep.transactionFilterMasterStep(this.storeService,this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionSenderCstarMasterStep(this.hpanConnectorService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderCstarMasterStep(this.hpanConnectorService))
@@ -319,13 +324,23 @@ public class TransactionFilterBatch {
     }
 
     @Bean
-    public Step saltRecoveryTask(HpanStoreService hpanStoreService) {
+    public Step saltRecoveryTask(StoreService storeService) {
         SaltRecoveryTasklet saltRecoveryTasklet = new SaltRecoveryTasklet();
         saltRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
-        saltRecoveryTasklet.setHpanStoreService(hpanStoreService);
+        saltRecoveryTasklet.setStoreService(storeService);
         saltRecoveryTasklet.setTaskletEnabled(saltRecoveryEnabled);
         return stepBuilderFactory.get("transaction-filter-salt-recovery-step")
                 .tasklet(saltRecoveryTasklet).build();
+    }
+
+    @Bean
+    public Step pagopaPublicKeyRecoveryTask(StoreService storeService) {
+        PagopaPublicKeyRecoveryTasklet pagopaPublicKeyRecoveryTasklet = new PagopaPublicKeyRecoveryTasklet();
+        pagopaPublicKeyRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
+        pagopaPublicKeyRecoveryTasklet.setStoreService(storeService);
+        pagopaPublicKeyRecoveryTasklet.setTaskletEnabled(pagopaPublicKeyRecoveryEnabled);
+        return stepBuilderFactory.get("transaction-filter-public-key-recovery-step")
+                .tasklet(pagopaPublicKeyRecoveryTasklet).build();
     }
 
     /**
@@ -347,8 +362,8 @@ public class TransactionFilterBatch {
                 .tasklet(fileManagementTasklet).build();
     }
 
-    public HpanStoreService batchHpanStoreService() {
-        return beanFactory.getBean(HpanStoreService.class);
+    public StoreService batchStoreService() {
+        return beanFactory.getBean(StoreService.class);
     }
 
 }

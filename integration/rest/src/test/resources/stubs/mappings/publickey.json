@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/rtd/csv-transaction/publickey"
+  },
+  "response": {
+    "status": "200",
+    "body": "keycontent",
+    "headers": {
+      "Content-Type": "text/plain"
+    }
+  }
+}

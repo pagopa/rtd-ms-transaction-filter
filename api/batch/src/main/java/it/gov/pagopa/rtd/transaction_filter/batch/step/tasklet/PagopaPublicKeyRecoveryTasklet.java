@@ -10,17 +10,18 @@ import org.springframework.batch.repeat.RepeatStatus;
 
 
 /**
- * implementation of the {@link Tasklet}, recovers the salt from a REST service, when enabled
+ * {@link Tasklet} implementations responsible for the retrieval of PGP public keys
+ * exposed via authenticated PagoPA webservices.
  */
 @Data
-public class SaltRecoveryTasklet implements Tasklet {
+public class PagopaPublicKeyRecoveryTasklet implements Tasklet {
 
     private HpanConnectorService hpanConnectorService;
     private StoreService storeService;
-    private Boolean taskletEnabled = false;
+    private boolean taskletEnabled = false;
 
     /**
-     * Recovers a string containing the salt to be applied for the pan hashing.
+     * Recovers the PagoPA public key via remote endpoint.
      *
      * @param stepContribution
      * @param chunkContext
@@ -29,7 +30,7 @@ public class SaltRecoveryTasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
         if (taskletEnabled) {
-            storeService.storeSalt(hpanConnectorService.getSalt());
+            this.storeService.storeKey("pagopa", hpanConnectorService.getPublicKey());
         }
         return RepeatStatus.FINISHED;
     }

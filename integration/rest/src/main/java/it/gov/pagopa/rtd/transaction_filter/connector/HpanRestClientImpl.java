@@ -226,6 +226,11 @@ class HpanRestClientImpl implements HpanRestClient {
     }
 
     @Override
+    public String getPublicKey() {
+        return hpanRestConnector.getPublicKey(apiKey);
+    }
+
+    @Override
     @SneakyThrows
     public Void uploadFile(File fileToUpload, String sas, String authorizedContainer) {
 

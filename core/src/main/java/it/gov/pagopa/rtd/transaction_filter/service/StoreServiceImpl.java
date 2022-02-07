@@ -4,18 +4,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.TreeSet;
 
 /**
-* Implementation of {@link HpanStoreService}
+* Implementation of {@link StoreService}
  */
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
-class HpanStoreServiceImpl implements HpanStoreService {
+class StoreServiceImpl implements StoreService {
 
     private final TreeSet<String> hpanSet;
+    private final HashMap<String, String> keyMap = new HashMap<>();
     private String salt = "";
 
     @Override
@@ -26,6 +27,16 @@ class HpanStoreServiceImpl implements HpanStoreService {
     @Override
     public String getSalt() {
         return this.salt;
+    }
+
+    @Override
+    public void storeKey(String identifier, String key) {
+        this.keyMap.put(identifier, key);
+    }
+
+    @Override
+    public String getKey(String identifier) {
+        return this.keyMap.get(identifier);
     }
 
     @Override
@@ -41,6 +52,7 @@ class HpanStoreServiceImpl implements HpanStoreService {
     @Override
     public void clearAll() {
         hpanSet.clear();
+        keyMap.clear();
         this.salt = "";
     }
 

@@ -26,7 +26,6 @@ public class TransactionItemProcessListenerTest {
         MockitoAnnotations.initMocks(this);
     }
 
-
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
             new File(getClass().getResource("/test-encrypt").getFile()));
