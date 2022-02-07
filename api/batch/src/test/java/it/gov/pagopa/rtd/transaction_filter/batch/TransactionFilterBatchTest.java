@@ -44,7 +44,11 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Date;
+import java.util.Set;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.ADE_OUTPUT_FILE_PREFIX;
