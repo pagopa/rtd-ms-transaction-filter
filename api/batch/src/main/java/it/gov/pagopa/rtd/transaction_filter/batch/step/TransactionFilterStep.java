@@ -236,7 +236,7 @@ public class TransactionFilterStep {
      * @return instance of the itemReader to be used in the first step of the configured job
      */
     @SneakyThrows
-    @Bean
+    @Bean(destroyMethod="")
     @StepScope
     public PGPFlatFileItemWriter transactionItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
@@ -256,7 +256,7 @@ public class TransactionFilterStep {
      * @return an instance of ItemWriter
      */
     @SneakyThrows
-    @Bean
+    @Bean(destroyMethod="")
     @StepScope
     public PGPFlatFileItemWriter transactionAdeItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
