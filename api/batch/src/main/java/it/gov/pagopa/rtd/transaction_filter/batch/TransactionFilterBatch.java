@@ -134,7 +134,7 @@ public class TransactionFilterBatch {
     @SneakyThrows
     public JobExecution executeBatchJob(Date startDate) {
         Resource[] transactionResources = resolver.getResources(transactionFilterStep.getTransactionDirectoryPath() + "/*.csv");
-        transactionResources = transactionFilterStep.filterValidFilenames(transactionResources);
+        transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
 
         String hpanPath = panReaderStep.getHpanDirectoryPath();
         Resource[] hpanResources = resolver.getResources(hpanPath);

@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.filterValidFilenames;
 
-public class TransactionFilterStepTest {
+class TransactionFilterStepTest {
 
     static Stream<Arguments> arrayProvider() {
         return Stream.of(
@@ -33,7 +33,7 @@ public class TransactionFilterStepTest {
 
     @ParameterizedTest
     @MethodSource("arrayProvider")
-    public void inputFilesMustAdhereToNamingConvention(String[][] args) {
+    void inputFilesMustAdhereToNamingConvention(String[][] args) {
         List<Resource> resources = new ArrayList<>();
         for (String filename : args[0]) {
             Resource mockedResource = Mockito.mock(Resource.class);
