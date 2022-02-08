@@ -690,7 +690,7 @@ public class TransactionFilterStep {
      * @param resources
      * @return a filtered list of resources
      */
-    public Resource[] filterValidFilenames(Resource[] resources) {
+    public static Resource[] filterValidFilenames(Resource[] resources) {
         List<Resource> filtered = new ArrayList<>();
         Pattern pattern = Pattern.compile(TRX_FILENAME_PATTERN);
         for (Resource inputResource : resources) {

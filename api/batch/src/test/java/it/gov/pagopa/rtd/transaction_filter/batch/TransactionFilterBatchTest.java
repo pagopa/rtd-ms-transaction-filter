@@ -45,14 +45,11 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.Date;
-import java.util.Set;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.ADE_OUTPUT_FILE_PREFIX;
+import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.filterValidFilenames;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 @RunWith(SpringRunner.class)

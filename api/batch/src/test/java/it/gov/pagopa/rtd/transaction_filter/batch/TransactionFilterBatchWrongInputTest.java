@@ -142,7 +142,7 @@ public class TransactionFilterBatchWrongInputTest {
 
     @SneakyThrows
     @Test
-    public void batchDoesntStartWhen() {
+    public void jobExecutionExitImmediatelyWhenMissingInputFiles() {
         tempFolder.newFolder("hpan");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");
 
