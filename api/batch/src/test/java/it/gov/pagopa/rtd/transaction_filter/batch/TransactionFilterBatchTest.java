@@ -85,6 +85,7 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles=false",
+                "batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles=ERROR",
                 "batchConfiguration.TransactionFilterBatch.successArchivePath=classpath:/test-encrypt/success",
                 "batchConfiguration.TransactionFilterBatch.errorArchivePath=classpath:/test-encrypt/error",
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
