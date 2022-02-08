@@ -133,17 +133,18 @@ public class TransactionFilterBatch {
      */
     @SneakyThrows
     public JobExecution executeBatchJob(Date startDate) {
-        String transactionsPath = transactionFilterStep.getTransactionDirectoryPath();
-        Resource[] transactionResources = resolver.getResources(transactionsPath);
+        Resource[] transactionResources = resolver.getResources(transactionFilterStep.getTransactionDirectoryPath() + "/*.csv");
+        transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
 
         String hpanPath = panReaderStep.getHpanDirectoryPath();
         Resource[] hpanResources = resolver.getResources(hpanPath);
 
         JobExecution execution = null;
 
-        /** The jobLauncher run method is called only if, based on the configured properties, a matching transaction
-        resource is found, and either the remote pan list recovery is enabled, or a pan list file is available locally
-        on the configured path
+        /*
+          The jobLauncher run method is called only if, based on the configured properties, a matching transaction
+          resource is found, and either the remote pan list recovery is enabled, or a pan list file is available locally
+          on the configured path
          */
         if (transactionResources.length > 0 &&
                 (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
@@ -165,7 +166,7 @@ public class TransactionFilterBatch {
 
         } else {
             if (transactionResources.length == 0) {
-                log.info("No transaction file has been found on configured path: {}", transactionsPath);
+                log.info("No transaction file has been found on configured path: {}", transactionFilterStep.getTransactionDirectoryPath());
             }
             if (!getHpanListRecoveryEnabled() && hpanResources.length==0) {
                 log.info("No hpan file has been found on configured path: {}", hpanPath);

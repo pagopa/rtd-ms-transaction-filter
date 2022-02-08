@@ -51,8 +51,12 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor", "readerTaskExecutor"})
@@ -122,6 +126,9 @@ public class TransactionFilterStep {
     private static final String LOG_PREFIX_TRN = "Trn_";
     private static final String LOG_PREFIX_ADE = "Ade_";
     private static final String PARTITIONER_WORKER_STEP_NAME = "partition";
+    // [service].[ABI].[filetype].[date].[time].[nnn].csv
+    // see: https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration/standard-pagopa-file-transactions
+    private static final String TRX_FILENAME_PATTERN = "^CSTAR\\.\\w{5}\\.TRNLOG\\.\\d{8}\\.\\d{6}\\.\\d{3}\\.csv$";
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
@@ -284,7 +291,9 @@ public class TransactionFilterStep {
     public Partitioner transactionFilterPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        partitioner.setResources(resolver.getResources(transactionDirectoryPath));
+        Resource[] resources = resolver.getResources(transactionDirectoryPath + "/*.csv");
+        resources = filterValidFilenames(resources);
+        partitioner.setResources(resources);
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -672,6 +681,25 @@ public class TransactionFilterStep {
             writerExecutor = Executors.newFixedThreadPool(writerPoolSize);
         }
         return writerExecutor;
+    }
+
+    /**
+     * Filter a list of resources retaining only those matching naming convention
+     * stated at https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration/standard-pagopa-file-transactions
+     *
+     * @param resources
+     * @return a filtered list of resources
+     */
+    public static Resource[] filterValidFilenames(Resource[] resources) {
+        List<Resource> filtered = new ArrayList<>();
+        Pattern pattern = Pattern.compile(TRX_FILENAME_PATTERN);
+        for (Resource inputResource : resources) {
+            Matcher matcher = pattern.matcher(inputResource.getFilename());
+            if (matcher.find()) {
+                filtered.add(inputResource);
+            }
+        }
+        return filtered.stream().toArray(Resource[]::new);
     }
 
 }

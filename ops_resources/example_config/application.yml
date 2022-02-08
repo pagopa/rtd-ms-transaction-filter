@@ -64,7 +64,7 @@ batchConfiguration:
       applyDecrypt: ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:false}
       applyHashing: ${ACQ_BATCH_PAN_LIST_APPLY_HASHING:false}
     transactionFilter:
-      transactionDirectoryPath: file:${ACQ_BATCH_TRX_INPUT_PATH:resources/transactions}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
+      transactionDirectoryPath: file:${ACQ_BATCH_TRX_INPUT_PATH:resources/transactions}/
       outputDirectoryPath: file:${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources}/output}
       publicKeyPath: file:${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:}
       partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
@@ -76,7 +76,7 @@ batchConfiguration:
       saveHashing: ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:true}
       linesToSkip: ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0}
       deleteProcessedFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:false}
-      deleteOutputFiles: ${ACQ_BATCH_DELETE_OUTPUT_FILE:ERROR}
+      deleteOutputFiles: ${ACQ_BATCH_DELETE_OUTPUT_FILE:ALWAYS}
       manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE}
       transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
       sftp:
