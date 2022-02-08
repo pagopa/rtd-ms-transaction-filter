@@ -11,7 +11,6 @@ import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.core.io.Resource;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Locale;
 
@@ -27,7 +26,6 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
     private final String publicKey;
     private final boolean applyEncrypt;
     private Resource resource;
-    private boolean isClosed = false;
 
     @Override
     public void setResource(Resource resource) {
@@ -39,7 +37,7 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
     @Override
     public void close() {
         super.close();
-        if (applyEncrypt && !isClosed) {
+        if (applyEncrypt) {
             ByteArrayInputStream publicKeyIS = null;
             FileOutputStream outputFOS = null;
             try {
@@ -52,7 +50,6 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
                         this.resource.getFile().getAbsolutePath(),
                         pgpPublicKey,
                         false, true);
-                isClosed = true;
             } finally {
                 if (publicKeyIS != null) {
                     publicKeyIS.close();
