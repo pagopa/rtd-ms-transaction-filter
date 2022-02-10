@@ -120,10 +120,10 @@ public class TransactionFilterStep {
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize}")
     private Integer writerPoolSize;
 
-    public static final String CSTAR_OUTPUT_FILE_PREFIX = "CSTAR.";
+    public static final String RTD_OUTPUT_FILE_PREFIX = "CSTAR.";
     public static final String ADE_OUTPUT_FILE_PREFIX = "ADE.";
     public static final String PAGOPA_PGP_PUBLIC_KEY_ID = "pagopa";
-    private static final String LOG_PREFIX_TRN = "Trn_";
+    private static final String LOG_PREFIX_TRN = "Rtd_";
     private static final String LOG_PREFIX_ADE = "Ade_";
     private static final String PARTITIONER_WORKER_STEP_NAME = "partition";
     // [service].[ABI].[filetype].[date].[time].[nnn].csv
@@ -606,52 +606,52 @@ public class TransactionFilterStep {
     }
 
     /**
-     * Partitioning strategy for the upload of CSTAR transaction files.
+     * Partitioning strategy for the upload of RTD transaction files.
      *
      * @return a partitioner instance
      * @throws IOException
      */
     @Bean
     @JobScope
-    public Partitioner transactionSenderCstarPartitioner() throws IOException {
+    public Partitioner transactionSenderRtdPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        String pathMatcher = outputDirectoryPath + File.separator + CSTAR_OUTPUT_FILE_PREFIX + "*.pgp";
+        String pathMatcher = outputDirectoryPath + File.separator + RTD_OUTPUT_FILE_PREFIX + "*.pgp";
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
 
     /**
-     * Master step for the upload of CSTAR transaction files.
+     * Master step for the upload of RTD transaction files.
      *
      * @param hpanConnectorService
-     * @return the CSTAR batch master step
+     * @return the RTD batch master step
      * @throws IOException
      */
     @Bean
-    public Step transactionSenderCstarMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
-        return stepBuilderFactory.get("transaction-sender-cstar-master-step")
-                .partitioner(transactionSenderCstarWorkerStep(hpanConnectorService))
-                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderCstarPartitioner())
+    public Step transactionSenderRtdMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
+        return stepBuilderFactory.get("transaction-sender-rtd-master-step")
+                .partitioner(transactionSenderRtdWorkerStep(hpanConnectorService))
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderRtdPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
     /**
-     * Worker step for the upload of CSTAR transaction files.
+     * Worker step for the upload of RTD transaction files.
      *
      * @param hpanConnectorService
-     * @return the CSTAR batch worker step
+     * @return the RTD batch worker step
      */
     @SneakyThrows
     @Bean
-    public Step transactionSenderCstarWorkerStep(HpanConnectorService hpanConnectorService) {
-        return stepBuilderFactory.get("transaction-sender-cstar-worker-step").tasklet(
-                transactionSenderCstarTasklet(null, hpanConnectorService)).build();
+    public Step transactionSenderRtdWorkerStep(HpanConnectorService hpanConnectorService) {
+        return stepBuilderFactory.get("transaction-sender-rtd-worker-step").tasklet(
+                transactionSenderRtdTasklet(null, hpanConnectorService)).build();
     }
 
     /**
-     * Tasklet responsible for the upload of CSTAR transaction files via REST endpoints.
+     * Tasklet responsible for the upload of RTD transaction files via REST endpoints.
      *
      * @param file the file to upload remotely via REST
      * @param hpanConnectorService
@@ -660,7 +660,7 @@ public class TransactionFilterStep {
     @SneakyThrows
     @Bean
     @StepScope
-    public TransactionSenderRestTasklet transactionSenderCstarTasklet(
+    public TransactionSenderRestTasklet transactionSenderRtdTasklet(
             @Value("#{stepExecutionContext['fileName']}") String file,
             HpanConnectorService hpanConnectorService
     ) {
