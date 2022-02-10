@@ -62,8 +62,8 @@ batchConfiguration:
       enabled: ${ACQ_BATCH_TRX_SENDER_FTP_ENABLED:false}
     transactionSenderAde:
       enabled: ${ACQ_BATCH_TRX_SENDER_ADE_ENABLED:true}
-    transactionSenderCstar:
-      enabled: ${ACQ_BATCH_TRX_SENDER_CSTAR_ENABLED:true}
+    transactionSenderRtd:
+      enabled: ${ACQ_BATCH_TRX_SENDER_RTD_ENABLED:true}
     saltRecovery:
       enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:true}
     pagopaPublicKeyRecovery:
@@ -111,8 +111,8 @@ rest-client:
       url: /rtd/payment-instrument-manager/salt
     adesas:
       url: /rtd/csv-transaction/ade/sas
-    cstarsas:
-      url: /rtd/csv-transaction/cstar/sas
+    rtdsas:
+      url: /rtd/csv-transaction/rtd/sas
     mtls:
       enabled: ${HPAN_SERVICE_MTLS_ENABLED:true}
     key-store:

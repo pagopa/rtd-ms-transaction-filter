@@ -91,8 +91,8 @@ public class TransactionFilterStep {
     private boolean transactionSenderFtpEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled}")
     private Boolean transactionSenderAdeEnabled;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderCstar.enabled}")
-    private Boolean transactionSenderCstarEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled}")
+    private Boolean transactionSenderRtdEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath}")
     private String transactionLogsPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterReadLogging}")
@@ -667,8 +667,8 @@ public class TransactionFilterStep {
         TransactionSenderRestTasklet transactionSenderRestTasklet = new TransactionSenderRestTasklet();
         transactionSenderRestTasklet.setHpanConnectorService(hpanConnectorService);
         transactionSenderRestTasklet.setResource(new UrlResource(file));
-        transactionSenderRestTasklet.setTaskletEnabled(transactionSenderCstarEnabled);
-        transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.CSTAR);
+        transactionSenderRestTasklet.setTaskletEnabled(transactionSenderRtdEnabled);
+        transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.RTD);
         return transactionSenderRestTasklet;
     }
 

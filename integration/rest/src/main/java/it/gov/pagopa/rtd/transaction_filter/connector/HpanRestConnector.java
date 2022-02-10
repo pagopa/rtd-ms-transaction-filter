@@ -24,8 +24,8 @@ public interface HpanRestConnector {
     // @Param placeholder is there only to force Feign to add a 'Content-length' header to the request
     SasResponse postAdeSas(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @Param("placeholder") String placeholder);
 
-    @PostMapping(value = "${rest-client.hpan.cstarsas.url}")
+    @PostMapping(value = "${rest-client.hpan.rtdsas.url}")
     // @Param placeholder is there only to force Feign to add a 'Content-length' header to the request
-    SasResponse postCstarSas(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @Param("placeholder") String placeholder);
+    SasResponse postRtdSas(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @Param("placeholder") String placeholder);
 
 }
