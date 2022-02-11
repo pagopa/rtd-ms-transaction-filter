@@ -154,7 +154,7 @@ public class TransactionFilterBatchTest {
         String publicKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/publicKey.asc";
         Resource publicKeyResource = resolver.getResource(publicKeyPath);
         FileInputStream publicKeyFilePathIS = new FileInputStream(publicKeyResource.getFile());
-        String publicKey = IOUtils.toString(publicKeyFilePathIS, StandardCharsets.UTF_8);
+        String publicKey = IOUtils.toString(publicKeyFilePathIS);
 
         BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
 
