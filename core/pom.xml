@@ -14,11 +14,6 @@
     <dependencies>
         <dependency>
             <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
-            <artifactId>rtd-ms-transaction_filter-integration-sftp</artifactId>
-            <version>1.1.0</version>
-        </dependency>
-        <dependency>
-            <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
             <artifactId>rtd-ms-transaction-filter-integration-jpa</artifactId>
             <version>1.1.0</version>
         </dependency>
