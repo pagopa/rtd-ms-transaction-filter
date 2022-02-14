@@ -246,9 +246,6 @@ public class TransactionFilterBatch {
      * This method builds a flow which can be decomposed in the following  
      * steps:
      * <ol>
-     * <li>Input transactions are filtered from unneeded fields (e.g. hashpan)
-     * and an output file for AdE is produced.</li>
-     * <li>The output file for AdE is sent remotely via REST, if enabled.</li>
      * <li>Attempts panlist recovery, if enabled. In case of a failure in the 
      * execution, the process is stopped.</li>
      * <li>Attempts salt recovery, if enabled. In case of a failure in the 
@@ -277,12 +274,6 @@ public class TransactionFilterBatch {
                 .listener(jobListener())
                 .start(pagopaPublicKeyRecoveryTask(this.storeService))
                 .on(FAILED).end()
-                .on("*").to(transactionFilterStep.transactionFilterAdeMasterStep(this.storeService, this.transactionWriterService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterAdeMasterStep(this.storeService, this.transactionWriterService))
-                .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
                 .on("*").to(hpanListRecoveryTask())
                 .on(FAILED).to(fileManagementTask())
                 .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.storeService))
