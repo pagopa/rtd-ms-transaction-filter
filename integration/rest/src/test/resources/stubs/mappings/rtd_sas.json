@@ -1,13 +1,13 @@
 {
   "request": {
     "method": "POST",
-    "urlPath": "/rtd/csv-transaction/cstar/sas"
+    "urlPath": "/rtd/csv-transaction/rtd/sas"
   },
   "response": {
     "status": "201",
     "jsonBody": {
       "sas": "sig=2GKx%2F7lrOhV4YidvHmuW8rMP4lCG%2BqX1pri%2FApjXJok%3D&st=2022-01-25T07:17Z&se=2022-01-25T08:17Z&spr=https&sp=rcw&sr=c&sv=2020-12-06",
-      "authorizedContainer": "cstar-transactions-216fecdd119fa27327d00bfbb975ece53e9c1d007a7e"
+      "authorizedContainer": "rtd-transactions-216fecdd119fa27327d00bfbb975ece53e9c1d007a7e"
     },
     "headers": {
       "Content-Type": "application/json"

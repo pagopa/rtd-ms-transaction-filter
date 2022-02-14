@@ -218,8 +218,8 @@ class HpanRestClientImpl implements HpanRestClient {
     public SasResponse getSasToken(SasScope scope) {
         if (scope.equals(SasScope.ADE)) {
             return hpanRestConnector.postAdeSas(apiKey, "");
-        } else if (scope.equals(SasScope.CSTAR)) {
-            return hpanRestConnector.postCstarSas(apiKey, "");
+        } else if (scope.equals(SasScope.RTD)) {
+            return hpanRestConnector.postRtdSas(apiKey, "");
         } else {
             throw new InvalidParameterException();
         }
