@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.transaction_filter.connector;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
 import lombok.SneakyThrows;
+import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -27,7 +28,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.junit.Assert.*;
 
 
 @RunWith(SpringRunner.class)
@@ -38,6 +38,7 @@ import static org.junit.Assert.*;
                 "rest-client.hpan.list.url=/rtd/payment-instrument-manager/hashed-pans",
                 "rest-client.hpan.salt.url=/rtd/payment-instrument-manager/salt",
                 "rest-client.hpan.adesas.url=/rtd/csv-transaction/ade/sas",
+                "rest-client.hpan.rtdsas.url=/rtd/csv-transaction/rtd/sas",
                 "rest-client.hpan.mtls.enabled=true",
                 "rest-client.hpan.list.checksumHeaderName=checksum",
                 "rest-client.hpan.dateValidation.enabled=true",
@@ -85,7 +86,7 @@ public class HpanRestClientTest {
     @Test
     public void getSalt() {
         String salt = hpanRestClient.getSalt();
-        assertNotNull(salt);
+        Assert.assertNotNull(salt);
     }
 
     @SneakyThrows
@@ -95,7 +96,7 @@ public class HpanRestClientTest {
                 .parse("Mon, 22 Jun 2020 15:58:35 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
         File hpanList = hpanRestClient.getList();
-        assertNotNull(hpanList);
+        Assert.assertNotNull(hpanList);
     }
 
     @SneakyThrows
@@ -105,7 +106,7 @@ public class HpanRestClientTest {
                 .parse("Mon, 22 Jun 2020 00:00:00 GMT",
                         DateTimeFormatter.RFC_1123_DATE_TIME));
         File hpanList = hpanRestClient.getList();
-        assertNotNull(hpanList);
+        Assert.assertNotNull(hpanList);
     }
 
     @SneakyThrows
@@ -124,28 +125,28 @@ public class HpanRestClientTest {
         SasResponse expectedSas = new SasResponse();
         expectedSas.setSas("sig=1FKx%2F7lrOhV4YidvHmuW8rMP4lCG%2BqX1pri%2FApjXJok%3D&st=2022-01-25T07:17Z&se=2022-01-25T08:17Z&spr=https&sp=rcw&sr=c&sv=2020-12-06");
         expectedSas.setAuthorizedContainer("ade-transactions-116fecdd119fa27327d00bfbb975ece53e9c1d007a7e");
-        assertEquals(expectedSas, sas);
+        Assert.assertEquals(expectedSas, sas);
     }
 
     @Test
-    public void getSasTokenForCstarScope() {
-        SasResponse sas = hpanRestClient.getSasToken(HpanRestClient.SasScope.CSTAR);
+    public void getSasTokenForRtdScope() {
+        SasResponse sas = hpanRestClient.getSasToken(HpanRestClient.SasScope.RTD);
         SasResponse expectedSas = new SasResponse();
         expectedSas.setSas("sig=2GKx%2F7lrOhV4YidvHmuW8rMP4lCG%2BqX1pri%2FApjXJok%3D&st=2022-01-25T07:17Z&se=2022-01-25T08:17Z&spr=https&sp=rcw&sr=c&sv=2020-12-06");
-        expectedSas.setAuthorizedContainer("cstar-transactions-216fecdd119fa27327d00bfbb975ece53e9c1d007a7e");
-        assertEquals(expectedSas, sas);
+        expectedSas.setAuthorizedContainer("rtd-transactions-216fecdd119fa27327d00bfbb975ece53e9c1d007a7e");
+        Assert.assertEquals(expectedSas, sas);
     }
 
     @Test
     public void uploadFile() throws IOException {
         File fileToUpload = tempFolder.newFile("testFile");
-        assertNull(hpanRestClient.uploadFile(fileToUpload, "sas-token", "authorized-container"));
+        Assert.assertNull(hpanRestClient.uploadFile(fileToUpload, "sas-token", "authorized-container"));
     }
 
     @Test
     public void getPublicKey() {
         String publicKey = hpanRestClient.getPublicKey();
-        assertEquals("keycontent", publicKey);
+        Assert.assertEquals("keycontent", publicKey);
     }
 
     @Test

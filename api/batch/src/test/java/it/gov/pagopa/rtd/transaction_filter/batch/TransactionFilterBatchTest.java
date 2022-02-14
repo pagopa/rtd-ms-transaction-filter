@@ -92,7 +92,7 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.transactionSenderCstar.enabled=false",
+                "batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorLogging=true",
@@ -276,11 +276,11 @@ public class TransactionFilterBatchTest {
                 resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), new String[]{"csv"}, false);
         Assert.assertEquals(4, outputLogsFiles.size());
 
-        FileFilter fileFilter = new WildcardFileFilter("*_Trn__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+        FileFilter fileFilter = new WildcardFileFilter("*_Rtd__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, trxFilteredFiles.size());
 
-        fileFilter = new WildcardFileFilter("*_Trn__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+        fileFilter = new WildcardFileFilter("*_Rtd__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, trxErrorFiles.size());
 

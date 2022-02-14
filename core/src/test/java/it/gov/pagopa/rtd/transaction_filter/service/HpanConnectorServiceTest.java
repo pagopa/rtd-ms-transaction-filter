@@ -130,24 +130,24 @@ public class HpanConnectorServiceTest {
     }
 
     @Test
-    public void testGetSasTokenOnCstarScopeReturnsSasResponse() {
+    public void testGetSasTokenOnRtdScopeReturnsSasResponse() {
         SasResponse fakeSasResponse = new SasResponse();
         fakeSasResponse.setSas("sig=1FKx%2F7lrOhV4YidvHmuW8rMP4lCG%2BqJ1pri%2FEpjXJtz%3D&st=2022-01-25T07:17Z&se=2022-01-25T08:17Z&spr=https&sp=rcw&sr=c&sv=2020-12-06");
-        fakeSasResponse.setAuthorizedContainer("ade-transactions-tf6fecdd129fa27327d00bfbb11ece53e9c1d007123");
-        BDDMockito.doReturn(fakeSasResponse).when(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.CSTAR);
-        SasResponse sas = hpanConnectorService.getSasToken(HpanRestClient.SasScope.CSTAR);
+        fakeSasResponse.setAuthorizedContainer("rtd-transactions-tf6fecdd129fa27327d00bfbb11ece53e9c1d007123");
+        BDDMockito.doReturn(fakeSasResponse).when(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.RTD);
+        SasResponse sas = hpanConnectorService.getSasToken(HpanRestClient.SasScope.RTD);
         Assert.assertEquals(sas, fakeSasResponse);
-        BDDMockito.verify(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.CSTAR);
+        BDDMockito.verify(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.RTD);
     }
 
     @Test
-    public void testGetSasTokenOnCstarScopeRaisesExceptionOnFailure() {
+    public void testGetSasTokenOnRtdScopeRaisesExceptionOnFailure() {
         BDDMockito.doAnswer(invocationOnMock -> {
             throw new Exception();
-        }).when(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.CSTAR);
+        }).when(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.RTD);
         expectedException.expect(Exception.class);
-        hpanConnectorService.getSasToken(HpanRestClient.SasScope.CSTAR);
-        BDDMockito.verify(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.CSTAR);
+        hpanConnectorService.getSasToken(HpanRestClient.SasScope.RTD);
+        BDDMockito.verify(hpanRestClientMock).getSasToken(HpanRestClient.SasScope.RTD);
     }
 
     @Test

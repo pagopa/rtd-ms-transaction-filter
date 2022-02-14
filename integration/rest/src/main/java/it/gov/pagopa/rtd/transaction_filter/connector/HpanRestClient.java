@@ -7,7 +7,7 @@ import java.io.File;
  */
 public interface HpanRestClient {
 
-      enum SasScope { ADE, CSTAR }
+      enum SasScope { ADE, RTD }
 
       File getList();
 
