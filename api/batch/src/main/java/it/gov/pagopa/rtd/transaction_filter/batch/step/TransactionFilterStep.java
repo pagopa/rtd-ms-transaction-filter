@@ -11,12 +11,10 @@ import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
-import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -85,10 +83,6 @@ public class TransactionFilterStep {
     private Boolean applyTrxHashing;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt}")
     private Boolean applyEncrypt;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory}")
-    private String localdirectory;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled}")
-    private boolean transactionSenderFtpEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled}")
     private Boolean transactionSenderAdeEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled}")
@@ -483,59 +477,6 @@ public class TransactionFilterStep {
         transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.setPrefix(LOG_PREFIX_TRN);
         return transactionItemProcessListener;
-    }
-
-    /**
-     * @return instance of a partitioner to be used for processing multiple files from a single directory
-     * @throws IOException
-     */
-    @Bean
-    @JobScope
-    public Partitioner transactionSenderFtpPartitioner() throws IOException {
-        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        Resource[] emptyList = {};
-        partitioner.setResources(transactionSenderFtpEnabled ? resolver.getResources(localdirectory) : emptyList);
-        partitioner.partition(partitionerSize);
-        return partitioner;
-    }
-
-    /**
-     * @return master step to be used as the formal main step in the reading phase of the job,
-     * partitioned for scalability on multiple file reading
-     * @throws IOException
-     */
-    @Bean
-    public Step transactionSenderFtpMasterStep(SftpConnectorService sftpConnectorService) throws IOException {
-        return stepBuilderFactory.get("transaction-sender-ftp-master-step")
-                .partitioner(transactionSenderFtpWorkerStep(sftpConnectorService))
-                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderFtpPartitioner())
-                .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
-    }
-
-    /**
-     * @return step instance based on the tasklet to be used for file archival at the end of the reading process
-     */
-    @SneakyThrows
-    @Bean
-    public Step transactionSenderFtpWorkerStep(SftpConnectorService sftpConnectorService) {
-
-        return stepBuilderFactory.get("transaction-sender-ftp-worker-step").tasklet(
-                transactionSenderFtpTasklet(null, sftpConnectorService)).build();
-    }
-
-    @SneakyThrows
-    @Bean
-    @StepScope
-    public TransactionSenderTasklet transactionSenderFtpTasklet(
-            @Value("#{stepExecutionContext['fileName']}") String file,
-            SftpConnectorService sftpConnectorService
-    ) {
-        TransactionSenderTasklet transactionSenderTasklet = new TransactionSenderTasklet();
-        transactionSenderTasklet.setResource(new UrlResource(file));
-        transactionSenderTasklet.setSftpConnectorService(sftpConnectorService);
-        transactionSenderTasklet.setTaskletEnabled(transactionSenderFtpEnabled);
-        return transactionSenderTasklet;
     }
 
     /**

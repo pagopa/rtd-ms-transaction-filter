@@ -117,7 +117,6 @@ public class TransactionItemReaderListenerTest {
 
     }
 
-
     @After
     public void tearDown() {
         tempFolder.delete();

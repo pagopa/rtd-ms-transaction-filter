@@ -91,7 +91,6 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
@@ -155,7 +154,7 @@ public class TransactionFilterBatchTest {
         String publicKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/publicKey.asc";
         Resource publicKeyResource = resolver.getResource(publicKeyPath);
         FileInputStream publicKeyFilePathIS = new FileInputStream(publicKeyResource.getFile());
-        String publicKey = IOUtils.toString(publicKeyFilePathIS, StandardCharsets.UTF_8);
+        String publicKey = IOUtils.toString(publicKeyFilePathIS);
 
         BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
 

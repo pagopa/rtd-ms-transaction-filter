@@ -2,9 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.LoggerRule;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
-import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
-import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
@@ -107,7 +105,6 @@ public class TransactionItemProcessListenerTest {
 
     }
 
-
     @SneakyThrows
     @Test
     public void onProcessError_OK_NoFileWritten() {
@@ -134,7 +131,6 @@ public class TransactionItemProcessListenerTest {
         BDDMockito.verify(transactionWriterService, Mockito.times(0)).write(Mockito.any(),Mockito.any());
 
     }
-
 
     @After
     public void tearDown() {

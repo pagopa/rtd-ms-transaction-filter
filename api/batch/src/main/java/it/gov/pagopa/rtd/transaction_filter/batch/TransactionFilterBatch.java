@@ -10,7 +10,6 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRe
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
-import it.gov.pagopa.rtd.transaction_filter.service.SftpConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -72,7 +71,6 @@ public class TransactionFilterBatch {
     private final StepBuilderFactory stepBuilderFactory;
     private final BeanFactory beanFactory;
     private final HpanConnectorService hpanConnectorService;
-    private final SftpConnectorService sftpConnectorService;
 
     private final static String FAILED = "FAILED";
 
@@ -299,7 +297,6 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
-                .on("*").to(transactionFilterStep.transactionSenderFtpMasterStep(this.sftpConnectorService))
                 .on("*").to(fileManagementTask())
                 .build();
     }
