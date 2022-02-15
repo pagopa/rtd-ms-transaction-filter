@@ -70,7 +70,7 @@ stages:
               failOnStderr: true
 
   - stage: 'Build'
-    displayName: 'Build_and_Pusblih_to_${{ variables.environment }}'
+    displayName: 'Build_and_Publish_to_${{ variables.environment }}'
     dependsOn: Release
     condition: and(succeeded(), eq(variables.isToDeploy, true))
     variables:
