@@ -21,7 +21,6 @@ spec:
           args:
           - -c
           - >-
-            base64 -d /app_certs_in/publickey.asc.base64 > /app_workdir/publickey.asc &&
             base64 -d /app_certs_in/certs.jks.base64 > /app_workdir/certs.jks
           volumeMounts:
             - name: certs-volume
@@ -72,7 +71,5 @@ spec:
             items:
             - key: HPAN_SERVICE_JKS_CONTENT_BASE64
               path: certs.jks.base64
-            - key: HPAN_SERVICE_ENC_PUBLIC_KEY_ARMORED
-              path: publickey.asc.base64
         - name: workdir-volume
           emptyDir: {}
