@@ -12,7 +12,6 @@ To install and run the batch, it's required:
 - _Java 1.8+_
 - _batch-transaction-filter.jar_ artifact
 
-For the application of PGP encryption to the result file, produced by the batch, there will also need a file containing the public key to be used, reported in __Appendix 1 - PGP public key__.
 For the application of decryption of the PGP pan file, it must be provided a file containing the secret key to be applied for the operation.
 To produce the artifact from the source code it will be necessary to have an installation of Maven and a java compiler (jdk1.8+).
 
@@ -169,17 +168,6 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Place in a location of your choice, the configuration files
 
-- Place on the machine, the files of the public and/or private key for pgp, if one of the file encryption/decryption function is active.
-
-- Configure the path to the file containing the public key, through the
-  batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath property, or through the environment variable
-  _ACQ_BATCH_INPUT_PUBLIC_KEYPATH_.
-
-  __Note:__ The configuration is strictly needed only if the encryption function of the produced files is enabled.
-  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
-
-  >batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath = file:/C/:Development/keys/public.asc
-
 - Configure the pointing to the file containing the private key, through the property
   _batchConfiguration.TransactionFilterBatch.panList.secretKeyPath_, or through the environment variable
   _ACQ_BATCH_INPUT_SECRET_KEYPATH_.
@@ -290,13 +278,6 @@ maintained, in order to have the correct setup for the batch execution.
 
   >java -cp "batch-transaction-filter.jar;<vendor_jar>" -Dloader.main=RtdTransactionFilterApplication org.springframework.boot.loader.PropertiesLauncher -jar .\batch-transaction-filter.jar --spring.config.location=file:config\
 
-
-### Appendix 1 - Public PGP Key
-
-For any problem relating to the use of the public key and for the release of the specifications and / or updates relating to the public
-key to be used to encrypt the file, it is mandatory to contact the structure delegated by PagoPA  (ref. SIA OPE Innovative Payments -
-[sistemisti_bigdata@sia.eu](mailto:sistemisti_bigdata@sia.eu)).
-
 ### Appendix 2 - Configuration properties
 
 #### 1. Logging properties
@@ -340,7 +321,6 @@ Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
 __batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath__ | Path where the transaction file to be processed is read | file:/${ACQ_BATCH_TRX_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath__ | Path where the final file is writtene | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/output} | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.publicKeyPath__ | Path containing the public key with which to encrypt the result file | file:/${ACQ_BATCH_INPUT_PUBLIC_KEYPATH:} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize__ | Partitiner size for transaction files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize__ | Chunck size for reading transaction files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.skipLimit__ | Maximum number of records discarded before execution is blocked | ${ACQ_BATCH_INPUT_SKIP_LIMIT:0} | NO
@@ -743,14 +723,6 @@ Regarding the tests in the SIT environment, the client certificate can be self-s
 #### Where should be inserted the Subscription Key obtained after the registration to Azure Portal?
 
 After completing the subscription, the Client can invoke the services by inserting the key obtained "Ocp-Apim-Subscription-Key" as a parameter in the request header.
-
-#### Where is it possible to find the PGP Key necessary for the test (SIT and UAT) Environment?
-
-The PGP Key can be found in the Appendice 1 of the document "RTD Acquirer Interface_v3" (link: https://github.com/pagopa/rtd-ms-transaction-filter/blob/master/ops_resources/RTD_Acquirer_Interface_V3.pdf)
-
-#### Where is it possible to find the PGP Key necessary for the Production Environment?
-
-The PGP Key can be found in the Appendice 9 of the document "RTD Acquirer Interface_v3" (link: https://github.com/pagopa/rtd-ms-transaction-filter/blob/master/ops_resources/RTD_Acquirer_Interface_V3.pdf)
 
 #### PAN List validation error
 
