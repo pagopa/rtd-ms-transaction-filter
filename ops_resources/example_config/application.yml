@@ -78,12 +78,6 @@ batchConfiguration:
       deleteOutputFiles: ${ACQ_BATCH_DELETE_OUTPUT_FILE:ALWAYS}
       manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE}
       transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
-      sftp:
-        localdirectory: file:${SFTP_LOCAL_DIR:resources/output}/${SFTP_FILE_PATTERN:*}
-    transactionSenderFtp:
-      enabled: ${ACQ_BATCH_TRX_SENDER_FTP_ENABLED:false}
-    transactionSenderAde:
-      enabled: ${ACQ_BATCH_TRX_SENDER_ADE_ENABLED:true}
     transactionSenderRtd:
       enabled: ${ACQ_BATCH_TRX_SENDER_RTD_ENABLED:true}
     saltRecovery:
@@ -96,19 +90,6 @@ batchConfiguration:
       filename: ${ACQ_BATCH_HPAN_LIST_FILENAME:hpanList}${ACQ_BATCH_INPUT_FILE_PATTERN:.csv}
       attemptExtract: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
       listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
-
-connectors:
-  sftpConfigurations:
-    connection:
-      host: ${SFTP_HOST:}
-      port: ${SFTP_PORT:10022}
-      user: ${SFTP_USER:}
-      password: ${SFTP_PASSWORD:}
-      privateKey: file:/${SFTP_PRIVATE_KEY:}
-      passphrase: ${SFTP_PASSPHRASE:}
-      allowUnknownKeys: ${SFTP_ALLOW_UNKNOWN_KEYS:true}
-      timeout: ${SFTP_TIMEOUT:5000}
-      directory: ${SFTP_DIRECTORY:/}
 
 rest-client:
   hpan:
@@ -131,10 +112,10 @@ rest-client:
       dateValidationPattern: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION_PATTERN:}
     salt:
       url: /rtd/payment-instrument-manager/salt
-    adesas:
-      url: /rtd/csv-transaction/ade/sas
     rtdsas:
       url: /rtd/csv-transaction/rtd/sas
+    publickey:
+      url: /rtd/csv-transaction/publickey
     mtls:
       enabled: ${HPAN_SERVICE_MTLS_ENABLED:true}
     key-store:

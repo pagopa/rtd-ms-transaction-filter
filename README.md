@@ -187,8 +187,8 @@ maintained, in order to have the correct setup for the batch execution.
   of daily removal for stored PAN files
 
 - Configure the path to the transaction files to be processed, through the
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath_ property, or through the environment variables
-  _ACQ_BATCH_TRX_INPUT_PATH_ for the folder, and _ACQ_BATCH_INPUT_FILE_PATTERN_, for the pattern of files to read.
+  _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath_ property, or through the environment variable
+  _ACQ_BATCH_TRX_INPUT_PATH_.
 
   __Note:__  In the case of file configuration, the path must be preceded by the prefix _file:/_. for example:
 
@@ -236,12 +236,6 @@ maintained, in order to have the correct setup for the batch execution.
 - Configure for product encryption, through the batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt property, or
   through the environment variable _ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT_
 
-- To send the product file on SFTP channel, the functionality must be enabled through
-  _batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled_ properties,
-  then the configurations related to the host, the user used and the authentication method,
-  password-based, or through certificate must be reported. Configurations for sftp are listed under the
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.sftp_ root in the configuration properties appendix.
-
 - Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles_
   on true/false value to either delete al processed files, or store on the archival directories.
 
@@ -251,7 +245,7 @@ maintained, in order to have the correct setup for the batch execution.
 
 - Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles_
   on KEEP to always maintain the output files, ERROR to delete them in case of a FAILURE during the process phase, ALWAYS to
-  delete the files at the end of the execution (option to be used in junction with the sftp internal sender task).
+  delete the files at the end of the execution (option to be used in junction with the internal sender task).
 
 - To enable the passages related to the jump recovery services, or the pan list through REST services,
   configure the properties following the definitions in the section __Connecting to REST Services__.
@@ -319,7 +313,7 @@ __batchConfiguration.TransactionFilterBatch.panList.applyDecrypt__ | Flag indica
 
 Key |  Description | Default | Mandatory | Values
 --- | ------------ | ------- | ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath__ | Path where the transaction file to be processed is read | file:/${ACQ_BATCH_TRX_INPUT_PATH:}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv} | YES
+__batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath__ | Path where the transaction file to be processed is read | file:/${ACQ_BATCH_TRX_INPUT_PATH:}/ | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath__ | Path where the final file is writtene | file:/${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:}/output} | YES
 __batchConfiguration.TransactionFilterBatch.transactionFilter.partitionerSize__ | Partitiner size for transaction files | ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10} | NO
 __batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize__ | Chunck size for reading transaction files | ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000} | NO
@@ -340,23 +334,6 @@ __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.e
 __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorLogging__ | Property to enable logging for the records that had errors on the writing phase | ${ACQ_BATCH_TRX_WRITE_ERROR_LOGGING_ENABLED:true} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorFileLogging__ | Property to enable writing the records that had errors on the writing phase | ${ACQ_BATCH_TRX_WRITE_ERROR_FILE_LOGGING_ENABLED:true} | YES | TRUE FALSE
 __batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency__ | Logging frequency for transaction records | ${ACQ_BATCH_TRX_READ_LOGGING_FREQUENCY:10000} | YES
-
-#### 5. Batch properties - SFTP
-
-Key |  Description | Default                                   | Mandatory | Values
---- | ------------ |-------------------------------------------| ------------ | ------
-__batchConfiguration.TransactionFilterBatch.transactionSenderFtp.enabled__ | Indicates whether the sending to the sftp channel is active or not | ${ACQ_BATCH_TRX_SENDER_FTP_ENABLED:false} | YES | TRUE FALSE
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.localdirectory__ |Local directory from which to get the file to be sent on remote SFTP | ${SFTP_LOCAL_DIR:}                        | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.remotedirectory__ | Remote SFTP directory to copy the file to | ${SFTP_DIRECTORY:}                        | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filenamepattern__ | Name / pattern of the file to be moved to remote SFTP | ${SFTP_FILE_PATTERN:}                     | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.filextension__ | File extension to copy to remote SFTP | ${SFTP_FILE_EXTENSION:}                   | NO
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.host__ | SFTP Host | ${SFTP_HOST:}                             | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.port__ | SFTP Port | ${SFTP_PORT:22}                           | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.user__ | User for access to SFTP | ${SFTP_USER:}                             | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.password__ | Password for access to SFTP | ${SFTP_PASSWORD:}                         | YES
-__batchConfiguration.TransactionFilterBatch.transactionFilter.sftp.timeout__ | Timeout related to connection with SFTP | ${SFTP_SOCKET_TIMEOUT:0:}                 | YES
-__connectors.sftpConfigurations.connection.privateKey__ | Indicates the file for channel authentication will take place via a private key | file:/${SFTP_PRIVATE_KEY:}                | NO
-__connectors.sftpConfigurations.connection.passphrase__ | Indicates the passphrase associated with the private key | ${SFTP_PASSPHRASE:}                       | NO
 
 #### 6. Batch properties - REST services
 
