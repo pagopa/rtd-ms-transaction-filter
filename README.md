@@ -16,7 +16,7 @@ The artifact is completely autonomous and usable on any device that has a JVM
 
 To install and run the batch, it's required:
 - _Java 1.8+_
-- _batch-transaction-filter.jar_ artifact
+- _rtd-ms-transaction-filter-<VERSION>-FATJAR.jar_ artifact
 
 For the application of decryption of the PGP pan file, it must be provided a file containing the secret key to be applied for the operation.
 To produce the artifact from the source code it will be necessary to have an installation of Maven and a java compiler (jdk1.8+).
