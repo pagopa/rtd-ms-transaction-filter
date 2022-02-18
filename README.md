@@ -3,6 +3,12 @@
 Component defining the batch process for filtering the input transaction records, based on a list of pan,
 recovered from a local directory or through a remote service. 
 
+### Acquirer Integration with PagoPA Centro Stella
+
+The up-to-date integration guide is maintained here:
+
+[Acquirer Integration with PagoPA Centro Stella - Integration](https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration)
+
 ### Execution requirements
 
 The artifact consists of an executable jar produced with _spring-boot_, therefore all the project dependencies are contained within the jar, together with the classes that contains the business logic.
@@ -655,32 +661,8 @@ __rest-client.hpan.list.dateValidationZone__.
 
 This error occurs generally during the download phase when calling the endpoint to recover the hpan list. due to the file volume it's expected to wait a substantial amount of time, and both the application ad eventual proxyies need to tolerate this wait. For the batch application, the read timeout can be configured with the property __feign.client.config.hpan-service.readTimeout__.
 
-#### TOKENIZED CARDS
-
-#### Should the Acquirer include in the transactions flow sent to the Batch Acquirer, besides the PAN also the TokenPan/s in order to obtain both hashed values (HashPAN and hashTokenPAN)?
-Yes, it should.
-
-#### Should the Acquirer pass the PAR, if applicable, for both the PAN and the TokenPAN?
-Yes, it should.
-
-#### How the Acquirer should value the “operation_type”?
-The acquirer should value the “operation_type” field accordingly with the transaction type.
-The Acquirer should use operation_type values such as “02”, “03”,”xx-future uses”  only if it can distinguish whether a Reversal Payment transaction was executed with the Physical Card or with a Tokenized one.
-If the Acquirer cannot distinguish between these typologies of payments, then it should use the default operation_type value “00”.
-All Refund Transactions must be valued with operation_type = “01”.
-
-#### Should the “Standard PagoPA flow – TokenPANs” be produced by every Acquirer?
-No, it should be produced only by the Acquirers that can manage tokenized transaction (ex. ApplePay, GooglePay etc)
-
-#### If an Acquirer can process transactions made also with Tokenized Cards wallet, what should it do?
-This Acquirer should feed the Batch Acquirer with transactions executed with Physical Cards as well as with Tokenized ones and, for both transactions typologies, it should provide the PAR if available.
-
-#### When and how the new Batch Acquirer files will be released?
-The new Batch Acquirer file will be released gradually in a date TBD. The current Batch Acquirer version will coexist with the new one in order to manage correctly the new and the old version of the transactions flow.
-
 #### Out of memory errors
 The error occurs when trying to process the hpan files without enough space reserved for the java process. As of right now the suggested heap space is of 6 Gigabytes
 
 #### JDBC Error: Unable to acquire JDBC Connection
 The error occurs when using a connection pool that is undersized for the operations to be executed inside the database. In case this error occurs, the suggested action is to extend the connection pool, using the config property _spring.datasource.hikari.maximumPoolSize_
-
