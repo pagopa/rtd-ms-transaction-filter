@@ -77,17 +77,17 @@ public class HpanRestConnectorConfig {
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @SneakyThrows
-    private static String getPomVersion() {
+    public static String getUserAgent() {
         MavenXpp3Reader reader = new MavenXpp3Reader();
         Model model = reader.read(new FileReader(pomFilename));
-        return model.getVersion();
+        return userAgentHeaderPrefix + "/" + model.getVersion();
     }
 
     @Bean
     public RequestInterceptor requestInterceptor() {
         // This interceptor injects the User-Agent header in each request made with the client.
         return requestTemplate -> {
-            requestTemplate.header("User-Agent", userAgentHeaderPrefix + "/" + getPomVersion());
+            requestTemplate.header("User-Agent", getUserAgent());
         };
     }
 
