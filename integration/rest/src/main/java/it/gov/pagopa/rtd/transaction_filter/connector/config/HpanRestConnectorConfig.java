@@ -1,9 +1,12 @@
 package it.gov.pagopa.rtd.transaction_filter.connector.config;
 
 import feign.Client;
+import feign.RequestInterceptor;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestConnector;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
@@ -13,6 +16,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import javax.net.ssl.*;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
@@ -67,7 +71,25 @@ public class HpanRestConnectorConfig {
     @Value("${rest-client.hpan.key-store.password}")
     private String keyStorePassword;
 
+    private static final String userAgentHeaderPrefix = "BatchAcquirer";
+    private static final String pomFilename = "pom.xml";
+
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+
+    @SneakyThrows
+    public static String getUserAgent() {
+        MavenXpp3Reader reader = new MavenXpp3Reader();
+        Model model = reader.read(new FileReader(pomFilename));
+        return userAgentHeaderPrefix + "/" + model.getVersion();
+    }
+
+    @Bean
+    public RequestInterceptor requestInterceptor() {
+        // This interceptor injects the User-Agent header in each request made with the client.
+        return requestTemplate -> {
+            requestTemplate.header("User-Agent", getUserAgent());
+        };
+    }
 
     @Bean
     public Client getFeignClient() throws Exception {
