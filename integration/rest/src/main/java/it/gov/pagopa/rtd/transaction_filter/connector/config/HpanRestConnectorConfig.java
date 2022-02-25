@@ -73,7 +73,7 @@ public class HpanRestConnectorConfig {
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-    public String getUserAgent() {
+    public static String getUserAgent() {
         return userAgentHeaderPrefix + "/" + userAgentVersion;
     }
 
