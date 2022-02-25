@@ -71,7 +71,7 @@ public class HpanRestConnectorConfig {
     @Value("${rest-client.hpan.key-store.password}")
     private String keyStorePassword;
 
-    private static final String userAgentHeaderPrefix = "BatchAcquirer";
+    private static final String userAgentHeaderPrefix = "BatchService";
     private static final String pomFilename = "pom.xml";
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();

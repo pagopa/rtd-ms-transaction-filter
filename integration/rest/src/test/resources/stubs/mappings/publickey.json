@@ -4,7 +4,7 @@
     "urlPath": "/rtd/csv-transaction/publickey",
     "headers": {
       "User-Agent": {
-        "equalTo": "BatchAcquirer/1.1.0"
+        "equalTo": "BatchService/1.1.0"
       }
     }
   },
