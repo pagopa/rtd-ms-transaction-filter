@@ -234,13 +234,14 @@ class HpanRestClientImpl implements HpanRestClient {
     @SneakyThrows
     public Void uploadFile(File fileToUpload, String sas, String authorizedContainer) {
 
+        HpanRestConnectorConfig config = context.getBean(HpanRestConnectorConfig.class);
+
         List<Header> headers = new ArrayList<>();
         headers.add(new BasicHeader("Ocp-Apim-Subscription-Key", apiKey));
-        headers.add(new BasicHeader("User-Agent", HpanRestConnectorConfig.getUserAgent()));
+        headers.add(new BasicHeader("User-Agent", config.getUserAgent()));
         headers.add(new BasicHeader("x-ms-blob-type", HEADER_X_MS_BLOB_TYPE));
         headers.add(new BasicHeader("x-ms-version", HEADER_X_MS_VERSION));
 
-        HpanRestConnectorConfig config = context.getBean(HpanRestConnectorConfig.class);
         SSLContext sslContext = config.getSSLContext();
 
         HttpClient httpclient = HttpClients.custom()

@@ -117,11 +117,6 @@
             <version>5.8.2</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.maven</groupId>
-            <artifactId>maven-model</artifactId>
-            <version>3.3.1</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -165,7 +160,7 @@
                         <version>2.0.0</version>
                     </tagletArtifact>
                 </configuration>
-          </plugin>
+            </plugin>
         </plugins>
     </build>
 
