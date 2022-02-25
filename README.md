@@ -18,7 +18,6 @@ To install and run the batch, it's required:
 - _Java 1.8+_
 - _rtd-ms-transaction-filter-<VERSION>-FATJAR.jar_ artifact
 
-For the application of decryption of the PGP pan file, it must be provided a file containing the secret key to be applied for the operation.
 To produce the artifact from the source code it will be necessary to have an installation of Maven and a java compiler (jdk1.8+).
 
 ### Generating artifact from source
@@ -57,12 +56,6 @@ the cron expression defined in the property _batchConfiguration.TransactionFilte
 
 __Note__: The property _spring.batch.job.enabled_ must as to be configured to false, when overriding the default
 property configurations.
-
-### Minimum Parameters Batch Acquirer
-
-With regard to the Batch Acquirer, the minimum parameters related to the jvm's assigned memory provide a sizing of at least 4GB, therefore it is necessary to add -Xms4g -Xmx4g to the java command.
-Please note that the parameter that controls the hash file date must always be set. In particular, it is necessary to set athe following configuration property: 
-rest-client.hpan.list.dateValidation: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION:true}
 
 ### Logging Configurations
 
@@ -152,131 +145,11 @@ Explanations on how to use the java keytool commands are in the
 References for introducing the Azure truststore key in your system, is in the official
 [Azure Reference Guidelines](https://docs.microsoft.com/it-it/azure/developer/java/sdk/java-sdk-add-certificate-ca-store)
 
-For references to the services displayed through Azure's API service, you can find the corresponding links in
-__Appendix 4 - RTD Acquirer Interface__.
-
 ### Minimal Configuration on Override
 
-When overriding the application.yaml file with an external configuration, the following minimal configuration has to be
-maintained, in order to have the correct setup for the batch execution.
+When using a customized configuration file, the following minimal configuration has to be maintained, in order to have the correct setup for the batch execution.
 
 ![Minimal_Config](readme_screens/Minimal_config.PNG)
-
-### Execution guidelines
-
-- Install and configure the environment so that the Java 1.8+ version is available, as indicated in the prerequisites
-
-- Produce a version of the artifact via source code, as indicated in the corresponding
-  paragraph of the manual. Prepare a configuration application.yml file and, if needed, other files .yml or .properties to be used for
-  the configuration properties.
-
-- Place the _batch-transaction-filter.jar_ artifact in a location of your choice
-
-- Place in a location of your choice, the configuration files
-
-- Configure the pointing to the file containing the private key, through the property
-  _batchConfiguration.TransactionFilterBatch.panList.secretKeyPath_, or through the environment variable
-  _ACQ_BATCH_INPUT_SECRET_KEYPATH_.
-
-  __Note:__ The configuration is strictly necessary only if the decryption function of the files containing the pan list is enabled.
-  In the case of configuration on file, the path must be preceded by prefix _file:/_. for example::
-
-  >batchConfiguration.TransactionFilterBatch.panList.secretKeyPath = file:/C:/Development/keys/secret.asc
-
-- Configure the passphrase to be applied if the secret key is enabled, through the
-  _batchConfiguration.TransactionFilterBatch.panList.passphrase_ property , or via the _ACQ_BATCH_INPUT_SECRET_PASSPHRASE_ environment
-  variable.
-
-- Define a folder where the path files, to be processed, will be placed
-
-- Define _batchConfiguration.TransactionFilterBatch.hpanListRecovery.dailyRemoval.enabled_ parameter on _TRUE_ in case
-  of daily removal for stored PAN files
-
-- Configure the path to the transaction files to be processed, through the
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath_ property, or through the environment variable
-  _ACQ_BATCH_TRX_INPUT_PATH_.
-
-  __Note:__  In the case of file configuration, the path must be preceded by the prefix _file:/_. for example:
-
-  >batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath = file:/C:/Development/transactions/*.csv
-
-- Define a folder for the files containing the PAN list
-
-- Configure the path to the files containing the pan list, through the
-  _batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath_ property , or through the environment variables
-  _ACQ_BATCH_HPAN_INPUT_PATH_ for the folder, and  _ACQ_BATCH_HPAN_INPUT_FILE_PATTERN_, for the pattern of files to read.
-
-  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
-
-  >batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath = file:/C:/Development/hpan/*.pgp
-
-- Define a folder for the output files
-
-- Configure the pointing to the trace files to be processed, through the property
-  _batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath_, or through the environment variable _ACQ_BATCH_OUTPUT_PATH_
-
-  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
-
-  >batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath = file:/C:/Development/output
-
-- Define a folder for the output files
-
-- Configure the pointing to the directory where records that are either filtered, or that had an error, are stored,
-  through the property _batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath_,
-  or through the environment variable _ACQ_BATCH_TRX_LOGS_PATH_
-
-  __Note:__  In the case of configuration on file, the path must be preceded by the prefix _file:/_. for example:
-
-  >batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath = file:/C:/Development/errorLogs
-
-- Configure the hashing application for the pan list, through the _batchConfiguration.TransactionFilterBatch.panList.applyHashing_
-  property, or through the environment variable _ACQ_BATCH_PAN_LIST_APPLY_HASHING_
-
-- Configure for decryption of the file containing the pan list, through the
-  _batchConfiguration.TransactionFilterBatch.panList.applyDecrypt_ property, or through the environment variable
-  _ACQ_BATCH_PAN_LIST_APPLY_DECRYPT_
-
-- Configure the hash application for transactions, through the batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing
-  property, or through the environment variable _ACQ_BATCH_TRX_LIST_APPLY_HASHING_
-
-- Configure for product encryption, through the batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt property, or
-  through the environment variable _ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT_
-
-- Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles_
-  on true/false value to either delete al processed files, or store on the archival directories.
-
-- Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.manageHpanOnSuccess_
-  on KEEP to always maintain the hpan files in the input directory, ARCHIVE to store them in the configured archive directory,
-  DELETE for removal in case of successful file processing.
-
-- Define file management options, defining the _batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles_
-  on KEEP to always maintain the output files, ERROR to delete them in case of a FAILURE during the process phase, ALWAYS to
-  delete the files at the end of the execution (option to be used in junction with the internal sender task).
-
-- To enable the passages related to the jump recovery services, or the pan list through REST services,
-  configure the properties following the definitions in the section __Connecting to REST Services__.
-
-- Configure the process scheduling, through a cron rule, through the
-  _batchConfiguration.TransactionFilterBatch.cron_ property, or through the environment variable _ACQ_BATCH_INPUT_CRON_
-
-- To configure the batch process for the usage of a persisted database, define the configuration parameters under the
-  path prefix _spring.datasource_, refer to the command later defined to add the appropriate driver .jar to the process
-  classpath, in order to use the chosen database.
-
-- Apply any other changes to the configuration parameters, the full list of properties is described in __Appendix 2 - Configuration
-  properties__
-
-- Run the batch. The batch can be started via the java command:
-
-  >java -jar <nome-jar> --spring.config.location=<location batch files>
-
-  __Note:__ replace with the path to the proper configuration directory
-
-  >java -jar batch-transaction-filter.jar --spring.config.location=C:\Development\batch-transaction-file\property\
-
-  For a batch process that does not use the default in-memory database, execute the following command:
-
-  >java -cp "batch-transaction-filter.jar;<vendor_jar>" -Dloader.main=RtdTransactionFilterApplication org.springframework.boot.loader.PropertiesLauncher -jar .\batch-transaction-filter.jar --spring.config.location=file:config\
 
 ### Appendix 2 - Configuration properties
 
@@ -507,8 +380,3 @@ In order to use this appender, the tables reported in the documentation are requ
 where the log records are inserted is the __logging_event__ table.
 
 ![Logback_Event_DB_Screen](readme_screens/Logback_DB_Table_Screen.PNG)
-
-### Appendix 4 - RTD Acquirer Interface
-
-The document containing the details regarding the interface agreement are available
-at [Digital Transaction Filter - Integration](https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration).
