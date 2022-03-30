@@ -10,6 +10,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionChecksumTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
@@ -406,6 +407,58 @@ public class TransactionFilterStep {
         transactionSenderRestTasklet.setTaskletEnabled(transactionSenderRtdEnabled);
         transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.RTD);
         return transactionSenderRestTasklet;
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    @JobScope
+    public Partitioner transactionChecksumPartitioner() throws IOException {
+        // TODO: valutare di unificare questa logica con il partitioner transactionFilter
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        Resource[] resources = resolver.getResources(transactionDirectoryPath + "/*.csv");
+        resources = filterValidFilenames(resources);
+        partitioner.setResources(resources);
+        partitioner.partition(partitionerSize);
+        return partitioner;
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    public Step transactionChecksumMasterStep() throws IOException {
+        return stepBuilderFactory.get("transaction-checksum-master-step")
+            .partitioner(transactionChecksumWorkerStep())
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionChecksumPartitioner())
+            .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * TODO
+     */
+    @SneakyThrows
+    @Bean
+    public Step transactionChecksumWorkerStep() {
+        return stepBuilderFactory.get("transaction-checksum-worker-step").tasklet(
+            transactionChecksumTasklet(null)).build();
+    }
+
+    /**
+     * TODO
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public TransactionChecksumTasklet transactionChecksumTasklet(
+        @Value("#{stepExecutionContext['fileName']}") String file
+    ) {
+        TransactionChecksumTasklet transactionChecksumTasklet = new TransactionChecksumTasklet();
+        transactionChecksumTasklet.setResource(new UrlResource(file));
+        transactionChecksumTasklet.setTaskletEnabled(true);
+        return transactionChecksumTasklet;
     }
 
     /**
