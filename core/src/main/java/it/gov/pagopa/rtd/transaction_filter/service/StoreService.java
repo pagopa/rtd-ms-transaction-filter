@@ -5,10 +5,18 @@ package it.gov.pagopa.rtd.transaction_filter.service;
  * - the pan list obtained from file
  * - the salt obtained remotely
  * - PGP keys obtained at runtime
+ * - Hashes of input files
  *
  * {@link StoreServiceImpl}
  */
 public interface StoreService {
+
+    /**
+     * Method used to recover the stored salt.
+     *
+     * @return String containing the salt
+     */
+    String getSalt();
 
     /**
      * Method to be used to store the salt applied on the pans.
@@ -34,11 +42,20 @@ public interface StoreService {
     void storeKey(String identifier, String key);
 
     /**
-    * Method used to recover the stored salt.
+     * Get a previously stored file hash.
      *
-    * @return String containing the salt
+     * @param filename the hashed file name
+     * @return a String containing the hash in hexadecimal notation
      */
-    String getSalt();
+    String getHash(String filename);
+
+    /**
+     * Stores a file hash.
+     *
+     * @param filename the hashed file name
+     * @param hash a String containing the hash in hexadecimal notation
+     */
+    void storeHash(String filename, String hash);
 
     /**
      * Method to be used to store a hpan.

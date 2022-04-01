@@ -81,6 +81,8 @@ public class TransactionFilterStep {
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing}")
     private Boolean applyTrxHashing;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt}")
+    private Boolean inputFileChecksumEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.inputFileChecksumEnabled}")
     private Boolean applyEncrypt;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled}")
     private Boolean transactionSenderRtdEnabled;
@@ -429,9 +431,9 @@ public class TransactionFilterStep {
      * TODO
      */
     @Bean
-    public Step transactionChecksumMasterStep() throws IOException {
+    public Step transactionChecksumMasterStep(StoreService storeService) throws IOException {
         return stepBuilderFactory.get("transaction-checksum-master-step")
-            .partitioner(transactionChecksumWorkerStep())
+            .partitioner(transactionChecksumWorkerStep(storeService))
             .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionChecksumPartitioner())
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
@@ -441,9 +443,9 @@ public class TransactionFilterStep {
      */
     @SneakyThrows
     @Bean
-    public Step transactionChecksumWorkerStep() {
+    public Step transactionChecksumWorkerStep(StoreService storeService) {
         return stepBuilderFactory.get("transaction-checksum-worker-step").tasklet(
-            transactionChecksumTasklet(null)).build();
+            transactionChecksumTasklet(null, storeService)).build();
     }
 
     /**
@@ -453,11 +455,13 @@ public class TransactionFilterStep {
     @Bean
     @StepScope
     public TransactionChecksumTasklet transactionChecksumTasklet(
-        @Value("#{stepExecutionContext['fileName']}") String file
+        @Value("#{stepExecutionContext['fileName']}") String file,
+        StoreService storeService
     ) {
         TransactionChecksumTasklet transactionChecksumTasklet = new TransactionChecksumTasklet();
         transactionChecksumTasklet.setResource(new UrlResource(file));
-        transactionChecksumTasklet.setTaskletEnabled(true);
+        transactionChecksumTasklet.setStoreService(storeService);
+        transactionChecksumTasklet.setTaskletEnabled(inputFileChecksumEnabled);
         return transactionChecksumTasklet;
     }
 

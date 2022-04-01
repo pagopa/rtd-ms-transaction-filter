@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.io.InputStream;
 import java.nio.file.Files;
 import lombok.Data;
@@ -16,6 +17,7 @@ import org.springframework.core.io.Resource;
 public class TransactionChecksumTasklet implements Tasklet {
 
     private Resource resource;
+    private StoreService storeService;
     private boolean taskletEnabled = false;
 
     @Override
@@ -23,8 +25,9 @@ public class TransactionChecksumTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
         if (taskletEnabled) {
             try (InputStream is = Files.newInputStream(resource.getFile().toPath())) {
-                String sha256 = org.apache.commons.codec.digest.DigestUtils.sha256Hex(is);
-                System.out.println("SHA256:" + sha256);
+                String sha256hex = org.apache.commons.codec.digest.DigestUtils.sha256Hex(is);
+                log.info("File " + resource.getFilename() + " SHA256 digest: " + sha256hex);
+                storeService.storeHash(resource.getFilename(), sha256hex);
             }
         }
         return RepeatStatus.FINISHED;
