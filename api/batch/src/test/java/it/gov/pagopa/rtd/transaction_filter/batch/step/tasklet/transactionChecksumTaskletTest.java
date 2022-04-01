@@ -25,6 +25,16 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 public class transactionChecksumTaskletTest {
 
+    private final static String inputTrxFile = "CSTAR.99999.TRNLOG.20220204.094652.001.csv";
+    private final static String trxResourcePath = "/test-encrypt/transactions/";
+    private final static String expectedHash = "0fae450776f018583e579bdd682bd5abb25abc3abc92da139fc9305c2adee405";
+
+    @Mock
+    private StoreService storeServiceMock;
+
+    @Rule
+    public ExpectedException expectedException = ExpectedException.none();
+
     public transactionChecksumTaskletTest(){
         MockitoAnnotations.initMocks(this);
     }
@@ -35,25 +45,15 @@ public class transactionChecksumTaskletTest {
         root.setLevel(Level.INFO);
     }
 
-    @Mock
-    private StoreService storeServiceMock;
-
     @SneakyThrows
     @Before
     public void setUp() {
         Mockito.reset(storeServiceMock);
     }
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     @SneakyThrows
     @Test
     public void testChecksumOk() {
-        String inputTrxFile = "CSTAR.99999.TRNLOG.20220204.094652.001.csv";
-        String trxResourcePath = "/test-encrypt/transactions/";
-        String expectedHash = "0fae450776f018583e579bdd682bd5abb25abc3abc92da139fc9305c2adee405";
-
         URL url = this.getClass().getResource(trxResourcePath + inputTrxFile);
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] resources = resolver.getResources(url.toString());

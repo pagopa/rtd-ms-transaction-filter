@@ -412,7 +412,10 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Partitioning strategy for the hashing of input transaction files.
+     *
+     * @return a partitioner instance
+     * @throws IOException
      */
     @Bean
     @JobScope
@@ -423,12 +426,15 @@ public class TransactionFilterStep {
         Resource[] resources = resolver.getResources(transactionDirectoryPath + "/*.csv");
         resources = filterValidFilenames(resources);
         partitioner.setResources(resources);
-        partitioner.partition(partitionerSize);
         return partitioner;
     }
 
     /**
-     * TODO
+     * Master step for the hashing of input transaction files.
+     *
+     * @param storeService
+     * @return the hashing batch master step
+     * @throws IOException
      */
     @Bean
     public Step transactionChecksumMasterStep(StoreService storeService) throws IOException {
@@ -439,7 +445,10 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Worker step for the hashing of input transaction files.
+     *
+     * @param storeService
+     * @return the hashing batch worker step
      */
     @SneakyThrows
     @Bean
@@ -449,7 +458,11 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Tasklet responsible for computation of the hash of each input transaction file.
+     *
+     * @param file the file to be hashed
+     * @param storeService
+     * @return an instance configured for the hashing of a specified file
      */
     @SneakyThrows
     @Bean
