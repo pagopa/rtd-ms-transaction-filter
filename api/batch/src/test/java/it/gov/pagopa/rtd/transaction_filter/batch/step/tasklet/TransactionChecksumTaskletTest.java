@@ -72,7 +72,7 @@ public class TransactionChecksumTaskletTest {
         transactionChecksumTasklet.setTaskletEnabled(true);
         transactionChecksumTasklet.setResource(inputFileResource);
         transactionChecksumTasklet.execute(new StepContribution(execution), chunkContext);
-        verify(storeServiceMock).storeHash(Mockito.eq(inputTrxFile), Mockito.eq(expectedHash));
+        verify(storeServiceMock, Mockito.times(1)).storeHash(inputTrxFile, expectedHash);
     }
 
     @Test
