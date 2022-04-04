@@ -4,7 +4,6 @@ import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.io.InputStream;
 import java.nio.file.Files;
 import lombok.Data;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -21,7 +20,6 @@ public class TransactionChecksumTasklet implements Tasklet {
     private boolean taskletEnabled = false;
 
     @Override
-    @SneakyThrows
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
         if (taskletEnabled) {
             try (InputStream is = Files.newInputStream(resource.getFile().toPath())) {
