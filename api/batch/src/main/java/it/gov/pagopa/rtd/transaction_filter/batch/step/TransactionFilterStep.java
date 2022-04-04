@@ -17,6 +17,7 @@ import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
+import java.net.MalformedURLException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -420,7 +421,6 @@ public class TransactionFilterStep {
     @Bean
     @JobScope
     public Partitioner transactionChecksumPartitioner() throws IOException {
-        // TODO: valutare di unificare questa logica con il partitioner transactionFilter
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] resources = resolver.getResources(transactionDirectoryPath + "/*.csv");
@@ -450,9 +450,9 @@ public class TransactionFilterStep {
      * @param storeService
      * @return the hashing batch worker step
      */
-    @SneakyThrows
     @Bean
-    public Step transactionChecksumWorkerStep(StoreService storeService) {
+    public Step transactionChecksumWorkerStep(StoreService storeService)
+        throws MalformedURLException {
         return stepBuilderFactory.get("transaction-checksum-worker-step").tasklet(
             transactionChecksumTasklet(null, storeService)).build();
     }
@@ -464,13 +464,12 @@ public class TransactionFilterStep {
      * @param storeService
      * @return an instance configured for the hashing of a specified file
      */
-    @SneakyThrows
     @Bean
     @StepScope
     public TransactionChecksumTasklet transactionChecksumTasklet(
         @Value("#{stepExecutionContext['fileName']}") String file,
         StoreService storeService
-    ) {
+    ) throws MalformedURLException {
         TransactionChecksumTasklet transactionChecksumTasklet = new TransactionChecksumTasklet();
         transactionChecksumTasklet.setResource(new UrlResource(file));
         transactionChecksumTasklet.setStoreService(storeService);
