@@ -1,16 +1,18 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.reset;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
+import java.io.IOException;
 import java.net.URL;
-import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -23,11 +25,15 @@ import org.springframework.batch.test.MetaDataInstanceFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-public class transactionChecksumTaskletTest {
+public class TransactionChecksumTaskletTest {
 
     private final static String inputTrxFile = "CSTAR.99999.TRNLOG.20220204.094652.001.csv";
     private final static String trxResourcePath = "/test-encrypt/transactions/";
     private final static String expectedHash = "0fae450776f018583e579bdd682bd5abb25abc3abc92da139fc9305c2adee405";
+
+    private Resource inputFileResource;
+    private ChunkContext chunkContext;
+    private StepExecution execution;
 
     @Mock
     private StoreService storeServiceMock;
@@ -35,7 +41,7 @@ public class transactionChecksumTaskletTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    public transactionChecksumTaskletTest(){
+    public TransactionChecksumTaskletTest(){
         MockitoAnnotations.initMocks(this);
     }
 
@@ -45,30 +51,38 @@ public class transactionChecksumTaskletTest {
         root.setLevel(Level.INFO);
     }
 
-    @SneakyThrows
     @Before
-    public void setUp() {
-        Mockito.reset(storeServiceMock);
-    }
+    public void setUp() throws IOException {
+        reset(storeServiceMock);
 
-    @SneakyThrows
-    @Test
-    public void testChecksumOk() {
         URL url = this.getClass().getResource(trxResourcePath + inputTrxFile);
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] resources = resolver.getResources(url.toString());
-        Resource inputFileResource = resources[0];
+        inputFileResource = resources[0];
 
-        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
-        ChunkContext chunkContext = new ChunkContext(stepContext);
+        chunkContext = new ChunkContext(stepContext);
+    }
+
+    @Test
+    public void shouldComputeHash() throws Exception {
         TransactionChecksumTasklet transactionChecksumTasklet = new TransactionChecksumTasklet();
         transactionChecksumTasklet.setStoreService(storeServiceMock);
         transactionChecksumTasklet.setTaskletEnabled(true);
         transactionChecksumTasklet.setResource(inputFileResource);
         transactionChecksumTasklet.execute(new StepContribution(execution), chunkContext);
+        verify(storeServiceMock).storeHash(Mockito.eq(inputTrxFile), Mockito.eq(expectedHash));
+    }
 
-        BDDMockito.verify(storeServiceMock).storeHash(Mockito.eq(inputTrxFile), Mockito.eq(expectedHash));
+    @Test
+    public void shouldNotComputeHashWhenEnabledEqualsFalse() throws Exception {
+        TransactionChecksumTasklet transactionChecksumTasklet = new TransactionChecksumTasklet();
+        transactionChecksumTasklet.setStoreService(storeServiceMock);
+        transactionChecksumTasklet.setTaskletEnabled(false);
+        transactionChecksumTasklet.setResource(inputFileResource);
+        transactionChecksumTasklet.execute(new StepContribution(execution), chunkContext);
+        verify(storeServiceMock, Mockito.times(0)).storeHash(Mockito.any(), Mockito.any());
     }
 
 }
