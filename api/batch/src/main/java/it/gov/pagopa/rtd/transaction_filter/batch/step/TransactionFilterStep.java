@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
+import it.gov.pagopa.rtd.transaction_filter.batch.model.AdeTransactionsAggregate;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemProcessListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemReaderListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemWriterListener;
@@ -8,11 +9,16 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionReade
 import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionFieldSetMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionAggregationProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggregationWriterProcessor;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.CustomIteratorItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileAggregateWriter;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
+import it.gov.pagopa.rtd.transaction_filter.service.AggregationKey;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
@@ -26,6 +32,8 @@ import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.core.step.skip.SkipLimitExceededException;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
@@ -33,6 +41,7 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.file.transform.LineTokenizer;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.LineAggregator;
+import org.springframework.batch.item.support.IteratorItemReader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -111,8 +120,10 @@ public class TransactionFilterStep {
     private Integer writerPoolSize;
 
     public static final String RTD_OUTPUT_FILE_PREFIX = "CSTAR.";
+    public static final String ADE_OUTPUT_FILE_PREFIX = "ADE.";
     public static final String PAGOPA_PGP_PUBLIC_KEY_ID = "pagopa";
     private static final String LOG_PREFIX_TRN = "Rtd_";
+    private static final String LOG_PREFIX_ADE = "Ade_";
     private static final String PARTITIONER_WORKER_STEP_NAME = "partition";
     // [service].[ABI].[filetype].[date].[time].[nnn].csv
     // see: https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration/standard-pagopa-file-transactions
@@ -171,6 +182,11 @@ public class TransactionFilterStep {
         return flatFileItemReader;
     }
 
+    public ItemReader<AggregationKey> mapItemReader(StoreService storeService) {
+        CustomIteratorItemReader<AggregationKey> iteratorItemReader = new CustomIteratorItemReader<>(storeService.getAggregateKeySet());
+        return iteratorItemReader;
+    }
+
     /**
      * @return instance of the LineTokenizer to be used in the itemReader configured for the job
      */
@@ -196,6 +212,19 @@ public class TransactionFilterStep {
     }
 
     /**
+     * TODO
+     */
+    @Bean
+    public LineAggregator<AdeTransactionsAggregate> adeTransactionsAggregateLineAggregator() {
+        BeanWrapperFieldExtractor<AdeTransactionsAggregate> extractor = new BeanWrapperFieldExtractor<>();
+        extractor.setNames(new String[]{ "acquirerCode", "acquirerId", "merchantId", "terminalId", "fiscalCode", "operationType", "accountingDate", "numTrx", "totalAmount" });
+        DelimitedLineAggregator<AdeTransactionsAggregate> delimitedLineTokenizer = new DelimitedLineAggregator<>();
+        delimitedLineTokenizer.setDelimiter(";");
+        delimitedLineTokenizer.setFieldExtractor(extractor);
+        return delimitedLineTokenizer;
+    }
+
+    /**
      * @param file Late-Binding parameter to be used as the resource for the reader instance
      * @return instance of the itemReader to be used in the first step of the configured job
      */
@@ -214,6 +243,31 @@ public class TransactionFilterStep {
     }
 
     /**
+     * TODO
+     */
+    @SneakyThrows
+    @Bean(destroyMethod="")
+    @StepScope
+    public PGPFlatFileAggregateWriter transactionAggregateWriter(
+        @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
+        PGPFlatFileAggregateWriter itemWriter = new PGPFlatFileAggregateWriter(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
+        itemWriter.setLineAggregator(adeTransactionsAggregateLineAggregator());
+        file = file.replaceAll("\\\\", "/");
+        String[] filename = file.split("/");
+        String newFilename = ADE_OUTPUT_FILE_PREFIX + filename[filename.length - 1];
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        itemWriter.setResource(resolver.getResource(outputDirectoryPath.concat("/".concat(newFilename))));
+        return itemWriter;
+    }
+
+    public class NoOpItemWriter implements ItemWriter<InboundTransaction> {
+        @Override
+        public void write(List<? extends InboundTransaction> list) throws Exception {
+            // no-op
+        }
+    }
+
+    /**
      * @return instance of the itemProcessor to be used in the first step of the configured job
      */
     @Bean
@@ -223,6 +277,27 @@ public class TransactionFilterStep {
         return new InboundTransactionItemProcessor(
                 storeService,
                 this.applyTrxHashing);
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    @StepScope
+    public InboundTransactionAggregationProcessor transactionAggregationProcessor(
+        StoreService storeService) {
+        return new InboundTransactionAggregationProcessor(
+            storeService);
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    @StepScope
+    public TransactionAggregationWriterProcessor transactionAggregationWriterProcessor(
+        StoreService storeService) {
+        return new TransactionAggregationWriterProcessor(storeService);
     }
 
     /**
@@ -284,6 +359,113 @@ public class TransactionFilterStep {
                 .build();
     }
 
+    /**
+     * TODO
+     */
+    @Bean
+    public Step transactionAggregationReaderMasterStep(StoreService storeService, TransactionWriterService transactionWriterService) throws IOException {
+        return stepBuilderFactory.get("transaction-aggregation-reader-master-step")
+            .partitioner(transactionAggregationReaderWorkerStep(storeService, transactionWriterService))
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
+            .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    public Step transactionAggregationReaderWorkerStep(StoreService storeService, TransactionWriterService transactionWriterService) {
+        System.out.println("WORKER STEP READER CREATED");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        String executionDate = OffsetDateTime.now().format(fmt);
+        return stepBuilderFactory.get("transaction-aggregation-reader-worker-step")
+            .<InboundTransaction, InboundTransaction>chunk(chunkSize)
+            .reader(transactionItemReader(null))
+            .processor(transactionAggregationProcessor(storeService))
+            .writer(new NoOpItemWriter())
+            .faultTolerant()
+            .skipLimit(skipLimit)
+            .noSkip(FileNotFoundException.class)
+            .noSkip(SkipLimitExceededException.class)
+            .skip(Exception.class)
+            .noRetry(DateTimeParseException.class)
+            .noRollback(DateTimeParseException.class)
+            .noRetry(ConstraintViolationException.class)
+            .noRollback(ConstraintViolationException.class)
+            .listener(transactionAdeItemReaderListener(transactionWriterService, executionDate))
+            .listener(transactionAdeItemProcessListener(transactionWriterService, executionDate))
+            .listener(transactionAdeItemWriteListener(transactionWriterService, executionDate))
+            .listener(transactionAdeStepListener(transactionWriterService, executionDate))
+            .taskExecutor(batchConfig.readerTaskExecutor())
+            .build();
+    }
+
+    /**
+     //     * TODO
+     //     */
+    @Bean
+    public Step transactionAggregationWriterMasterStep(StoreService storeService) throws IOException {
+        return stepBuilderFactory.get("transaction-aggregation-writer-master-step")
+            .partitioner(transactionAggregationWriterWorkerStep(storeService))
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
+            .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * TODO
+     */
+    @Bean
+    public Step transactionAggregationWriterWorkerStep(StoreService storeService) {
+        System.out.println("WORKER STEP WRITER CREATED");
+        return stepBuilderFactory.get("transaction-aggregation-writer-worker-step")
+            .<AggregationKey, AdeTransactionsAggregate>chunk(chunkSize)
+            .reader(mapItemReader(storeService))
+            .processor(transactionAggregationWriterProcessor(storeService))
+            .writer(transactionAggregateWriter(null, storeService))
+            .faultTolerant()
+            //.skipLimit(skipLimit)
+            //.noSkip(FileNotFoundException.class)
+            //.noSkip(SkipLimitExceededException.class)
+            //.skip(Exception.class)
+            .taskExecutor(batchConfig.readerTaskExecutor())
+            .build();
+    }
+
+//    /**
+//     * TODO
+//     */
+//    @Bean
+//    public Step transactionAggregationWriterMasterStep(StoreService storeService) throws IOException {
+//        return stepBuilderFactory.get("transaction-aggregation-writer-master-step")
+//            .partitioner(transactionAggregationWriterWorkerStep(storeService))
+//            // TODO: capire bene interazioni con il partitioner
+//            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
+//            .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+//    }
+//
+//    /**
+//     * TODO
+//     */
+//    @Bean
+//    public Step transactionAggregationWriterWorkerStep(StoreService storeService) {
+//        return stepBuilderFactory.get("transaction-aggregation-writer-worker-step")
+//            .<AggregationKey, AdeTransactionsAggregate>chunk(chunkSize)
+//            .reader(mapItemReader(storeService))
+//            .processor(transactionAggregationWriterProcessor(storeService))
+//            .writer(transactionAggregateWriter(null, storeService))
+//            .faultTolerant()
+//            .skipLimit(skipLimit)
+//            .noSkip(FileNotFoundException.class)
+//            .noSkip(SkipLimitExceededException.class)
+//            .skip(Exception.class)
+//            .noRetry(DateTimeParseException.class)
+//            .noRollback(DateTimeParseException.class)
+//            .noRetry(ConstraintViolationException.class)
+//            .noRollback(ConstraintViolationException.class)
+//            .taskExecutor(batchConfig.readerTaskExecutor())
+//            .build();
+//    }
+
     @Bean
     public TransactionReaderStepListener transactionStepListener(
             TransactionWriterService transactionWriterService, String executionDate) {
@@ -292,6 +474,17 @@ public class TransactionFilterStep {
         transactionReaderStepListener.setErrorTransactionsLogsPath(transactionLogsPath);
         transactionReaderStepListener.setExecutionDate(executionDate);
         transactionReaderStepListener.setPrefix(LOG_PREFIX_TRN);
+        return transactionReaderStepListener;
+    }
+
+    @Bean
+    public TransactionReaderStepListener transactionAdeStepListener(
+        TransactionWriterService transactionWriterService, String executionDate) {
+        TransactionReaderStepListener transactionReaderStepListener = new TransactionReaderStepListener();
+        transactionReaderStepListener.setTransactionWriterService(transactionWriterService);
+        transactionReaderStepListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionReaderStepListener.setExecutionDate(executionDate);
+        transactionReaderStepListener.setPrefix(LOG_PREFIX_ADE);
         return transactionReaderStepListener;
     }
 
@@ -311,6 +504,21 @@ public class TransactionFilterStep {
     }
 
     @Bean
+    public TransactionItemReaderListener transactionAdeItemReaderListener(
+        TransactionWriterService transactionWriterService, String executionDate) {
+        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
+        transactionItemReaderListener.setExecutionDate(executionDate);
+        transactionItemReaderListener.setTransactionWriterService(transactionWriterService);
+        transactionItemReaderListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionItemReaderListener.setEnableAfterReadLogging(enableAfterReadLogging);
+        transactionItemReaderListener.setLoggingFrequency(loggingFrequency);
+        transactionItemReaderListener.setEnableOnErrorFileLogging(enableOnReadErrorFileLogging);
+        transactionItemReaderListener.setEnableOnErrorLogging(enableOnReadErrorLogging);
+        transactionItemReaderListener.setPrefix(LOG_PREFIX_ADE);
+        return transactionItemReaderListener;
+    }
+
+    @Bean
     public TransactionItemWriterListener transactionItemWriteListener(
             TransactionWriterService transactionWriterService, String executionDate) {
         TransactionItemWriterListener transactionItemWriteListener = new TransactionItemWriterListener();
@@ -322,6 +530,21 @@ public class TransactionFilterStep {
         transactionItemWriteListener.setEnableOnErrorFileLogging(enableOnWriteErrorFileLogging);
         transactionItemWriteListener.setEnableOnErrorLogging(enableOnWriteErrorLogging);
         transactionItemWriteListener.setPrefix(LOG_PREFIX_TRN);
+        return transactionItemWriteListener;
+    }
+
+    @Bean
+    public TransactionItemWriterListener transactionAdeItemWriteListener(
+        TransactionWriterService transactionWriterService, String executionDate) {
+        TransactionItemWriterListener transactionItemWriteListener = new TransactionItemWriterListener();
+        transactionItemWriteListener.setExecutionDate(executionDate);
+        transactionItemWriteListener.setTransactionWriterService(transactionWriterService);
+        transactionItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionItemWriteListener.setEnableAfterWriteLogging(enableAfterWriteLogging);
+        transactionItemWriteListener.setLoggingFrequency(loggingFrequency);
+        transactionItemWriteListener.setEnableOnErrorFileLogging(enableOnWriteErrorFileLogging);
+        transactionItemWriteListener.setEnableOnErrorLogging(enableOnWriteErrorLogging);
+        transactionItemWriteListener.setPrefix(LOG_PREFIX_ADE);
         return transactionItemWriteListener;
     }
 
@@ -338,6 +561,22 @@ public class TransactionFilterStep {
         transactionItemProcessListener.setEnableAfterProcessFileLogging(enableAfterProcessFileLogging);
         transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.setPrefix(LOG_PREFIX_TRN);
+        return transactionItemProcessListener;
+    }
+
+    @Bean
+    public TransactionItemProcessListener transactionAdeItemProcessListener(
+        TransactionWriterService transactionWriterService, String executionDate) {
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        transactionItemProcessListener.setExecutionDate(executionDate);
+        transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionItemProcessListener.setEnableAfterProcessLogging(enableAfterProcessLogging);
+        transactionItemProcessListener.setLoggingFrequency(loggingFrequency);
+        transactionItemProcessListener.setEnableOnErrorFileLogging(enableOnProcessErrorFileLogging);
+        transactionItemProcessListener.setEnableOnErrorLogging(enableOnProcessErrorLogging);
+        transactionItemProcessListener.setEnableAfterProcessFileLogging(enableAfterProcessFileLogging);
+        transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
+        transactionItemProcessListener.setPrefix(LOG_PREFIX_ADE);
         return transactionItemProcessListener;
     }
 

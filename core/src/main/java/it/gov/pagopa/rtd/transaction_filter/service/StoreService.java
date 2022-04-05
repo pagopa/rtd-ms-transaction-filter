@@ -1,5 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * Service to be used for storing information shared across steps, e.g.:
  * - the pan list obtained from file
@@ -54,6 +58,15 @@ public interface StoreService {
      * @return boolean defining if the hpan store contains the input hpan
      */
     boolean hasHpan(String hpan);
+
+    void storeAggregate(AggregationKey key, long amount);
+
+    AggregationData getAggregate(AggregationKey key);
+
+    Iterator<AggregationKey> aggregateIterator();
+
+    Set<AggregationKey> getAggregateKeySet();
+
 
     /**
     * Method explicitly used to clear the stored hpans and salt.

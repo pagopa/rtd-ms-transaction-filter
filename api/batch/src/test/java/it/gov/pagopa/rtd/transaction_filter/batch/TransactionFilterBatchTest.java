@@ -173,6 +173,13 @@ public class TransactionFilterBatchTest {
             outputFileTrn.createNewFile();
         }
 
+        File outputFileAde = new File(resolver.getResource("classpath:/test-encrypt/output")
+            .getFile().getAbsolutePath() + "/ADE.CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+
+        if (!outputFileAde.exists()) {
+            outputFileAde.createNewFile();
+        }
+
         // Check that the job exited with the right exit status
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
                 .addDate("startDateTime", new Date())
@@ -188,25 +195,27 @@ public class TransactionFilterBatchTest {
         // Check that the HPAN store has been accessed as expected
         BDDMockito.verify(storeServiceSpy, Mockito.times(3)).store(Mockito.any());
         BDDMockito.verify(storeServiceSpy, Mockito.times(4)).hasHpan(Mockito.any());
-        BDDMockito.verify(storeServiceSpy, Mockito.times(1)).getKey(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, Mockito.times(2)).getKey(Mockito.any());
 
         // Check that output folder contains expected files, and only those
         Collection<File> outputPgpFiles = FileUtils.listFiles(
                 resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[]{"pgp"}, false);
-        Assert.assertEquals(1, outputPgpFiles.size());
+        Assert.assertEquals(2, outputPgpFiles.size());
 
         Set<String> outputPgpFilenames = outputPgpFiles.stream().map(p -> p.getName()).collect(Collectors.toSet());
         Set<String> expectedPgpFilenames = new HashSet<>();
         expectedPgpFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp");
+        expectedPgpFilenames.add("ADE.CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp");
         Assert.assertEquals(expectedPgpFilenames, outputPgpFilenames);
 
         Collection<File> outputCsvFiles = FileUtils.listFiles(
             resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[]{"csv"}, false);
-        Assert.assertEquals(1, outputCsvFiles.size());
+        Assert.assertEquals(2, outputCsvFiles.size());
 
         Set<String> outputCsvFilenames = outputCsvFiles.stream().map(p -> p.getName()).collect(Collectors.toSet());
         Set<String> expectedCsvFilenames = new HashSet<>();
         expectedCsvFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+        expectedCsvFilenames.add("ADE.CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Assert.assertEquals(expectedCsvFilenames, outputCsvFilenames);
 
         List<String> outputFileTrnContent = Files.readAllLines(outputFileTrn.toPath().toAbsolutePath());
@@ -243,7 +252,7 @@ public class TransactionFilterBatchTest {
         // Check that logs folder contains expected files
         Collection<File> outputLogsFiles = FileUtils.listFiles(
                 resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), new String[]{"csv"}, false);
-        Assert.assertEquals(2, outputLogsFiles.size());
+        Assert.assertEquals(4, outputLogsFiles.size());
 
         FileFilter fileFilter = new WildcardFileFilter("*_Rtd__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
@@ -252,6 +261,8 @@ public class TransactionFilterBatchTest {
         fileFilter = new WildcardFileFilter("*_Rtd__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, trxErrorFiles.size());
+
+        // TODO: check content of AdE log files
 
         // Check that logs files contains expected lines
         File trxFilteredFile = trxFilteredFiles.iterator().next();

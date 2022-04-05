@@ -1,5 +1,10 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicLong;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,6 +22,7 @@ class StoreServiceImpl implements StoreService {
 
     private final TreeSet<String> hpanSet;
     private final HashMap<String, String> keyMap = new HashMap<>();
+    private final ConcurrentMap<AggregationKey, AggregationData> aggregates = new ConcurrentHashMap<>();
     private String salt = "";
 
     @Override
@@ -50,9 +56,30 @@ class StoreServiceImpl implements StoreService {
     }
 
     @Override
+    public void storeAggregate(AggregationKey key, long amount) {
+        aggregates.putIfAbsent(key, new AggregationData());
+        aggregates.get(key).getNumTrx().incrementAndGet();
+        aggregates.get(key).getTotalAmount().addAndGet(amount);
+    }
+
+    @Override
+    public AggregationData getAggregate(AggregationKey key) {
+        return this.aggregates.get(key);
+    }
+
+    public Set<AggregationKey> getAggregateKeySet() {
+        return this.aggregates.keySet();
+    }
+
+    public Iterator<AggregationKey> aggregateIterator() {
+        return this.aggregates.keySet().iterator();
+    }
+
+    @Override
     public void clearAll() {
         hpanSet.clear();
         keyMap.clear();
+        aggregates.clear();
         this.salt = "";
     }
 
