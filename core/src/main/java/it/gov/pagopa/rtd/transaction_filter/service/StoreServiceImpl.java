@@ -55,10 +55,14 @@ class StoreServiceImpl implements StoreService {
     }
 
     @Override
-    public void storeAggregate(AggregationKey key, long amount) {
+    public void storeAggregate(AggregationKey key, long amount, String currency, String vat, String posType) {
         aggregates.putIfAbsent(key, new AggregationData());
-        aggregates.get(key).getNumTrx().incrementAndGet();
-        aggregates.get(key).getTotalAmount().addAndGet(amount);
+        AggregationData data = aggregates.get(key);
+        data.getNumTrx().incrementAndGet();
+        data.getTotalAmount().addAndGet(amount);
+        data.getCurrencies().add(currency);
+        data.getVats().add(vat);
+        data.getPosTypes().add(posType);
     }
 
     @Override

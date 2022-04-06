@@ -58,7 +58,7 @@ public interface StoreService {
      */
     boolean hasHpan(String hpan);
 
-    void storeAggregate(AggregationKey key, long amount);
+    void storeAggregate(AggregationKey key, long amount, String currency, String vat, String posType);
 
     AggregationData getAggregate(AggregationKey key);
 
