@@ -5,7 +5,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -14,7 +13,6 @@ import lombok.NoArgsConstructor;
  * TODO
  */
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
@@ -25,6 +23,31 @@ AdeTransactionsAggregate {
     @NotBlank
     @Size(max = 20)
     String acquirerCode;
+
+    @NotNull
+    @NotBlank
+    @Size(min = 2, max = 2)
+    @Pattern(regexp = "[0-9]{2}")
+    String operationType;
+
+    @NotNull
+    @NotBlank
+    String transmissionDate;
+
+    @NotNull
+    @NotBlank
+    String accountingDate;
+
+    @NotNull
+    @NotBlank
+    Integer numTrx;
+
+    @NotNull
+    @NotBlank
+    Long totalAmount;
+
+    @Size(max = 3)
+    String currency;
 
     @NotNull
     @NotBlank
@@ -46,21 +69,13 @@ AdeTransactionsAggregate {
     @Size(max = 50)
     String fiscalCode;
 
-    @NotNull
-    @NotBlank
-    String accountingDate;
+    @Size(max = 50)
+    String vat;
 
     @NotNull
     @NotBlank
     @Size(min = 2, max = 2)
     @Pattern(regexp = "[0-9]{2}")
-    String operationType;
+    String posType;
 
-    @NotNull
-    @NotBlank
-    Integer numTrx;
-
-    @NotNull
-    @NotBlank
-    Long totalAmount;
 }

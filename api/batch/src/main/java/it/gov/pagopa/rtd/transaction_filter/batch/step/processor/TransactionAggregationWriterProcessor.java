@@ -15,6 +15,7 @@ import org.springframework.batch.item.ItemProcessor;
 public class TransactionAggregationWriterProcessor implements ItemProcessor<AggregationKey, AdeTransactionsAggregate> {
 
     private final StoreService storeService;
+    private final String transmissionDate;
 
     /**
      * TODO
@@ -23,14 +24,18 @@ public class TransactionAggregationWriterProcessor implements ItemProcessor<Aggr
     public AdeTransactionsAggregate process(AggregationKey key) {
         AdeTransactionsAggregate aggregate = new AdeTransactionsAggregate();
         aggregate.setAcquirerCode(key.getAcquirerCode());
-        aggregate.setAcquirerId(key.getAcquirerId());
-        aggregate.setTerminalId(key.getTerminalId());
-        aggregate.setAccountingDate(key.getAccountingDate());
-        aggregate.setFiscalCode(key.getFiscalCode());
-        aggregate.setMerchantId(key.getMerchantId());
         aggregate.setOperationType(key.getOperationType());
+        aggregate.setTransmissionDate(transmissionDate);
+        aggregate.setAccountingDate(key.getAccountingDate());
         aggregate.setNumTrx(storeService.getAggregate(key).getNumTrx().intValue());
         aggregate.setTotalAmount(storeService.getAggregate(key).getTotalAmount().longValue());
+        aggregate.setCurrency("978");  // TODO
+        aggregate.setAcquirerId(key.getAcquirerId());
+        aggregate.setMerchantId(key.getMerchantId());
+        aggregate.setTerminalId(key.getTerminalId());
+        aggregate.setFiscalCode(key.getFiscalCode());
+        aggregate.setVat("VAT");  // TODO
+        aggregate.setPosType("POS TYPE"); // TODO
         return aggregate;
     }
 }

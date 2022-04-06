@@ -41,7 +41,6 @@ import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.file.transform.LineTokenizer;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.LineAggregator;
-import org.springframework.batch.item.support.IteratorItemReader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -217,7 +216,9 @@ public class TransactionFilterStep {
     @Bean
     public LineAggregator<AdeTransactionsAggregate> adeTransactionsAggregateLineAggregator() {
         BeanWrapperFieldExtractor<AdeTransactionsAggregate> extractor = new BeanWrapperFieldExtractor<>();
-        extractor.setNames(new String[]{ "acquirerCode", "acquirerId", "merchantId", "terminalId", "fiscalCode", "operationType", "accountingDate", "numTrx", "totalAmount" });
+        extractor.setNames(new String[]{
+            "acquirerCode", "operationType", "transmissionDate", "accountingDate", "numTrx", "totalAmount",
+            "currency", "acquirerId", "merchantId", "terminalId", "fiscalCode", "vat", "posType"  });
         DelimitedLineAggregator<AdeTransactionsAggregate> delimitedLineTokenizer = new DelimitedLineAggregator<>();
         delimitedLineTokenizer.setDelimiter(";");
         delimitedLineTokenizer.setFieldExtractor(extractor);
@@ -260,6 +261,9 @@ public class TransactionFilterStep {
         return itemWriter;
     }
 
+    /**
+     * TODO
+     */
     public class NoOpItemWriter implements ItemWriter<InboundTransaction> {
         @Override
         public void write(List<? extends InboundTransaction> list) throws Exception {
@@ -297,7 +301,9 @@ public class TransactionFilterStep {
     @StepScope
     public TransactionAggregationWriterProcessor transactionAggregationWriterProcessor(
         StoreService storeService) {
-        return new TransactionAggregationWriterProcessor(storeService);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String transmissionDate = OffsetDateTime.now().format(fmt);
+        return new TransactionAggregationWriterProcessor(storeService, transmissionDate);
     }
 
     /**
@@ -375,7 +381,6 @@ public class TransactionFilterStep {
      */
     @Bean
     public Step transactionAggregationReaderWorkerStep(StoreService storeService, TransactionWriterService transactionWriterService) {
-        System.out.println("WORKER STEP READER CREATED");
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
         return stepBuilderFactory.get("transaction-aggregation-reader-worker-step")
@@ -401,8 +406,8 @@ public class TransactionFilterStep {
     }
 
     /**
-     //     * TODO
-     //     */
+     * TODO
+     */
     @Bean
     public Step transactionAggregationWriterMasterStep(StoreService storeService) throws IOException {
         return stepBuilderFactory.get("transaction-aggregation-writer-master-step")
@@ -416,55 +421,16 @@ public class TransactionFilterStep {
      */
     @Bean
     public Step transactionAggregationWriterWorkerStep(StoreService storeService) {
-        System.out.println("WORKER STEP WRITER CREATED");
+        ItemReader itemReader = mapItemReader(storeService);
         return stepBuilderFactory.get("transaction-aggregation-writer-worker-step")
             .<AggregationKey, AdeTransactionsAggregate>chunk(chunkSize)
-            .reader(mapItemReader(storeService))
+            .reader(itemReader)
             .processor(transactionAggregationWriterProcessor(storeService))
             .writer(transactionAggregateWriter(null, storeService))
             .faultTolerant()
-            //.skipLimit(skipLimit)
-            //.noSkip(FileNotFoundException.class)
-            //.noSkip(SkipLimitExceededException.class)
-            //.skip(Exception.class)
             .taskExecutor(batchConfig.readerTaskExecutor())
             .build();
     }
-
-//    /**
-//     * TODO
-//     */
-//    @Bean
-//    public Step transactionAggregationWriterMasterStep(StoreService storeService) throws IOException {
-//        return stepBuilderFactory.get("transaction-aggregation-writer-master-step")
-//            .partitioner(transactionAggregationWriterWorkerStep(storeService))
-//            // TODO: capire bene interazioni con il partitioner
-//            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
-//            .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
-//    }
-//
-//    /**
-//     * TODO
-//     */
-//    @Bean
-//    public Step transactionAggregationWriterWorkerStep(StoreService storeService) {
-//        return stepBuilderFactory.get("transaction-aggregation-writer-worker-step")
-//            .<AggregationKey, AdeTransactionsAggregate>chunk(chunkSize)
-//            .reader(mapItemReader(storeService))
-//            .processor(transactionAggregationWriterProcessor(storeService))
-//            .writer(transactionAggregateWriter(null, storeService))
-//            .faultTolerant()
-//            .skipLimit(skipLimit)
-//            .noSkip(FileNotFoundException.class)
-//            .noSkip(SkipLimitExceededException.class)
-//            .skip(Exception.class)
-//            .noRetry(DateTimeParseException.class)
-//            .noRollback(DateTimeParseException.class)
-//            .noRetry(ConstraintViolationException.class)
-//            .noRollback(ConstraintViolationException.class)
-//            .taskExecutor(batchConfig.readerTaskExecutor())
-//            .build();
-//    }
 
     @Bean
     public TransactionReaderStepListener transactionStepListener(

@@ -2,7 +2,6 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Service to be used for storing information shared across steps, e.g.:
