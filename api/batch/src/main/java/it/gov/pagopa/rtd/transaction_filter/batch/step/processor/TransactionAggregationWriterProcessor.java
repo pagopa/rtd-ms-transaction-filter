@@ -8,7 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
 /**
- * TODO
+ * ItemProcessor responsible for creating aggregates models suited for CSV
+ * writing from the previously in-memory aggregated data.
  */
 @Slf4j
 @RequiredArgsConstructor
@@ -18,7 +19,8 @@ public class TransactionAggregationWriterProcessor implements ItemProcessor<Aggr
     private final String transmissionDate;
 
     /**
-     * TODO
+     * Given an aggregation clause (i.e. key) build a data model of the aggregation
+     * suitable for CSV encoding by the ItemWriter.
      */
     @Override
     public AdeTransactionsAggregate process(AggregationKey key) {

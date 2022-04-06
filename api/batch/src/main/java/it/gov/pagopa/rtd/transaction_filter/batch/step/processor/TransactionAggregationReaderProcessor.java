@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
 /**
- * TODO
+ * ItemProcessor responsible for in-memory aggregation of transaction data.
  */
 @Slf4j
 @RequiredArgsConstructor

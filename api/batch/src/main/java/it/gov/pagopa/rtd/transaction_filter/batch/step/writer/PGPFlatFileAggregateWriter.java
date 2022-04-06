@@ -14,9 +14,9 @@ import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.core.io.Resource;
 
 /**
- * TODO
+ * Implementation of {@link FlatFileItemWriter}, to be used for writing the output aggregated
+ * records, potentially encrypting the output file with PGP.
  */
-
 @Slf4j
 @RequiredArgsConstructor
 public class PGPFlatFileAggregateWriter extends FlatFileItemWriter<AdeTransactionsAggregate> {

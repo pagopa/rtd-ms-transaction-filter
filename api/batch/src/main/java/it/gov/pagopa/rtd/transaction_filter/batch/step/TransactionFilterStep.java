@@ -190,8 +190,7 @@ public class TransactionFilterStep {
     }
 
     public ItemReader<AggregationKey> mapItemReader(StoreService storeService) {
-        CustomIteratorItemReader<AggregationKey> iteratorItemReader = new CustomIteratorItemReader<>(storeService.getAggregateKeySet());
-        return iteratorItemReader;
+        return new CustomIteratorItemReader<>(storeService.getAggregateKeySet());
     }
 
     /**
