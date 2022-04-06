@@ -9,7 +9,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionReade
 import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionFieldSetMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionAggregationProcessor;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggregationReaderProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggregationWriterProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.CustomIteratorItemReader;
@@ -127,6 +127,14 @@ public class TransactionFilterStep {
     // [service].[ABI].[filetype].[date].[time].[nnn].csv
     // see: https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration/standard-pagopa-file-transactions
     private static final String TRX_FILENAME_PATTERN = "^CSTAR\\.\\w{5}\\.TRNLOG\\.\\d{8}\\.\\d{6}\\.\\d{3}\\.csv$";
+    private static final String[] ADE_CSV_FIELDS = new String[]{
+        "acquirerCode", "operationType", "transmissionDate", "accountingDate", "numTrx", "totalAmount",
+        "currency", "acquirerId", "merchantId", "terminalId", "fiscalCode", "vat", "posType"  };
+    private static final String[] CSTAR_CSV_FIELDS = new String[]{
+        "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
+        "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
+        "terminalId", "bin", "mcc", "fiscalCode", "vat", "posType", "par"};
+    private static final String CSV_DELIMITER = ";";
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
@@ -138,7 +146,7 @@ public class TransactionFilterStep {
     @Bean
     public LineTokenizer transactionLineTokenizer() {
         DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
-        delimitedLineTokenizer.setDelimiter(";");
+        delimitedLineTokenizer.setDelimiter(CSV_DELIMITER);
         delimitedLineTokenizer.setNames(
                 "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
@@ -187,47 +195,41 @@ public class TransactionFilterStep {
     }
 
     /**
-     * @return instance of the LineTokenizer to be used in the itemReader configured for the job
-     */
-    @Bean
-    public BeanWrapperFieldExtractor<InboundTransaction> transactionWriterFieldExtractor() {
-        BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
-        extractor.setNames(new String[]{
-                "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
-                "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
-                "terminalId", "bin", "mcc", "fiscalCode", "vat", "posType", "par"});
-        return extractor;
-    }
-
-    /**
-     * @return instance of the LineTokenizer to be used in the itemReader configured for the job
+     * Aggregates filtered aggregations into CSV rows.
+     *
+     * @return an instance of a DelimitedLineAggregator suited for filtered aggregations data model
      */
     @Bean
     public LineAggregator<InboundTransaction> transactionWriterAggregator() {
-        DelimitedLineAggregator<InboundTransaction> delimitedLineTokenizer = new DelimitedLineAggregator<>();
-        delimitedLineTokenizer.setDelimiter(";");
-        delimitedLineTokenizer.setFieldExtractor(transactionWriterFieldExtractor());
-        return delimitedLineTokenizer;
+        BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
+        extractor.setNames(CSTAR_CSV_FIELDS);
+        DelimitedLineAggregator<InboundTransaction> delimitedLineAggregator = new DelimitedLineAggregator<>();
+        delimitedLineAggregator.setDelimiter(CSV_DELIMITER);
+        delimitedLineAggregator.setFieldExtractor(extractor);
+        return delimitedLineAggregator;
     }
 
     /**
-     * TODO
+     * Aggregates AdE aggregations into CSV rows.
+     *
+     * @return an instance of a DelimitedLineAggregator suited for AdE aggregations data model
      */
     @Bean
     public LineAggregator<AdeTransactionsAggregate> adeTransactionsAggregateLineAggregator() {
         BeanWrapperFieldExtractor<AdeTransactionsAggregate> extractor = new BeanWrapperFieldExtractor<>();
-        extractor.setNames(new String[]{
-            "acquirerCode", "operationType", "transmissionDate", "accountingDate", "numTrx", "totalAmount",
-            "currency", "acquirerId", "merchantId", "terminalId", "fiscalCode", "vat", "posType"  });
-        DelimitedLineAggregator<AdeTransactionsAggregate> delimitedLineTokenizer = new DelimitedLineAggregator<>();
-        delimitedLineTokenizer.setDelimiter(";");
-        delimitedLineTokenizer.setFieldExtractor(extractor);
-        return delimitedLineTokenizer;
+        extractor.setNames(ADE_CSV_FIELDS);
+        DelimitedLineAggregator<AdeTransactionsAggregate> delimitedLineAggregator = new DelimitedLineAggregator<>();
+        delimitedLineAggregator.setDelimiter(CSV_DELIMITER);
+        delimitedLineAggregator.setFieldExtractor(extractor);
+        return delimitedLineAggregator;
     }
 
     /**
+     * Builds an ItemWriter for filtered transactions. Implements encryption of the output file via PGP.
+     *
      * @param file Late-Binding parameter to be used as the resource for the reader instance
-     * @return instance of the itemReader to be used in the first step of the configured job
+     * @param storeService data structures shared between different steps
+     * @return instance of an itemWriter to be used in the transactionFilterWorkerStep
      */
     @SneakyThrows
     @Bean(destroyMethod="")
@@ -244,7 +246,11 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Builds an ItemWriter for aggregated transactions. Implements encryption of the output file via PGP.
+     *
+     * @param file Late-Binding parameter to be used as the resource for the reader instance
+     * @param storeService data structures shared between different steps
+     * @return instance of an itemWriter to be used in the transactionAggregationWriterWorkerStep
      */
     @SneakyThrows
     @Bean(destroyMethod="")
@@ -262,7 +268,12 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Builds a dummy ItemWriter to use during transaction aggregation.
+     * Since we're reading from a chunk-oriented ItemReader and aggregating data in-memory
+     * in the ItemProcessor we declare a dummy (i.e. do nothing) ItemWriter to postpone the
+     * writing of the computed aggregations in a next dedicated step.
+     *
+     * @return instance of an itemWriter to be used in the transactionAggregationReaderWorkerStep
      */
     public class NoOpItemWriter implements ItemWriter<InboundTransaction> {
         @Override
@@ -284,18 +295,22 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Builds an ItemProcessor to use during transaction aggregation.
+     *
+     * @return instance of an itemProcessor to be used in the transactionAggregationReaderWorkerStep
      */
     @Bean
     @StepScope
-    public InboundTransactionAggregationProcessor transactionAggregationProcessor(
+    public TransactionAggregationReaderProcessor transactionAggregationProcessor(
         StoreService storeService) {
-        return new InboundTransactionAggregationProcessor(
+        return new TransactionAggregationReaderProcessor(
             storeService);
     }
 
     /**
-     * TODO
+     * Builds an ItemProcessor to use during aggregation write to file.
+     *
+     * @return instance of an itemProcessor to be used in the transactionAggregationWriterWorkerStep
      */
     @Bean
     @StepScope
@@ -366,7 +381,12 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Master step for the in-memory aggregation of transaction files.
+     *
+     * @param storeService data structures shared between different steps
+     * @param transactionWriterService service exposing handlers for local log files
+     * @return the aggregation reader batch master step
+     * @throws IOException
      */
     @Bean
     public Step transactionAggregationReaderMasterStep(StoreService storeService, TransactionWriterService transactionWriterService) throws IOException {
@@ -377,7 +397,11 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Worker step for the in-memory aggregation of transaction files.
+     *
+     * @param storeService data structures shared between different steps
+     * @param transactionWriterService service exposing handlers for local log files
+     * @return the aggregation reader batch worker step
      */
     @Bean
     public Step transactionAggregationReaderWorkerStep(StoreService storeService, TransactionWriterService transactionWriterService) {
@@ -406,7 +430,11 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Master step for the writing of aggregation output files.
+     *
+     * @param storeService data structures shared between different steps
+     * @return the aggregation writer batch master step
+     * @throws IOException
      */
     @Bean
     public Step transactionAggregationWriterMasterStep(StoreService storeService) throws IOException {
@@ -417,14 +445,16 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Worker step for the writing of aggregation output files.
+     *
+     * @param storeService data structures shared between different steps
+     * @return the aggregation writer batch worker step
      */
     @Bean
     public Step transactionAggregationWriterWorkerStep(StoreService storeService) {
-        ItemReader itemReader = mapItemReader(storeService);
         return stepBuilderFactory.get("transaction-aggregation-writer-worker-step")
             .<AggregationKey, AdeTransactionsAggregate>chunk(chunkSize)
-            .reader(itemReader)
+            .reader(mapItemReader(storeService))
             .processor(transactionAggregationWriterProcessor(storeService))
             .writer(transactionAggregateWriter(null, storeService))
             .faultTolerant()

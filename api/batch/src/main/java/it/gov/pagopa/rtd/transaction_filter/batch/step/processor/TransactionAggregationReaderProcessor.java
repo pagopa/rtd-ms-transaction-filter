@@ -18,16 +18,16 @@ import org.springframework.batch.item.ItemProcessor;
  */
 @Slf4j
 @RequiredArgsConstructor
-public class InboundTransactionAggregationProcessor implements ItemProcessor<InboundTransaction, InboundTransaction> {
+public class TransactionAggregationReaderProcessor implements ItemProcessor<InboundTransaction, InboundTransaction> {
 
     private final StoreService storeService;
 
     private static final ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
     private static final Validator validator = factory.getValidator();
 
-
     /**
-     * TODO
+     * Process inbound transactions and aggregates on the fly leveraging
+     * the StoreService data structure.
      */
     @Override
     public InboundTransaction process(InboundTransaction inboundTransaction) {
@@ -46,9 +46,9 @@ public class InboundTransactionAggregationProcessor implements ItemProcessor<Inb
         key.setFiscalCode(inboundTransaction.getFiscalCode());
         key.setOperationType(inboundTransaction.getOperationType());
         key.setAccountingDate(inboundTransaction.getTrxDate().substring(0, 10));
-
         storeService.storeAggregate(key, inboundTransaction.getAmount());
 
+        // Return null since we'll bound to a dummy writer
         return null;
     }
 }
