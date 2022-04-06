@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.transaction_filter.service;
+package it.gov.pagopa.rtd.transaction_filter.service.store;
 
 import java.util.HashSet;
 import java.util.Set;

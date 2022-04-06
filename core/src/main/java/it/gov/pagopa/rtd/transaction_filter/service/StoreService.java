@@ -1,5 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import java.util.Iterator;
 import java.util.Set;
 
