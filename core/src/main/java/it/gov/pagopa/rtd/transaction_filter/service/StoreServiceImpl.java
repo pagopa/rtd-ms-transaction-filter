@@ -2,7 +2,6 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -74,10 +73,6 @@ class StoreServiceImpl implements StoreService {
 
     public Set<AggregationKey> getAggregateKeySet() {
         return this.aggregates.keySet();
-    }
-
-    public Iterator<AggregationKey> aggregateIterator() {
-        return this.aggregates.keySet().iterator();
     }
 
     @Override

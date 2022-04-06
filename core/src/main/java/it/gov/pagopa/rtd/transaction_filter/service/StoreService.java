@@ -2,7 +2,6 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
-import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -60,14 +59,31 @@ public interface StoreService {
      */
     boolean hasHpan(String hpan);
 
+    /**
+     * Aggregates transaction data by a defined group clause (the AggregationKey).
+     *
+     * @param key the aggregation key
+     * @param amount the transaction amount
+     * @param currency the transaction currency
+     * @param vat the transaction VAT, if present
+     * @param posType the transaction POS type
+     */
     void storeAggregate(AggregationKey key, long amount, String currency, String vat, String posType);
 
+    /**
+     * Get the aggregate computed over a single aggregation key.
+     *
+     * @param key an aggregation key
+     * @return the aggregated data
+     */
     AggregationData getAggregate(AggregationKey key);
 
-    Iterator<AggregationKey> aggregateIterator();
-
+    /**
+     * Get the set of aggregation keys.
+     *
+     * @return a set of aggregation keys
+     */
     Set<AggregationKey> getAggregateKeySet();
-
 
     /**
     * Method explicitly used to clear the stored hpans and salt.
