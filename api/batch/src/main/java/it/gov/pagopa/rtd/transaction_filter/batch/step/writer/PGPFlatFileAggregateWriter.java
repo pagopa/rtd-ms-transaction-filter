@@ -36,11 +36,7 @@ public class PGPFlatFileAggregateWriter extends FlatFileItemWriter<AdeTransactio
     public void close() {
         super.close();
         if (applyEncrypt) {
-            ByteArrayInputStream publicKeyIS = null;
-            FileOutputStream outputFOS = null;
-            try {
-                publicKeyIS = new ByteArrayInputStream(publicKey.getBytes());
-                outputFOS = new FileOutputStream(resource.getFile().getAbsolutePath().concat(".pgp"));
+            try (ByteArrayInputStream publicKeyIS = new ByteArrayInputStream(publicKey.getBytes()); FileOutputStream outputFOS = new FileOutputStream(resource.getFile().getAbsolutePath().concat(".pgp"))) {
                 PGPPublicKey pgpPublicKey = EncryptUtil.readPublicKey(publicKeyIS);
                 String fingerprint = new String(Hex.encode(pgpPublicKey.getFingerprint())).toUpperCase(Locale.ROOT);
                 log.info("Encrypting file " + resource.getFilename() + " with PGP key " + fingerprint);
@@ -48,17 +44,7 @@ public class PGPFlatFileAggregateWriter extends FlatFileItemWriter<AdeTransactio
                         this.resource.getFile().getAbsolutePath(),
                         pgpPublicKey,
                         false, true);
-            } finally {
-                if (publicKeyIS != null) {
-                    publicKeyIS.close();
-                }
-                if (outputFOS != null) {
-                    outputFOS.close();
-                }
             }
         }
     }
-
-
-
 }
