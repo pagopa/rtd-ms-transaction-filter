@@ -34,7 +34,7 @@ public class TransactionAggregationReaderProcessor implements ItemProcessor<Inbo
 
         Set<ConstraintViolation<InboundTransaction>> constraintViolations =
                 validator.validate(inboundTransaction);
-        if (constraintViolations.size() > 0) {
+        if (!constraintViolations.isEmpty()) {
             throw new ConstraintViolationException(constraintViolations);
         }
 
