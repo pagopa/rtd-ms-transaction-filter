@@ -86,6 +86,18 @@ public class StoreServiceTest {
     }
 
     @Test
+    public void getHashBeforeStoreHashReturnsNull() {
+        Assert.assertNull(storeService.getHash("fileName"));
+    }
+
+    @Test
+    public void getHashAfterStoreHashReturnStoredValue() {
+        String sha256hex = "089bae15036715a9e613552a0fcee186c6b610a85beb16cc4192595a940f16d3";
+        storeService.storeHash("fileName", sha256hex);
+        Assert.assertEquals(sha256hex, storeService.getHash("fileName"));
+    }
+
+    @Test
     public void clearAllEmptiesDataStructures() {
         Assert.assertEquals(0, storeSet.size());
         storeSet.add("test");

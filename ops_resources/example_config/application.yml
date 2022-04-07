@@ -78,6 +78,7 @@ batchConfiguration:
       deleteOutputFiles: ${ACQ_BATCH_DELETE_OUTPUT_FILE:ALWAYS}
       manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE}
       transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
+      inputFileChecksumEnabled: ${ACQ_BATCH_INPUT_FILE_CHECKSUM:true}
     transactionSenderRtd:
       enabled: ${ACQ_BATCH_TRX_SENDER_RTD_ENABLED:true}
     saltRecovery:
