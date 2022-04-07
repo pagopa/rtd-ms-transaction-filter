@@ -152,6 +152,38 @@ public class StoreServiceTest {
     }
 
     @Test
+    public void getAggregateKeySetReturnsExpectedKeys() {
+        AggregationKey key = new AggregationKey();
+        key.setTerminalId("1");
+        key.setMerchantId("1");
+        key.setAcquirerId("1");
+        key.setAcquirerCode("code");
+        key.setFiscalCode("FC");
+        key.setAccountingDate("2022-04-07");
+        key.setOperationType("00");
+        storeService.storeAggregate(key, 1000, "978", null, "01");
+        storeService.storeAggregate(key, 5000, "978", null, "00");
+        Set<AggregationKey> expectedKeySet = new HashSet<>();
+        expectedKeySet.add(key);
+        Assert.assertEquals(expectedKeySet, storeService.getAggregateKeySet());
+    }
+
+    @Test
+    public void clearAggregatesShouldEmptyKeySet() {
+        AggregationKey key = new AggregationKey();
+        key.setTerminalId("1");
+        key.setMerchantId("1");
+        key.setAcquirerId("1");
+        key.setAcquirerCode("code");
+        key.setFiscalCode("FC");
+        key.setAccountingDate("2022-04-07");
+        key.setOperationType("00");
+        storeService.storeAggregate(key, 1000, "978", null, "01");
+        storeService.clearAggregates();
+        Assert.assertEquals(0, storeService.getAggregateKeySet().size());
+    }
+
+    @Test
     public void getHashBeforeStoreHashReturnsNull() {
         Assert.assertNull(storeService.getHash("fileName"));
     }
