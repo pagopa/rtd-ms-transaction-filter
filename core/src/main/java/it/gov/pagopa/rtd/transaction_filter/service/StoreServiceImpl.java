@@ -22,8 +22,14 @@ class StoreServiceImpl implements StoreService {
 
     private final TreeSet<String> hpanSet;
     private final HashMap<String, String> keyMap = new HashMap<>();
+    private final HashMap<String, String> fileHashMap = new HashMap<>();
     private final ConcurrentMap<AggregationKey, AggregationData> aggregates = new ConcurrentHashMap<>();
     private String salt = "";
+
+    @Override
+    public String getSalt() {
+        return this.salt;
+    }
 
     @Override
     public void storeSalt(String salt) {
@@ -31,8 +37,8 @@ class StoreServiceImpl implements StoreService {
     }
 
     @Override
-    public String getSalt() {
-        return this.salt;
+    public String getKey(String identifier) {
+        return this.keyMap.get(identifier);
     }
 
     @Override
@@ -41,8 +47,13 @@ class StoreServiceImpl implements StoreService {
     }
 
     @Override
-    public String getKey(String identifier) {
-        return this.keyMap.get(identifier);
+    public String getHash(String filename) {
+        return this.fileHashMap.get(filename);
+    }
+
+    @Override
+    public void storeHash(String filename, String hash) {
+        this.fileHashMap.put(filename, hash);
     }
 
     @Override
@@ -85,6 +96,7 @@ class StoreServiceImpl implements StoreService {
     public void clearAll() {
         hpanSet.clear();
         keyMap.clear();
+        fileHashMap.clear();
         aggregates.clear();
         this.salt = "";
     }

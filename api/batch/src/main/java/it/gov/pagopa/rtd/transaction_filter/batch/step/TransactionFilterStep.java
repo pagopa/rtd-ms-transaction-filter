@@ -14,6 +14,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransact
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggregationWriterProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.CustomIteratorItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionChecksumTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileAggregateWriter;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
@@ -22,6 +23,7 @@ import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
+import java.net.MalformedURLException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -88,6 +90,8 @@ public class TransactionFilterStep {
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing}")
     private Boolean applyTrxHashing;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt}")
+    private Boolean inputFileChecksumEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.inputFileChecksumEnabled}")
     private Boolean applyEncrypt;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled}")
     private Boolean transactionSenderRtdEnabled;
@@ -640,6 +644,71 @@ public class TransactionFilterStep {
         transactionSenderRestTasklet.setTaskletEnabled(transactionSenderRtdEnabled);
         transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.RTD);
         return transactionSenderRestTasklet;
+    }
+
+    /**
+     * Partitioning strategy for the hashing of input transaction files.
+     *
+     * @return a partitioner instance
+     * @throws IOException
+     */
+    @Bean
+    @JobScope
+    public Partitioner transactionChecksumPartitioner() throws IOException {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        Resource[] resources = resolver.getResources(transactionDirectoryPath + "/*.csv");
+        resources = filterValidFilenames(resources);
+        partitioner.setResources(resources);
+        return partitioner;
+    }
+
+    /**
+     * Master step for the hashing of input transaction files.
+     *
+     * @param storeService
+     * @return the hashing batch master step
+     * @throws IOException
+     */
+    @Bean
+    public Step transactionChecksumMasterStep(StoreService storeService) throws IOException {
+        return stepBuilderFactory.get("transaction-checksum-master-step")
+            .partitioner(transactionChecksumWorkerStep(storeService))
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionChecksumPartitioner())
+            .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * Worker step for the hashing of input transaction files.
+     *
+     * @param storeService
+     * @return the hashing batch worker step
+     */
+    @Bean
+    public Step transactionChecksumWorkerStep(StoreService storeService)
+        throws MalformedURLException {
+        return stepBuilderFactory.get("transaction-checksum-worker-step").tasklet(
+            transactionChecksumTasklet(null, storeService)).build();
+    }
+
+    /**
+     * Tasklet responsible for computation of the hash of each input transaction file.
+     *
+     * @param file the file to be hashed
+     * @param storeService
+     * @return an instance configured for the hashing of a specified file
+     */
+    @Bean
+    @StepScope
+    public TransactionChecksumTasklet transactionChecksumTasklet(
+        @Value("#{stepExecutionContext['fileName']}") String file,
+        StoreService storeService
+    ) throws MalformedURLException {
+        TransactionChecksumTasklet transactionChecksumTasklet = new TransactionChecksumTasklet();
+        transactionChecksumTasklet.setResource(new UrlResource(file));
+        transactionChecksumTasklet.setStoreService(storeService);
+        transactionChecksumTasklet.setTaskletEnabled(inputFileChecksumEnabled);
+        return transactionChecksumTasklet;
     }
 
     /**
