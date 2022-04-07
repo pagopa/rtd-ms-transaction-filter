@@ -16,7 +16,6 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.CustomIteratorItem
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionChecksumTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileAggregateWriter;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
@@ -237,9 +236,9 @@ public class TransactionFilterStep {
     @SneakyThrows
     @Bean(destroyMethod="")
     @StepScope
-    public PGPFlatFileItemWriter transactionItemWriter(
+    public PGPFlatFileItemWriter<InboundTransaction> transactionItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
-        PGPFlatFileItemWriter itemWriter = new PGPFlatFileItemWriter(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
+        PGPFlatFileItemWriter<InboundTransaction> itemWriter = new PGPFlatFileItemWriter<>(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
         itemWriter.setLineAggregator(transactionWriterAggregator());
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
@@ -258,9 +257,9 @@ public class TransactionFilterStep {
     @SneakyThrows
     @Bean(destroyMethod="")
     @StepScope
-    public PGPFlatFileAggregateWriter transactionAggregateWriter(
+    public PGPFlatFileItemWriter<AdeTransactionsAggregate> transactionAggregateWriter(
         @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
-        PGPFlatFileAggregateWriter itemWriter = new PGPFlatFileAggregateWriter(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
+        PGPFlatFileItemWriter<AdeTransactionsAggregate> itemWriter = new PGPFlatFileItemWriter<>(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
         itemWriter.setLineAggregator(adeTransactionsAggregateLineAggregator());
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
@@ -275,8 +274,6 @@ public class TransactionFilterStep {
      * Since we're reading from a chunk-oriented ItemReader and aggregating data in-memory
      * in the ItemProcessor we declare a dummy (i.e. do nothing) ItemWriter to postpone the
      * writing of the computed aggregations in a next dedicated step.
-     *
-     * @return instance of an itemWriter to be used in the transactionAggregationReaderWorkerStep
      */
     public class NoOpItemWriter implements ItemWriter<InboundTransaction> {
         @Override
@@ -726,7 +723,7 @@ public class TransactionFilterStep {
      * Filter a list of resources retaining only those matching naming convention
      * stated at https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration/standard-pagopa-file-transactions
      *
-     * @param resources
+     * @param resources a list of resources to be filtered
      * @return a filtered list of resources
      */
     public static Resource[] filterValidFilenames(Resource[] resources) {
