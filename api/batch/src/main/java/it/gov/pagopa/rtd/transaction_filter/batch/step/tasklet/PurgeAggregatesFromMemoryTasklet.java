@@ -9,7 +9,7 @@ import org.springframework.batch.repeat.RepeatStatus;
 
 
 /**
- * TODO
+ * Tasklet responsible for clearing aggregates data from memory.
  */
 @Data
 public class PurgeAggregatesFromMemoryTasklet implements Tasklet {
@@ -17,7 +17,11 @@ public class PurgeAggregatesFromMemoryTasklet implements Tasklet {
     private StoreService storeService;
 
     /**
-     * TODO
+     * Clears the aggregations' data from the shared storage.
+     *
+     * @param stepContribution
+     * @param chunkContext
+     * @return the {@link Tasklet} execution status
      */
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
