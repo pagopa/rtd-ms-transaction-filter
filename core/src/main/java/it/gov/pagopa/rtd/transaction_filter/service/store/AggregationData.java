@@ -4,10 +4,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
-@EqualsAndHashCode
+@ToString
 public class AggregationData {
 
   private AtomicLong numTrx = new AtomicLong(0);

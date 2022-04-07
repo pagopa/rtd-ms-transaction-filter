@@ -86,6 +86,11 @@ public interface StoreService {
     Set<AggregationKey> getAggregateKeySet();
 
     /**
+     * Clear aggregates data structure.
+     */
+    void clearAggregates();
+
+    /**
     * Method explicitly used to clear the stored hpans and salt.
      */
     void clearAll();

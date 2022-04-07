@@ -71,8 +71,14 @@ class StoreServiceImpl implements StoreService {
         return this.aggregates.get(key);
     }
 
+    @Override
     public Set<AggregationKey> getAggregateKeySet() {
         return this.aggregates.keySet();
+    }
+
+    @Override
+    public void clearAggregates() {
+        this.aggregates.clear();
     }
 
     @Override
