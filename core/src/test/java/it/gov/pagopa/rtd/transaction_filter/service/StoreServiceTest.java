@@ -118,8 +118,7 @@ public class StoreServiceTest {
         AggregationData expectedData = new AggregationData();
         expectedData.setNumTrx((short)1);
         expectedData.setTotalAmount(1000);
-        expectedData.setCurrency("978");
-        expectedData.setPosType("01");
+        expectedData.setPosType((byte)1);
         expectedData.setVat(null);
         Assert.assertEquals(expectedData.toString(), storeService.getAggregate(key).toString());
     }
@@ -135,12 +134,11 @@ public class StoreServiceTest {
         key.setAccountingDate("2022-04-07");
         key.setOperationType("00");
         storeService.storeAggregate(key, 1000, "978", null, "01");
-        storeService.storeAggregate(key, 2500, "978", null, "02");
+        storeService.storeAggregate(key, 2500, "978", null, "01");
         AggregationData expectedData = new AggregationData();
         expectedData.setNumTrx((short)2);
         expectedData.setTotalAmount(3500);
-        expectedData.setCurrency("978");
-        expectedData.setPosType("02");
+        expectedData.setPosType((byte)1);
         expectedData.setVat(null);
         Assert.assertEquals(expectedData.toString(), storeService.getAggregate(key).toString());
     }

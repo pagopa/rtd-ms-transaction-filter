@@ -73,9 +73,12 @@ class StoreServiceImpl implements StoreService {
         AggregationData data = aggregates.get(key);
         data.incNumTrx();
         data.incTotalAmount(amount);
-        data.setCurrency(currency);
         data.setVat(vat);
-        data.setPosType(posType);
+        if (posType == "00") {
+            data.setPosType((byte) 0);
+        } else {
+            data.setPosType((byte) 1);
+        }
     }
 
     @Override

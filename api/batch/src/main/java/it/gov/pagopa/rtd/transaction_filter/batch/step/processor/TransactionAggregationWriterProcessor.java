@@ -31,13 +31,17 @@ public class TransactionAggregationWriterProcessor implements ItemProcessor<Aggr
         aggregate.setAccountingDate(key.getAccountingDate());
         aggregate.setNumTrx(storeService.getAggregate(key).getNumTrx());
         aggregate.setTotalAmount(storeService.getAggregate(key).getTotalAmount());
-        aggregate.setCurrency(storeService.getAggregate(key).getCurrency());
+        aggregate.setCurrency("978");
         aggregate.setAcquirerId(key.getAcquirerId());
         aggregate.setMerchantId(key.getMerchantId());
         aggregate.setTerminalId(key.getTerminalId());
         aggregate.setFiscalCode(key.getFiscalCode());
         aggregate.setVat(storeService.getAggregate(key).getVat());
-        aggregate.setPosType(storeService.getAggregate(key).getPosType());
+        if (storeService.getAggregate(key).getPosType() == 0) {
+            aggregate.setPosType("00");
+        } else {
+            aggregate.setPosType("01");
+        }
         return aggregate;
     }
 }
