@@ -40,7 +40,7 @@ AdeTransactionsAggregate {
 
     @NotNull
     @NotBlank
-    Integer numTrx;
+    short numTrx;
 
     @NotNull
     @NotBlank

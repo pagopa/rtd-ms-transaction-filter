@@ -116,14 +116,11 @@ public class StoreServiceTest {
         key.setOperationType("00");
         storeService.storeAggregate(key, 1000, "978", null, "01");
         AggregationData expectedData = new AggregationData();
-        expectedData.setNumTrx(new AtomicLong(1));
-        expectedData.setTotalAmount(new AtomicLong(1000));
-        expectedData.setCurrencies(new HashSet<>(Arrays.asList("978")));
-        expectedData.setPosTypes(new HashSet<>(Arrays.asList("01")));
-        Set<String> vats = new HashSet<String>(){{
-            add(null);
-        }};
-        expectedData.setVats(vats);
+        expectedData.setNumTrx((short)1);
+        expectedData.setTotalAmount(1000);
+        expectedData.setCurrency("978");
+        expectedData.setPosType("01");
+        expectedData.setVat(null);
         Assert.assertEquals(expectedData.toString(), storeService.getAggregate(key).toString());
     }
 
@@ -140,14 +137,11 @@ public class StoreServiceTest {
         storeService.storeAggregate(key, 1000, "978", null, "01");
         storeService.storeAggregate(key, 2500, "978", null, "02");
         AggregationData expectedData = new AggregationData();
-        expectedData.setNumTrx(new AtomicLong(2));
-        expectedData.setTotalAmount(new AtomicLong(3500));
-        expectedData.setCurrencies(new HashSet<>(Arrays.asList("978")));
-        expectedData.setPosTypes(new HashSet<>(Arrays.asList("01", "02")));
-        Set<String> vats = new HashSet<String>() {{
-            add(null);
-        }};
-        expectedData.setVats(vats);
+        expectedData.setNumTrx((short)2);
+        expectedData.setTotalAmount(3500);
+        expectedData.setCurrency("978");
+        expectedData.setPosType("02");
+        expectedData.setVat(null);
         Assert.assertEquals(expectedData.toString(), storeService.getAggregate(key).toString());
     }
 

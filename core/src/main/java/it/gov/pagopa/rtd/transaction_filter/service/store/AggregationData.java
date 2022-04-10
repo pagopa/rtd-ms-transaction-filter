@@ -10,11 +10,19 @@ import lombok.ToString;
 @ToString
 public class AggregationData {
 
-  private AtomicLong numTrx = new AtomicLong(0);
-  private AtomicLong totalAmount = new AtomicLong(0);
-  private Set<String> currencies = new HashSet<>();
-  private Set<String> vats = new HashSet<>();
-  private Set<String> posTypes = new HashSet<>();
+  private short numTrx;
+  private long totalAmount;
+  private String currency;
+  private String vat;
+  private String posType;
+
+  public void incNumTrx() {
+    this.numTrx += 1;
+  }
+
+  public void incTotalAmount(long amount) {
+    this.totalAmount += amount;
+  }
 
 }
 

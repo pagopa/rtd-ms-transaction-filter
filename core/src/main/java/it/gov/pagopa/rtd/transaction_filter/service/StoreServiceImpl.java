@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -23,7 +24,7 @@ class StoreServiceImpl implements StoreService {
     private final TreeSet<String> hpanSet;
     private final HashMap<String, String> keyMap = new HashMap<>();
     private final HashMap<String, String> fileHashMap = new HashMap<>();
-    private final ConcurrentMap<AggregationKey, AggregationData> aggregates = new ConcurrentHashMap<>();
+    private final Map<AggregationKey, AggregationData> aggregates = new HashMap<>();
     private String salt = "";
 
     @Override
@@ -67,14 +68,14 @@ class StoreServiceImpl implements StoreService {
     }
 
     @Override
-    public void storeAggregate(AggregationKey key, long amount, String currency, String vat, String posType) {
+    public synchronized void storeAggregate(AggregationKey key, long amount, String currency, String vat, String posType) {
         aggregates.putIfAbsent(key, new AggregationData());
         AggregationData data = aggregates.get(key);
-        data.getNumTrx().incrementAndGet();
-        data.getTotalAmount().addAndGet(amount);
-        data.getCurrencies().add(currency);
-        data.getVats().add(vat);
-        data.getPosTypes().add(posType);
+        data.incNumTrx();
+        data.incTotalAmount(amount);
+        data.setCurrency(currency);
+        data.setVat(vat);
+        data.setPosType(posType);
     }
 
     @Override
