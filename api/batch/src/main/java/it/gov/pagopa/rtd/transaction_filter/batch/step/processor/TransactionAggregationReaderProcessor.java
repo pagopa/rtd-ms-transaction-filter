@@ -44,7 +44,11 @@ public class TransactionAggregationReaderProcessor implements ItemProcessor<Inbo
         key.setMerchantId(inboundTransaction.getMerchantId());
         key.setTerminalId(inboundTransaction.getTerminalId());
         key.setFiscalCode(inboundTransaction.getFiscalCode());
-        key.setOperationType(inboundTransaction.getOperationType());
+        if (inboundTransaction.getOperationType().equals("00")) {
+            key.setOperationType((byte)0);
+        } else {
+            key.setOperationType((byte)1);
+        }
         key.setAccountingDate(inboundTransaction.getTrxDate().substring(0, 10));
         storeService.storeAggregate(key, inboundTransaction.getAmount(), inboundTransaction.getAmountCurrency(), inboundTransaction.getVat(), inboundTransaction.getPosType());
 

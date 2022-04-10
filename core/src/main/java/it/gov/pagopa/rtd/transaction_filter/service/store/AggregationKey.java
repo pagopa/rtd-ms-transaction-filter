@@ -15,7 +15,7 @@ public class AggregationKey {
   private String acquirerId;
   private String fiscalCode;
   private String accountingDate;
-  private String operationType;
+  private byte operationType;
 
 }
 

@@ -100,7 +100,7 @@ public class StoreServiceTest {
         key.setAcquirerCode("code");
         key.setFiscalCode("FC");
         key.setAccountingDate("2022-04-07");
-        key.setOperationType("00");
+        key.setOperationType((byte)0);
         Assert.assertNull(storeService.getAggregate(key));
     }
 
@@ -113,7 +113,7 @@ public class StoreServiceTest {
         key.setAcquirerCode("code");
         key.setFiscalCode("FC");
         key.setAccountingDate("2022-04-07");
-        key.setOperationType("00");
+        key.setOperationType((byte)0);
         storeService.storeAggregate(key, 1000, "978", null, "01");
         AggregationData expectedData = new AggregationData();
         expectedData.setNumTrx((short)1);
@@ -132,7 +132,7 @@ public class StoreServiceTest {
         key.setAcquirerCode("code");
         key.setFiscalCode("FC");
         key.setAccountingDate("2022-04-07");
-        key.setOperationType("00");
+        key.setOperationType((byte)0);
         storeService.storeAggregate(key, 1000, "978", null, "01");
         storeService.storeAggregate(key, 2500, "978", null, "01");
         AggregationData expectedData = new AggregationData();
@@ -152,7 +152,7 @@ public class StoreServiceTest {
         key.setAcquirerCode("code");
         key.setFiscalCode("FC");
         key.setAccountingDate("2022-04-07");
-        key.setOperationType("00");
+        key.setOperationType((byte)0);
         storeService.storeAggregate(key, 1000, "978", null, "01");
         storeService.storeAggregate(key, 5000, "978", null, "00");
         Set<AggregationKey> expectedKeySet = new HashSet<>();
@@ -169,7 +169,7 @@ public class StoreServiceTest {
         key.setAcquirerCode("code");
         key.setFiscalCode("FC");
         key.setAccountingDate("2022-04-07");
-        key.setOperationType("00");
+        key.setOperationType((byte)0);
         storeService.storeAggregate(key, 1000, "978", null, "01");
         storeService.clearAggregates();
         Assert.assertEquals(0, storeService.getAggregateKeySet().size());
