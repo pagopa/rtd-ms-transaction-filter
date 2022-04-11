@@ -1,8 +1,5 @@
 package it.gov.pagopa.rtd.transaction_filter.service.store;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import lombok.Data;
 import lombok.ToString;
 
@@ -11,7 +8,7 @@ import lombok.ToString;
 public class AggregationData {
 
   private short numTrx;
-  private long totalAmount;
+  private int totalAmount;
   private String vat;
   private byte posType;
 
@@ -19,7 +16,7 @@ public class AggregationData {
     this.numTrx += 1;
   }
 
-  public void incTotalAmount(long amount) {
+  public void incTotalAmount(int amount) {
     this.totalAmount += amount;
   }
 

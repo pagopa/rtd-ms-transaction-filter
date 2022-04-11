@@ -1,6 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDateFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.util.Set;
@@ -39,18 +42,21 @@ public class TransactionAggregationReaderProcessor implements ItemProcessor<Inbo
         }
 
         AggregationKey key = new AggregationKey();
-        key.setAcquirerCode(inboundTransaction.getAcquirerCode());
-        key.setAcquirerId(inboundTransaction.getAcquirerId());
+        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode(inboundTransaction.getAcquirerCode()));
+        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId(inboundTransaction.getAcquirerId()));
         key.setMerchantId(inboundTransaction.getMerchantId());
         key.setTerminalId(inboundTransaction.getTerminalId());
         key.setFiscalCode(inboundTransaction.getFiscalCode());
         if (inboundTransaction.getOperationType().equals("00")) {
-            key.setOperationType((byte)0);
+            key.setOperationType((byte) 0);
         } else {
-            key.setOperationType((byte)1);
+            key.setOperationType((byte) 1);
         }
-        key.setAccountingDate(inboundTransaction.getTrxDate().substring(0, 10));
-        storeService.storeAggregate(key, inboundTransaction.getAmount(), inboundTransaction.getAmountCurrency(), inboundTransaction.getVat(), inboundTransaction.getPosType());
+        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate(
+            inboundTransaction.getTrxDate().substring(0, 10)));
+        storeService.storeAggregate(key, Math.toIntExact(inboundTransaction.getAmount()),
+            inboundTransaction.getAmountCurrency(), inboundTransaction.getVat(),
+            inboundTransaction.getPosType());
 
         // Return null since we'll bound to a dummy writer
         return null;

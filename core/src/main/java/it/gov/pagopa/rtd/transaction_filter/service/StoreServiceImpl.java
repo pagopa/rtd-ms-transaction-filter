@@ -68,7 +68,7 @@ class StoreServiceImpl implements StoreService {
     }
 
     @Override
-    public synchronized void storeAggregate(AggregationKey key, long amount, String currency, String vat, String posType) {
+    public synchronized void storeAggregate(AggregationKey key, int amount, String currency, String vat, String posType) {
         aggregates.putIfAbsent(key, new AggregationData());
         AggregationData data = aggregates.get(key);
         data.incNumTrx();

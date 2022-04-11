@@ -85,7 +85,7 @@ public interface StoreService {
      * @param vat the transaction VAT, if present
      * @param posType the transaction POS type
      */
-    void storeAggregate(AggregationKey key, long amount, String currency, String vat, String posType);
+    void storeAggregate(AggregationKey key, int amount, String currency, String vat, String posType);
 
     /**
      * Get the aggregate computed over a single aggregation key.

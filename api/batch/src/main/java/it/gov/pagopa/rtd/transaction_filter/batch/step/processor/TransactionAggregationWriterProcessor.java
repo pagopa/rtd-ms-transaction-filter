@@ -25,18 +25,18 @@ public class TransactionAggregationWriterProcessor implements ItemProcessor<Aggr
     @Override
     public AdeTransactionsAggregate process(AggregationKey key) {
         AdeTransactionsAggregate aggregate = new AdeTransactionsAggregate();
-        aggregate.setAcquirerCode(key.getAcquirerCode());
+        aggregate.setAcquirerCode(key.getAcquirerCode().getCode());
         if (key.getOperationType() == 0) {
             aggregate.setOperationType("00");
         } else {
             aggregate.setOperationType("01");
         }
         aggregate.setTransmissionDate(transmissionDate);
-        aggregate.setAccountingDate(key.getAccountingDate());
+        aggregate.setAccountingDate(key.getAccountingDate().getDate());
         aggregate.setNumTrx(storeService.getAggregate(key).getNumTrx());
-        aggregate.setTotalAmount(storeService.getAggregate(key).getTotalAmount());
+        aggregate.setTotalAmount((long) storeService.getAggregate(key).getTotalAmount());
         aggregate.setCurrency("978");
-        aggregate.setAcquirerId(key.getAcquirerId());
+        aggregate.setAcquirerId(key.getAcquirerId().getId());
         aggregate.setMerchantId(key.getMerchantId());
         aggregate.setTerminalId(key.getTerminalId());
         aggregate.setFiscalCode(key.getFiscalCode());

@@ -9,12 +9,12 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode
 public class AggregationKey {
 
-  private String acquirerCode;
+  private AcquirerCode acquirerCode;
   private String terminalId;
   private String merchantId;
-  private String acquirerId;
+  private AcquirerId acquirerId;
   private String fiscalCode;
-  private String accountingDate;
+  private AccountingDate accountingDate;
   private byte operationType;
 
 }
