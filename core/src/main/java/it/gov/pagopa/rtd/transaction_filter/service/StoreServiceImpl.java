@@ -74,7 +74,7 @@ class StoreServiceImpl implements StoreService {
         data.incNumTrx();
         data.incTotalAmount(amount);
         data.setVat(vat);
-        if (posType == "00") {
+        if (posType.equals("00")) {
             data.setPosType((byte) 0);
         } else {
             data.setPosType((byte) 1);
