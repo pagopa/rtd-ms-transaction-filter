@@ -197,7 +197,7 @@ public class TransactionFilterStep {
     }
 
     /**
-     * Aggregates filtered aggregations into CSV rows.
+     * Composes CSV lines from filtered transactions' models.
      *
      * @return an instance of a DelimitedLineAggregator suited for filtered aggregations data model
      */
@@ -212,7 +212,7 @@ public class TransactionFilterStep {
     }
 
     /**
-     * Aggregates AdE aggregations into CSV rows.
+     * Composes CSV lines from AdE aggregates' models.
      *
      * @return an instance of a DelimitedLineAggregator suited for AdE aggregations data model
      */
