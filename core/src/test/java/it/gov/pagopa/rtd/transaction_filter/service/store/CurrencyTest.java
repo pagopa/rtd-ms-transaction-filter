@@ -9,6 +9,6 @@ public class CurrencyTest {
     public void bla() {
         String isoCode = "ID123";
         Currency currency = new Currency(isoCode);
-        Assert.assertTrue(currency.getIsoCode().equals(isoCode));
+        Assert.assertEquals(currency.getIsoCode(), isoCode);
     }
 }

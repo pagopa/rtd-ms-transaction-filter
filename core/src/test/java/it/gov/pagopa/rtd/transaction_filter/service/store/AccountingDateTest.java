@@ -9,6 +9,6 @@ public class AccountingDateTest {
     public void bla() {
         String date = "12-04-2022";
         AccountingDate accountingDate = new AccountingDate(date);
-        Assert.assertTrue(accountingDate.getDate().equals(date));
+        Assert.assertEquals(accountingDate.getDate(), date);
     }
 }

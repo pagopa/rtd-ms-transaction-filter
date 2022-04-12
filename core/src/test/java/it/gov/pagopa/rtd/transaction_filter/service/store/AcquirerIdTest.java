@@ -9,6 +9,6 @@ public class AcquirerIdTest {
     public void bla() {
         String id = "ID123";
         AcquirerId acquirerId = new AcquirerId(id);
-        Assert.assertTrue(acquirerId.getId().equals(id));
+        Assert.assertEquals(acquirerId.getId(), id);
     }
 }

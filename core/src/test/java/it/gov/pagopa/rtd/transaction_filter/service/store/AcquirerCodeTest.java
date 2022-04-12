@@ -9,6 +9,6 @@ public class AcquirerCodeTest {
     public void bla() {
         String code = "CODE123";
         AcquirerCode acquirerCode = new AcquirerCode(code);
-        Assert.assertTrue(acquirerCode.getCode().equals(code));
+        Assert.assertEquals(acquirerCode.getCode(), code);
     }
 }
