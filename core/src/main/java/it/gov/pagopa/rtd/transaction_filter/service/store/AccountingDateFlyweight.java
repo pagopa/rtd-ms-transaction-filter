@@ -7,9 +7,12 @@ public class AccountingDateFlyweight {
 
   private static Map<String, AccountingDate> cache = new HashMap<>();
 
-  public synchronized static AccountingDate createAccountingDate(String date) {
-    AccountingDate accountingDate = cache.computeIfAbsent(date, newDate -> new AccountingDate(date));
-    return accountingDate;
+  private AccountingDateFlyweight() {
+    throw new IllegalStateException("Utility class, do not instantiate directly");
+  }
+
+  public static synchronized AccountingDate createAccountingDate(String date) {
+    return cache.computeIfAbsent(date, newDate -> new AccountingDate(date));
   }
 }
 

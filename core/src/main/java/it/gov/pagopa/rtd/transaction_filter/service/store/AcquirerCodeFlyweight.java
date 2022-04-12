@@ -7,9 +7,12 @@ public class AcquirerCodeFlyweight {
 
   private static Map<String, AcquirerCode> cache = new HashMap<>();
 
-  public synchronized static AcquirerCode createAcquirerCode(String code) {
-    AcquirerCode acquirerCode = cache.computeIfAbsent(code, newCode -> new AcquirerCode(code));
-    return acquirerCode;
+  private AcquirerCodeFlyweight() {
+    throw new IllegalStateException("Utility class, do not instantiate directly");
+  }
+
+  public static synchronized AcquirerCode createAcquirerCode(String code) {
+    return cache.computeIfAbsent(code, newCode -> new AcquirerCode(code));
   }
 }
 

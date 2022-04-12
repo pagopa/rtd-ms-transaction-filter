@@ -7,9 +7,12 @@ public class AcquirerIdFlyweight {
 
   private static Map<String, AcquirerId> cache = new HashMap<>();
 
-  public synchronized static AcquirerId createAcquirerId(String id) {
-    AcquirerId acquirerId = cache.computeIfAbsent(id, newId -> new AcquirerId(id));
-    return acquirerId;
+  private AcquirerIdFlyweight() {
+    throw new IllegalStateException("Utility class, do not instantiate directly");
+  }
+
+  public static synchronized AcquirerId createAcquirerId(String id) {
+    return cache.computeIfAbsent(id, newId -> new AcquirerId(id));
   }
 }
 
