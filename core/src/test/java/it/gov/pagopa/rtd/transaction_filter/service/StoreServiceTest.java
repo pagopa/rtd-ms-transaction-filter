@@ -7,10 +7,9 @@ import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
-import java.util.Arrays;
+import it.gov.pagopa.rtd.transaction_filter.service.store.CurrencyFlyweight;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 import org.junit.BeforeClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -123,6 +122,7 @@ public class StoreServiceTest {
         expectedData.setTotalAmount(1000);
         expectedData.setPosType((byte)1);
         expectedData.setVat(null);
+        expectedData.setCurrency(CurrencyFlyweight.createCurrency("978"));
         Assert.assertEquals(expectedData.toString(), storeService.getAggregate(key).toString());
     }
 
@@ -143,6 +143,7 @@ public class StoreServiceTest {
         expectedData.setTotalAmount(3500);
         expectedData.setPosType((byte)1);
         expectedData.setVat(null);
+        expectedData.setCurrency(CurrencyFlyweight.createCurrency("978"));
         Assert.assertEquals(expectedData.toString(), storeService.getAggregate(key).toString());
     }
 
@@ -185,7 +186,7 @@ public class StoreServiceTest {
 
     @Test
     public void getHashAfterStoreHashReturnStoredValue() {
-        String sha256hex = "089bae15036715a9e613552a0fcee186c6b610a85beb16cc4192595a940f16d3";
+        String sha256hex = "089bae15036715a9e613552a0free186c6b610a85beb16cc4192595a940f16d3";
         storeService.storeHash("fileName", sha256hex);
         Assert.assertEquals(sha256hex, storeService.getHash("fileName"));
     }

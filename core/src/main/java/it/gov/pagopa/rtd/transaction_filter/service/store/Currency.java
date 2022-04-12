@@ -1,21 +1,21 @@
 package it.gov.pagopa.rtd.transaction_filter.service.store;
 
 /**
- * Class encapsulating an Acquirer Code string representation.
+ * Class encapsulating a Currency string representation.
  *
  * We encapsulate the string into an object to leverage the Flyweight pattern
  * and reduce the memory footprint of allocating potentially millions of strings,
  * many of them we expect to be the repeated many times.
  */
-public class AcquirerCode {
+public class Currency {
 
-  String code;
+  String isoCode;
 
-  public AcquirerCode(String code) {
-    this.code = code;
+  public Currency(String isoCode) {
+    this.isoCode = isoCode;
   }
 
-  public String getCode() {
-    return this.code;
+  public String getIsoCode() {
+    return this.isoCode;
   }
 }

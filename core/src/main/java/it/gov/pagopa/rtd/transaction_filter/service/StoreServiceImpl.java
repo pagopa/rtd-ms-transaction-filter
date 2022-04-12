@@ -2,10 +2,9 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
+import it.gov.pagopa.rtd.transaction_filter.service.store.CurrencyFlyweight;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -79,6 +78,7 @@ class StoreServiceImpl implements StoreService {
         } else {
             data.setPosType((byte) 1);
         }
+        data.setCurrency(CurrencyFlyweight.createCurrency(currency));
     }
 
     @Override

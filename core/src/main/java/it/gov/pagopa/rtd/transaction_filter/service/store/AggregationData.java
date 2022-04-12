@@ -11,6 +11,7 @@ public class AggregationData {
   private int totalAmount;
   private String vat;
   private byte posType;
+  private Currency currency;
 
   public void incNumTrx() {
     this.numTrx += 1;
