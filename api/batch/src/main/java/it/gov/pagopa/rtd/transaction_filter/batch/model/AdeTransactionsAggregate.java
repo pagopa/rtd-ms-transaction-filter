@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * TODO
+ * Model for transactions' POS-based aggregates.
  */
 @Data
 @NoArgsConstructor
