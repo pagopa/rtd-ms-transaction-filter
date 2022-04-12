@@ -270,9 +270,17 @@ public class TransactionFilterBatchTest {
         Collection<File> trxFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, trxFilteredFiles.size());
 
+        fileFilter = new WildcardFileFilter("*_Ade__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+        Collection<File> adeFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
+        Assert.assertEquals(1, adeFilteredFiles.size());
+
         fileFilter = new WildcardFileFilter("*_Rtd__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, trxErrorFiles.size());
+
+        fileFilter = new WildcardFileFilter("*_Ade__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+        Collection<File> adeErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
+        Assert.assertEquals(1, adeErrorFiles.size());
 
         // Check that logs files contains expected lines
         File trxFilteredFile = trxFilteredFiles.iterator().next();
@@ -281,9 +289,18 @@ public class TransactionFilterBatchTest {
         Assert.assertTrue(trxFilteredContent.contains("99999;00;01;pan4;03/20/2020 13:23:00;4444444444;8888;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;par4"));
         Assert.assertTrue(trxFilteredContent.contains("99999;00;01;pan5;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
 
+        File adeFilteredFile = adeFilteredFiles.iterator().next();
+        List<String> adeFilteredContent = Files.readAllLines(adeFilteredFile.toPath().toAbsolutePath());
+        Assert.assertEquals(1, adeFilteredContent.size());
+        Assert.assertTrue(adeFilteredContent.contains("99999;00;01;pan5;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+
         File trxErrorFile = trxErrorFiles.iterator().next();
         List<String> trxErrorContent = Files.readAllLines(trxErrorFile.toPath().toAbsolutePath());
         Assert.assertEquals(0, trxErrorContent.size());
+
+        File adeErrorFile = adeErrorFiles.iterator().next();
+        List<String> adeErrorContent = Files.readAllLines(adeErrorFile.toPath().toAbsolutePath());
+        Assert.assertEquals(0, adeErrorContent.size());
     }
 
     @SneakyThrows

@@ -422,8 +422,6 @@ public class TransactionFilterStep {
             .noRetry(ConstraintViolationException.class)
             .noRollback(ConstraintViolationException.class)
             .listener(transactionAdeItemReaderListener(transactionWriterService, executionDate))
-            .listener(transactionAdeItemProcessListener(transactionWriterService, executionDate))
-            .listener(transactionAdeItemWriteListener(transactionWriterService, executionDate))
             .listener(transactionAdeStepListener(transactionWriterService, executionDate))
             .taskExecutor(batchConfig.readerTaskExecutor())
             .build();
@@ -530,21 +528,6 @@ public class TransactionFilterStep {
     }
 
     @Bean
-    public TransactionItemWriterListener transactionAdeItemWriteListener(
-        TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemWriterListener transactionItemWriteListener = new TransactionItemWriterListener();
-        transactionItemWriteListener.setExecutionDate(executionDate);
-        transactionItemWriteListener.setTransactionWriterService(transactionWriterService);
-        transactionItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);
-        transactionItemWriteListener.setEnableAfterWriteLogging(enableAfterWriteLogging);
-        transactionItemWriteListener.setLoggingFrequency(loggingFrequency);
-        transactionItemWriteListener.setEnableOnErrorFileLogging(enableOnWriteErrorFileLogging);
-        transactionItemWriteListener.setEnableOnErrorLogging(enableOnWriteErrorLogging);
-        transactionItemWriteListener.setPrefix(LOG_PREFIX_ADE);
-        return transactionItemWriteListener;
-    }
-
-    @Bean
     public TransactionItemProcessListener transactionItemProcessListener(
             TransactionWriterService transactionWriterService, String executionDate) {
         TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
@@ -557,22 +540,6 @@ public class TransactionFilterStep {
         transactionItemProcessListener.setEnableAfterProcessFileLogging(enableAfterProcessFileLogging);
         transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.setPrefix(LOG_PREFIX_TRN);
-        return transactionItemProcessListener;
-    }
-
-    @Bean
-    public TransactionItemProcessListener transactionAdeItemProcessListener(
-        TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
-        transactionItemProcessListener.setExecutionDate(executionDate);
-        transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
-        transactionItemProcessListener.setEnableAfterProcessLogging(enableAfterProcessLogging);
-        transactionItemProcessListener.setLoggingFrequency(loggingFrequency);
-        transactionItemProcessListener.setEnableOnErrorFileLogging(enableOnProcessErrorFileLogging);
-        transactionItemProcessListener.setEnableOnErrorLogging(enableOnProcessErrorLogging);
-        transactionItemProcessListener.setEnableAfterProcessFileLogging(enableAfterProcessFileLogging);
-        transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
-        transactionItemProcessListener.setPrefix(LOG_PREFIX_ADE);
         return transactionItemProcessListener;
     }
 
