@@ -1,13 +1,15 @@
 package it.gov.pagopa.rtd.transaction_filter.service.store;
 
 import lombok.Data;
-import lombok.ToString;
+import lombok.EqualsAndHashCode;
 
 @Data
-@ToString
+@EqualsAndHashCode
 public class AggregationData {
 
-  private short numTrx;
+  private int numTrx;
+  // Integer should be fine until we aggregate on daily basis.
+  // Remember to re-evaluate the data type in case the aggregation period would be increased.
   private int totalAmount;
   private String vat;
   private byte posType;

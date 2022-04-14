@@ -118,12 +118,12 @@ public class StoreServiceTest {
         key.setOperationType((byte)0);
         storeService.storeAggregate(key, 1000, "978", null, "01");
         AggregationData expectedData = new AggregationData();
-        expectedData.setNumTrx((short)1);
+        expectedData.setNumTrx(1);
         expectedData.setTotalAmount(1000);
         expectedData.setPosType((byte)1);
         expectedData.setVat(null);
         expectedData.setCurrency(CurrencyFlyweight.createCurrency("978"));
-        Assert.assertEquals(expectedData.toString(), storeService.getAggregate(key).toString());
+        Assert.assertEquals(expectedData, storeService.getAggregate(key));
     }
 
     @Test
@@ -139,12 +139,12 @@ public class StoreServiceTest {
         storeService.storeAggregate(key, 1000, "978", null, "01");
         storeService.storeAggregate(key, 2500, "978", null, "01");
         AggregationData expectedData = new AggregationData();
-        expectedData.setNumTrx((short)2);
+        expectedData.setNumTrx(2);
         expectedData.setTotalAmount(3500);
         expectedData.setPosType((byte)1);
         expectedData.setVat(null);
         expectedData.setCurrency(CurrencyFlyweight.createCurrency("978"));
-        Assert.assertEquals(expectedData.toString(), storeService.getAggregate(key).toString());
+        Assert.assertEquals(expectedData, storeService.getAggregate(key));
     }
 
     @Test
