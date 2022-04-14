@@ -1,5 +1,10 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
+import it.gov.pagopa.rtd.transaction_filter.service.store.CurrencyFlyweight;
+import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +23,7 @@ class StoreServiceImpl implements StoreService {
     private final TreeSet<String> hpanSet;
     private final HashMap<String, String> keyMap = new HashMap<>();
     private final HashMap<String, String> fileHashMap = new HashMap<>();
+    private final Map<AggregationKey, AggregationData> aggregates = new HashMap<>();
     private String salt = "";
 
     @Override
@@ -61,10 +67,41 @@ class StoreServiceImpl implements StoreService {
     }
 
     @Override
+    public synchronized void storeAggregate(AggregationKey key, int amount, String currency, String vat, String posType) {
+        aggregates.putIfAbsent(key, new AggregationData());
+        AggregationData data = aggregates.get(key);
+        data.incNumTrx();
+        data.incTotalAmount(amount);
+        data.setVat(vat);
+        if (posType.equals("00")) {
+            data.setPosType((byte) 0);
+        } else {
+            data.setPosType((byte) 1);
+        }
+        data.setCurrency(CurrencyFlyweight.createCurrency(currency));
+    }
+
+    @Override
+    public AggregationData getAggregate(AggregationKey key) {
+        return this.aggregates.get(key);
+    }
+
+    @Override
+    public Set<AggregationKey> getAggregateKeySet() {
+        return this.aggregates.keySet();
+    }
+
+    @Override
+    public void clearAggregates() {
+        this.aggregates.clear();
+    }
+
+    @Override
     public void clearAll() {
         hpanSet.clear();
         keyMap.clear();
         fileHashMap.clear();
+        aggregates.clear();
         this.salt = "";
     }
 

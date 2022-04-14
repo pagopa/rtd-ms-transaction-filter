@@ -1,7 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.writer;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
-import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -14,14 +13,10 @@ import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.util.Locale;
 
-/**
- * Implementation of {@link FlatFileItemWriter}, to be used for writing the output transaction records, potentially
- * encrypting the output file in the pgp phase
- */
 
 @Slf4j
 @RequiredArgsConstructor
-public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction> {
+public class PGPFlatFileItemWriter<T> extends FlatFileItemWriter<T> {
 
     private final String publicKey;
     private final boolean applyEncrypt;
@@ -38,11 +33,7 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
     public void close() {
         super.close();
         if (applyEncrypt) {
-            ByteArrayInputStream publicKeyIS = null;
-            FileOutputStream outputFOS = null;
-            try {
-                publicKeyIS = new ByteArrayInputStream(publicKey.getBytes());
-                outputFOS = new FileOutputStream(resource.getFile().getAbsolutePath().concat(".pgp"));
+            try (ByteArrayInputStream publicKeyIS = new ByteArrayInputStream(publicKey.getBytes()); FileOutputStream outputFOS = new FileOutputStream(resource.getFile().getAbsolutePath().concat(".pgp"))) {
                 PGPPublicKey pgpPublicKey = EncryptUtil.readPublicKey(publicKeyIS);
                 String fingerprint = new String(Hex.encode(pgpPublicKey.getFingerprint())).toUpperCase(Locale.ROOT);
                 log.info("Encrypting file " + resource.getFilename() + " with PGP key " + fingerprint);
@@ -50,17 +41,7 @@ public class PGPFlatFileItemWriter extends FlatFileItemWriter<InboundTransaction
                         this.resource.getFile().getAbsolutePath(),
                         pgpPublicKey,
                         false, true);
-            } finally {
-                if (publicKeyIS != null) {
-                    publicKeyIS.close();
-                }
-                if (outputFOS != null) {
-                    outputFOS.close();
-                }
             }
         }
     }
-
-
-
 }

@@ -7,6 +7,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PurgeAggregatesFromMemoryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
@@ -274,6 +275,18 @@ public class TransactionFilterBatch {
                 .listener(jobListener())
                 .start(pagopaPublicKeyRecoveryTask(this.storeService))
                 .on(FAILED).end()
+                .on("*").to(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
+                .on(FAILED).end()
+                .from(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
+                .on("*").to(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
+                .on("*").to(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
+                .on("*").to(purgeAggregatesFromMemoryTask(this.storeService))
+                .on(FAILED).to(fileManagementTask())
+                .from(purgeAggregatesFromMemoryTask(this.storeService))
                 .on("*").to(hpanListRecoveryTask())
                 .on(FAILED).to(fileManagementTask())
                 .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.storeService))
@@ -282,12 +295,9 @@ public class TransactionFilterBatch {
                 .to(panReaderStep.hpanRecoveryMasterStep(this.storeService))
                 .on(FAILED).to(fileManagementTask())
                 .from(panReaderStep.hpanRecoveryMasterStep(this.storeService))
-                .on("*").to(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
+                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.storeService, this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
-                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.storeService,this.transactionWriterService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterMasterStep(this.storeService,this.transactionWriterService))
+                .from(transactionFilterStep.transactionFilterMasterStep(this.storeService, this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
@@ -332,6 +342,14 @@ public class TransactionFilterBatch {
         pagopaPublicKeyRecoveryTasklet.setTaskletEnabled(pagopaPublicKeyRecoveryEnabled);
         return stepBuilderFactory.get("transaction-filter-public-key-recovery-step")
                 .tasklet(pagopaPublicKeyRecoveryTasklet).build();
+    }
+
+    @Bean
+    public Step purgeAggregatesFromMemoryTask(StoreService storeService) {
+        PurgeAggregatesFromMemoryTasklet tasklet = new PurgeAggregatesFromMemoryTasklet();
+        tasklet.setStoreService(storeService);
+        return stepBuilderFactory.get("transaction-filter-purge-aggregates-from-memory-step")
+            .tasklet(tasklet).build();
     }
 
     /**

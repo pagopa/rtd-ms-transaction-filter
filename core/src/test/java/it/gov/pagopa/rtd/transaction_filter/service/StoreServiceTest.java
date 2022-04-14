@@ -2,6 +2,14 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDateFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
+import it.gov.pagopa.rtd.transaction_filter.service.store.CurrencyFlyweight;
+import java.util.HashSet;
+import java.util.Set;
 import org.junit.BeforeClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -86,13 +94,99 @@ public class StoreServiceTest {
     }
 
     @Test
+    public void getAggregateBeforeStoreReturnsNull() {
+        AggregationKey key = new AggregationKey();
+        key.setTerminalId("1");
+        key.setMerchantId("1");
+        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
+        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setFiscalCode("FC");
+        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setOperationType((byte)0);
+        Assert.assertNull(storeService.getAggregate(key));
+    }
+
+    @Test
+    public void getAggregateAfterStoreReturnsData() {
+        AggregationKey key = new AggregationKey();
+        key.setTerminalId("1");
+        key.setMerchantId("1");
+        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
+        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setFiscalCode("FC");
+        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setOperationType((byte)0);
+        storeService.storeAggregate(key, 1000, "978", null, "01");
+        AggregationData expectedData = new AggregationData();
+        expectedData.setNumTrx(1);
+        expectedData.setTotalAmount(1000);
+        expectedData.setPosType((byte)1);
+        expectedData.setVat(null);
+        expectedData.setCurrency(CurrencyFlyweight.createCurrency("978"));
+        Assert.assertEquals(expectedData, storeService.getAggregate(key));
+    }
+
+    @Test
+    public void getAggregateAfterMultipleStoreReturnsData() {
+        AggregationKey key = new AggregationKey();
+        key.setTerminalId("1");
+        key.setMerchantId("1");
+        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
+        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setFiscalCode("FC");
+        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setOperationType((byte)0);
+        storeService.storeAggregate(key, 1000, "978", null, "01");
+        storeService.storeAggregate(key, 2500, "978", null, "01");
+        AggregationData expectedData = new AggregationData();
+        expectedData.setNumTrx(2);
+        expectedData.setTotalAmount(3500);
+        expectedData.setPosType((byte)1);
+        expectedData.setVat(null);
+        expectedData.setCurrency(CurrencyFlyweight.createCurrency("978"));
+        Assert.assertEquals(expectedData, storeService.getAggregate(key));
+    }
+
+    @Test
+    public void getAggregateKeySetReturnsExpectedKeys() {
+        AggregationKey key = new AggregationKey();
+        key.setTerminalId("1");
+        key.setMerchantId("1");
+        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
+        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setFiscalCode("FC");
+        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setOperationType((byte)0);
+        storeService.storeAggregate(key, 1000, "978", null, "01");
+        storeService.storeAggregate(key, 5000, "978", null, "00");
+        Set<AggregationKey> expectedKeySet = new HashSet<>();
+        expectedKeySet.add(key);
+        Assert.assertEquals(expectedKeySet, storeService.getAggregateKeySet());
+    }
+
+    @Test
+    public void clearAggregatesShouldEmptyKeySet() {
+        AggregationKey key = new AggregationKey();
+        key.setTerminalId("1");
+        key.setMerchantId("1");
+        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
+        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setFiscalCode("FC");
+        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setOperationType((byte)0);
+        storeService.storeAggregate(key, 1000, "978", null, "01");
+        storeService.clearAggregates();
+        Assert.assertEquals(0, storeService.getAggregateKeySet().size());
+    }
+
+    @Test
     public void getHashBeforeStoreHashReturnsNull() {
         Assert.assertNull(storeService.getHash("fileName"));
     }
 
     @Test
     public void getHashAfterStoreHashReturnStoredValue() {
-        String sha256hex = "089bae15036715a9e613552a0fcee186c6b610a85beb16cc4192595a940f16d3";
+        String sha256hex = "089bae15036715a9e613552a0free186c6b610a85beb16cc4192595a940f16d3";
         storeService.storeHash("fileName", sha256hex);
         Assert.assertEquals(sha256hex, storeService.getHash("fileName"));
     }
