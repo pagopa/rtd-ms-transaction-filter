@@ -25,6 +25,7 @@ class StoreServiceImpl implements StoreService {
     private final HashMap<String, String> fileHashMap = new HashMap<>();
     private final Map<AggregationKey, AggregationData> aggregates = new HashMap<>();
     private String salt = "";
+    private String targetInputFile;
 
     @Override
     public String getSalt() {
@@ -96,6 +97,14 @@ class StoreServiceImpl implements StoreService {
         this.aggregates.clear();
     }
 
+    public void setTargetInputFile(String filename) {
+        this.targetInputFile = filename;
+    }
+
+    public String getTargetInputFile() {
+        return this.targetInputFile;
+    }
+
     @Override
     public void clearAll() {
         hpanSet.clear();
@@ -103,6 +112,7 @@ class StoreServiceImpl implements StoreService {
         fileHashMap.clear();
         aggregates.clear();
         this.salt = "";
+        this.targetInputFile = null;
     }
 
 }

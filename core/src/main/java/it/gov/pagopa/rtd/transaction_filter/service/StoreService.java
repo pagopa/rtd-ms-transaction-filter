@@ -108,6 +108,20 @@ public interface StoreService {
     void clearAggregates();
 
     /**
+     * Set the filename of the target input file for current job execution.
+     *
+     * @param filename the target file name
+     */
+    void setTargetInputFile(String filename);
+
+    /**
+     * Get the filename of the target input file for current job execution.
+     *
+     * @return a filename string
+     */
+    String getTargetInputFile();
+
+    /**
     * Method explicitly used to clear the stored hpans and salt.
      */
     void clearAll();
