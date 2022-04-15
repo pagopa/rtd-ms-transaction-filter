@@ -46,7 +46,12 @@ public class SelectTargetInputFileTasklet implements Tasklet {
         String olderDateTimeProgressive = "99999999999999999"; // yyyymmddhhmmssnnn
 
         for (Resource res : transactionResources) {
-            String[] filenameParts = res.getFilename().split("\\.");
+            String filename = res.getFilename();
+            if (filename == null) {
+                log.warn("Resource returned a null filename");
+                continue;
+            }
+            String[] filenameParts = filename.split("\\.");
             String dateTimeProgressive = filenameParts[3] + filenameParts[4] + filenameParts[5];
             if (dateTimeProgressive.compareTo(olderDateTimeProgressive) < 0) {
                 olderFilename = res.getFilename();

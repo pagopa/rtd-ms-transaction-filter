@@ -765,7 +765,8 @@ public class TransactionFilterStep {
     public static Resource[] filterResourcesByFilename(Resource[] resources, String filename) {
         List<Resource> filtered = new ArrayList<>();
         for (Resource inputResource : resources) {
-            if (inputResource.getFilename().equals(filename)) {
+            String resFilename = inputResource.getFilename();
+            if (resFilename != null && resFilename.equals(filename)) {
                 filtered.add(inputResource);
             }
         }
