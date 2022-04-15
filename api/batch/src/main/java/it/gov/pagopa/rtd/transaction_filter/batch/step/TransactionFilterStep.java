@@ -92,6 +92,8 @@ public class TransactionFilterStep {
     private Boolean inputFileChecksumEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.inputFileChecksumEnabled}")
     private Boolean applyEncrypt;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled}")
+    private Boolean transactionSenderAdeEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled}")
     private Boolean transactionSenderRtdEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath}")
@@ -558,6 +560,73 @@ public class TransactionFilterStep {
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
+    }
+
+    /**
+     * Partitioning strategy for the upload of AdE transaction files.
+     *
+     * @return a partitioner instance
+     * @throws IOException
+     */
+    @Bean
+    @JobScope
+    public Partitioner transactionSenderAdePartitioner() throws IOException {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        String pathMatcher = outputDirectoryPath + File.separator + ADE_OUTPUT_FILE_PREFIX + "*.pgp";
+        partitioner.setResources(resolver.getResources(pathMatcher));
+        partitioner.partition(partitionerSize);
+        return partitioner;
+    }
+
+    /**
+     * Master step for the upload of AdE transaction files.
+     *
+     * @param hpanConnectorService
+     * @return the AdE batch master step
+     * @throws IOException
+     */
+    @Bean
+    public Step transactionSenderAdeMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
+        return stepBuilderFactory.get("transaction-sender-ade-master-step")
+            .partitioner(transactionSenderAdeWorkerStep(hpanConnectorService))
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderAdePartitioner())
+            .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * Worker step for the upload of AdE transaction files.
+     *
+     * @param hpanConnectorService
+     * @return the AdE batch worker step
+     */
+    @SneakyThrows
+    @Bean
+    public Step transactionSenderAdeWorkerStep(HpanConnectorService hpanConnectorService) {
+        return stepBuilderFactory.get("transaction-sender-ade-worker-step").tasklet(
+            transactionSenderAdeTasklet(null, hpanConnectorService)).build();
+    }
+
+    /**
+     * Tasklet responsible for the upload of AdE transaction files via REST endpoints.
+     *
+     * @param file the file to upload remotely via REST
+     * @param hpanConnectorService
+     * @return an instance configured for the upload of a specified file
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public TransactionSenderRestTasklet transactionSenderAdeTasklet(
+        @Value("#{stepExecutionContext['fileName']}") String file,
+        HpanConnectorService hpanConnectorService
+    ) {
+        TransactionSenderRestTasklet transactionSenderRestTasklet = new TransactionSenderRestTasklet();
+        transactionSenderRestTasklet.setHpanConnectorService(hpanConnectorService);
+        transactionSenderRestTasklet.setResource(new UrlResource(file));
+        transactionSenderRestTasklet.setTaskletEnabled(transactionSenderAdeEnabled);
+        transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.ADE);
+        return transactionSenderRestTasklet;
     }
 
     /**
