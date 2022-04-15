@@ -23,7 +23,6 @@ import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import java.net.MalformedURLException;
-import java.util.Arrays;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -760,7 +759,11 @@ public class TransactionFilterStep {
     }
 
     /**
-     * TODO
+     * Filter a list of resources retaining only those matching a target filename
+     *
+     * @param resources a list of resources to be filtered
+     * @param filename the filename to filter
+     * @return a filtered list of resources
      */
     public static Resource[] filterResourcesByFilename(Resource[] resources, String filename) {
         List<Resource> filtered = new ArrayList<>();
