@@ -8,7 +8,7 @@ import java.io.Writer;
 public class ChecksumHeaderWriter implements FlatFileHeaderCallback {
 
   private final String header;
-  private static final String commentPrefix = "#sha256sum:";
+  private static final String COMMENT_PREFIX = "#sha256sum:";
 
   public ChecksumHeaderWriter(String header) {
     this.header = header;
@@ -16,6 +16,6 @@ public class ChecksumHeaderWriter implements FlatFileHeaderCallback {
 
   @Override
   public void writeHeader(Writer writer) throws IOException {
-    writer.write(commentPrefix + this.header);
+    writer.write(COMMENT_PREFIX + this.header);
   }
 }
