@@ -762,14 +762,14 @@ public class TransactionFilterStep {
      * Filter a list of resources retaining only those matching a target filename
      *
      * @param resources a list of resources to be filtered
-     * @param filename the filename to filter
+     * @param validFilename only resource(s) matching this filename will be retained from the list
      * @return a filtered list of resources
      */
-    public static Resource[] filterResourcesByFilename(Resource[] resources, String filename) {
+    public static Resource[] filterResourcesByFilename(Resource[] resources, String validFilename) {
         List<Resource> filtered = new ArrayList<>();
         for (Resource inputResource : resources) {
             String resFilename = inputResource.getFilename();
-            if (resFilename != null && resFilename.equals(filename)) {
+            if (resFilename != null && resFilename.equals(validFilename)) {
                 filtered.add(inputResource);
             }
         }
