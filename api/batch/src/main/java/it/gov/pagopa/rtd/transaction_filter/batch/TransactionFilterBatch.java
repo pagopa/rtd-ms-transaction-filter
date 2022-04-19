@@ -9,6 +9,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryT
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PurgeAggregatesFromMemoryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInputFileTasklet;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
@@ -275,6 +276,9 @@ public class TransactionFilterBatch {
                 .listener(jobListener())
                 .start(pagopaPublicKeyRecoveryTask(this.storeService))
                 .on(FAILED).end()
+                .on("*").to(selectTargetInputFileTask(this.storeService))
+                .on(FAILED).end()
+                .from(selectTargetInputFileTask(this.storeService))
                 .on("*").to(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
                 .on(FAILED).end()
                 .from(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
@@ -352,6 +356,15 @@ public class TransactionFilterBatch {
         PurgeAggregatesFromMemoryTasklet tasklet = new PurgeAggregatesFromMemoryTasklet();
         tasklet.setStoreService(storeService);
         return stepBuilderFactory.get("transaction-filter-purge-aggregates-from-memory-step")
+            .tasklet(tasklet).build();
+    }
+
+    @Bean
+    public Step selectTargetInputFileTask(StoreService storeService) {
+        SelectTargetInputFileTasklet tasklet = new SelectTargetInputFileTasklet();
+        tasklet.setStoreService(storeService);
+        tasklet.setTransactionDirectoryPath(transactionFilterStep.getTransactionDirectoryPath());
+        return stepBuilderFactory.get("transaction-filter-select-target-input-file-step")
             .tasklet(tasklet).build();
     }
 

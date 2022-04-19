@@ -329,11 +329,12 @@ public class TransactionFilterStep {
      */
     @Bean
     @JobScope
-    public Partitioner transactionFilterPartitioner() throws IOException {
+    public Partitioner transactionFilterPartitioner(StoreService storeService) throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] resources = resolver.getResources(transactionDirectoryPath + "/*.csv");
         resources = filterValidFilenames(resources);
+        resources = filterResourcesByFilename(resources, storeService.getTargetInputFile());
         partitioner.setResources(resources);
         partitioner.partition(partitionerSize);
         return partitioner;
@@ -348,7 +349,7 @@ public class TransactionFilterStep {
     public Step transactionFilterMasterStep(StoreService storeService, TransactionWriterService transactionWriterService) throws IOException {
         return stepBuilderFactory.get("transaction-filter-master-step")
                 .partitioner(transactionFilterWorkerStep(storeService, transactionWriterService))
-                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner(storeService))
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -394,7 +395,7 @@ public class TransactionFilterStep {
     public Step transactionAggregationReaderMasterStep(StoreService storeService, TransactionWriterService transactionWriterService) throws IOException {
         return stepBuilderFactory.get("transaction-aggregation-reader-master-step")
             .partitioner(transactionAggregationReaderWorkerStep(storeService, transactionWriterService))
-            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner(storeService))
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -440,7 +441,7 @@ public class TransactionFilterStep {
     public Step transactionAggregationWriterMasterStep(StoreService storeService) throws IOException {
         return stepBuilderFactory.get("transaction-aggregation-writer-master-step")
             .partitioner(transactionAggregationWriterWorkerStep(storeService))
-            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner())
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner(storeService))
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -680,23 +681,6 @@ public class TransactionFilterStep {
     }
 
     /**
-     * Partitioning strategy for the hashing of input transaction files.
-     *
-     * @return a partitioner instance
-     * @throws IOException
-     */
-    @Bean
-    @JobScope
-    public Partitioner transactionChecksumPartitioner() throws IOException {
-        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        Resource[] resources = resolver.getResources(transactionDirectoryPath + "/*.csv");
-        resources = filterValidFilenames(resources);
-        partitioner.setResources(resources);
-        return partitioner;
-    }
-
-    /**
      * Master step for the hashing of input transaction files.
      *
      * @param storeService
@@ -707,7 +691,7 @@ public class TransactionFilterStep {
     public Step transactionChecksumMasterStep(StoreService storeService) throws IOException {
         return stepBuilderFactory.get("transaction-checksum-master-step")
             .partitioner(transactionChecksumWorkerStep(storeService))
-            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionChecksumPartitioner())
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner(storeService))
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -768,6 +752,24 @@ public class TransactionFilterStep {
         for (Resource inputResource : resources) {
             Matcher matcher = pattern.matcher(inputResource.getFilename());
             if (matcher.find()) {
+                filtered.add(inputResource);
+            }
+        }
+        return filtered.stream().toArray(Resource[]::new);
+    }
+
+    /**
+     * Filter a list of resources retaining only those matching a target filename
+     *
+     * @param resources a list of resources to be filtered
+     * @param validFilename only resource(s) matching this filename will be retained from the list
+     * @return a filtered list of resources
+     */
+    public static Resource[] filterResourcesByFilename(Resource[] resources, String validFilename) {
+        List<Resource> filtered = new ArrayList<>();
+        for (Resource inputResource : resources) {
+            String resFilename = inputResource.getFilename();
+            if (resFilename != null && resFilename.equals(validFilename)) {
                 filtered.add(inputResource);
             }
         }
