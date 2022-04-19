@@ -192,12 +192,26 @@ public class StoreServiceTest {
     }
 
     @Test
+    public void getTargetInputFileBeforeStoreReturnsNull() {
+        Assert.assertNull(storeService.getTargetInputFile());
+    }
+
+    @Test
+    public void getTargetInputFileAfterStoreReturnsStoredValue() {
+        String filename = "a.csv";
+        storeService.setTargetInputFile(filename);
+        Assert.assertEquals(filename, storeService.getTargetInputFile());
+    }
+
+    @Test
     public void clearAllEmptiesDataStructures() {
         Assert.assertEquals(0, storeSet.size());
         storeSet.add("test");
+        storeService.setTargetInputFile("filename");
         storeService.clearAll();
         Assert.assertEquals(0, storeSet.size());
         Assert.assertEquals("", storeService.getSalt());
+        Assert.assertNull(storeService.getTargetInputFile());
     }
 
 }
