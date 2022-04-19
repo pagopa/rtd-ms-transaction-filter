@@ -14,7 +14,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 
 /**
- * Tasklet responsible for clearing aggregates data from memory.
+ * Tasklet responsible for selecting a single input file to process in the current job's execution.
  */
 @Data
 @Slf4j
@@ -41,6 +41,14 @@ public class SelectTargetInputFileTasklet implements Tasklet {
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] transactionResources = resolver.getResources(transactionDirectoryPath + "/*.csv");
         transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
+
+        // The job is started only if input trx directory contains at least one valid file.
+        // The following condition should not verify during normal circumstances but we must
+        // check for weird situations (e.g. something emptied the directory between the job start
+        // and the execution of this step)
+        if (transactionResources.length == 0) {
+            throw new IOException("No resources in input trx directory! Quitting job immediately");
+        }
 
         String olderFilename = "";
         String olderDateTimeProgressive = "99999999999999999"; // yyyymmddhhmmssnnn
