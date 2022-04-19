@@ -16,6 +16,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.CustomIteratorItem
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionChecksumTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.ChecksumHeaderWriter;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
@@ -268,6 +269,8 @@ public class TransactionFilterStep {
         String newFilename = ADE_OUTPUT_FILE_PREFIX + filename[filename.length - 1];
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         itemWriter.setResource(resolver.getResource(outputDirectoryPath.concat("/".concat(newFilename))));
+        ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
+        itemWriter.setHeaderCallback(checksumHeaderWriter);
         return itemWriter;
     }
 

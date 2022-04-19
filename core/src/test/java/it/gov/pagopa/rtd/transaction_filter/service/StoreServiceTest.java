@@ -181,14 +181,14 @@ public class StoreServiceTest {
 
     @Test
     public void getHashBeforeStoreHashReturnsNull() {
-        Assert.assertNull(storeService.getHash("fileName"));
+        Assert.assertNull(storeService.getTargetInputFileHash());
     }
 
     @Test
     public void getHashAfterStoreHashReturnStoredValue() {
         String sha256hex = "089bae15036715a9e613552a0free186c6b610a85beb16cc4192595a940f16d3";
-        storeService.storeHash("fileName", sha256hex);
-        Assert.assertEquals(sha256hex, storeService.getHash("fileName"));
+        storeService.setTargetInputFileHash(sha256hex);
+        Assert.assertEquals(sha256hex, storeService.getTargetInputFileHash());
     }
 
     @Test
