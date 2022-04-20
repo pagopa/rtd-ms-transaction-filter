@@ -7,11 +7,11 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class AggregationData {
 
-  public final static String DIRTY_CURRENCY = "###na###";
-  public final static byte DIRTY_POS_TYPE = 127;
-  public final static byte INIT_POS_TYPE = 126;
-  public final static String INIT_VAT = "###init###";
-  public final static String DIRTY_VAT = "###na###";
+  public static final String DIRTY_CURRENCY = "###na###";
+  public static final byte DIRTY_POS_TYPE = 127;
+  public static final byte INIT_POS_TYPE = 126;
+  public static final String INIT_VAT = "###init###";
+  public static final String DIRTY_VAT = "###na###";
 
   private int numTrx;
   // Integer should be fine until we aggregate on daily basis.
