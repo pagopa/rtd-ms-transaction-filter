@@ -2,7 +2,6 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
-import it.gov.pagopa.rtd.transaction_filter.service.store.CurrencyFlyweight;
 import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -64,30 +63,9 @@ class StoreServiceImpl implements StoreService {
         data.incNumTrx();
         data.incTotalAmount(amount);
 
-        if (data.getCurrency() == null) {
-            data.setCurrency(CurrencyFlyweight.createCurrency(currency));
-        } else {
-            if (!data.getCurrency().getIsoCode().equals("###na###") && !data.getCurrency().getIsoCode().equals(currency)) {
-                data.setCurrency(CurrencyFlyweight.createCurrency("###na###"));
-            }
-        }
-
-        data.setVat(vat);
-
-        if (data.getPosType() == 126) {
-            if (posType.equals("00")) {
-                data.setPosType((byte) 0);
-            } else if (posType.equals("01")) {
-                data.setPosType((byte) 1);
-            }
-        } else {
-            if (posType.equals("00") && data.getPosType() != 0) {
-                data.setPosType((byte) 127);
-            }
-            if (posType.equals("01") && data.getPosType() != 1) {
-                data.setPosType((byte) 127);
-            }
-        }
+        data.updateCurrencyOrMarkAsDirty(currency);
+        data.updateVatOrMarkAsDirty(vat);
+        data.updatePosTypeOrMarkAsDirty(posType);
     }
 
     @Override
