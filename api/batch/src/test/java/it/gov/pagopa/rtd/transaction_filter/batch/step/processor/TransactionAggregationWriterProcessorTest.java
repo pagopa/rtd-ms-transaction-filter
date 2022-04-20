@@ -138,5 +138,29 @@ public class TransactionAggregationWriterProcessorTest {
         Assert.assertEquals(expectedAggregate, aggregate);
     }
 
+    @Test
+    public void processShouldHandleDirtyVat() {
+        data.setVat(AggregationData.DIRTY_VAT);
+        BDDMockito.doReturn(data).when(storeServiceMock).getAggregate(key);
+
+        AdeTransactionsAggregate aggregate = processor.process(key);
+
+        AdeTransactionsAggregate expectedAggregate = new AdeTransactionsAggregate();
+        expectedAggregate.setAccountingDate("2022-04-07");
+        expectedAggregate.setAcquirerCode("code");
+        expectedAggregate.setAcquirerId("1");
+        expectedAggregate.setMerchantId("1");
+        expectedAggregate.setTerminalId("1");
+        expectedAggregate.setFiscalCode("FC");
+        expectedAggregate.setCurrency("978");
+        expectedAggregate.setPosType("01");
+        expectedAggregate.setOperationType("00");
+        expectedAggregate.setNumTrx(3);
+        expectedAggregate.setTotalAmount(10000L);
+        expectedAggregate.setTransmissionDate(TRANSMISSION_DATE);
+        expectedAggregate.setVat(AggregationData.DIRTY_VAT);
+
+        Assert.assertEquals(expectedAggregate, aggregate);
+    }
 
 }
