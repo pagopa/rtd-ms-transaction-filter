@@ -69,6 +69,15 @@ public class AggregationDataTest {
     }
 
     @Test
+    public void updatePosTypeShouldHandleDirtyDataBis() {
+        AggregationData data = new AggregationData();
+        data.updatePosTypeOrMarkAsDirty(POS_TYPE_PHYSICAL);
+        data.updatePosTypeOrMarkAsDirty(POS_TYPE_ECOMMERCE);
+        data.updatePosTypeOrMarkAsDirty(POS_TYPE_ECOMMERCE);
+        Assert.assertEquals(AggregationData.DIRTY_POS_TYPE, data.getPosType());
+    }
+
+    @Test
     public void updateCurrencyShouldHandleCleanData() {
         AggregationData data = new AggregationData();
         data.updateCurrencyOrMarkAsDirty(CURRENCY_EUR_ISO_CODE);
