@@ -46,22 +46,6 @@ public interface StoreService {
     void storeKey(String identifier, String key);
 
     /**
-     * Get a previously stored file hash.
-     *
-     * @param filename the hashed file name
-     * @return a String containing the hash in hexadecimal notation
-     */
-    String getHash(String filename);
-
-    /**
-     * Stores a file hash.
-     *
-     * @param filename the hashed file name
-     * @param hash a String containing the hash in hexadecimal notation
-     */
-    void storeHash(String filename, String hash);
-
-    /**
      * Method to be used to store a hpan.
      *
      * @param hpan Hashed PAN
@@ -120,6 +104,20 @@ public interface StoreService {
      * @return a filename string
      */
     String getTargetInputFile();
+
+    /**
+     * Set the checksum of the target input file for current job execution.
+     *
+     * @param checksum the target file name
+     */
+    void setTargetInputFileHash(String checksum);
+
+    /**
+     * Get the checksum of the target input file for current job execution.
+     *
+     * @return a checksum string
+     */
+    String getTargetInputFileHash();
 
     /**
     * Method explicitly used to clear the stored hpans and salt.
