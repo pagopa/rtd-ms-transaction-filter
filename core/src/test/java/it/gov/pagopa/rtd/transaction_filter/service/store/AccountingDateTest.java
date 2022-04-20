@@ -6,7 +6,7 @@ import org.junit.Test;
 public class AccountingDateTest {
 
     @Test
-    public void bla() {
+    public void getCodeShouldReturnExpectedValue() {
         String date = "12-04-2022";
         AccountingDate accountingDate = new AccountingDate(date);
         Assert.assertEquals(accountingDate.getDate(), date);

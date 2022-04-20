@@ -43,8 +43,10 @@ public class TransactionAggregationWriterProcessor implements ItemProcessor<Aggr
         aggregate.setVat(storeService.getAggregate(key).getVat());
         if (storeService.getAggregate(key).getPosType() == 0) {
             aggregate.setPosType("00");
-        } else {
+        } else if (storeService.getAggregate(key).getPosType() == 1) {
             aggregate.setPosType("01");
+        } else {
+            aggregate.setPosType("99");
         }
         return aggregate;
     }

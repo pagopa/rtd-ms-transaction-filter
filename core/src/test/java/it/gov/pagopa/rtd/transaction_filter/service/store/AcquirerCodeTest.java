@@ -6,7 +6,7 @@ import org.junit.Test;
 public class AcquirerCodeTest {
 
     @Test
-    public void bla() {
+    public void getCodeShouldReturnExpectedValue() {
         String code = "CODE123";
         AcquirerCode acquirerCode = new AcquirerCode(code);
         Assert.assertEquals(acquirerCode.getCode(), code);

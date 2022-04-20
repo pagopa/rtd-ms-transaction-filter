@@ -73,13 +73,31 @@ class StoreServiceImpl implements StoreService {
         AggregationData data = aggregates.get(key);
         data.incNumTrx();
         data.incTotalAmount(amount);
-        data.setVat(vat);
-        if (posType.equals("00")) {
-            data.setPosType((byte) 0);
+
+        if (data.getCurrency() == null) {
+            data.setCurrency(CurrencyFlyweight.createCurrency(currency));
         } else {
-            data.setPosType((byte) 1);
+            if (!data.getCurrency().getIsoCode().equals("###na###") && !data.getCurrency().getIsoCode().equals(currency)) {
+                data.setCurrency(CurrencyFlyweight.createCurrency("###na###"));
+            }
         }
-        data.setCurrency(CurrencyFlyweight.createCurrency(currency));
+
+        data.setVat(vat);
+
+        if (data.getPosType() == 126) {
+            if (posType.equals("00")) {
+                data.setPosType((byte) 0);
+            } else if (posType.equals("01")) {
+                data.setPosType((byte) 1);
+            }
+        } else {
+            if (posType.equals("00") && data.getPosType() != 0) {
+                data.setPosType((byte) 127);
+            }
+            if (posType.equals("01") && data.getPosType() != 1) {
+                data.setPosType((byte) 127);
+            }
+        }
     }
 
     @Override

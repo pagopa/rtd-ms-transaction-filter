@@ -6,7 +6,7 @@ import org.junit.Test;
 public class AcquirerIdTest {
 
     @Test
-    public void bla() {
+    public void getCodeShouldReturnExpectedValue() {
         String id = "ID123";
         AcquirerId acquirerId = new AcquirerId(id);
         Assert.assertEquals(acquirerId.getId(), id);

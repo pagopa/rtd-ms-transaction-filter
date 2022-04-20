@@ -11,8 +11,8 @@ public class AggregationData {
   // Integer should be fine until we aggregate on daily basis.
   // Remember to re-evaluate the data type in case the aggregation period would be increased.
   private int totalAmount;
-  private String vat;
-  private byte posType;
+  private String vat = "empty";
+  private byte posType = 126;
   private Currency currency;
 
   public void incNumTrx() {

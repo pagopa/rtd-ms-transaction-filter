@@ -6,7 +6,7 @@ import org.junit.Test;
 public class CurrencyTest {
 
     @Test
-    public void bla() {
+    public void getCodeShouldReturnExpectedValue() {
         String isoCode = "ID123";
         Currency currency = new Currency(isoCode);
         Assert.assertEquals(currency.getIsoCode(), isoCode);
