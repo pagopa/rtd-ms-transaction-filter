@@ -25,7 +25,7 @@ public class TransactionChecksumTasklet implements Tasklet {
             try (InputStream is = Files.newInputStream(resource.getFile().toPath())) {
                 String sha256hex = org.apache.commons.codec.digest.DigestUtils.sha256Hex(is);
                 log.info("File " + resource.getFilename() + " SHA256 digest: " + sha256hex);
-                storeService.storeHash(resource.getFilename(), sha256hex);
+                storeService.setTargetInputFileHash(sha256hex);
             }
         }
         return RepeatStatus.FINISHED;

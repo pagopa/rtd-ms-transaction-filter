@@ -234,12 +234,15 @@ public class TransactionFilterBatchTest {
         String transmissionDate = OffsetDateTime.now().format(fmt);
 
         Set<String> expectedOutputFileAdeContent = new HashSet<>();
+        expectedOutputFileAdeContent.add("#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046");
         expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;2;6666;978;4444;0000;1;fis123;12345678901;00");
         expectedOutputFileAdeContent.add("99999;01;" + transmissionDate + ";03/20/2020;1;2222;978;3333;0000;1;fis123;12345678901;00");
         expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;1;1111;978;22222;0000;1;fis123;12345678901;00");
 
         Assert.assertEquals(expectedOutputFileTrnContent, new HashSet<>(outputFileTrnContent));
         Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
+        Assert.assertEquals("#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046",
+            outputFileAdeContent.get(0));
 
         // Check that encrypted output files have the same content of unencrypted ones
         File trxEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp")).collect(Collectors.toList()).iterator().next();
