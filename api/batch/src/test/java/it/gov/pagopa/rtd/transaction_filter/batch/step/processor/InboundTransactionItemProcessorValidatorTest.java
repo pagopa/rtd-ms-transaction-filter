@@ -414,7 +414,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  ", "010", "AA"})
+    @ValueSource(strings = {"", " ", "  ", "02", "08", "010", "AA"})
     public void processTransactionWithInvalidPosTypeThrowsException(String posType) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setPosType(posType);
