@@ -15,7 +15,7 @@ import org.springframework.batch.item.ItemProcessor;
 @RequiredArgsConstructor
 public class TransactionAggregationWriterProcessor implements ItemProcessor<AggregationKey, AdeTransactionsAggregate> {
 
-    private final static String DIRTY_POS_TYPE = "99";
+    private static final String DIRTY_POS_TYPE = "99";
     private final StoreService storeService;
     private final String transmissionDate;
 
