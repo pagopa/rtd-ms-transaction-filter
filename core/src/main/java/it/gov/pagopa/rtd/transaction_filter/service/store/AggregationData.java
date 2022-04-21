@@ -59,7 +59,7 @@ public class AggregationData {
     if (this.getPosType() == INIT_POS_TYPE) {
       if (posType.equals("00")) {
         this.setPosType((byte) 0);
-      } else if (posType.equals("01")) {
+      } else {
         this.setPosType((byte) 1);
       }
     } else {

@@ -154,7 +154,7 @@ InboundTransaction {
     @NotNull
     @NotBlank
     @Size(min = 2, max = 2)
-    @Pattern(regexp = "[0-9]{2}")
+    @Pattern(regexp = "00|01")
     String posType;
 
     /**
