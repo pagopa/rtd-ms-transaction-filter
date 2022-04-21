@@ -15,6 +15,7 @@ import org.springframework.batch.item.ItemProcessor;
 @RequiredArgsConstructor
 public class TransactionAggregationWriterProcessor implements ItemProcessor<AggregationKey, AdeTransactionsAggregate> {
 
+    private final static String DIRTY_POS_TYPE = "99";
     private final StoreService storeService;
     private final String transmissionDate;
 
@@ -46,7 +47,7 @@ public class TransactionAggregationWriterProcessor implements ItemProcessor<Aggr
         } else if (storeService.getAggregate(key).getPosType() == 1) {
             aggregate.setPosType("01");
         } else {
-            aggregate.setPosType("99");
+            aggregate.setPosType(DIRTY_POS_TYPE);
         }
         return aggregate;
     }
