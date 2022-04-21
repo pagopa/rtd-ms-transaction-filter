@@ -1,7 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.AdeTransactionsAggregate;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.RequiredArgsConstructor;
