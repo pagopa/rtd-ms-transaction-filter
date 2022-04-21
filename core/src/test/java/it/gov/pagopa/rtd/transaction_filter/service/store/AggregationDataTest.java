@@ -11,9 +11,6 @@ public class AggregationDataTest {
     private final static String POS_TYPE_PHYSICAL = "00";
     private final static String POS_TYPE_ECOMMERCE = "01";
 
-    private final static String CURRENCY_EUR_ISO_CODE = "978";
-    private final static String CURRENCY_CHF_ISO_CODE = "756";
-
     @Test
     public void updateVatShouldHandleCleanData() {
         AggregationData data = new AggregationData();
@@ -93,23 +90,5 @@ public class AggregationDataTest {
         data.updatePosTypeOrMarkAsDirty(POS_TYPE_ECOMMERCE);
         data.updatePosTypeOrMarkAsDirty(POS_TYPE_ECOMMERCE);
         Assert.assertEquals(AggregationData.DIRTY_POS_TYPE, data.getPosType());
-    }
-
-    @Test
-    public void updateCurrencyShouldHandleCleanData() {
-        AggregationData data = new AggregationData();
-        data.updateCurrencyOrMarkAsDirty(CURRENCY_EUR_ISO_CODE);
-        data.updateCurrencyOrMarkAsDirty(CURRENCY_EUR_ISO_CODE);
-        data.updateCurrencyOrMarkAsDirty(CURRENCY_EUR_ISO_CODE);
-        Assert.assertEquals(CURRENCY_EUR_ISO_CODE, data.getCurrency().getIsoCode());
-    }
-
-    @Test
-    public void updateCurrencyShouldHandleDirtyData() {
-        AggregationData data = new AggregationData();
-        data.updateCurrencyOrMarkAsDirty(CURRENCY_EUR_ISO_CODE);
-        data.updateCurrencyOrMarkAsDirty(CURRENCY_EUR_ISO_CODE);
-        data.updateCurrencyOrMarkAsDirty(CURRENCY_CHF_ISO_CODE);
-        Assert.assertEquals(AggregationData.DIRTY_CURRENCY, data.getCurrency().getIsoCode());
     }
 }

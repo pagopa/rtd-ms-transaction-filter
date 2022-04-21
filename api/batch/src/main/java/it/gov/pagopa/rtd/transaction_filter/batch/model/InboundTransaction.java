@@ -92,7 +92,10 @@ InboundTransaction {
     /**
      * Transaction amount currency
      */
+    @NotNull
+    @NotBlank
     @Size(max = 3)
+    @Pattern(regexp = "978")
     String amountCurrency;
 
     /**

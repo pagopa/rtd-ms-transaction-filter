@@ -7,7 +7,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class AggregationData {
 
-  public static final String DIRTY_CURRENCY = "###na###";
   public static final byte DIRTY_POS_TYPE = 127;
   public static final byte INIT_POS_TYPE = 126;
   public static final String INIT_VAT = "###init###";
@@ -19,7 +18,6 @@ public class AggregationData {
   private int totalAmount;
   private String vat = INIT_VAT;
   private byte posType = INIT_POS_TYPE;
-  private Currency currency;
 
   public void incNumTrx() {
     this.numTrx += 1;
@@ -27,16 +25,6 @@ public class AggregationData {
 
   public void incTotalAmount(int amount) {
     this.totalAmount += amount;
-  }
-
-  public void updateCurrencyOrMarkAsDirty(String currency) {
-    if (this.getCurrency() == null) {
-      this.setCurrency(CurrencyFlyweight.createCurrency(currency));
-    } else {
-      if (!this.getCurrency().getIsoCode().equals(currency)) {
-        this.setCurrency(CurrencyFlyweight.createCurrency(DIRTY_CURRENCY));
-      }
-    }
   }
 
   public void updateVatOrMarkAsDirty(String vat) {

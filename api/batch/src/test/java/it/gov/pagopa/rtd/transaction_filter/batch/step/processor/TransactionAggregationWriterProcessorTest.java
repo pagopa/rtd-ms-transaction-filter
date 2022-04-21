@@ -9,7 +9,6 @@ import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
-import it.gov.pagopa.rtd.transaction_filter.service.store.CurrencyFlyweight;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -55,7 +54,6 @@ public class TransactionAggregationWriterProcessorTest {
         key.setOperationType((byte)0);
 
         data = new AggregationData();
-        data.setCurrency(CurrencyFlyweight.createCurrency("978"));
         data.setVat("123882312");
         data.setNumTrx(3);
         data.setTotalAmount(10000);
@@ -104,31 +102,6 @@ public class TransactionAggregationWriterProcessorTest {
         expectedAggregate.setFiscalCode("FC");
         expectedAggregate.setCurrency("978");
         expectedAggregate.setPosType("99");
-        expectedAggregate.setOperationType("00");
-        expectedAggregate.setNumTrx(3);
-        expectedAggregate.setTotalAmount(10000L);
-        expectedAggregate.setTransmissionDate(TRANSMISSION_DATE);
-        expectedAggregate.setVat("123882312");
-
-        Assert.assertEquals(expectedAggregate, aggregate);
-    }
-
-    @Test
-    public void processShouldHandleDirtyCurrency() {
-        data.setCurrency(CurrencyFlyweight.createCurrency(AggregationData.DIRTY_CURRENCY));
-        BDDMockito.doReturn(data).when(storeServiceMock).getAggregate(key);
-
-        AdeTransactionsAggregate aggregate = processor.process(key);
-
-        AdeTransactionsAggregate expectedAggregate = new AdeTransactionsAggregate();
-        expectedAggregate.setAccountingDate("2022-04-07");
-        expectedAggregate.setAcquirerCode("code");
-        expectedAggregate.setAcquirerId("1");
-        expectedAggregate.setMerchantId("1");
-        expectedAggregate.setTerminalId("1");
-        expectedAggregate.setFiscalCode("FC");
-        expectedAggregate.setCurrency(AggregationData.DIRTY_CURRENCY);
-        expectedAggregate.setPosType("01");
         expectedAggregate.setOperationType("00");
         expectedAggregate.setNumTrx(3);
         expectedAggregate.setTotalAmount(10000L);

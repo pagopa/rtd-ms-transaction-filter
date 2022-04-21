@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.AdeTransactionsAggregate;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ public class TransactionAggregationWriterProcessor implements ItemProcessor<Aggr
         aggregate.setAccountingDate(key.getAccountingDate().getDate());
         aggregate.setNumTrx(storeService.getAggregate(key).getNumTrx());
         aggregate.setTotalAmount((long) storeService.getAggregate(key).getTotalAmount());
-        aggregate.setCurrency(storeService.getAggregate(key).getCurrency().getIsoCode());
+        aggregate.setCurrency("978");
         aggregate.setAcquirerId(key.getAcquirerId().getId());
         aggregate.setMerchantId(key.getMerchantId());
         aggregate.setTerminalId(key.getTerminalId());

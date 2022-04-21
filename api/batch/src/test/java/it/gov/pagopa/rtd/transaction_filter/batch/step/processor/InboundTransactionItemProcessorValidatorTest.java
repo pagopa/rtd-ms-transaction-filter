@@ -238,7 +238,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"1234"})
+    @ValueSource(strings = {"1234", "412", "15", ""})
     public void processTransactionWithInvalidAmountCurrencyThrowsException(String amountCurrency) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setAmountCurrency(amountCurrency);
@@ -247,7 +247,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"978", "12", ""})
+    @ValueSource(strings = {"978"})
     public void processTransactionWithValidAmountCurrency(String amountCurrency) {
         BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
@@ -468,7 +468,7 @@ public class InboundTransactionItemProcessorValidatorTest {
                 .idTrxIssuer("0")
                 .correlationId("1")
                 .amount(1000L)
-                .amountCurrency("833")
+                .amountCurrency("978")
                 .acquirerId("0")
                 .merchantId("0")
                 .terminalId("0")
