@@ -42,6 +42,24 @@ public class AggregationDataTest {
     }
 
     @Test
+    public void updateVatShouldHandleDirtyDataBis() {
+        AggregationData data = new AggregationData();
+        data.updateVatOrMarkAsDirty(VAT);
+        data.updateVatOrMarkAsDirty(NULL_VAT);
+        data.updateVatOrMarkAsDirty(VAT);
+        Assert.assertEquals(AggregationData.DIRTY_VAT, data.getVat());
+    }
+
+    @Test
+    public void updateVatShouldHandleDirtyDataTer() {
+        AggregationData data = new AggregationData();
+        data.updateVatOrMarkAsDirty(NULL_VAT);
+        data.updateVatOrMarkAsDirty(VAT);
+        data.updateVatOrMarkAsDirty(NULL_VAT);
+        Assert.assertEquals(AggregationData.DIRTY_VAT, data.getVat());
+    }
+
+    @Test
     public void updatePosTypeShouldHandleCleanData() {
         AggregationData data = new AggregationData();
         data.updatePosTypeOrMarkAsDirty(POS_TYPE_PHYSICAL);
