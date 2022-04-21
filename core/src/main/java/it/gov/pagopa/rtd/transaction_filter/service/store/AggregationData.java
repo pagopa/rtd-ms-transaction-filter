@@ -33,8 +33,10 @@ public class AggregationData {
     if (this.getCurrency() == null) {
       this.setCurrency(CurrencyFlyweight.createCurrency(currency));
     } else {
-      if (!this.getCurrency().getIsoCode().equals(DIRTY_CURRENCY) && !this.getCurrency().getIsoCode().equals(currency)) {
-        this.setCurrency(CurrencyFlyweight.createCurrency(DIRTY_CURRENCY));
+      if (!this.getCurrency().getIsoCode().equals(DIRTY_CURRENCY)) {
+        if (!this.getCurrency().getIsoCode().equals(currency)) {
+          this.setCurrency(CurrencyFlyweight.createCurrency(DIRTY_CURRENCY));
+        }
       }
     }
   }
