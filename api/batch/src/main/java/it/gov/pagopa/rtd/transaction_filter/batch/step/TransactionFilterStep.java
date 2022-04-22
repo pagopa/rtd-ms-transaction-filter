@@ -266,7 +266,7 @@ public class TransactionFilterStep {
         itemWriter.setLineAggregator(adeTransactionsAggregateLineAggregator());
         file = file.replaceAll("\\\\", "/");
         String[] filename = file.split("/");
-        String newFilename = ADE_OUTPUT_FILE_PREFIX + filename[filename.length - 1];
+        String newFilename = ADE_OUTPUT_FILE_PREFIX + filename[filename.length - 1].substring(6);
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         itemWriter.setResource(resolver.getResource(outputDirectoryPath.concat("/".concat(newFilename))));
         ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());

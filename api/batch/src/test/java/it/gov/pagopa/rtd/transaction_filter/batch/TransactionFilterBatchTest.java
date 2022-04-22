@@ -177,7 +177,7 @@ public class TransactionFilterBatchTest {
         }
 
         File outputFileAde = new File(resolver.getResource("classpath:/test-encrypt/output")
-            .getFile().getAbsolutePath() + "/ADE.CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+            .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.csv");
 
         if (!outputFileAde.exists()) {
             outputFileAde.createNewFile();
@@ -208,7 +208,7 @@ public class TransactionFilterBatchTest {
         Set<String> outputPgpFilenames = outputPgpFiles.stream().map(p -> p.getName()).collect(Collectors.toSet());
         Set<String> expectedPgpFilenames = new HashSet<>();
         expectedPgpFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp");
-        expectedPgpFilenames.add("ADE.CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp");
+        expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.csv.pgp");
         Assert.assertEquals(expectedPgpFilenames, outputPgpFilenames);
 
         Collection<File> outputCsvFiles = FileUtils.listFiles(
@@ -218,7 +218,7 @@ public class TransactionFilterBatchTest {
         Set<String> outputCsvFilenames = outputCsvFiles.stream().map(p -> p.getName()).collect(Collectors.toSet());
         Set<String> expectedCsvFilenames = new HashSet<>();
         expectedCsvFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv");
-        expectedCsvFilenames.add("ADE.CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+        expectedCsvFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.csv");
         Assert.assertEquals(expectedCsvFilenames, outputCsvFilenames);
 
         List<String> outputFileTrnContent = Files.readAllLines(outputFileTrn.toPath().toAbsolutePath());
