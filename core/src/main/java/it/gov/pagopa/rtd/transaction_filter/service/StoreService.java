@@ -67,8 +67,9 @@ public interface StoreService {
      * @param amount the transaction amount
      * @param vat the transaction VAT, if present
      * @param posType the transaction POS type
+     * @return boolean true if dirty data has been found during aggregation
      */
-    void storeAggregate(AggregationKey key, int amount, String vat, String posType);
+    boolean storeAggregate(AggregationKey key, int amount, String vat, String posType);
 
     /**
      * Get the aggregate computed over a single aggregation key.

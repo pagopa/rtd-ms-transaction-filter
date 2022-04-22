@@ -54,8 +54,12 @@ public class TransactionAggregationReaderProcessor implements ItemProcessor<Inbo
         }
         key.setAccountingDate(AccountingDateFlyweight.createAccountingDate(
             inboundTransaction.getTrxDate().substring(0, 10)));
-        storeService.storeAggregate(key, Math.toIntExact(inboundTransaction.getAmount()), inboundTransaction.getVat(),
+        boolean dirtyDataFound = storeService.storeAggregate(key, Math.toIntExact(inboundTransaction.getAmount()), inboundTransaction.getVat(),
             inboundTransaction.getPosType());
+
+        if (dirtyDataFound) {
+            log.warn("Dirty data found on either VAT or POS type fields at line {}", inboundTransaction.getLineNumber());
+        }
 
         // Return null since we'll bound to a dummy writer
         return null;

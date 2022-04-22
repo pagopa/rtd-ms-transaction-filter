@@ -57,13 +57,14 @@ class StoreServiceImpl implements StoreService {
     }
 
     @Override
-    public synchronized void storeAggregate(AggregationKey key, int amount, String vat, String posType) {
+    public synchronized boolean storeAggregate(AggregationKey key, int amount, String vat, String posType) {
         aggregates.putIfAbsent(key, new AggregationData());
         AggregationData data = aggregates.get(key);
         data.incNumTrx();
         data.incTotalAmount(amount);
-        data.updateVatOrMarkAsDirty(vat);
-        data.updatePosTypeOrMarkAsDirty(posType);
+        boolean dirtyVat = data.updateVatOrMarkAsDirty(vat);
+        boolean dirtyPosType = data.updatePosTypeOrMarkAsDirty(posType);
+        return dirtyVat || dirtyPosType;
     }
 
     @Override

@@ -27,23 +27,26 @@ public class AggregationData {
     this.totalAmount += amount;
   }
 
-  public void updateVatOrMarkAsDirty(String vat) {
+  public boolean updateVatOrMarkAsDirty(String vat) {
     if (this.getVat() != null) {
       if (this.getVat().equals(INIT_VAT)) {
         this.setVat(vat);
       } else {
         if (!this.getVat().equals(vat)) {
           this.setVat(DIRTY_VAT);
+          return true;
         }
       }
     } else {
       if (vat != null) {
         this.setVat(DIRTY_VAT);
+        return true;
       }
     }
+    return false;
   }
 
-  public void updatePosTypeOrMarkAsDirty(String posType) {
+  public boolean updatePosTypeOrMarkAsDirty(String posType) {
     if (this.getPosType() == INIT_POS_TYPE) {
       if (posType.equals("00")) {
         this.setPosType((byte) 0);
@@ -53,11 +56,14 @@ public class AggregationData {
     } else {
       if (posType.equals("00") && this.getPosType() != 0) {
         this.setPosType(DIRTY_POS_TYPE);
+        return true;
       }
       if (posType.equals("01") && this.getPosType() != 1) {
         this.setPosType(DIRTY_POS_TYPE);
+        return true;
       }
     }
+    return false;
   }
 
 }
