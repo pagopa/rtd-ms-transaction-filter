@@ -106,6 +106,13 @@ public interface StoreService {
     String getTargetInputFile();
 
     /**
+     * Get the ABI code embodied in the input filename.
+     *
+     * @return an ABI code
+     */
+    String getTargetInputFileAbiPart();
+
+    /**
      * Set the checksum of the target input file for current job execution.
      *
      * @param checksum the target file name

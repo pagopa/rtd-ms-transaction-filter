@@ -22,6 +22,7 @@ import java.util.TreeSet;
 
 public class StoreServiceTest {
 
+    private final static String TARGET_INPUT_FILENAME = "CSTAR.99999.TRNLOG.20220426.084359.001.csv";
     private TreeSet<String> storeSet;
     private StoreService storeService;
 
@@ -195,16 +196,21 @@ public class StoreServiceTest {
 
     @Test
     public void getTargetInputFileAfterStoreReturnsStoredValue() {
-        String filename = "a.csv";
-        storeService.setTargetInputFile(filename);
-        Assert.assertEquals(filename, storeService.getTargetInputFile());
+        storeService.setTargetInputFile(TARGET_INPUT_FILENAME);
+        Assert.assertEquals(TARGET_INPUT_FILENAME, storeService.getTargetInputFile());
+    }
+
+    @Test
+    public void getTargetInputFileAbiPartAfterStoreReturnsStoredValue() {
+        storeService.setTargetInputFile(TARGET_INPUT_FILENAME);
+        Assert.assertEquals("99999", storeService.getTargetInputFileAbiPart());
     }
 
     @Test
     public void clearAllEmptiesDataStructures() {
         Assert.assertEquals(0, storeSet.size());
         storeSet.add("test");
-        storeService.setTargetInputFile("filename");
+        storeService.setTargetInputFile(TARGET_INPUT_FILENAME);
         storeService.clearAll();
         Assert.assertEquals(0, storeSet.size());
         Assert.assertEquals("", storeService.getSalt());

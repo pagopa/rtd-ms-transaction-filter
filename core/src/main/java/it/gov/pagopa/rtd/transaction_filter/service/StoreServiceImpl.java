@@ -90,6 +90,10 @@ class StoreServiceImpl implements StoreService {
         return this.targetInputFile;
     }
 
+    public String getTargetInputFileAbiPart() {
+        return this.targetInputFile.substring(6, 11);
+    }
+
     @Override
     public void setTargetInputFileHash(String hash) {
         this.targetInputFileHash = hash;
