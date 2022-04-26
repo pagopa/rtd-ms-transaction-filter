@@ -2,7 +2,6 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
-import it.gov.pagopa.rtd.transaction_filter.service.store.CurrencyFlyweight;
 import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -58,18 +57,14 @@ class StoreServiceImpl implements StoreService {
     }
 
     @Override
-    public synchronized void storeAggregate(AggregationKey key, int amount, String currency, String vat, String posType) {
+    public synchronized boolean storeAggregate(AggregationKey key, int amount, String vat, String posType) {
         aggregates.putIfAbsent(key, new AggregationData());
         AggregationData data = aggregates.get(key);
         data.incNumTrx();
         data.incTotalAmount(amount);
-        data.setVat(vat);
-        if (posType.equals("00")) {
-            data.setPosType((byte) 0);
-        } else {
-            data.setPosType((byte) 1);
-        }
-        data.setCurrency(CurrencyFlyweight.createCurrency(currency));
+        boolean dirtyVat = data.updateVatOrMarkAsDirty(vat);
+        boolean dirtyPosType = data.updatePosTypeOrMarkAsDirty(posType);
+        return dirtyVat || dirtyPosType;
     }
 
     @Override

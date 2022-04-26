@@ -7,7 +7,6 @@ import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
-import it.gov.pagopa.rtd.transaction_filter.service.store.CurrencyFlyweight;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.BeforeClass;
@@ -116,13 +115,12 @@ public class StoreServiceTest {
         key.setFiscalCode("FC");
         key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
-        storeService.storeAggregate(key, 1000, "978", null, "01");
+        storeService.storeAggregate(key, 1000, null, "01");
         AggregationData expectedData = new AggregationData();
         expectedData.setNumTrx(1);
         expectedData.setTotalAmount(1000);
         expectedData.setPosType((byte)1);
         expectedData.setVat(null);
-        expectedData.setCurrency(CurrencyFlyweight.createCurrency("978"));
         Assert.assertEquals(expectedData, storeService.getAggregate(key));
     }
 
@@ -136,14 +134,13 @@ public class StoreServiceTest {
         key.setFiscalCode("FC");
         key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
-        storeService.storeAggregate(key, 1000, "978", null, "01");
-        storeService.storeAggregate(key, 2500, "978", null, "01");
+        storeService.storeAggregate(key, 1000, null, "01");
+        storeService.storeAggregate(key, 2500, null, "01");
         AggregationData expectedData = new AggregationData();
         expectedData.setNumTrx(2);
         expectedData.setTotalAmount(3500);
         expectedData.setPosType((byte)1);
         expectedData.setVat(null);
-        expectedData.setCurrency(CurrencyFlyweight.createCurrency("978"));
         Assert.assertEquals(expectedData, storeService.getAggregate(key));
     }
 
@@ -157,8 +154,8 @@ public class StoreServiceTest {
         key.setFiscalCode("FC");
         key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
-        storeService.storeAggregate(key, 1000, "978", null, "01");
-        storeService.storeAggregate(key, 5000, "978", null, "00");
+        storeService.storeAggregate(key, 1000, null, "01");
+        storeService.storeAggregate(key, 5000, null, "00");
         Set<AggregationKey> expectedKeySet = new HashSet<>();
         expectedKeySet.add(key);
         Assert.assertEquals(expectedKeySet, storeService.getAggregateKeySet());
@@ -174,7 +171,7 @@ public class StoreServiceTest {
         key.setFiscalCode("FC");
         key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
-        storeService.storeAggregate(key, 1000, "978", null, "01");
+        storeService.storeAggregate(key, 1000, null, "01");
         storeService.clearAggregates();
         Assert.assertEquals(0, storeService.getAggregateKeySet().size());
     }

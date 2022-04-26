@@ -46,7 +46,10 @@ AdeTransactionsAggregate {
     @NotBlank
     Long totalAmount;
 
+    @NotNull
+    @NotBlank
     @Size(max = 3)
+    @Pattern(regexp = "978")
     String currency;
 
     @NotNull
@@ -75,7 +78,7 @@ AdeTransactionsAggregate {
     @NotNull
     @NotBlank
     @Size(min = 2, max = 2)
-    @Pattern(regexp = "[0-9]{2}")
+    @Pattern(regexp = "00|01")
     String posType;
 
 }
