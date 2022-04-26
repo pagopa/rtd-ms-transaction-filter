@@ -5,6 +5,9 @@ import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDateFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import lombok.SneakyThrows;
@@ -131,6 +134,10 @@ public class TransactionFilterBatchTest {
         for (Resource resource : resolver.getResources("classpath:/test-encrypt/errorLogs/*.csv")) {
             resource.getFile().delete();
         }
+
+        AcquirerCodeFlyweight.clean();
+        AccountingDateFlyweight.clean();
+        AcquirerIdFlyweight.clean();
     }
 
     @SneakyThrows

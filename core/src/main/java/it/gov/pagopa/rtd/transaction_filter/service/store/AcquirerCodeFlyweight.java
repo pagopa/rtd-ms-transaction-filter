@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.service.store;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +20,18 @@ public class AcquirerCodeFlyweight {
 
   public static synchronized AcquirerCode createAcquirerCode(String code) {
     return cache.computeIfAbsent(code, newCode -> new AcquirerCode(code));
+  }
+
+  public static synchronized int cacheSize() {
+    return cache.size();
+  }
+
+  public static synchronized Collection<AcquirerCode> values() {
+    return cache.values();
+  }
+
+  public static synchronized void clean() {
+    cache = new HashMap<>();
   }
 }
 

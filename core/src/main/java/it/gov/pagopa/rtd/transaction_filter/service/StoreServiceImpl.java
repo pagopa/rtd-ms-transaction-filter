@@ -1,5 +1,8 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDateFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import java.util.Map;
@@ -112,6 +115,9 @@ class StoreServiceImpl implements StoreService {
         this.salt = "";
         this.targetInputFile = null;
         this.targetInputFileHash = null;
+        AcquirerCodeFlyweight.clean();
+        AccountingDateFlyweight.clean();
+        AcquirerIdFlyweight.clean();
     }
 
 }

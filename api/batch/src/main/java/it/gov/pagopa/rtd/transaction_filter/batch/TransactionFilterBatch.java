@@ -4,6 +4,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.EnforceAcquirerCodeUniquenessTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
@@ -13,6 +14,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInput
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -285,6 +287,9 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
+                .on("*").to(enforceAcquirerCodeUniquenessTask(this.storeService))
+                .on(FAILED).end()
+                .from(enforceAcquirerCodeUniquenessTask(this.storeService))
                 .on("*").to(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
@@ -367,6 +372,15 @@ public class TransactionFilterBatch {
         return stepBuilderFactory.get("transaction-filter-select-target-input-file-step")
             .tasklet(tasklet).build();
     }
+
+    @Bean
+    public Step enforceAcquirerCodeUniquenessTask(StoreService storeService) {
+        EnforceAcquirerCodeUniquenessTasklet tasklet = new EnforceAcquirerCodeUniquenessTasklet();
+        tasklet.setStoreService(storeService);
+        return stepBuilderFactory.get("transaction-filter-enforce-uniqueness-acquirer-code-step")
+            .tasklet(tasklet).build();
+    }
+
 
     /**
      * @return step instance based on the {@link FileManagementTasklet} to be used for

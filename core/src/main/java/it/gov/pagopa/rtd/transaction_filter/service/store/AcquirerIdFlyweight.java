@@ -20,5 +20,9 @@ public class AcquirerIdFlyweight {
   public static synchronized AcquirerId createAcquirerId(String id) {
     return cache.computeIfAbsent(id, newId -> new AcquirerId(id));
   }
+
+  public static synchronized void clean() {
+    cache = new HashMap<>();
+  }
 }
 
