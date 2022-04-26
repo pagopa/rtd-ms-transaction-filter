@@ -14,7 +14,7 @@ import org.springframework.batch.repeat.RepeatStatus;
 
 
 /**
- * TODO
+ * Tasklet responsible for Acquirer Code uniqueness enforcing
  */
 @Data
 @Slf4j
@@ -23,12 +23,17 @@ public class EnforceAcquirerCodeUniquenessTasklet implements Tasklet {
     private StoreService storeService;
 
     /**
-     * TODO
+     * Makes sure that no more than one acquirer code has been defined in the
+     * input file content, and in that case that the code defined in the file
+     * is the same as the one defined in the file name itself.
+     *
+     * @param stepContribution
+     * @param chunkContext
+     * @return the {@link Tasklet} execution status
      */
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext)
         throws IOException {
-        // TODO: check that flyweight caches are empties at the end of each execution!
         if (AcquirerCodeFlyweight.cacheSize() != 1) {
             throw new IOException("Acquirer code is not unique within file content (n of distinct values: " + AcquirerCodeFlyweight.cacheSize() + ")");
         } else {
