@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public class AccountingDateFlyweight {
 
-  private static Map<String, AccountingDate> cache;
+  private Map<String, AccountingDate> cache;
 
   public AccountingDateFlyweight() {
     this.cache = new HashMap<>();

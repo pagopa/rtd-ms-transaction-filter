@@ -12,7 +12,7 @@ import java.util.Map;
  */
 public class AcquirerCodeFlyweight {
 
-  private static Map<String, AcquirerCode> cache;
+  private Map<String, AcquirerCode> cache;
 
   public AcquirerCodeFlyweight() {
     this.cache = new HashMap<>();

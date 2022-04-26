@@ -11,7 +11,7 @@ import java.util.Map;
  */
 public class AcquirerIdFlyweight {
 
-  private static Map<String, AcquirerId> cache;
+  private Map<String, AcquirerId> cache;
 
   public AcquirerIdFlyweight() {
     this.cache = new HashMap<>();
