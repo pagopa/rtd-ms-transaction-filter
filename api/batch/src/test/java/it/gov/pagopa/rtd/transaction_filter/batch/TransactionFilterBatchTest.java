@@ -134,10 +134,6 @@ public class TransactionFilterBatchTest {
         for (Resource resource : resolver.getResources("classpath:/test-encrypt/errorLogs/*.csv")) {
             resource.getFile().delete();
         }
-
-        AcquirerCodeFlyweight.clean();
-        AccountingDateFlyweight.clean();
-        AcquirerIdFlyweight.clean();
     }
 
     @SneakyThrows

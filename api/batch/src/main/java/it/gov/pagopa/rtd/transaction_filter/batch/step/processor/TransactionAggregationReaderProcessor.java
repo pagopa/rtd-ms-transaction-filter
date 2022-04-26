@@ -1,9 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDateFlyweight;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.util.Set;
@@ -42,8 +39,8 @@ public class TransactionAggregationReaderProcessor implements ItemProcessor<Inbo
         }
 
         AggregationKey key = new AggregationKey();
-        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode(inboundTransaction.getAcquirerCode()));
-        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId(inboundTransaction.getAcquirerId()));
+        key.setAcquirerCode(storeService.flyweightAcquirerCode(inboundTransaction.getAcquirerCode()));
+        key.setAcquirerId(storeService.flyweightAcquirerId(inboundTransaction.getAcquirerId()));
         key.setMerchantId(inboundTransaction.getMerchantId());
         key.setTerminalId(inboundTransaction.getTerminalId());
         key.setFiscalCode(inboundTransaction.getFiscalCode());
@@ -52,7 +49,7 @@ public class TransactionAggregationReaderProcessor implements ItemProcessor<Inbo
         } else {
             key.setOperationType((byte) 1);
         }
-        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate(
+        key.setAccountingDate(storeService.flyweightAccountingDate(
             inboundTransaction.getTrxDate().substring(0, 10)));
         boolean dirtyDataFound = storeService.storeAggregate(key, Math.toIntExact(inboundTransaction.getAmount()), inboundTransaction.getVat(),
             inboundTransaction.getPosType());

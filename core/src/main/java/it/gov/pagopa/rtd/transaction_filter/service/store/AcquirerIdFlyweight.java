@@ -11,18 +11,18 @@ import java.util.Map;
  */
 public class AcquirerIdFlyweight {
 
-  private static Map<String, AcquirerId> cache = new HashMap<>();
+  private static Map<String, AcquirerId> cache;
 
-  private AcquirerIdFlyweight() {
-    throw new IllegalStateException("Utility class, do not instantiate directly");
+  public AcquirerIdFlyweight() {
+    this.cache = new HashMap<>();
   }
 
-  public static synchronized AcquirerId createAcquirerId(String id) {
-    return cache.computeIfAbsent(id, newId -> new AcquirerId(id));
+  public synchronized AcquirerId createAcquirerId(String id) {
+    return this.cache.computeIfAbsent(id, newId -> new AcquirerId(id));
   }
 
-  public static synchronized void clean() {
-    cache = new HashMap<>();
+  public synchronized void clean() {
+    this.cache = new HashMap<>();
   }
 }
 

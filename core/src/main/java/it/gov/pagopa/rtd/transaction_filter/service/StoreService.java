@@ -1,5 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDate;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCode;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerId;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import java.util.Set;
@@ -125,6 +129,37 @@ public interface StoreService {
      * @return a checksum string
      */
     String getTargetInputFileHash();
+
+    /**
+     * TODO
+     *
+     * @param acquirerCode
+     * @return
+     */
+    AcquirerCode flyweightAcquirerCode(String acquirerCode);
+
+    /**
+     * TODO
+     *
+     * @return
+     */
+    AcquirerCodeFlyweight getAcquirerCodeFlyweight();
+
+    /**
+     * TODO
+     *
+     * @param acquirerId
+     * @return
+     */
+    AcquirerId flyweightAcquirerId(String acquirerId);
+
+    /**
+     * TODO
+     *
+     * @param accountingDate
+     * @return
+     */
+    AccountingDate flyweightAccountingDate(String accountingDate);
 
     /**
     * Method explicitly used to clear the stored hpans and salt.

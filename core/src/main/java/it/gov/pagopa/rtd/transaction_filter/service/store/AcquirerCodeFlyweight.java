@@ -12,26 +12,26 @@ import java.util.Map;
  */
 public class AcquirerCodeFlyweight {
 
-  private static Map<String, AcquirerCode> cache = new HashMap<>();
+  private static Map<String, AcquirerCode> cache;
 
-  private AcquirerCodeFlyweight() {
-    throw new IllegalStateException("Utility class, do not instantiate directly");
+  public AcquirerCodeFlyweight() {
+    this.cache = new HashMap<>();
   }
 
-  public static synchronized AcquirerCode createAcquirerCode(String code) {
-    return cache.computeIfAbsent(code, newCode -> new AcquirerCode(code));
+  public synchronized AcquirerCode createAcquirerCode(String code) {
+    return this.cache.computeIfAbsent(code, newCode -> new AcquirerCode(code));
   }
 
-  public static synchronized int cacheSize() {
-    return cache.size();
+  public synchronized int cacheSize() {
+    return this.cache.size();
   }
 
-  public static synchronized Collection<AcquirerCode> values() {
-    return cache.values();
+  public synchronized Collection<AcquirerCode> values() {
+    return this.cache.values();
   }
 
-  public static synchronized void clean() {
-    cache = new HashMap<>();
+  public synchronized void clean() {
+    this.cache = new HashMap<>();
   }
 }
 

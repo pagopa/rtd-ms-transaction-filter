@@ -27,6 +27,10 @@ public class TransactionAggregationWriterProcessorTest {
     private AggregationData data;
     private TransactionAggregationWriterProcessor processor;
 
+    private AccountingDateFlyweight accountingDateFlyweight;
+    private AcquirerIdFlyweight acquirerIdFlyweight;
+    private AcquirerCodeFlyweight acquirerCodeFlyweight;
+
     public TransactionAggregationWriterProcessorTest() {
         MockitoAnnotations.initMocks(this);
     }
@@ -44,13 +48,17 @@ public class TransactionAggregationWriterProcessorTest {
     public void setUp() {
         Mockito.reset(storeServiceMock);
 
+        acquirerIdFlyweight = new AcquirerIdFlyweight();
+        acquirerCodeFlyweight = new AcquirerCodeFlyweight();
+        accountingDateFlyweight = new AccountingDateFlyweight();
+
         key = new AggregationKey();
         key.setTerminalId("1");
         key.setMerchantId("1");
-        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
-        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setAcquirerId(acquirerIdFlyweight.createAcquirerId("1"));
+        key.setAcquirerCode(acquirerCodeFlyweight.createAcquirerCode("code"));
         key.setFiscalCode("FC");
-        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setAccountingDate(accountingDateFlyweight.createAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
 
         data = new AggregationData();

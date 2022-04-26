@@ -34,10 +34,11 @@ public class EnforceAcquirerCodeUniquenessTasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext)
         throws IOException {
-        if (AcquirerCodeFlyweight.cacheSize() != 1) {
-            throw new IOException("Acquirer code is not unique within file content (n of distinct values: " + AcquirerCodeFlyweight.cacheSize() + ")");
+        AcquirerCodeFlyweight acquirerCodeFlyweight = storeService.getAcquirerCodeFlyweight();
+        if (acquirerCodeFlyweight.cacheSize() != 1) {
+            throw new IOException("Acquirer code is not unique within file content (n of distinct values: " + acquirerCodeFlyweight.cacheSize() + ")");
         } else {
-            Collection<AcquirerCode> acquirerCodes = AcquirerCodeFlyweight.values();
+            Collection<AcquirerCode> acquirerCodes = acquirerCodeFlyweight.values();
             AcquirerCode code = acquirerCodes.iterator().next();
             if (!code.getCode().equals(storeService.getTargetInputFileAbiPart())) {
                 throw new IOException("Acquirer code is not unique between file content and file name");
