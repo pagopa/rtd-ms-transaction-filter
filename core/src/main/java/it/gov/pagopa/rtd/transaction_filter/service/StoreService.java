@@ -131,33 +131,33 @@ public interface StoreService {
     String getTargetInputFileHash();
 
     /**
-     * TODO
+     * Instantiate an Acquirer Code object via Flyweight.
      *
-     * @param acquirerCode
-     * @return
+     * @param acquirerCode a string representing an Acquirer Code
+     * @return an Acquirer Code object
      */
     AcquirerCode flyweightAcquirerCode(String acquirerCode);
 
     /**
-     * TODO
+     * Return the Flyweight managing Acquirer Code's instances.
      *
-     * @return
+     * @return a Flyweight object
      */
     AcquirerCodeFlyweight getAcquirerCodeFlyweight();
 
     /**
-     * TODO
+     * Instantiate an Acquirer Id object via Flyweight.
      *
-     * @param acquirerId
-     * @return
+     * @param acquirerId a string representing an Acquirer Id
+     * @return an Acquirer Id object
      */
     AcquirerId flyweightAcquirerId(String acquirerId);
 
     /**
-     * TODO
+     * Instantiate an Accounting Date object via Flyweight.
      *
-     * @param accountingDate
-     * @return
+     * @param accountingDate a string representing an Accounting Date
+     * @return an Accounting Date object
      */
     AccountingDate flyweightAccountingDate(String accountingDate);
 
