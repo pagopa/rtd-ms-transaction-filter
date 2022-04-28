@@ -1,5 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDate;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCode;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerId;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import java.util.Set;
@@ -106,6 +110,13 @@ public interface StoreService {
     String getTargetInputFile();
 
     /**
+     * Get the ABI code embodied in the input filename.
+     *
+     * @return an ABI code
+     */
+    String getTargetInputFileAbiPart();
+
+    /**
      * Set the checksum of the target input file for current job execution.
      *
      * @param checksum the target file name
@@ -118,6 +129,37 @@ public interface StoreService {
      * @return a checksum string
      */
     String getTargetInputFileHash();
+
+    /**
+     * Instantiate an Acquirer Code object via Flyweight.
+     *
+     * @param acquirerCode a string representing an Acquirer Code
+     * @return an Acquirer Code object
+     */
+    AcquirerCode flyweightAcquirerCode(String acquirerCode);
+
+    /**
+     * Return the Flyweight managing Acquirer Code's instances.
+     *
+     * @return a Flyweight object
+     */
+    AcquirerCodeFlyweight getAcquirerCodeFlyweight();
+
+    /**
+     * Instantiate an Acquirer Id object via Flyweight.
+     *
+     * @param acquirerId a string representing an Acquirer Id
+     * @return an Acquirer Id object
+     */
+    AcquirerId flyweightAcquirerId(String acquirerId);
+
+    /**
+     * Instantiate an Accounting Date object via Flyweight.
+     *
+     * @param accountingDate a string representing an Accounting Date
+     * @return an Accounting Date object
+     */
+    AccountingDate flyweightAccountingDate(String accountingDate);
 
     /**
     * Method explicitly used to clear the stored hpans and salt.

@@ -2,9 +2,6 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDateFlyweight;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import java.util.HashSet;
@@ -22,6 +19,7 @@ import java.util.TreeSet;
 
 public class StoreServiceTest {
 
+    private final static String TARGET_INPUT_FILENAME = "CSTAR.99999.TRNLOG.20220426.084359.001.csv";
     private TreeSet<String> storeSet;
     private StoreService storeService;
 
@@ -97,10 +95,10 @@ public class StoreServiceTest {
         AggregationKey key = new AggregationKey();
         key.setTerminalId("1");
         key.setMerchantId("1");
-        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
-        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setAcquirerId(storeService.flyweightAcquirerId("1"));
+        key.setAcquirerCode(storeService.flyweightAcquirerCode("code"));
         key.setFiscalCode("FC");
-        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
         Assert.assertNull(storeService.getAggregate(key));
     }
@@ -110,10 +108,10 @@ public class StoreServiceTest {
         AggregationKey key = new AggregationKey();
         key.setTerminalId("1");
         key.setMerchantId("1");
-        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
-        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setAcquirerId(storeService.flyweightAcquirerId("1"));
+        key.setAcquirerCode(storeService.flyweightAcquirerCode("code"));
         key.setFiscalCode("FC");
-        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
         storeService.storeAggregate(key, 1000, null, "01");
         AggregationData expectedData = new AggregationData();
@@ -129,10 +127,10 @@ public class StoreServiceTest {
         AggregationKey key = new AggregationKey();
         key.setTerminalId("1");
         key.setMerchantId("1");
-        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
-        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setAcquirerId(storeService.flyweightAcquirerId("1"));
+        key.setAcquirerCode(storeService.flyweightAcquirerCode("code"));
         key.setFiscalCode("FC");
-        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
         storeService.storeAggregate(key, 1000, null, "01");
         storeService.storeAggregate(key, 2500, null, "01");
@@ -149,10 +147,10 @@ public class StoreServiceTest {
         AggregationKey key = new AggregationKey();
         key.setTerminalId("1");
         key.setMerchantId("1");
-        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
-        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setAcquirerId(storeService.flyweightAcquirerId("1"));
+        key.setAcquirerCode(storeService.flyweightAcquirerCode("code"));
         key.setFiscalCode("FC");
-        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
         storeService.storeAggregate(key, 1000, null, "01");
         storeService.storeAggregate(key, 5000, null, "00");
@@ -166,10 +164,10 @@ public class StoreServiceTest {
         AggregationKey key = new AggregationKey();
         key.setTerminalId("1");
         key.setMerchantId("1");
-        key.setAcquirerId(AcquirerIdFlyweight.createAcquirerId("1"));
-        key.setAcquirerCode(AcquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setAcquirerId(storeService.flyweightAcquirerId("1"));
+        key.setAcquirerCode(storeService.flyweightAcquirerCode("code"));
         key.setFiscalCode("FC");
-        key.setAccountingDate(AccountingDateFlyweight.createAccountingDate("2022-04-07"));
+        key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
         storeService.storeAggregate(key, 1000, null, "01");
         storeService.clearAggregates();
@@ -195,16 +193,21 @@ public class StoreServiceTest {
 
     @Test
     public void getTargetInputFileAfterStoreReturnsStoredValue() {
-        String filename = "a.csv";
-        storeService.setTargetInputFile(filename);
-        Assert.assertEquals(filename, storeService.getTargetInputFile());
+        storeService.setTargetInputFile(TARGET_INPUT_FILENAME);
+        Assert.assertEquals(TARGET_INPUT_FILENAME, storeService.getTargetInputFile());
+    }
+
+    @Test
+    public void getTargetInputFileAbiPartAfterStoreReturnsStoredValue() {
+        storeService.setTargetInputFile(TARGET_INPUT_FILENAME);
+        Assert.assertEquals("99999", storeService.getTargetInputFileAbiPart());
     }
 
     @Test
     public void clearAllEmptiesDataStructures() {
         Assert.assertEquals(0, storeSet.size());
         storeSet.add("test");
-        storeService.setTargetInputFile("filename");
+        storeService.setTargetInputFile(TARGET_INPUT_FILENAME);
         storeService.clearAll();
         Assert.assertEquals(0, storeSet.size());
         Assert.assertEquals("", storeService.getSalt());

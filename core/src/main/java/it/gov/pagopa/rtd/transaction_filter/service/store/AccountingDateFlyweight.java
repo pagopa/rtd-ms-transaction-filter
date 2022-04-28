@@ -11,14 +11,18 @@ import java.util.Map;
  */
 public class AccountingDateFlyweight {
 
-  private static Map<String, AccountingDate> cache = new HashMap<>();
+  private Map<String, AccountingDate> cache;
 
-  private AccountingDateFlyweight() {
-    throw new IllegalStateException("Utility class, do not instantiate directly");
+  public AccountingDateFlyweight() {
+    this.cache = new HashMap<>();
   }
 
-  public static synchronized AccountingDate createAccountingDate(String date) {
-    return cache.computeIfAbsent(date, newDate -> new AccountingDate(date));
+  public synchronized AccountingDate createAccountingDate(String date) {
+    return this.cache.computeIfAbsent(date, newDate -> new AccountingDate(date));
+  }
+
+  public synchronized void clean() {
+    this.cache = new HashMap<>();
   }
 }
 

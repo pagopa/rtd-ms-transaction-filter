@@ -1,5 +1,11 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDate;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDateFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCode;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerId;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import java.util.Map;
@@ -25,6 +31,9 @@ class StoreServiceImpl implements StoreService {
     private String salt = "";
     private String targetInputFile;
     private String targetInputFileHash;
+    private AcquirerCodeFlyweight acquirerCodeFlyweight = new AcquirerCodeFlyweight();
+    private AcquirerIdFlyweight acquirerIdFlyweight = new AcquirerIdFlyweight();
+    private AccountingDateFlyweight accountingDateFlyweight = new AccountingDateFlyweight();
 
     @Override
     public String getSalt() {
@@ -90,6 +99,10 @@ class StoreServiceImpl implements StoreService {
         return this.targetInputFile;
     }
 
+    public String getTargetInputFileAbiPart() {
+        return this.targetInputFile.substring(6, 11);
+    }
+
     @Override
     public void setTargetInputFileHash(String hash) {
         this.targetInputFileHash = hash;
@@ -100,6 +113,22 @@ class StoreServiceImpl implements StoreService {
         return this.targetInputFileHash;
     }
 
+    public AcquirerCode flyweightAcquirerCode(String acquirerCode) {
+        return this.acquirerCodeFlyweight.createAcquirerCode(acquirerCode);
+    }
+
+    public AcquirerCodeFlyweight getAcquirerCodeFlyweight() {
+        return this.acquirerCodeFlyweight;
+    }
+
+    public AcquirerId flyweightAcquirerId(String acquirerId) {
+        return this.acquirerIdFlyweight.createAcquirerId(acquirerId);
+    }
+
+    public AccountingDate flyweightAccountingDate(String accountingDate) {
+        return this.accountingDateFlyweight.createAccountingDate(accountingDate);
+    }
+
     @Override
     public void clearAll() {
         hpanSet.clear();
@@ -108,6 +137,9 @@ class StoreServiceImpl implements StoreService {
         this.salt = "";
         this.targetInputFile = null;
         this.targetInputFileHash = null;
+        this.acquirerCodeFlyweight.clean();
+        this.accountingDateFlyweight.clean();
+        this.acquirerIdFlyweight.clean();
     }
 
 }
