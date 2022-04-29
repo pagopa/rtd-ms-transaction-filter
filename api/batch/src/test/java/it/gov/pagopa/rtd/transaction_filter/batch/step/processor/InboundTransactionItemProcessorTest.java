@@ -172,7 +172,7 @@ public class InboundTransactionItemProcessorTest {
                 .idTrxIssuer("0")
                 .correlationId("1")
                 .amount(1000L)
-                .amountCurrency("833")
+                .amountCurrency("978")
                 .acquirerId("0")
                 .merchantId("0")
                 .terminalId("0")
