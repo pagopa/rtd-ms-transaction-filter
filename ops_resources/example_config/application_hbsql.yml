@@ -55,8 +55,11 @@ batchConfiguration:
       deleteOutputFiles: ${ACQ_BATCH_DELETE_OUTPUT_FILE:ALWAYS}
       manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE}
       transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
+      inputFileChecksumEnabled: ${ACQ_BATCH_INPUT_FILE_CHECKSUM:true}
     transactionSenderRtd:
       enabled: ${ACQ_BATCH_TRX_SENDER_RTD_ENABLED:true}
+    transactionSenderAde:
+      enabled: ${ACQ_BATCH_TRX_SENDER_ADE_ENABLED:true}
     saltRecovery:
       enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:true}
     pagopaPublicKeyRecovery:
@@ -89,6 +92,8 @@ rest-client:
       dateValidationPattern: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION_PATTERN:}
     salt:
       url: /rtd/payment-instrument-manager/salt
+    adesas:
+      url: /rtd/csv-transaction/ade/sas
     rtdsas:
       url: /rtd/csv-transaction/rtd/sas
     publickey:

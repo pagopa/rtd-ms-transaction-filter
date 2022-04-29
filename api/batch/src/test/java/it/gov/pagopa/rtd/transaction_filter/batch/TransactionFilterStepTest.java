@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.filterResourcesByFilename;
 import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.filterValidFilenames;
 
 class TransactionFilterStepTest {
@@ -31,6 +32,15 @@ class TransactionFilterStepTest {
         );
     }
 
+    static Stream<Arguments> filenamesToMatch() {
+        return Stream.of(
+            Arguments.of((Object) new String[][]{{}, {}}),
+            Arguments.of((Object) new String[][]{{"a.csv", "b.csv", "c.sv"}, {"b.csv"}}),
+            Arguments.of((Object) new String[][]{{"a.csv", "c.csv"}, {}}),
+            Arguments.of((Object) new String[][]{{"a.csv", "b.csv", "b.csv", "c.csv"}, {"b.csv"}})
+        );
+    }
+
     @ParameterizedTest
     @MethodSource("arrayProvider")
     void inputFilesMustAdhereToNamingConvention(String[][] args) {
@@ -44,6 +54,27 @@ class TransactionFilterStepTest {
         resourceArray = resources.toArray(resourceArray);
 
         resourceArray = filterValidFilenames(resourceArray);
+
+        Set<String> outputFilenames = Arrays.stream(resourceArray).map(Resource::getFilename).collect(Collectors.toSet());
+        Set<String> expectedFilenames = Arrays.stream(args[1]).collect(Collectors.toSet());
+        Assertions.assertEquals(expectedFilenames, outputFilenames);
+    }
+
+    @ParameterizedTest
+    @MethodSource("filenamesToMatch")
+    void inputFilesShouldBeFilteredByFilename(String[][] args) {
+        String filenameToFilter = "b.csv";
+
+        List<Resource> resources = new ArrayList<>();
+        for (String filename : args[0]) {
+            Resource mockedResource = Mockito.mock(Resource.class);
+            BDDMockito.doReturn(filename).when(mockedResource).getFilename();
+            resources.add(mockedResource);
+        }
+        Resource[] resourceArray = new Resource[resources.size()];
+        resourceArray = resources.toArray(resourceArray);
+
+        resourceArray = filterResourcesByFilename(resourceArray, filenameToFilter);
 
         Set<String> outputFilenames = Arrays.stream(resourceArray).map(Resource::getFilename).collect(Collectors.toSet());
         Set<String> expectedFilenames = Arrays.stream(args[1]).collect(Collectors.toSet());

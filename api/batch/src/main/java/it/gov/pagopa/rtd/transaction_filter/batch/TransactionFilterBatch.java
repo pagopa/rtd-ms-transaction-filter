@@ -4,13 +4,17 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.EnforceAcquirerCodeUniquenessTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PurgeAggregatesFromMemoryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInputFileTasklet;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -274,6 +278,27 @@ public class TransactionFilterBatch {
                 .listener(jobListener())
                 .start(pagopaPublicKeyRecoveryTask(this.storeService))
                 .on(FAILED).end()
+                .on("*").to(selectTargetInputFileTask(this.storeService))
+                .on(FAILED).end()
+                .from(selectTargetInputFileTask(this.storeService))
+                .on("*").to(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
+                .on(FAILED).end()
+                .from(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
+                .on("*").to(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
+                .on("*").to(enforceAcquirerCodeUniquenessTask(this.storeService))
+                .on(FAILED).end()
+                .from(enforceAcquirerCodeUniquenessTask(this.storeService))
+                .on("*").to(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
+                .on("*").to(purgeAggregatesFromMemoryTask(this.storeService))
+                .on(FAILED).to(fileManagementTask())
+                .from(purgeAggregatesFromMemoryTask(this.storeService))
+                .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
                 .on("*").to(hpanListRecoveryTask())
                 .on(FAILED).to(fileManagementTask())
                 .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.storeService))
@@ -282,9 +307,9 @@ public class TransactionFilterBatch {
                 .to(panReaderStep.hpanRecoveryMasterStep(this.storeService))
                 .on(FAILED).to(fileManagementTask())
                 .from(panReaderStep.hpanRecoveryMasterStep(this.storeService))
-                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.storeService,this.transactionWriterService))
+                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.storeService, this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterMasterStep(this.storeService,this.transactionWriterService))
+                .from(transactionFilterStep.transactionFilterMasterStep(this.storeService, this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
@@ -330,6 +355,32 @@ public class TransactionFilterBatch {
         return stepBuilderFactory.get("transaction-filter-public-key-recovery-step")
                 .tasklet(pagopaPublicKeyRecoveryTasklet).build();
     }
+
+    @Bean
+    public Step purgeAggregatesFromMemoryTask(StoreService storeService) {
+        PurgeAggregatesFromMemoryTasklet tasklet = new PurgeAggregatesFromMemoryTasklet();
+        tasklet.setStoreService(storeService);
+        return stepBuilderFactory.get("transaction-filter-purge-aggregates-from-memory-step")
+            .tasklet(tasklet).build();
+    }
+
+    @Bean
+    public Step selectTargetInputFileTask(StoreService storeService) {
+        SelectTargetInputFileTasklet tasklet = new SelectTargetInputFileTasklet();
+        tasklet.setStoreService(storeService);
+        tasklet.setTransactionDirectoryPath(transactionFilterStep.getTransactionDirectoryPath());
+        return stepBuilderFactory.get("transaction-filter-select-target-input-file-step")
+            .tasklet(tasklet).build();
+    }
+
+    @Bean
+    public Step enforceAcquirerCodeUniquenessTask(StoreService storeService) {
+        EnforceAcquirerCodeUniquenessTasklet tasklet = new EnforceAcquirerCodeUniquenessTasklet();
+        tasklet.setStoreService(storeService);
+        return stepBuilderFactory.get("transaction-filter-enforce-uniqueness-acquirer-code-step")
+            .tasklet(tasklet).build();
+    }
+
 
     /**
      * @return step instance based on the {@link FileManagementTasklet} to be used for
