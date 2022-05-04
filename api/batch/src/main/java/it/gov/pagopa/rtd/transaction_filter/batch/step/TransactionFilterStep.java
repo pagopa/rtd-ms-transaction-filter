@@ -90,9 +90,9 @@ public class TransactionFilterStep {
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing}")
     private Boolean applyTrxHashing;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt}")
-    private Boolean inputFileChecksumEnabled;
-    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.inputFileChecksumEnabled}")
     private Boolean applyEncrypt;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.inputFileChecksumEnabled}")
+    private Boolean inputFileChecksumEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled}")
     private Boolean transactionSenderAdeEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled}")
@@ -247,8 +247,10 @@ public class TransactionFilterStep {
         String[] filename = file.split("/");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         itemWriter.setResource(resolver.getResource(outputDirectoryPath.concat("/".concat(filename[filename.length - 1]))));
-        ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
-        itemWriter.setHeaderCallback(checksumHeaderWriter);
+        if (inputFileChecksumEnabled) {
+            ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
+            itemWriter.setHeaderCallback(checksumHeaderWriter);
+        }
         return itemWriter;
     }
 
@@ -271,8 +273,10 @@ public class TransactionFilterStep {
         String newFilename = ADE_OUTPUT_FILE_PREFIX + filename[filename.length - 1].substring(6);
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         itemWriter.setResource(resolver.getResource(outputDirectoryPath.concat("/".concat(newFilename))));
-        ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
-        itemWriter.setHeaderCallback(checksumHeaderWriter);
+        if (inputFileChecksumEnabled) {
+            ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
+            itemWriter.setHeaderCallback(checksumHeaderWriter);
+        }
         return itemWriter;
     }
 
