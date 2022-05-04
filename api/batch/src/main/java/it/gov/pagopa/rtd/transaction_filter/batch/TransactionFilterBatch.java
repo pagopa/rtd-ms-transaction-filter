@@ -14,7 +14,6 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInput
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
