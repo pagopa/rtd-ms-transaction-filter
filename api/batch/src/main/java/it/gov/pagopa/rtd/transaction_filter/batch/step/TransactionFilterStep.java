@@ -92,7 +92,7 @@ public class TransactionFilterStep {
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt}")
     private Boolean applyEncrypt;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.inputFileChecksumEnabled}")
-    private Boolean inputFileChecksumEnabled;
+    private boolean inputFileChecksumEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled}")
     private Boolean transactionSenderAdeEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled}")
