@@ -36,6 +36,11 @@ public class TransactionWriterServiceImpl implements TransactionWriterService {
 
     }
 
+    @Override
+    public synchronized boolean existFileChannel(String filename) {
+        return fileChannelMap.containsKey(filename);
+    }
+
     @SneakyThrows
     @Override
     public void write(String filename, String content) {
