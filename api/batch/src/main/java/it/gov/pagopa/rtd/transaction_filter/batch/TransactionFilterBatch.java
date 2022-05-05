@@ -8,11 +8,13 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.EnforceAcquirerCo
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PreventReprocessingFilenameAlreadySeenTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PurgeAggregatesFromMemoryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInputFileTasklet;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -279,7 +281,9 @@ public class TransactionFilterBatch {
                 .on(FAILED).end()
                 .on("*").to(selectTargetInputFileTask(this.storeService))
                 .on(FAILED).end()
-                .from(selectTargetInputFileTask(this.storeService))
+                .on("*").to(preventReprocessingFilenameAlreadySeenTask(this.storeService, this.transactionWriterService))
+                .on(FAILED).end()
+                .from(preventReprocessingFilenameAlreadySeenTask(this.storeService, this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
                 .on(FAILED).end()
                 .from(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
@@ -380,6 +384,14 @@ public class TransactionFilterBatch {
             .tasklet(tasklet).build();
     }
 
+    @Bean
+    public Step preventReprocessingFilenameAlreadySeenTask(StoreService storeService, TransactionWriterService transactionWriterService) {
+        PreventReprocessingFilenameAlreadySeenTasklet tasklet = new PreventReprocessingFilenameAlreadySeenTasklet();
+        tasklet.setStoreService(storeService);
+        tasklet.setTransactionWriterService(transactionWriterService);
+        return stepBuilderFactory.get("prevent-reprocessing-filename-already-seen-step")
+            .tasklet(tasklet).build();
+    }
 
     /**
      * @return step instance based on the {@link FileManagementTasklet} to be used for

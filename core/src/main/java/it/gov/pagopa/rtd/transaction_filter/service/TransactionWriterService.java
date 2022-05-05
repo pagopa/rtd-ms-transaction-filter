@@ -4,6 +4,8 @@ public interface TransactionWriterService {
 
     void openFileChannel(String filename);
 
+    boolean existFileChannel(String filename);
+
     void write(String filename, String content);
 
     void closeAll();
