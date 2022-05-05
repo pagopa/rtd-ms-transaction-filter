@@ -12,7 +12,16 @@ import org.springframework.batch.repeat.RepeatStatus;
 
 
 /**
- * TODO
+ * {@link Tasklet} implementation checking that the job's target input file
+ * hasn't been processed in previous jobs.
+ *
+ * The program keeps track of previous jobs only in memory, so it cannot
+ * prevent the reprocessing of a file that has been processed during a previous
+ * execution of the application.
+ *
+ * Also keep in mind that this tasklet relies exclusively on the filename, and
+ * ignores the content of the input files. To prevent that the same identical file
+ * but named differently will be processed twice look at the TransactionChecksumTasklet.
  */
 @Data
 @Slf4j
@@ -22,7 +31,8 @@ public class PreventReprocessingFilenameAlreadySeenTasklet implements Tasklet {
     private TransactionWriterService transactionWriterService;
 
     /**
-     * TODO
+     * Terminates with failure the current job if the filename of the target input file has been
+     * already processed in previous jobs.
      *
      * @param stepContribution
      * @param chunkContext
@@ -31,7 +41,7 @@ public class PreventReprocessingFilenameAlreadySeenTasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext)
         throws IOException {
-        if (this.transactionWriterService.existFileChannel(storeService.getTargetInputFile())) {
+        if (this.transactionWriterService.existFileChannelForFilename(storeService.getTargetInputFile())) {
             throw new IOException();
         } else {
             return RepeatStatus.FINISHED;

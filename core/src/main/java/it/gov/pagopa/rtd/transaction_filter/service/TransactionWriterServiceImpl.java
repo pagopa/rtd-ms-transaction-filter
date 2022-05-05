@@ -37,8 +37,13 @@ public class TransactionWriterServiceImpl implements TransactionWriterService {
     }
 
     @Override
-    public synchronized boolean existFileChannel(String filename) {
-        return fileChannelMap.containsKey(filename);
+    public synchronized boolean existFileChannelForFilename(String filename) {
+        for (String key : fileChannelMap.keySet()) {
+            if (key.contains(filename)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @SneakyThrows
