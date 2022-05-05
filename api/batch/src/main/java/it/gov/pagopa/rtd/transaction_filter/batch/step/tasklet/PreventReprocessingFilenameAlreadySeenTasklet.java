@@ -42,7 +42,7 @@ public class PreventReprocessingFilenameAlreadySeenTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext)
         throws IOException {
         if (this.transactionWriterService.existFileChannelForFilename(storeService.getTargetInputFile())) {
-            throw new IOException();
+            throw new IOException("A file named " + storeService.getTargetInputFile() + " has already been processed in previous jobs!");
         } else {
             return RepeatStatus.FINISHED;
         }
