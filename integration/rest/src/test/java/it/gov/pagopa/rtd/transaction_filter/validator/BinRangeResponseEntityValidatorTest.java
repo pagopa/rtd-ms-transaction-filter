@@ -24,7 +24,7 @@ class BinRangeResponseEntityValidatorTest {
 
     assertThatThrownBy(() -> responseEntityValidator.validate(binRangeResponse))
         .isInstanceOf(ValidationException.class)
-        .hasMessage("NumberOfFiles does not match FileLinks size.");
+        .hasMessage(BinRangeResponseEntityValidator.NUM_FILES_DOES_NOT_MATCH_LINKS);
   }
 
   @SneakyThrows

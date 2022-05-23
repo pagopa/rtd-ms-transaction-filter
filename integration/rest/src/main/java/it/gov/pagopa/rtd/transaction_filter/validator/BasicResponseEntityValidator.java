@@ -20,6 +20,8 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class BasicResponseEntityValidator<T> implements ResponseEntityValidator<T> {
 
+  public static final String BODY_IS_NOT_VALID = "Body is not valid.";
+
   private final Validator validator;
 
   @SneakyThrows
@@ -38,7 +40,7 @@ public class BasicResponseEntityValidator<T> implements ResponseEntityValidator<
     Set<ConstraintViolation<T>> violations = validator.validate(body);
 
     if (!violations.isEmpty()) {
-      throw new ValidationException("Body is not valid.");
+      throw new ValidationException(BODY_IS_NOT_VALID);
     }
   }
 }

@@ -43,7 +43,8 @@ class BasicResponseEntityValidatorTest {
     ResponseEntity<BinRangeResponse> binRangeResponse = createInvalidResponse();
 
     assertThatThrownBy(() -> responseEntityValidator.validate(binRangeResponse))
-        .isInstanceOf(ValidationException.class).hasMessage("Body is not valid.");
+        .isInstanceOf(ValidationException.class)
+        .hasMessage(BasicResponseEntityValidator.BODY_IS_NOT_VALID);
   }
 
   @Test

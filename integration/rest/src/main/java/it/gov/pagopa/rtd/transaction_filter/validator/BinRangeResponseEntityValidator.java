@@ -12,6 +12,8 @@ import org.springframework.stereotype.Component;
 public class BinRangeResponseEntityValidator extends
     BasicResponseEntityValidator<BinRangeResponse> {
 
+  public static final String NUM_FILES_DOES_NOT_MATCH_LINKS = "NumberOfFiles does not match FileLinks size.";
+
   public BinRangeResponseEntityValidator(Validator validator) {
     super(validator);
   }
@@ -21,7 +23,7 @@ public class BinRangeResponseEntityValidator extends
     super.validateBody(body);
 
     if (body.getFileLinks().size() != body.getNumberOfFiles()) {
-      throw new ValidationException("NumberOfFiles does not match FileLinks size.");
+      throw new ValidationException(NUM_FILES_DOES_NOT_MATCH_LINKS);
     }
   }
 }
