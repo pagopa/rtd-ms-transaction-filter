@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
@@ -10,11 +10,14 @@ public class BinRangeResponse {
 
   @NotNull
   List<String> fileLinks;
+
   @NotNull
   Integer numberOfFiles;
+
   @NotNull
-  LocalDateTime availableUntil;
+  OffsetDateTime availableUntil;
+
   @NotNull
-  LocalDateTime generationDate;
+  OffsetDateTime generationDate;
 
 }
