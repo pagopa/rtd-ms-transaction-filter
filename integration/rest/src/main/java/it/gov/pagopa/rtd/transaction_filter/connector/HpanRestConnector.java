@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import feign.Param;
+import java.util.Map;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -28,4 +29,6 @@ public interface HpanRestConnector {
     // @Param placeholder is there only to force Feign to add a 'Content-length' header to the request
     SasResponse postRtdSas(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @Param("placeholder") String placeholder);
 
+    @GetMapping(value = "${rest-client.hpan.abi-to-fiscalcode-map.url}")
+    Map<String, String> getFiscalCodeMap(@RequestHeader("Ocp-Apim-Subscription-Key") String token);
 }
