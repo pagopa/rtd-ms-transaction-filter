@@ -1,0 +1,21 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/rtd/abi-to-fiscalcode/conversion-map",
+    "headers": {
+      "User-Agent": {
+        "equalTo": "BatchService/1.1.0"
+      }
+    }
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "EVODE": "1234567890",
+      "STPAY": "6789012345678"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
