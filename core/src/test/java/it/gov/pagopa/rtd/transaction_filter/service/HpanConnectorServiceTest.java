@@ -4,6 +4,8 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.BeforeClass;
 import org.junit.Before;
@@ -162,6 +164,18 @@ public class HpanConnectorServiceTest {
     public void testCleanAllTempFiles() {
         hpanConnectorService.cleanAllTempFiles();
         BDDMockito.verify(hpanRestClientMock).cleanTempFile();
+    }
+
+    @Test
+    public void testGetFakeAbiToFiscalCodeMap() {
+        Map<String, String> stubMap = new HashMap<>();
+        stubMap.put("STPAY", "1234567890123");
+        BDDMockito.doReturn(stubMap).when(hpanRestClientMock).getFakeAbiToFiscalCodeMap();
+
+        Map<String, String> abiToFiscalCodeMap = hpanConnectorService.getFakeAbiToFiscalCodeMap();
+
+        Assert.assertEquals(abiToFiscalCodeMap, stubMap);
+        BDDMockito.verify(hpanRestClientMock).getFakeAbiToFiscalCodeMap();
     }
 
     @After
