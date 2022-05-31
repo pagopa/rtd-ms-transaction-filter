@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
+import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jackson.JacksonAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.openfeign.FeignAutoConfiguration;
 import org.springframework.context.ApplicationContext;
@@ -89,6 +91,7 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
+                "batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled=true",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
@@ -114,6 +117,9 @@ public class TransactionFilterBatchTest {
 
     @Autowired
     private JobRepositoryTestUtils jobRepositoryTestUtils;
+
+    @MockBean
+    private AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
 
     @SpyBean
     StoreService storeServiceSpy;
