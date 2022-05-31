@@ -8,14 +8,13 @@ import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerId;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.TreeSet;
 
 /**
 * Implementation of {@link StoreService}
@@ -23,7 +22,7 @@ import java.util.TreeSet;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-class StoreServiceImpl implements StoreService {
+public class StoreServiceImpl implements StoreService {
 
     private final TreeSet<String> hpanSet;
     private final HashMap<String, String> keyMap = new HashMap<>();
@@ -34,6 +33,7 @@ class StoreServiceImpl implements StoreService {
     private AcquirerCodeFlyweight acquirerCodeFlyweight = new AcquirerCodeFlyweight();
     private AcquirerIdFlyweight acquirerIdFlyweight = new AcquirerIdFlyweight();
     private AccountingDateFlyweight accountingDateFlyweight = new AccountingDateFlyweight();
+    private Map<String, String> fakeAbiToFiscalCodeMap = new HashMap<>();
 
     @Override
     public String getSalt() {
@@ -130,6 +130,17 @@ class StoreServiceImpl implements StoreService {
     }
 
     @Override
+    public AcquirerId flyweightAcquirerIdToFiscalCode(String acquirerId) {
+        String acquirerFiscalCode = fakeAbiToFiscalCodeMap.getOrDefault(acquirerId, acquirerId);
+        return this.acquirerIdFlyweight.createAcquirerId(acquirerFiscalCode);
+    }
+
+    @Override
+    public void setAbiToFiscalCodeMap(Map<String, String> fakeAbiToFiscalCodeMap) {
+        this.fakeAbiToFiscalCodeMap = fakeAbiToFiscalCodeMap;
+    }
+
+    @Override
     public void clearAll() {
         hpanSet.clear();
         keyMap.clear();
@@ -140,6 +151,7 @@ class StoreServiceImpl implements StoreService {
         this.acquirerCodeFlyweight.clean();
         this.accountingDateFlyweight.clean();
         this.acquirerIdFlyweight.clean();
+        fakeAbiToFiscalCodeMap.clear();
     }
 
 }

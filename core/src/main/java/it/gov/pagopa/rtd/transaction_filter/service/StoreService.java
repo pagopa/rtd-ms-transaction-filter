@@ -6,7 +6,9 @@ import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerId;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
+import java.util.Map;
 import java.util.Set;
+import javax.validation.constraints.NotNull;
 
 /**
  * Service to be used for storing information shared across steps, e.g.:
@@ -160,6 +162,23 @@ public interface StoreService {
      * @return an Accounting Date object
      */
     AccountingDate flyweightAccountingDate(String accountingDate);
+
+    /**
+     * Convert the acquirer id to fiscal code (if value is mapped, otherwise use
+     * the acquirer id param) and instantiate an AcquirerId object via Flyweight.
+     *
+     * @param acquirerId a string representing an AcquirerId
+     * @return an Acquirer Id object
+     */
+    AcquirerId flyweightAcquirerIdToFiscalCode(String acquirerId);
+
+    /**
+     * Set the map containing the map conversion from acquirerId to fiscal code.
+     * Needed for those acquirers who have no abi associated.
+     *
+     * @param map a conversion map
+     */
+    void setAbiToFiscalCodeMap(@NotNull Map<String, String> map);
 
     /**
     * Method explicitly used to clear the stored hpans and salt.
