@@ -208,7 +208,7 @@ public class StoreServiceTest {
     }
 
     @Test
-    public void whenFakeAbiIsMappedThenReturnConvertedAcquirerId() {
+    public void whenAcquirerIdIsMappedThenReturnConvertedAcquirerId() {
         Map<String, String> abiToFiscalCodeMap = new HashMap<>();
         abiToFiscalCodeMap.put("STPAY", "1234567890123");
         storeService.setAbiToFiscalCodeMap(abiToFiscalCodeMap);
