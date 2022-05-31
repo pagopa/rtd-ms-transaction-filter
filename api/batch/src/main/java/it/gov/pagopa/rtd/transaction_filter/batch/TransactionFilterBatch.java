@@ -4,6 +4,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.AbiToFiscalCodeMapRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.EnforceAcquirerCodeUniquenessTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
@@ -12,6 +13,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PreventReprocessi
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PurgeAggregatesFromMemoryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInputFileTasklet;
+import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
@@ -76,6 +78,7 @@ public class TransactionFilterBatch {
     private final StepBuilderFactory stepBuilderFactory;
     private final BeanFactory beanFactory;
     private final HpanConnectorService hpanConnectorService;
+    private final AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
 
     private final static String FAILED = "FAILED";
 
@@ -107,6 +110,8 @@ public class TransactionFilterBatch {
     private Boolean hpanListDailyRemovalEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled}")
     private Boolean pagopaPublicKeyRecoveryEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled}")
+    private Boolean abiToFiscalCodeTaskletEnabled;
 
     private DataSource dataSource;
     private StoreService storeService;
@@ -287,6 +292,9 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
                 .on(FAILED).end()
                 .from(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
+                .on("*").to(abiToFiscalCodeMapRecoveryTask(storeService))
+                .on(FAILED).end()
+                .from(abiToFiscalCodeMapRecoveryTask(storeService))
                 .on("*").to(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
@@ -390,6 +398,15 @@ public class TransactionFilterBatch {
         tasklet.setStoreService(storeService);
         tasklet.setTransactionWriterService(transactionWriterService);
         return stepBuilderFactory.get("prevent-reprocessing-filename-already-seen-step")
+            .tasklet(tasklet).build();
+    }
+
+    @Bean
+    public Step abiToFiscalCodeMapRecoveryTask(StoreService storeService) {
+        AbiToFiscalCodeMapRecoveryTasklet tasklet = new AbiToFiscalCodeMapRecoveryTasklet(abiToFiscalCodeRestClient, storeService);
+        tasklet.setTaskletEnabled(abiToFiscalCodeTaskletEnabled);
+        return stepBuilderFactory
+            .get("transaction-filter-abi-to-fiscalcode-recovery-step")
             .tasklet(tasklet).build();
     }
 
