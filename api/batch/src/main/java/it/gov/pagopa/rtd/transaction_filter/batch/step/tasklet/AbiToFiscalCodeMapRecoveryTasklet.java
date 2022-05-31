@@ -12,7 +12,8 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 
 /**
- * implementation of the {@link Tasklet}, recovers the pan list from a REST service, when enabled
+ * Implementation of the {@link Tasklet}, recovers a map containing the conversion from
+ * acquirer fake abi to fiscal code from a REST service, when enabled.
  */
 
 @Slf4j
