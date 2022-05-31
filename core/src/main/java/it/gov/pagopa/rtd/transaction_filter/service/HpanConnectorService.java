@@ -2,9 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
-
 import java.io.File;
-import java.util.Map;
 
 /**
  * Interface for the service to be called for recovering the hpan list and salt from remote endpoints.
@@ -45,13 +43,6 @@ public interface HpanConnectorService {
      * @param authorizedContainer the container authorized by the SAS token
      */
     Void uploadFile(File fileToUpload, String sas, String authorizedContainer);
-
-    /**
-     * Method to be called for recovering the map of acquirer ABIs to fiscal code.
-     *
-     * @return map of string conversion
-     */
-    Map<String, String> getFakeAbiToFiscalCodeMap();
 
     /**
      * Method to clean all temporary files.

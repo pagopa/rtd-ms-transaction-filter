@@ -2,7 +2,6 @@ package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
-import java.util.Map;
 import lombok.SneakyThrows;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -28,11 +27,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static org.assertj.core.api.Assertions.assertThat;
 
 
 @RunWith(SpringRunner.class)
@@ -159,28 +154,6 @@ public class HpanRestClientTest {
         File fileToUpload = tempFolder.newFile("testFile");
         expectedException.expect(IOException.class);
         hpanRestClient.uploadFile(fileToUpload, "sas-token", "not-authorized-container");
-    }
-
-    @Test
-    public void getFakeAbiToFiscalCodeMap() {
-        Map<String, String> abiToFiscalCodeMap = hpanRestClient.getFakeAbiToFiscalCodeMap();
-
-        assertThat(abiToFiscalCodeMap).isNotNull();
-        assertThat(abiToFiscalCodeMap.keySet()).hasSize(2);
-    }
-
-    @Test
-    public void whenGetFakeAbiToFiscalCodeMapReturnsEmptyBodyThenMapIsEmpty() {
-        wireMockRule.stubFor(get(urlPathEqualTo("/rtd/abi-to-fiscalcode/conversion-map"))
-            .willReturn(aResponse()
-                .withStatus(200)
-                .withHeader("Content-Type", "application/json")
-                .withBody("{}"))
-        );
-        Map<String, String> abiToFiscalCodeMap = hpanRestClient.getFakeAbiToFiscalCodeMap();
-
-        assertThat(abiToFiscalCodeMap).isNotNull();
-        assertThat(abiToFiscalCodeMap.keySet()).isEmpty();
     }
 
     public static class RandomPortInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

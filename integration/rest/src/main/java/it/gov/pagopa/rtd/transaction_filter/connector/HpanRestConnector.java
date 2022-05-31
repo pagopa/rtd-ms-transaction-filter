@@ -30,5 +30,5 @@ public interface HpanRestConnector {
     SasResponse postRtdSas(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @Param("placeholder") String placeholder);
 
     @GetMapping(value = "${rest-client.hpan.abi-to-fiscalcode-map.url}")
-    Map<String, String> getFiscalCodeMap(@RequestHeader("Ocp-Apim-Subscription-Key") String token);
+    Map<String, String> getFakeAbiToFiscalCodeMap(@RequestHeader("Ocp-Apim-Subscription-Key") String token);
 }
