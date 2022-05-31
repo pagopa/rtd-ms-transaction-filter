@@ -1,7 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -271,11 +270,6 @@ class HpanRestClientImpl implements HpanRestClient {
     log.info("File " + fileToUpload.getName() + " uploaded with success (status was: "
         + response.getStatusLine().getStatusCode() + ")");
     return null;
-  }
-
-  @Override
-  public Map<String, String> getFakeAbiToFiscalCodeMap() {
-    return hpanRestConnector.getFiscalCodeMap(apiKey);
   }
 
   public void setValidationDate(LocalDateTime now) {
