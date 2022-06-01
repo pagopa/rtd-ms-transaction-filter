@@ -94,6 +94,7 @@ import org.springframework.transaction.annotation.Transactional;
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
+                "batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",

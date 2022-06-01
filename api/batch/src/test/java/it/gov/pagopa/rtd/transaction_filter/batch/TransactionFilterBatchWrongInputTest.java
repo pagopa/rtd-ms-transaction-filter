@@ -77,6 +77,7 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
                 "batchConfiguration.TransactionFilterBatch.errorArchivePath=classpath:/test-encrypt/error",
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
+                "batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
