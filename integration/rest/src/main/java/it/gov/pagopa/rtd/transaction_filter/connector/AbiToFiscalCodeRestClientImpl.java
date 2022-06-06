@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +22,6 @@ public class AbiToFiscalCodeRestClientImpl implements AbiToFiscalCodeRestClient 
 
       @Override
       public Map<String, String> getFakeAbiToFiscalCodeMap() {
-            return hpanRestConnector.getFakeAbiToFiscalCodeMap(apiKey);
+            return Objects.requireNonNull(hpanRestConnector.getFakeAbiToFiscalCodeMap(apiKey));
       }
 }
