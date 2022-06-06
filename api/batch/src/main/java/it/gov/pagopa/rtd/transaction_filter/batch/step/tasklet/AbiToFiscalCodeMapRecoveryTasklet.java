@@ -12,8 +12,8 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 
 /**
- * Implementation of the {@link Tasklet}, recovers a map containing the conversion from
- * acquirer fake abi to fiscal code from a REST service, when enabled.
+ * Implementation of the {@link Tasklet}, recovers a map containing the conversion from acquirer
+ * fake abi to fiscal code from a REST service, when enabled.
  */
 
 @Slf4j
@@ -36,9 +36,7 @@ public class AbiToFiscalCodeMapRecoveryTasklet implements Tasklet {
     if (taskletEnabled) {
       log.info("Retrieving acquirer fake abi to fiscal code map");
       Map<String, String> abiToFiscalCodeMap = restClient.getFakeAbiToFiscalCodeMap();
-      if (abiToFiscalCodeMap != null) {
-        storeService.setAbiToFiscalCodeMap(abiToFiscalCodeMap);
-      }
+      storeService.setAbiToFiscalCodeMap(abiToFiscalCodeMap);
     }
 
     return RepeatStatus.FINISHED;

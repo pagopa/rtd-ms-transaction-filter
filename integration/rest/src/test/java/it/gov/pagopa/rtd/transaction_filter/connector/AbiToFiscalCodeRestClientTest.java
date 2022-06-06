@@ -5,6 +5,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
@@ -90,6 +91,16 @@ public class AbiToFiscalCodeRestClientTest {
 
     assertThat(abiToFiscalCodeMap).isNotNull();
     assertThat(abiToFiscalCodeMap.keySet()).isEmpty();
+  }
+
+  @Test
+  public void whenGetFakeAbiToFiscalCodeMapReturnsNullBodyThenRaiseException() {
+    wireMockRule.stubFor(get(urlPathEqualTo("/rtd/abi-to-fiscalcode/conversion-map"))
+        .willReturn(aResponse()
+            .withStatus(200))
+    );
+
+    assertThatThrownBy(() -> restClient.getFakeAbiToFiscalCodeMap()).isInstanceOf(NullPointerException.class);
   }
 
   public static class RandomPortInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
