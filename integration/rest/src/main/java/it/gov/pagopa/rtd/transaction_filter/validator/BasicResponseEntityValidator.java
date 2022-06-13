@@ -38,7 +38,7 @@ public class BasicResponseEntityValidator<T> implements ResponseEntityValidator<
     Set<ConstraintViolation<T>> violations = validator.validate(body);
 
     if (!violations.isEmpty()) {
-      throw new ValidationException("Body is not valid.");
+      throw new ValidationException("Body is not valid: " + violations.size() + " errors.");
     }
   }
 }
