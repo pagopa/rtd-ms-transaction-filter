@@ -36,6 +36,6 @@ public interface HpanRestConnector {
     @GetMapping(value = "${rest-client.sender-ade-ack.list.url}")
     ResponseEntity<SenderAdeAckList> getSenderAdeAckList(@RequestHeader("Ocp-Apim-Subscription-Key") String token);
 
-    @GetMapping(value = "${rest-client.sender-ade-ack.download.url}")
+    @GetMapping(value = "${rest-client.sender-ade-ack.download-file.url}")
     ResponseEntity<Resource> getSenderAdeAckFile(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName);
 }

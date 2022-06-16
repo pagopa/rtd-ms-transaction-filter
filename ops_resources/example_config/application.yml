@@ -128,7 +128,7 @@ rest-client:
     sender-ade-ack:
       list:
         url: /rtd/file-register/sender-ade-ack
-      download:
+      download-file:
         url: /ade/{id}
       temp-directory:
         path: /temp/sender-ade-ack
