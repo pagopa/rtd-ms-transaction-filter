@@ -42,7 +42,7 @@ class BasicResponseEntityValidatorTest {
     ResponseEntity<GenericDto> genericResponse = createInvalidResponse();
 
     assertThatThrownBy(() -> responseEntityValidator.validate(genericResponse))
-        .isInstanceOf(ValidationException.class).hasMessage("Body is not valid.");
+        .isInstanceOf(ValidationException.class).hasMessageContaining("Body is not valid");
   }
 
   @Test

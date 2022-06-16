@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.validator;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -10,4 +11,6 @@ import org.springframework.http.ResponseEntity;
 public interface ResponseEntityValidator<T> {
 
   void validate(ResponseEntity<T> responseEntity);
+
+  void validateStatus(HttpStatus status);
 }
