@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/rtd/file-register/sender-ade-ack",
+    "headers": {
+      "User-Agent": {
+        "equalTo": "BatchService/1.1.0"
+      }
+    }
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "fileNameList": [
+        "rejectedFiscalCodes1.csv",
+        "rejectedFiscalCodes2.csv"
+      ]
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
