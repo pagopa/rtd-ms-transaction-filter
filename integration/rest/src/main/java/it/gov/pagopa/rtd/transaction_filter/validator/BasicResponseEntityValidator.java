@@ -6,8 +6,11 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.ValidationException;
 import javax.validation.Validator;
+import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,17 +27,25 @@ public class BasicResponseEntityValidator<T> implements ResponseEntityValidator<
 
   @SneakyThrows
   @Override
-  public void validate(ResponseEntity<T> responseEntity) {
-    if (!responseEntity.getStatusCode().is2xxSuccessful()) {
-      throw new ResponseStatusException(responseEntity.getStatusCode());
-    }
-    T body = responseEntity.getBody();
-    Objects.requireNonNull(body);
+  public void validate(@NotNull ResponseEntity<T> responseEntity) {
+    validateStatus(responseEntity.getStatusCode());
+    validateHeaders(responseEntity.getHeaders());
+    validateBody(responseEntity.getBody());
+  }
 
-    validateBody(body);
+  @Override
+  public void validateStatus(HttpStatus statusCode) {
+    if (!statusCode.is2xxSuccessful()) {
+      throw new ResponseStatusException(statusCode);
+    }
+  }
+
+  protected void validateHeaders(HttpHeaders headers) {
+    // default empty implementation, override in derived class if needed
   }
 
   protected void validateBody(T body) {
+    Objects.requireNonNull(body);
     Set<ConstraintViolation<T>> violations = validator.validate(body);
 
     if (!violations.isEmpty()) {
