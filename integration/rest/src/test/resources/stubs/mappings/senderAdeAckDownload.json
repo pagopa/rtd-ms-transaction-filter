@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/ade/.*",
+    "headers": {
+      "User-Agent": {
+        "equalTo": "BatchService/1.1.0"
+      }
+    }
+  },
+  "response": {
+    "status": "200",
+    "bodyFileName": "senderAdeAck/{{request.path.[1]}}",
+    "headers": {
+      "Content-type": "application/octet-stream",
+      "filename": "{{request.path.[1]}}"
+    }
+  }
+}
