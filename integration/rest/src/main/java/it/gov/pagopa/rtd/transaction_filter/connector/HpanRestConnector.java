@@ -6,6 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 
@@ -31,4 +32,10 @@ public interface HpanRestConnector {
 
     @GetMapping(value = "${rest-client.hpan.abi-to-fiscalcode-map.url}")
     Map<String, String> getFakeAbiToFiscalCodeMap(@RequestHeader("Ocp-Apim-Subscription-Key") String token);
+
+    @GetMapping(value = "${rest-client.sender-ade-ack.list.url}")
+    ResponseEntity<SenderAdeAckList> getSenderAdeAckList(@RequestHeader("Ocp-Apim-Subscription-Key") String token);
+
+    @GetMapping(value = "${rest-client.sender-ade-ack.download.url}")
+    ResponseEntity<Resource> getSenderAdeAckFile(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName);
 }
