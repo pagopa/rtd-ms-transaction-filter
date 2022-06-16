@@ -102,6 +102,13 @@ rest-client:
       url: /rtd/csv-transaction/publickey
     abi-to-fiscalcode-map:
       url: /rtd/abi-to-fiscalcode/conversion-map
+    sender-ade-ack:
+      list:
+        url: /rtd/file-register/sender-ade-ack
+      download:
+        url: /ade/{id}
+      temp-directory:
+        path: /temp/sender-ade-ack
     mtls:
       enabled: ${HPAN_SERVICE_MTLS_ENABLED:true}
     key-store:
