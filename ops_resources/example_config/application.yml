@@ -95,6 +95,8 @@ batchConfiguration:
       listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
     abiToFiscalCodeMapRecovery:
       enabled: ${ACQ_BATCH_ABI_TO_FISCALCODE_RECOVERY_ENABLED:true}
+    senderAdeAckFilesRecovery:
+      directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:senderAdeAck}
 
 rest-client:
   hpan:
