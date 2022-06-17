@@ -11,9 +11,11 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryT
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PreventReprocessingFilenameAlreadySeenTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PurgeAggregatesFromMemoryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SenderAdeAckFilesRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInputFileTasklet;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
@@ -79,6 +81,7 @@ public class TransactionFilterBatch {
     private final BeanFactory beanFactory;
     private final HpanConnectorService hpanConnectorService;
     private final AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
+    private final SenderAdeAckRestClient senderAdeAckRestClient;
 
     private final static String FAILED = "FAILED";
 
@@ -112,6 +115,10 @@ public class TransactionFilterBatch {
     private Boolean pagopaPublicKeyRecoveryEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled}")
     private Boolean abiToFiscalCodeTaskletEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.enabled}")
+    private Boolean senderAdeAckFilesTaskletEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath}")
+    private String senderAdeAckFilesDirectoryPath;
 
     private DataSource dataSource;
     private StoreService storeService;
@@ -324,6 +331,7 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
+                .on("*").to(senderAdeAckFilesRecoveryTask())
                 .on("*").to(fileManagementTask())
                 .build();
     }
@@ -407,6 +415,17 @@ public class TransactionFilterBatch {
         tasklet.setTaskletEnabled(abiToFiscalCodeTaskletEnabled);
         return stepBuilderFactory
             .get("transaction-filter-abi-to-fiscalcode-recovery-step")
+            .tasklet(tasklet).build();
+    }
+
+    @Bean
+    public Step senderAdeAckFilesRecoveryTask() {
+        SenderAdeAckFilesRecoveryTasklet tasklet = new SenderAdeAckFilesRecoveryTasklet(senderAdeAckRestClient);
+        tasklet.setSenderAdeAckDirectory(senderAdeAckFilesDirectoryPath);
+        tasklet.setTaskletEnabled(senderAdeAckFilesTaskletEnabled);
+
+        return stepBuilderFactory
+            .get("transaction-filter-sender-ade-ack-files-recovery-step")
             .tasklet(tasklet).build();
     }
 
