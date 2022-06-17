@@ -1,10 +1,12 @@
 package it.gov.pagopa.rtd.transaction_filter.batch;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
@@ -13,9 +15,11 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -104,6 +108,8 @@ import org.springframework.transaction.annotation.Transactional;
                 "batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled=true",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
+                "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.enabled=true",
+                "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath=classpath:/test-encrypt/sender-ade-ack",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorLogging=true",
@@ -132,6 +138,9 @@ public class TransactionFilterBatchTest {
     @MockBean
     private AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
 
+    @MockBean
+    private SenderAdeAckRestClient senderAdeAckRestClient;
+
     @SpyBean
     StoreService storeServiceSpy;
 
@@ -153,13 +162,20 @@ public class TransactionFilterBatchTest {
     @SneakyThrows
     @After
     public void tearDown() {
-        Resource[] resources = resolver.getResources("classpath:/test-encrypt/output/*.pgp");
+        deleteFiles("classpath:/test-encrypt/output/*.pgp");
+        deleteFiles("classpath:/test-encrypt/sender-ade-ack/*.csv");
+
+        tempFolder.delete();
+    }
+
+    @SneakyThrows
+    private void deleteFiles(String classpath) {
+        Resource[] resources = resolver.getResources(classpath);
         if (resources.length > 1) {
             for (Resource resource : resources) {
                 resource.getFile().delete();
             }
         }
-        tempFolder.delete();
     }
 
     @After
@@ -311,6 +327,32 @@ public class TransactionFilterBatchTest {
 
     @SneakyThrows
     @Test
+    public void whenSenderAdeAckTaskletIsSetThenMatchExpectedOutputFiles() {
+        String publicKey = createPublicKey();
+        BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
+        BDDMockito.doReturn(createSenderAdeAckFiles()).when(senderAdeAckRestClient)
+            .getSenderAdeAckFiles();
+        createPanPGP();
+
+        JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
+            .addDate("startDateTime", new Date())
+            .toJobParameters());
+        Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+
+        Collection<File> filesSaved = getSenderAdeAckFilesSavedByTasklet();
+        assertThat(filesSaved).isNotNull().isNotEmpty();
+        assertThat(filesSaved.stream()
+            .filter(file -> "CSTAR.STPAY.ADEACK.20220801.211940.001.csv".equals(file.getName()))
+            .findAny().orElse(null))
+            .hasContent("12345;fiscalcode");
+        assertThat(filesSaved.stream()
+            .filter(file -> "senderAdeAck2.csv".equals(file.getName()))
+            .findAny().orElse(null))
+            .hasContent("7890123;stringdefault");
+    }
+
+    @SneakyThrows
+    @Test
     public void jobExecutionFails() {
 
         tempFolder.newFolder("hpan");
@@ -359,6 +401,11 @@ public class TransactionFilterBatchTest {
         Map<String, String> abiToFiscalCodeMap = new HashMap<>();
         abiToFiscalCodeMap.put("4444", "fiscalCode");
         return abiToFiscalCodeMap;
+    }
+
+    @SneakyThrows
+    private Collection<File> getSenderAdeAckFilesSavedByTasklet() {
+        return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/sender-ade-ack")[0].getFile(), new String[]{"csv"}, false);
     }
 
     @SneakyThrows
@@ -450,4 +497,22 @@ public class TransactionFilterBatchTest {
         return OffsetDateTime.now().format(fmt);
     }
 
+    @SneakyThrows
+    List<File> createSenderAdeAckFiles() {
+        List<File> files = new ArrayList<>();
+        tempFolder.newFolder("temporarySenderAdeAck");
+
+        File firstFile = tempFolder.newFile("temporarySenderAdeAck/CSTAR.STPAY.ADEACK.20220801.211940.001.csv");
+        byte[] firstFileContent = "12345;fiscalcode".getBytes(StandardCharsets.UTF_8);
+        Files.write(firstFile.toPath(), firstFileContent);
+        files.add(firstFile);
+
+        File secondFile = tempFolder.newFile("temporarySenderAdeAck/senderAdeAck2.csv");
+        byte[] secondFileContent = "7890123;stringdefault".getBytes(StandardCharsets.UTF_8);
+        Files.write(secondFile.toPath(), secondFileContent);
+        files.add(secondFile);
+
+        files.forEach(file -> System.out.println(file.getAbsolutePath()));
+        return files;
+    }
 }
