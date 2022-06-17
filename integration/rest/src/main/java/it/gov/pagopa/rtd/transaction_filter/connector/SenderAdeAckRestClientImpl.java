@@ -14,6 +14,7 @@ import java.util.Objects;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -28,8 +29,7 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
   @Value("${rest-client.hpan.api.key}")
   private String apiKey;
 
-  @Value("${rest-client.sender-ade-ack.temp-directory.path}")
-  private String tempDir;
+  private File tempDir = FileUtils.getTempDirectory();
 
   private final BasicResponseEntityValidator<SenderAdeAckList> senderAdeAckValidator;
   private final BasicResponseEntityValidator<Resource> resourceValidator;
@@ -48,7 +48,9 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
 
   private List<File> downloadFiles(List<String> fileNameList) throws IOException {
     List<File> filesDownloaded = new ArrayList<>();
-    Path temporaryDirectory = Files.createTempDirectory(Paths.get(tempDir), "senderAdeAck");
+    // a dedicated temporary directory will be created to save the sender ade ack files
+    // until they are persisted in the correct directory
+    Path temporaryDirectory = Files.createTempDirectory(tempDir.toPath(), "senderAdeAck");
 
     for (String fileName : fileNameList) {
       ResponseEntity<Resource> resourceResponseEntity = hpanRestConnector.getSenderAdeAckFile(
@@ -83,5 +85,9 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
         InputStream inputStream = resource.getInputStream()) {
       StreamUtils.copy(inputStream, tempFileFOS);
     }
+  }
+
+  public void setTempDir(File tempDir) {
+    this.tempDir = tempDir;
   }
 }

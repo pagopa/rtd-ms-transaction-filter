@@ -14,18 +14,16 @@ import it.gov.pagopa.rtd.transaction_filter.validator.BasicResponseEntityValidat
 import it.gov.pagopa.rtd.transaction_filter.validator.ValidatorConfig;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import lombok.SneakyThrows;
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.openfeign.FeignAutoConfiguration;
@@ -53,7 +51,6 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
         "rest-client.hpan.key-store.password=secret",
         "rest-client.hpan.trust-store.file=classpath:certs/client-truststore.jks",
         "rest-client.hpan.trust-store.password=secret",
-        "rest-client.sender-ade-ack.temp-directory.path=/tmp/batch-service",
         "spring.application.name=rtd-ms-transaction-filter-integration-rest"
     }
 )
@@ -73,8 +70,8 @@ public class SenderAdeAckRestClientTest {
   @Autowired
   private SenderAdeAckRestClientImpl restClient;
 
-  @Value("${rest-client.sender-ade-ack.temp-directory.path}")
-  private String tempDir;
+  @Rule
+  public TemporaryFolder tempDir = new TemporaryFolder();
 
   @ClassRule
   public static WireMockClassRule wireMockRule = new WireMockClassRule(wireMockConfig()
@@ -91,13 +88,12 @@ public class SenderAdeAckRestClientTest {
 
   @Before
   public void setup() throws IOException {
-    Files.createDirectory(Paths.get(tempDir));
+    restClient.setTempDir(tempDir.getRoot());
   }
 
   @After
-  public void cleanup() throws IOException {
+  public void cleanup() {
     wireMockRule.resetAll();
-    FileUtils.deleteDirectory(Paths.get(tempDir).toFile());
   }
 
   @SneakyThrows
