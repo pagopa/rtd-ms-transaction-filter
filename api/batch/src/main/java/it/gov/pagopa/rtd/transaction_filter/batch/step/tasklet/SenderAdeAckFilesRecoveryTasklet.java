@@ -82,8 +82,8 @@ public class SenderAdeAckFilesRecoveryTasklet implements Tasklet, InitializingBe
   }
 
   private String getPathToResolve(String senderAdeAckDirectory) {
-    return senderAdeAckDirectory.startsWith("/") ? "file:".concat(senderAdeAckDirectory)
-        : senderAdeAckDirectory;
+    return senderAdeAckDirectory.startsWith("classpath:") ? senderAdeAckDirectory
+        : "file:".concat(senderAdeAckDirectory);
   }
 
   private void cleanupTemporaryFiles(Path sourceDirectory) {

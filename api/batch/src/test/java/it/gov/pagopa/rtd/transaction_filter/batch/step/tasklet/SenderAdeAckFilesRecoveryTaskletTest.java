@@ -128,7 +128,7 @@ class SenderAdeAckFilesRecoveryTaskletTest {
 
   SenderAdeAckFilesRecoveryTasklet createDefaultTasklet() {
     SenderAdeAckFilesRecoveryTasklet tasklet = new SenderAdeAckFilesRecoveryTasklet(restClient);
-    tasklet.setSenderAdeAckDirectory("file:/" + temporaryOutputPath);
+    tasklet.setSenderAdeAckDirectory(temporaryOutputPath.toString());
     tasklet.setTaskletEnabled(true);
     return tasklet;
   }
