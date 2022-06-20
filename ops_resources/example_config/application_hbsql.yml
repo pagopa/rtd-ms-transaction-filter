@@ -70,6 +70,11 @@ batchConfiguration:
       filename: ${ACQ_BATCH_HPAN_LIST_FILENAME:hpanList}${ACQ_BATCH_INPUT_FILE_PATTERN:.csv}
       attemptExtract: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
       listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
+    abiToFiscalCodeMapRecovery:
+      enabled: ${ACQ_BATCH_ABI_TO_FISCALCODE_RECOVERY_ENABLED:true}
+    senderAdeAckFilesRecovery:
+      enabled: ${ACQ_BATCH_SENDER_ADEACK_RECOVERY_ENABLED:true}
+      directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:senderAdeAck}
 
 rest-client:
   hpan:
@@ -98,6 +103,13 @@ rest-client:
       url: /rtd/csv-transaction/rtd/sas
     publickey:
       url: /rtd/csv-transaction/publickey
+    abi-to-fiscalcode-map:
+      url: /rtd/abi-to-fiscalcode/conversion-map
+    sender-ade-ack:
+      list:
+        url: /rtd/file-register/sender-ade-ack
+      download-file:
+        url: /ade/{id}
     mtls:
       enabled: ${HPAN_SERVICE_MTLS_ENABLED:true}
     key-store:

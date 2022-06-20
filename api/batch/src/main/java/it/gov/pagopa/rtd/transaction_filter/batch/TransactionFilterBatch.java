@@ -4,17 +4,22 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.AbiToFiscalCodeMapRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.EnforceAcquirerCodeUniquenessTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PreventReprocessingFilenameAlreadySeenTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PurgeAggregatesFromMemoryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SenderAdeAckFilesRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInputFileTasklet;
+import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -75,6 +80,8 @@ public class TransactionFilterBatch {
     private final StepBuilderFactory stepBuilderFactory;
     private final BeanFactory beanFactory;
     private final HpanConnectorService hpanConnectorService;
+    private final AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
+    private final SenderAdeAckRestClient senderAdeAckRestClient;
 
     private final static String FAILED = "FAILED";
 
@@ -106,6 +113,12 @@ public class TransactionFilterBatch {
     private Boolean hpanListDailyRemovalEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled}")
     private Boolean pagopaPublicKeyRecoveryEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled}")
+    private Boolean abiToFiscalCodeTaskletEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.enabled}")
+    private Boolean senderAdeAckFilesTaskletEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath}")
+    private String senderAdeAckFilesDirectoryPath;
 
     private DataSource dataSource;
     private StoreService storeService;
@@ -280,10 +293,15 @@ public class TransactionFilterBatch {
                 .on(FAILED).end()
                 .on("*").to(selectTargetInputFileTask(this.storeService))
                 .on(FAILED).end()
-                .from(selectTargetInputFileTask(this.storeService))
+                .on("*").to(preventReprocessingFilenameAlreadySeenTask(this.storeService, this.transactionWriterService))
+                .on(FAILED).end()
+                .from(preventReprocessingFilenameAlreadySeenTask(this.storeService, this.transactionWriterService))
                 .on("*").to(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
                 .on(FAILED).end()
                 .from(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
+                .on("*").to(abiToFiscalCodeMapRecoveryTask(this.storeService))
+                .on(FAILED).end()
+                .from(abiToFiscalCodeMapRecoveryTask(this.storeService))
                 .on("*").to(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
@@ -313,6 +331,7 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
+                .on("*").to(senderAdeAckFilesRecoveryTask())
                 .on("*").to(fileManagementTask())
                 .build();
     }
@@ -381,6 +400,34 @@ public class TransactionFilterBatch {
             .tasklet(tasklet).build();
     }
 
+    @Bean
+    public Step preventReprocessingFilenameAlreadySeenTask(StoreService storeService, TransactionWriterService transactionWriterService) {
+        PreventReprocessingFilenameAlreadySeenTasklet tasklet = new PreventReprocessingFilenameAlreadySeenTasklet();
+        tasklet.setStoreService(storeService);
+        tasklet.setTransactionWriterService(transactionWriterService);
+        return stepBuilderFactory.get("prevent-reprocessing-filename-already-seen-step")
+            .tasklet(tasklet).build();
+    }
+
+    @Bean
+    public Step abiToFiscalCodeMapRecoveryTask(StoreService storeService) {
+        AbiToFiscalCodeMapRecoveryTasklet tasklet = new AbiToFiscalCodeMapRecoveryTasklet(abiToFiscalCodeRestClient, storeService);
+        tasklet.setTaskletEnabled(abiToFiscalCodeTaskletEnabled);
+        return stepBuilderFactory
+            .get("transaction-filter-abi-to-fiscalcode-recovery-step")
+            .tasklet(tasklet).build();
+    }
+
+    @Bean
+    public Step senderAdeAckFilesRecoveryTask() {
+        SenderAdeAckFilesRecoveryTasklet tasklet = new SenderAdeAckFilesRecoveryTasklet(senderAdeAckRestClient);
+        tasklet.setSenderAdeAckDirectory(senderAdeAckFilesDirectoryPath);
+        tasklet.setTaskletEnabled(senderAdeAckFilesTaskletEnabled);
+
+        return stepBuilderFactory
+            .get("transaction-filter-sender-ade-ack-files-recovery-step")
+            .tasklet(tasklet).build();
+    }
 
     /**
      * @return step instance based on the {@link FileManagementTasklet} to be used for

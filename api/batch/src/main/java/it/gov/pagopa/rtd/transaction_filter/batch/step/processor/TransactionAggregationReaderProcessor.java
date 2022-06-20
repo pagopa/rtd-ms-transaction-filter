@@ -40,7 +40,7 @@ public class TransactionAggregationReaderProcessor implements ItemProcessor<Inbo
 
         AggregationKey key = new AggregationKey();
         key.setAcquirerCode(storeService.flyweightAcquirerCode(inboundTransaction.getAcquirerCode()));
-        key.setAcquirerId(storeService.flyweightAcquirerId(inboundTransaction.getAcquirerId()));
+        key.setAcquirerId(storeService.flyweightAcquirerIdToFiscalCode(inboundTransaction.getAcquirerId()));
         key.setMerchantId(inboundTransaction.getMerchantId());
         key.setTerminalId(inboundTransaction.getTerminalId());
         key.setFiscalCode(inboundTransaction.getFiscalCode());
