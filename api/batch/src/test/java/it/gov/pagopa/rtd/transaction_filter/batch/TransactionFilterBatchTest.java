@@ -301,13 +301,12 @@ public class TransactionFilterBatchTest {
     @Test
     public void whenAbiToFiscalCodeMapIsSetThenOutputMustHaveConvertedAcquirerId() {
         String publicKey = createPublicKey();
-
+        createPanPGP();
+        createTrnOutputFile();
+        File outputFileAde = createAdeOutputFile();
         BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
         BDDMockito.doReturn(createAbiToFiscalCodeMap()).when(abiToFiscalCodeRestClient)
             .getFakeAbiToFiscalCodeMap();
-
-        createPanPGP();
-        File outputFileAde = createAdeOutputFile();
 
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
             .addDate("startDateTime", new Date())
@@ -324,10 +323,12 @@ public class TransactionFilterBatchTest {
     @Test
     public void whenSenderAdeAckTaskletIsSetThenMatchExpectedOutputFiles() {
         String publicKey = createPublicKey();
+        createPanPGP();
+        createTrnOutputFile();
+        createAdeOutputFile();
         BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
         BDDMockito.doReturn(createSenderAdeAckFiles()).when(senderAdeAckRestClient)
             .getSenderAdeAckFiles();
-        createPanPGP();
 
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
             .addDate("startDateTime", new Date())
