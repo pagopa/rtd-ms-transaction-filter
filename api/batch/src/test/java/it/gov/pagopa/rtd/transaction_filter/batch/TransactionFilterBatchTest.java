@@ -154,9 +154,7 @@ public class TransactionFilterBatchTest {
     public void setUp() {
         Mockito.reset(storeServiceSpy);
 
-        for (Resource resource : resolver.getResources("classpath:/test-encrypt/errorLogs/*.csv")) {
-            resource.getFile().delete();
-        }
+        deleteFiles("classpath:/test-encrypt/errorLogs/*.csv");
     }
 
     @SneakyThrows
@@ -218,12 +216,9 @@ public class TransactionFilterBatchTest {
         Set<String> expectedPgpFilenames = getExpectedPgpFilenames();
         Assert.assertEquals(expectedPgpFilenames, outputPgpFilenames);
 
-        Collection<File> outputCsvFiles = getOutputCsvFiles();
-        Assert.assertEquals(2, outputCsvFiles.size());
-
-        Set<String> outputCsvFilenames = outputCsvFiles.stream().map(File::getName).collect(Collectors.toSet());
+        Set<String> outputCsvFilenames = getOutputCsvFiles().stream().map(File::getName).collect(Collectors.toSet());
         Set<String> expectedCsvFilenames = getExpectedCsvFileNames();
-        Assert.assertEquals(expectedCsvFilenames, outputCsvFilenames);
+        assertThat(outputCsvFilenames).containsAll(expectedCsvFilenames);
 
         List<String> outputFileTrnContent = Files.readAllLines(outputFileTrn.toPath().toAbsolutePath());
         List<String> outputFileAdeContent = Files.readAllLines(outputFileAde.toPath().toAbsolutePath());
