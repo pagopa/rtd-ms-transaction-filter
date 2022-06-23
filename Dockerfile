@@ -5,7 +5,7 @@ COPY . .
 
 RUN mvn clean package
 
-FROM adoptopenjdk/openjdk11:alpine-jre as runtime
+FROM openjdk:19-slim-buster as runtime
 
 VOLUME /app_workdir
 VOLUME /app_certs_in
