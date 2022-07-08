@@ -53,24 +53,24 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", STRING_LEN_21})
-    public void processTransactionWithInvalidAcquirerCodeThrowsException(String acquirerCode) {
+    public void processTransactionWithInvalidSenderCodeThrowsException(String senderCode) {
         InboundTransaction transaction = fakeInboundTransaction();
-        transaction.setAcquirerCode(acquirerCode);
+        transaction.setSenderCode(senderCode);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
         Assertions.assertThrows(ConstraintViolationException.class, () -> processor.process(transaction));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"fae71", "27cd4dd11ea5859", STRING_LEN_20})
-    public void processTransactionWithValidAcquirerCode(String acquirerCode) {
+    public void processTransactionWithValidSenderCode(String senderCode) {
         BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
-        transaction.setAcquirerCode(acquirerCode);
+        transaction.setSenderCode(senderCode);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
         InboundTransaction outbound = processor.process(transaction);
         Assertions.assertNotNull(outbound);
-        Assertions.assertEquals(acquirerCode, outbound.getAcquirerCode());
+        Assertions.assertEquals(senderCode, outbound.getSenderCode());
     }
 
     @ParameterizedTest
@@ -459,7 +459,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     private InboundTransaction fakeInboundTransaction() {
         return InboundTransaction.builder()
-                .acquirerCode("001")
+                .senderCode("001")
                 .operationType("00")
                 .circuitType("00")
                 .pan(FAKE_ENROLLED_PAN)

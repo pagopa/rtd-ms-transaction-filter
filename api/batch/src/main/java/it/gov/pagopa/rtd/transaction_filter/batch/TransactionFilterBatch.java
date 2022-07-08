@@ -5,7 +5,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.JobListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.AbiToFiscalCodeMapRecoveryTasklet;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.EnforceAcquirerCodeUniquenessTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.EnforceSenderCodeUniquenessTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.FileManagementTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
@@ -305,9 +305,9 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
-                .on("*").to(enforceAcquirerCodeUniquenessTask(this.storeService))
+                .on("*").to(enforceSenderCodeUniquenessTask(this.storeService))
                 .on(FAILED).end()
-                .from(enforceAcquirerCodeUniquenessTask(this.storeService))
+                .from(enforceSenderCodeUniquenessTask(this.storeService))
                 .on("*").to(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
@@ -393,10 +393,10 @@ public class TransactionFilterBatch {
     }
 
     @Bean
-    public Step enforceAcquirerCodeUniquenessTask(StoreService storeService) {
-        EnforceAcquirerCodeUniquenessTasklet tasklet = new EnforceAcquirerCodeUniquenessTasklet();
+    public Step enforceSenderCodeUniquenessTask(StoreService storeService) {
+        EnforceSenderCodeUniquenessTasklet tasklet = new EnforceSenderCodeUniquenessTasklet();
         tasklet.setStoreService(storeService);
-        return stepBuilderFactory.get("transaction-filter-enforce-uniqueness-acquirer-code-step")
+        return stepBuilderFactory.get("transaction-filter-enforce-uniqueness-sender-code-step")
             .tasklet(tasklet).build();
     }
 
