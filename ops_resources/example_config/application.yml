@@ -42,7 +42,7 @@ spring:
 
 logging:
   level:
-    it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:INFO}
+    it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:DEBUG}
   file: ${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}/${ACQ_BATCH_APP_LOG_FILE:application.log}
   pattern: ${ACQ_BATCH_APP_LOG_PATTERN:}
   console: ${ACQ_BATCH_APP_LOG_CONSOLE:}
