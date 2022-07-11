@@ -163,7 +163,7 @@ public class InboundTransactionItemProcessorTest {
 
     private InboundTransaction fakeInboundTransaction() {
         return InboundTransaction.builder()
-                .acquirerCode("001")
+                .senderCode("001")
                 .operationType("00")
                 .circuitType("00")
                 .pan(FAKE_ENROLLED_PAN)

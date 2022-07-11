@@ -134,10 +134,10 @@ public class TransactionFilterStep {
     // see: https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration/standard-pagopa-file-transactions
     private static final String TRX_FILENAME_PATTERN = "^CSTAR\\.\\w{5}\\.TRNLOG\\.\\d{8}\\.\\d{6}\\.\\d{3}\\.csv$";
     private static final String[] ADE_CSV_FIELDS = new String[]{
-        "acquirerCode", "operationType", "transmissionDate", "accountingDate", "numTrx", "totalAmount",
+        "senderCode", "operationType", "transmissionDate", "accountingDate", "numTrx", "totalAmount",
         "currency", "acquirerId", "merchantId", "terminalId", "fiscalCode", "vat", "posType"  };
     private static final String[] CSTAR_CSV_FIELDS = new String[]{
-        "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
+        "senderCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
         "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
         "terminalId", "bin", "mcc", "fiscalCode", "vat", "posType", "par"};
     private static final String CSV_DELIMITER = ";";
@@ -154,7 +154,7 @@ public class TransactionFilterStep {
         DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
         delimitedLineTokenizer.setDelimiter(CSV_DELIMITER);
         delimitedLineTokenizer.setNames(
-                "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
+                "codice_sender", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
                 "bank_identification_number", "MCC", "fiscal_code", "vat", "pos_type", "par");
         return delimitedLineTokenizer;

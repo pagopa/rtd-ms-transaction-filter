@@ -6,7 +6,7 @@ import static org.mockito.Mockito.verify;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCodeFlyweight;
 import java.io.IOException;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -25,7 +25,7 @@ import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.test.MetaDataInstanceFactory;
 
 
-public class EnforceAcquirerCodeUniquenessTaskletTest {
+public class EnforceSenderCodeUniquenessTaskletTest {
 
     private ChunkContext chunkContext;
     private StepExecution execution;
@@ -36,7 +36,7 @@ public class EnforceAcquirerCodeUniquenessTaskletTest {
     @Rule
     public ExpectedException expectedException = ExpectedException.none();
 
-    public EnforceAcquirerCodeUniquenessTaskletTest(){
+    public EnforceSenderCodeUniquenessTaskletTest(){
         MockitoAnnotations.initMocks(this);
     }
 
@@ -57,65 +57,65 @@ public class EnforceAcquirerCodeUniquenessTaskletTest {
 
     @Test
     public void shouldRaiseIOExceptionWhenCacheIsEmpty() throws IOException {
-        EnforceAcquirerCodeUniquenessTasklet tasklet = new EnforceAcquirerCodeUniquenessTasklet();
+        EnforceSenderCodeUniquenessTasklet tasklet = new EnforceSenderCodeUniquenessTasklet();
         tasklet.setStoreService(storeServiceMock);
 
-        AcquirerCodeFlyweight flyweightMock = new AcquirerCodeFlyweight();
-        BDDMockito.doReturn(flyweightMock).when(storeServiceMock).getAcquirerCodeFlyweight();
+        SenderCodeFlyweight flyweightMock = new SenderCodeFlyweight();
+        BDDMockito.doReturn(flyweightMock).when(storeServiceMock).getSenderCodeFlyweight();
 
         expectedException.expect(IOException.class);
         tasklet.execute(new StepContribution(execution), chunkContext);
 
-        verify(storeServiceMock, Mockito.times(1)).getAcquirerCodeFlyweight();
+        verify(storeServiceMock, Mockito.times(1)).getSenderCodeFlyweight();
     }
 
     @Test
     public void shouldRaiseIOExceptionWhenCacheHasMoreThanOneValue() throws IOException {
-        EnforceAcquirerCodeUniquenessTasklet tasklet = new EnforceAcquirerCodeUniquenessTasklet();
+        EnforceSenderCodeUniquenessTasklet tasklet = new EnforceSenderCodeUniquenessTasklet();
         tasklet.setStoreService(storeServiceMock);
 
-        AcquirerCodeFlyweight flyweightMock = new AcquirerCodeFlyweight();
-        flyweightMock.createAcquirerCode("11111");
-        flyweightMock.createAcquirerCode("22222");
-        BDDMockito.doReturn(flyweightMock).when(storeServiceMock).getAcquirerCodeFlyweight();
+        SenderCodeFlyweight flyweightMock = new SenderCodeFlyweight();
+        flyweightMock.createSenderCode("11111");
+        flyweightMock.createSenderCode("22222");
+        BDDMockito.doReturn(flyweightMock).when(storeServiceMock).getSenderCodeFlyweight();
 
         expectedException.expect(IOException.class);
         tasklet.execute(new StepContribution(execution), chunkContext);
 
-        verify(storeServiceMock, Mockito.times(1)).getAcquirerCodeFlyweight();
+        verify(storeServiceMock, Mockito.times(1)).getSenderCodeFlyweight();
     }
 
     @Test
     public void shouldRaiseIOExceptionWhenCachedValueIsDifferentFromFilenamePart() throws IOException {
-        EnforceAcquirerCodeUniquenessTasklet tasklet = new EnforceAcquirerCodeUniquenessTasklet();
+        EnforceSenderCodeUniquenessTasklet tasklet = new EnforceSenderCodeUniquenessTasklet();
         tasklet.setStoreService(storeServiceMock);
 
-        AcquirerCodeFlyweight flyweightMock = new AcquirerCodeFlyweight();
-        flyweightMock.createAcquirerCode("11111");
-        BDDMockito.doReturn(flyweightMock).when(storeServiceMock).getAcquirerCodeFlyweight();
+        SenderCodeFlyweight flyweightMock = new SenderCodeFlyweight();
+        flyweightMock.createSenderCode("11111");
+        BDDMockito.doReturn(flyweightMock).when(storeServiceMock).getSenderCodeFlyweight();
         BDDMockito.doReturn("22222").when(storeServiceMock).getTargetInputFileAbiPart();
 
         expectedException.expect(IOException.class);
         tasklet.execute(new StepContribution(execution), chunkContext);
 
-        verify(storeServiceMock, Mockito.times(1)).getAcquirerCodeFlyweight();
+        verify(storeServiceMock, Mockito.times(1)).getSenderCodeFlyweight();
         verify(storeServiceMock, Mockito.times(1)).getTargetInputFileAbiPart();
     }
 
     @Test
     public void shouldReturnSuccessWhenUniquenessIsVerified() throws IOException {
-        EnforceAcquirerCodeUniquenessTasklet tasklet = new EnforceAcquirerCodeUniquenessTasklet();
+        EnforceSenderCodeUniquenessTasklet tasklet = new EnforceSenderCodeUniquenessTasklet();
         tasklet.setStoreService(storeServiceMock);
 
         String abiCode = "11111";
-        AcquirerCodeFlyweight flyweightMock = new AcquirerCodeFlyweight();
-        flyweightMock.createAcquirerCode(abiCode);
-        BDDMockito.doReturn(flyweightMock).when(storeServiceMock).getAcquirerCodeFlyweight();
+        SenderCodeFlyweight flyweightMock = new SenderCodeFlyweight();
+        flyweightMock.createSenderCode(abiCode);
+        BDDMockito.doReturn(flyweightMock).when(storeServiceMock).getSenderCodeFlyweight();
         BDDMockito.doReturn(abiCode).when(storeServiceMock).getTargetInputFileAbiPart();
 
         tasklet.execute(new StepContribution(execution), chunkContext);
 
-        verify(storeServiceMock, Mockito.times(1)).getAcquirerCodeFlyweight();
+        verify(storeServiceMock, Mockito.times(1)).getSenderCodeFlyweight();
         verify(storeServiceMock, Mockito.times(1)).getTargetInputFileAbiPart();
     }
 }

@@ -1,8 +1,8 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCode;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCode;
+import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCodeFlyweight;
 import java.io.IOException;
 import java.util.Collection;
 import lombok.Data;
@@ -14,16 +14,16 @@ import org.springframework.batch.repeat.RepeatStatus;
 
 
 /**
- * Tasklet responsible for Acquirer Code uniqueness enforcing
+ * Tasklet responsible for Sender Code uniqueness enforcing
  */
 @Data
 @Slf4j
-public class EnforceAcquirerCodeUniquenessTasklet implements Tasklet {
+public class EnforceSenderCodeUniquenessTasklet implements Tasklet {
 
     private StoreService storeService;
 
     /**
-     * Makes sure that no more than one acquirer code has been defined in the
+     * Makes sure that no more than one sender code has been defined in the
      * input file content, and in that case that the code defined in the file
      * is the same as the one defined in the file name itself.
      *
@@ -34,14 +34,14 @@ public class EnforceAcquirerCodeUniquenessTasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext)
         throws IOException {
-        AcquirerCodeFlyweight acquirerCodeFlyweight = storeService.getAcquirerCodeFlyweight();
-        if (acquirerCodeFlyweight.cacheSize() != 1) {
-            throw new IOException("Acquirer code is not unique within file content (n of distinct values: " + acquirerCodeFlyweight.cacheSize() + ")");
+        SenderCodeFlyweight senderCodeFlyweight = storeService.getSenderCodeFlyweight();
+        if (senderCodeFlyweight.cacheSize() != 1) {
+            throw new IOException("Sender code is not unique within file content (n of distinct values: " + senderCodeFlyweight.cacheSize() + ")");
         } else {
-            Collection<AcquirerCode> acquirerCodes = acquirerCodeFlyweight.values();
-            AcquirerCode code = acquirerCodes.iterator().next();
+            Collection<SenderCode> senderCodes = senderCodeFlyweight.values();
+            SenderCode code = senderCodes.iterator().next();
             if (!code.getCode().equals(storeService.getTargetInputFileAbiPart())) {
-                throw new IOException("Acquirer code is not unique between file content and file name");
+                throw new IOException("Sender code is not unique between file content and file name");
             } else {
                 return RepeatStatus.FINISHED;
             }

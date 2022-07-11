@@ -16,7 +16,7 @@ import javax.validation.constraints.Size;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = {"idTrxAcquirer", "acquirerCode", "trxDate"}, callSuper = false)
+@EqualsAndHashCode(of = {"idTrxAcquirer", "senderCode", "trxDate"}, callSuper = false)
 public class
 InboundTransaction {
 
@@ -34,7 +34,7 @@ InboundTransaction {
     @NotNull
     @NotBlank
     @Size(max = 20)
-    String acquirerCode;
+    String senderCode;
 
     /**
      * Date when the transaction occurred

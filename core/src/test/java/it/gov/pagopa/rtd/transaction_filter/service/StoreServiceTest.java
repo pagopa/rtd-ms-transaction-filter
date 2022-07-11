@@ -100,7 +100,7 @@ public class StoreServiceTest {
         key.setTerminalId("1");
         key.setMerchantId("1");
         key.setAcquirerId(storeService.flyweightAcquirerId("1"));
-        key.setAcquirerCode(storeService.flyweightAcquirerCode("code"));
+        key.setSenderCode(storeService.flyweightSenderCode("code"));
         key.setFiscalCode("FC");
         key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
@@ -113,7 +113,7 @@ public class StoreServiceTest {
         key.setTerminalId("1");
         key.setMerchantId("1");
         key.setAcquirerId(storeService.flyweightAcquirerId("1"));
-        key.setAcquirerCode(storeService.flyweightAcquirerCode("code"));
+        key.setSenderCode(storeService.flyweightSenderCode("code"));
         key.setFiscalCode("FC");
         key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
@@ -132,7 +132,7 @@ public class StoreServiceTest {
         key.setTerminalId("1");
         key.setMerchantId("1");
         key.setAcquirerId(storeService.flyweightAcquirerId("1"));
-        key.setAcquirerCode(storeService.flyweightAcquirerCode("code"));
+        key.setSenderCode(storeService.flyweightSenderCode("code"));
         key.setFiscalCode("FC");
         key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
@@ -152,7 +152,7 @@ public class StoreServiceTest {
         key.setTerminalId("1");
         key.setMerchantId("1");
         key.setAcquirerId(storeService.flyweightAcquirerId("1"));
-        key.setAcquirerCode(storeService.flyweightAcquirerCode("code"));
+        key.setSenderCode(storeService.flyweightSenderCode("code"));
         key.setFiscalCode("FC");
         key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
@@ -169,7 +169,7 @@ public class StoreServiceTest {
         key.setTerminalId("1");
         key.setMerchantId("1");
         key.setAcquirerId(storeService.flyweightAcquirerId("1"));
-        key.setAcquirerCode(storeService.flyweightAcquirerCode("code"));
+        key.setSenderCode(storeService.flyweightSenderCode("code"));
         key.setFiscalCode("FC");
         key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
