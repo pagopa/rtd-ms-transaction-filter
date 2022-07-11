@@ -42,7 +42,7 @@ spring:
 
 logging:
   level:
-    it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:DEBUG}
+    it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:INFO}
 
 batchConfiguration:
   TransactionFilterBatch:
