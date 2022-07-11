@@ -22,7 +22,7 @@ AdeTransactionsAggregate {
     @NotNull
     @NotBlank
     @Size(max = 20)
-    String acquirerCode;
+    String senderCode;
 
     @NotNull
     @NotBlank

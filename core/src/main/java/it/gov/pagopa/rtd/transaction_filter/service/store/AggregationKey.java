@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode
 public class AggregationKey {
 
-  private AcquirerCode acquirerCode;
+  private SenderCode senderCode;
   private String terminalId;
   private String merchantId;
   private AcquirerId acquirerId;

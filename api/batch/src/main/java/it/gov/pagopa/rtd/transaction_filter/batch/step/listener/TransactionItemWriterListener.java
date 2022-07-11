@@ -77,7 +77,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
     }
 
     private String buildCsv(InboundTransaction inboundTransaction) {
-        return (Optional.ofNullable(inboundTransaction.getAcquirerCode()).orElse("")).concat(";")
+        return (Optional.ofNullable(inboundTransaction.getSenderCode()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getOperationType()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getCircuitType()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getPan()).orElse("")).concat(";")

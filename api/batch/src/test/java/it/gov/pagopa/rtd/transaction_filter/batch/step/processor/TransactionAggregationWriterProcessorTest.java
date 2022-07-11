@@ -5,7 +5,7 @@ import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.AdeTransactionsAggregate;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDateFlyweight;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCodeFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
@@ -29,7 +29,7 @@ public class TransactionAggregationWriterProcessorTest {
 
     private AccountingDateFlyweight accountingDateFlyweight;
     private AcquirerIdFlyweight acquirerIdFlyweight;
-    private AcquirerCodeFlyweight acquirerCodeFlyweight;
+    private SenderCodeFlyweight senderCodeFlyweight;
 
     public TransactionAggregationWriterProcessorTest() {
         MockitoAnnotations.initMocks(this);
@@ -49,14 +49,14 @@ public class TransactionAggregationWriterProcessorTest {
         Mockito.reset(storeServiceMock);
 
         acquirerIdFlyweight = new AcquirerIdFlyweight();
-        acquirerCodeFlyweight = new AcquirerCodeFlyweight();
+        senderCodeFlyweight = new SenderCodeFlyweight();
         accountingDateFlyweight = new AccountingDateFlyweight();
 
         key = new AggregationKey();
         key.setTerminalId("1");
         key.setMerchantId("1");
         key.setAcquirerId(acquirerIdFlyweight.createAcquirerId("1"));
-        key.setAcquirerCode(acquirerCodeFlyweight.createAcquirerCode("code"));
+        key.setSenderCode(senderCodeFlyweight.createSenderCode("code"));
         key.setFiscalCode("FC");
         key.setAccountingDate(accountingDateFlyweight.createAccountingDate("2022-04-07"));
         key.setOperationType((byte)0);
@@ -78,7 +78,7 @@ public class TransactionAggregationWriterProcessorTest {
 
         AdeTransactionsAggregate expectedAggregate = new AdeTransactionsAggregate();
         expectedAggregate.setAccountingDate("2022-04-07");
-        expectedAggregate.setAcquirerCode("code");
+        expectedAggregate.setSenderCode("code");
         expectedAggregate.setAcquirerId("1");
         expectedAggregate.setMerchantId("1");
         expectedAggregate.setTerminalId("1");
@@ -103,7 +103,7 @@ public class TransactionAggregationWriterProcessorTest {
 
         AdeTransactionsAggregate expectedAggregate = new AdeTransactionsAggregate();
         expectedAggregate.setAccountingDate("2022-04-07");
-        expectedAggregate.setAcquirerCode("code");
+        expectedAggregate.setSenderCode("code");
         expectedAggregate.setAcquirerId("1");
         expectedAggregate.setMerchantId("1");
         expectedAggregate.setTerminalId("1");
@@ -128,7 +128,7 @@ public class TransactionAggregationWriterProcessorTest {
 
         AdeTransactionsAggregate expectedAggregate = new AdeTransactionsAggregate();
         expectedAggregate.setAccountingDate("2022-04-07");
-        expectedAggregate.setAcquirerCode("code");
+        expectedAggregate.setSenderCode("code");
         expectedAggregate.setAcquirerId("1");
         expectedAggregate.setMerchantId("1");
         expectedAggregate.setTerminalId("1");

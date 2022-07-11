@@ -45,7 +45,7 @@ public class InboundTransactionFieldSetMapper implements FieldSetMapper<InboundT
 
         InboundTransaction inboundTransaction =
                 InboundTransaction.builder()
-                        .acquirerCode(fieldSet.readString("codice_acquirer"))
+                        .senderCode(fieldSet.readString("codice_sender"))
                         .operationType(fieldSet.readString("tipo_operazione"))
                         .circuitType(fieldSet.readString("tipo_circuito"))
                         .pan(fieldSet.readString("PAN"))

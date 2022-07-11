@@ -2,8 +2,8 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 
 import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDate;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDateFlyweight;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCode;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCode;
+import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCodeFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerId;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerIdFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
@@ -30,7 +30,7 @@ public class StoreServiceImpl implements StoreService {
     private String salt = "";
     private String targetInputFile;
     private String targetInputFileHash;
-    private AcquirerCodeFlyweight acquirerCodeFlyweight = new AcquirerCodeFlyweight();
+    private SenderCodeFlyweight senderCodeFlyweight = new SenderCodeFlyweight();
     private AcquirerIdFlyweight acquirerIdFlyweight = new AcquirerIdFlyweight();
     private AccountingDateFlyweight accountingDateFlyweight = new AccountingDateFlyweight();
     private Map<String, String> fakeAbiToFiscalCodeMap = new HashMap<>();
@@ -113,12 +113,12 @@ public class StoreServiceImpl implements StoreService {
         return this.targetInputFileHash;
     }
 
-    public AcquirerCode flyweightAcquirerCode(String acquirerCode) {
-        return this.acquirerCodeFlyweight.createAcquirerCode(acquirerCode);
+    public SenderCode flyweightSenderCode(String senderCode) {
+        return this.senderCodeFlyweight.createSenderCode(senderCode);
     }
 
-    public AcquirerCodeFlyweight getAcquirerCodeFlyweight() {
-        return this.acquirerCodeFlyweight;
+    public SenderCodeFlyweight getSenderCodeFlyweight() {
+        return this.senderCodeFlyweight;
     }
 
     public AcquirerId flyweightAcquirerId(String acquirerId) {
@@ -148,7 +148,7 @@ public class StoreServiceImpl implements StoreService {
         this.salt = "";
         this.targetInputFile = null;
         this.targetInputFileHash = null;
-        this.acquirerCodeFlyweight.clean();
+        this.senderCodeFlyweight.clean();
         this.accountingDateFlyweight.clean();
         this.acquirerIdFlyweight.clean();
         fakeAbiToFiscalCodeMap.clear();

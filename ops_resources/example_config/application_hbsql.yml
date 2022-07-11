@@ -19,7 +19,7 @@ spring:
 
 logging:
   level:
-    it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:DEBUG}
+    it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:INFO}
   file: ${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}/${ACQ_BATCH_APP_LOG_FILE:application.log}
   pattern: ${ACQ_BATCH_APP_LOG_PATTERN:}
   console: ${ACQ_BATCH_APP_LOG_CONSOLE:}
@@ -56,7 +56,7 @@ batchConfiguration:
       linesToSkip: ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0}
       deleteProcessedFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:false}
       deleteOutputFiles: ${ACQ_BATCH_DELETE_OUTPUT_FILE:ALWAYS}
-      manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE}
+      manageHpanOnSuccess: ${ACQ_BATCH_HPAN_ON_SUCCESS:DELETE}
       transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
       inputFileChecksumEnabled: ${ACQ_BATCH_INPUT_FILE_CHECKSUM:true}
     transactionSenderRtd:
