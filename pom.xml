@@ -65,27 +65,22 @@
             </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
-                <artifactId>rtd-ms-transaction_filter-integration-jpa</artifactId>
+                <artifactId>rtd-ms-transaction-filter-integration-jpa</artifactId>
                 <version>${transaction-filter.version}</version>
             </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
-                <artifactId>rtd-ms-transaction_filter-integration-rest</artifactId>
-                <version>${transaction-filter.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
-                <artifactId>rtd-ms-transaction_filter-integration-sftp</artifactId>
+                <artifactId>rtd-ms-transaction-filter-integration-rest</artifactId>
                 <version>${transaction-filter.version}</version>
             </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
-                <artifactId>rtd-ms-transaction_filter-core</artifactId>
+                <artifactId>rtd-ms-transaction-filter-core</artifactId>
                 <version>${transaction-filter.version}</version>
             </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
-                <artifactId>rtd-ms-transaction_filter-api-batch</artifactId>
+                <artifactId>rtd-ms-transaction-filter-api-batch</artifactId>
                 <version>${transaction-filter.version}</version>
             </dependency>
         </dependencies>
