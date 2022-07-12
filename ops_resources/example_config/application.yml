@@ -8,7 +8,6 @@ spring:
       scheduled: ${ACQ_BATCH_SCHEDULED:false}
     initialize-schema: ${ACQ_BATCH_INITIALIZE_SCHEMA:always}
   datasource:
-    driver-class-name: ${ACQ_BATCH_DB_CLASS_NAME:org.postgresql.Driver}
     url: ${ACQ_BATCH_DB_CONN_URL:jdbc:postgresql://${ACQ_BATCH_DB_HOST:localhost}:${ACQ_BATCH_DB_PORT:5433}/${ACQ_BATCH_DB_SCHEMA:postgres}}
     username: ${ACQ_BATCH_DB_USERNAME:postgres}
     password: ${ACQ_BATCH_DBS_PASSWORD:root}
