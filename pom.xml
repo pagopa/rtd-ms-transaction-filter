@@ -88,10 +88,6 @@
                 <artifactId>rtd-ms-transaction_filter-api-batch</artifactId>
                 <version>${transaction-filter.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-jdbc</artifactId>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
