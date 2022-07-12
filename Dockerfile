@@ -7,13 +7,9 @@ RUN mvn clean package
 
 FROM openjdk:19-slim-buster as runtime
 
-VOLUME /app_workdir
-VOLUME /app_certs_in
-
 WORKDIR /app
 
 COPY --from=buildtime /build/target/*.jar /app/app.jar
-COPY ops_resources/example_config/application_hbsql.yml /app/config.yml
 COPY entrypoint.sh /app/entrypoint.sh
 
 RUN chmod +x /app/entrypoint.sh
