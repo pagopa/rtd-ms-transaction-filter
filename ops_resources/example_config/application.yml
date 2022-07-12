@@ -99,7 +99,7 @@ batchConfiguration:
       enabled: ${ACQ_BATCH_ABI_TO_FISCALCODE_RECOVERY_ENABLED:true}
     senderAdeAckFilesRecovery:
       enabled: ${ACQ_BATCH_SENDER_ADEACK_RECOVERY_ENABLED:true}
-      directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:senderAdeAck}
+      directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:ade-errors}
 
 rest-client:
   hpan:
