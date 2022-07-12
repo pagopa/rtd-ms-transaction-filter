@@ -19,7 +19,7 @@
         </dependency>
         <dependency>
             <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
-            <artifactId>rtd-ms-transaction_filter-integration-rest</artifactId>
+            <artifactId>rtd-ms-transaction-filter-integration-rest</artifactId>
             <version>${transaction-filter.version}</version>
         </dependency>
         <dependency>
