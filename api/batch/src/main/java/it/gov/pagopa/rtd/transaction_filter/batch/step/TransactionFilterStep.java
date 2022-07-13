@@ -131,7 +131,6 @@ public class TransactionFilterStep {
     private static final String LOG_PREFIX_ADE = "Ade_";
     private static final String PARTITIONER_WORKER_STEP_NAME = "partition";
     // [service].[ABI].[filetype].[date].[time].[nnn].csv
-    // see: https://docs.pagopa.it/centrostella-1/centro-stella/instructions-for-agenzia-delle-entrate-mandate/appendixes/appendix-2-input-file
     private static final String TRX_FILENAME_PATTERN = "^CSTAR\\.\\w{5}\\.TRNLOG\\.\\d{8}\\.\\d{6}\\.\\d{3}\\.csv$";
     private static final String[] ADE_CSV_FIELDS = new String[]{
         "senderCode", "operationType", "transmissionDate", "accountingDate", "numTrx", "totalAmount",
@@ -750,7 +749,6 @@ public class TransactionFilterStep {
 
     /**
      * Filter a list of resources retaining only those matching naming convention
-     * stated at https://docs.pagopa.it/centrostella-1/centro-stella/instructions-for-agenzia-delle-entrate-mandate/appendixes/appendix-2-input-file
      *
      * @param resources a list of resources to be filtered
      * @return a filtered list of resources
