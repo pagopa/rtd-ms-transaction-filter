@@ -1,8 +1,8 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
 import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDate;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCode;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerCodeFlyweight;
+import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCode;
+import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCodeFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerId;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
@@ -133,19 +133,19 @@ public interface StoreService {
     String getTargetInputFileHash();
 
     /**
-     * Instantiate an Acquirer Code object via Flyweight.
+     * Instantiate a Sender Code object via Flyweight.
      *
-     * @param acquirerCode a string representing an Acquirer Code
-     * @return an Acquirer Code object
+     * @param senderCode a string representing a Sender Code
+     * @return a Sender Code object1
      */
-    AcquirerCode flyweightAcquirerCode(String acquirerCode);
+    SenderCode flyweightSenderCode(String senderCode);
 
     /**
-     * Return the Flyweight managing Acquirer Code's instances.
+     * Return the Flyweight managing Sender Code's instances.
      *
      * @return a Flyweight object
      */
-    AcquirerCodeFlyweight getAcquirerCodeFlyweight();
+    SenderCodeFlyweight getSenderCodeFlyweight();
 
     /**
      * Instantiate an Acquirer Id object via Flyweight.

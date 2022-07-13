@@ -7,4 +7,5 @@ recovered from a local directory or through a remote service.
 
 The up-to-date integration guide is maintained here:
 
-[Acquirer Integration with PagoPA Centro Stella - Integration](https://docs.pagopa.it/digital-transaction-register/v/digital-transaction-filter/acquirer-integration-with-pagopa-centrostella/integration)
+[Acquirer Integration with PagoPA Centro Stella - ADE Integration](https://docs.pagopa.it/centrostella-1/centro-stella/instructions-for-agenzia-delle-entrate-mandate)
+[Acquirer Integration with PagoPA Centro Stella - RTD Integration](https://docs.pagopa.it/digital-transaction-register/v/digital-transaction-filter/acquirer-integration-with-pagopa-centrostella/integration)

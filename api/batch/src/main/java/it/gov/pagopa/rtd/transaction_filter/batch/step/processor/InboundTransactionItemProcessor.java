@@ -65,7 +65,7 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
                             .pan(inboundTransaction.getPan())
                             .circuitType(inboundTransaction.getCircuitType())
                             .operationType(inboundTransaction.getOperationType())
-                            .acquirerCode(inboundTransaction.getAcquirerCode())
+                            .senderCode(inboundTransaction.getSenderCode())
                             .amount(inboundTransaction.getAmount())
                             .trxDate(inboundTransaction.getTrxDate())
                             .fiscalCode(inboundTransaction.getFiscalCode())

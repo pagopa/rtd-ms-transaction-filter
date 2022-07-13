@@ -93,7 +93,7 @@ public class SenderAdeAckRestClientTest {
 
   @After
   public void cleanup() {
-    wireMockRule.resetAll();
+    wireMockRule.resetToDefaultMappings();
   }
 
   @SneakyThrows

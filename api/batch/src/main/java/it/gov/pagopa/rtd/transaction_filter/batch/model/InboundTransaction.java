@@ -9,14 +9,13 @@ import javax.validation.constraints.Size;
 
 /**
  * Model for the processed lines in the batch.
- * Documentation: https://app.gitbook.com/o/KXYtsf32WSKm6ga638R3/s/A5nRaBVrAjc1Sj7y0pYS/acquirer-integration-with-pagopa-centrostella/integration/standard-pagopa-file-transactions
  * Example files in /opt_resources/example_files
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(of = {"idTrxAcquirer", "acquirerCode", "trxDate"}, callSuper = false)
+@EqualsAndHashCode(of = {"idTrxAcquirer", "senderCode", "trxDate"}, callSuper = false)
 public class
 InboundTransaction {
 
@@ -34,7 +33,7 @@ InboundTransaction {
     @NotNull
     @NotBlank
     @Size(max = 20)
-    String acquirerCode;
+    String senderCode;
 
     /**
      * Date when the transaction occurred

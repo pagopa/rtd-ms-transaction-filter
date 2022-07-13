@@ -5,22 +5,155 @@ spring:
   batch:
     job:
       enabled: false
-      scheduled: true
-    initialize-schema: ${RTD_BATCH_INITIALIZE_SCHEMA:always}
+      scheduled: ${ACQ_BATCH_SCHEDULED:false}
+    initialize-schema: ${ACQ_BATCH_INITIALIZE_SCHEMA:always}
+  datasource:
+    url: ${ACQ_BATCH_DB_CONN_URL:jdbc:hsqldb:mem:${ACQ_BATCH_DB_NAME:batchdb};sql.enforce_strict_size=true;hsqldb.tx=mvcc}
+    username: ${ACQ_BATCH_DB_USERNAME:sa}
+    password: ${ACQ_BATCH_DBS_PASSWORD:}
+    hikari:
+      maximumPoolSize: ${ACQ_BATCH_DB_POOLSIZE:5}
+      connectionTimeout: ${ACQ_BATCH_DB_TIMEOUT:6000}
+      schema: ${ACQ_BATCH_DB_SCHEMA:PUBLIC}
+      readOnly: false
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation:info: true
+    hibernate:
+      ddl-auto: validate
+    show-sql: ${ACQ_BATCH_SHOW_SQL:true}
+    open-in-view: false
+    database-platform: ${ACQ_BATCH_DB_DIALECT:org.hibernate.dialect.HSQLDialect}
   main:
     web-application-type: none
     allow-bean-definition-overriding: true
-
-info:
   build:
     artifact: "@project.parent.artifactId@"
     name: "@project.parent.artifactId@"
     description: "@project.description@"
     version: "@project.version@"
+  enabled: true
 
 error-manager:
   enabled: true
 
 logging:
   level:
-    it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:DEBUG}
+    it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:INFO}
+  file: ${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}/${ACQ_BATCH_APP_LOG_FILE:application.log}
+  pattern: ${ACQ_BATCH_APP_LOG_PATTERN:}
+  console: ${ACQ_BATCH_APP_LOG_CONSOLE:}
+  config: ${ACQ_BATCH_APP_LOG_CONFIG:}
+
+batchConfiguration:
+  TransactionFilterBatch:
+    successArchivePath: file:${ACQ_BATCH_SUCCESS_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources/archive}/success}
+    errorArchivePath: file:${ACQ_BATCH_ERROR_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources/archive}/error}
+    cron: ${ACQ_BATCH_INPUT_CRON:0 0/1 * 1/1 * ?}
+    partitionerMaxPoolSize: ${ACQ_BATCH_INPUT_PART_MAX_POOL_SIZE:5}
+    partitionerCorePoolSize: ${ACQ_BATCH_INPUT_PART_CORE_POOL_SIZE:5}
+    readerMaxPoolSize: ${ACQ_BATCH_INPUT_PART_READ_MAX_POOL_SIZE:5}
+    readerCorePoolSize: ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5}
+    tablePrefix: ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_}
+    panList:
+      hpanDirectoryPath: file:${ACQ_BATCH_HPAN_INPUT_PATH:resources/hpans}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
+      secretKeyPath: file:${ACQ_BATCH_INPUT_SECRET_KEYPATH:}
+      passphrase: ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:}
+      partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
+      chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000}
+      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
+      applyDecrypt: ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:false}
+      applyHashing: ${ACQ_BATCH_PAN_LIST_APPLY_HASHING:false}
+    transactionFilter:
+      transactionDirectoryPath: file:${ACQ_BATCH_TRX_INPUT_PATH:resources/transactions}/
+      outputDirectoryPath: file:${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources}/output}
+      partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
+      chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000}
+      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:1000}
+      timestampPattern: ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX}
+      applyHashing: ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:true}
+      applyEncrypt: ${ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT:true}
+      saveHashing: ${ACQ_BATCH_TRX_LIST_HASHING_SAVE:true}
+      linesToSkip: ${ACQ_BATCH_INPUT_LINES_TO_SKIP:0}
+      deleteProcessedFiles: ${ACQ_BATCH_DELETE_LOCAL_FILE:false}
+      deleteOutputFiles: ${ACQ_BATCH_DELETE_OUTPUT_FILE:ALWAYS}
+      manageHpanOnSuccess: ${ACH_BATCH_HPAN_ON_SUCCESS:DELETE}
+      transactionLogsPath: file:${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}
+      inputFileChecksumEnabled: ${ACQ_BATCH_INPUT_FILE_CHECKSUM:true}
+    transactionSenderRtd:
+      enabled: ${ACQ_BATCH_TRX_SENDER_RTD_ENABLED:true}
+    transactionSenderAde:
+      enabled: ${ACQ_BATCH_TRX_SENDER_ADE_ENABLED:true}
+    saltRecovery:
+      enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:true}
+    pagopaPublicKeyRecovery:
+      enabled: ${ACQ_BATCH_PAGOPA_PUBLIC_KEY_RECOVERY_ENABLED:true}
+    hpanListRecovery:
+      enabled: ${ACQ_BATCH_HPAN_RECOVERY_ENABLED:true}
+      directoryPath: ${ACQ_BATCH_HPAN_INPUT_PATH:resources/hpans}
+      filename: ${ACQ_BATCH_HPAN_LIST_FILENAME:hpanList}${ACQ_BATCH_INPUT_FILE_PATTERN:.csv}
+      attemptExtract: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
+      listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
+    abiToFiscalCodeMapRecovery:
+      enabled: ${ACQ_BATCH_ABI_TO_FISCALCODE_RECOVERY_ENABLED:true}
+    senderAdeAckFilesRecovery:
+      enabled: ${ACQ_BATCH_SENDER_ADEACK_RECOVERY_ENABLED:true}
+      directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:ade-errors}
+
+rest-client:
+  hpan:
+    serviceCode: hpan-service
+    base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}
+    proxy:
+      enabled: ${HPAN_SERVICE_PROXY_ENABLED:false}
+      host: ${HPAN_SERVICE_PROXY_HOST:localhost}
+      port: ${HPAN_SERVICE_PROXY_PORT:8866}
+    api:
+      key: ${HPAN_SERVICE_API_KEY:test}
+    list:
+      url: /rtd/payment-instrument-manager/hashed-pans
+      attemptExtraction: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
+      checksumValidation: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_VALIDATION:true}
+      checksumHeaderName: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_HEADER:x-ms-meta-sha256}
+      listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
+      dateValidation: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION:true}
+      dateValidationHeaderName: ${ACQ_BATCH_HPAN_LIST_DATEVAL_HEADER:last-modified}
+      dateValidationPattern: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION_PATTERN:}
+    salt:
+      url: /rtd/payment-instrument-manager/salt
+    adesas:
+      url: /rtd/csv-transaction/ade/sas
+    rtdsas:
+      url: /rtd/csv-transaction/rtd/sas
+    publickey:
+      url: /rtd/csv-transaction/publickey
+    abi-to-fiscalcode-map:
+      url: /rtd/abi-to-fiscalcode/conversion-map
+    sender-ade-ack:
+      list:
+        url: /rtd/file-register/sender-ade-ack
+      download-file:
+        url: /ade/{id}
+    mtls:
+      enabled: ${HPAN_SERVICE_MTLS_ENABLED:true}
+    key-store:
+      file: file:${HPAN_SERVICE_KEY_STORE_FILE:resources/keys/keystore_cert_1.jks}
+      type: ${HPAN_SERVICE_KEY_STORE_TYPE:#{null}}
+      algorithm: ${HPAN_SERVICE_KEY_STORE_ALGORITHM:#{null}}
+      password: ${HPAN_SERVICE_KEY_STORE_PASSWORD:secret}
+    trust-store:
+      file: file:${HPAN_SERVICE_TRUST_STORE_FILE:resources/keys/truststore_cert_1.jks}
+      type: ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}}
+      algorithm: ${HPAN_SERVICE_TRUST_STORE_ALGORITHM:#{null}}
+      password: ${HPAN_SERVICE_TRUST_STORE_PASSWORD:secret}
+
+feign:
+  client:
+    config:
+      hpan-service:
+        connectTimeout: ${REST_CLIENT_CONNECT_TIMEOUT:${HPAN_REST_CLIENT_CONNECT_TIMEOUT:5000}}
+        readTimeout: ${REST_CLIENT_READ_TIMEOUT:${HPAN_REST_CLIENT_READ_TIMEOUT:5000}}
+        loggerLevel: ${REST_CLIENT_LOGGER_LEVEL:${HPAN_REST_CLIENT_LOGGER_LEVEL:FULL}}

@@ -43,7 +43,7 @@ public class LineAwareMapperTest {
         DelimitedLineTokenizer delimitedLineTokenizer = new DelimitedLineTokenizer();
         delimitedLineTokenizer.setDelimiter(";");
         delimitedLineTokenizer.setNames(
-                "codice_acquirer", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
+                "codice_sender", "tipo_operazione", "tipo_circuito", "PAN", "timestamp", "id_trx_acquirer",
                 "id_trx_issuer", "correlation_id", "importo", "currency", "acquirerID", "merchantID", "terminal_id",
                 "bank_identification_number", "MCC", "fiscal_code", "vat", "pos_type", "par");
         lineAwareMapper.setTokenizer(delimitedLineTokenizer);
@@ -54,7 +54,7 @@ public class LineAwareMapperTest {
     public void testMapperValidLineWithOnlyMandatoryFields() {
         String line = "13131;00;00;pan1;2011-12-03T10:15:30.000+00:00;1111111111;5555;;1111;;22222;0000;1;000002;5422;fc123543;;00;";
         InboundTransaction expected = InboundTransaction.builder()
-                .acquirerCode("13131")
+                .senderCode("13131")
                 .operationType("00")
                 .circuitType("00")
                 .pan("pan1")

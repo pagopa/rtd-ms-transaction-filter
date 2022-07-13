@@ -74,7 +74,7 @@ public class PGPFlatFileItemWriterTest {
     public BeanWrapperFieldExtractor transactionWriterFieldExtractor() {
         BeanWrapperFieldExtractor<InboundTransaction> extractor = new BeanWrapperFieldExtractor<>();
         extractor.setNames(new String[]{
-                "acquirerCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
+                "senderCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
                 "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
                 "terminalId", "bin", "mcc", "fiscalCode", "vat", "posType", "par"});
         return extractor;
@@ -223,7 +223,7 @@ public class PGPFlatFileItemWriterTest {
 
     protected InboundTransaction getInboundTransaction() {
         return InboundTransaction.builder()
-                .acquirerCode("13131")
+                .senderCode("13131")
                 .operationType("00")
                 .circuitType("00")
                 .pan("pan1")

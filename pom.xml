@@ -10,7 +10,7 @@
 
     <groupId>it.gov.pagopa.rtd.ms</groupId>
     <artifactId>rtd-ms-transaction-filter</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
 
     <packaging>pom</packaging>
 
@@ -29,7 +29,7 @@
         <sonar.exclusions>**/enums/**,**/model/**,**/Constants*.java,**/*Config.java,**/*Application.java
         </sonar.exclusions>
         <spring-kafka.version>2.2.11.RELEASE</spring-kafka.version>
-        <transaction-filter.version>1.2.1</transaction-filter.version>
+        <transaction-filter.version>1.2.2</transaction-filter.version>
     </properties>
 
     <dependencyManagement>
@@ -65,28 +65,23 @@
             </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
-                <artifactId>rtd-ms-transaction_filter-integration-jpa</artifactId>
+                <artifactId>rtd-ms-transaction-filter-integration-jpa</artifactId>
                 <version>${transaction-filter.version}</version>
             </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
-                <artifactId>rtd-ms-transaction_filter-integration-rest</artifactId>
-                <version>${transaction-filter.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
-                <artifactId>rtd-ms-transaction_filter-integration-sftp</artifactId>
+                <artifactId>rtd-ms-transaction-filter-integration-rest</artifactId>
                 <version>${transaction-filter.version}</version>
             </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
-                <artifactId>rtd-ms-transaction_filter-core</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <artifactId>rtd-ms-transaction-filter-core</artifactId>
+                <version>${transaction-filter.version}</version>
             </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
-                <artifactId>rtd-ms-transaction_filter-api-batch</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <artifactId>rtd-ms-transaction-filter-api-batch</artifactId>
+                <version>${transaction-filter.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -117,6 +112,12 @@
             <artifactId>junit-vintage-engine</artifactId>
             <version>5.8.2</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.4.0</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 
