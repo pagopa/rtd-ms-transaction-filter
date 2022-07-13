@@ -9,7 +9,6 @@ import javax.validation.constraints.Size;
 
 /**
  * Model for the processed lines in the batch.
- * Documentation: https://docs.pagopa.it/centrostella-1/centro-stella/instructions-for-agenzia-delle-entrate-mandate/appendixes/appendix-2-input-file
  * Example files in /opt_resources/example_files
  */
 @Data
