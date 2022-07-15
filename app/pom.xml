@@ -34,7 +34,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <skip>false</skip>
-                    <finalName>${project.parent.artifactId}-${project.parent.version}-FATJAR</finalName>
+                    <finalName>${project.parent.artifactId}</finalName>
                     <outputDirectory>../target</outputDirectory>
                 </configuration>
             </plugin>
