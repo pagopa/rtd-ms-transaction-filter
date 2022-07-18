@@ -10,7 +10,7 @@ spring:
   datasource:
     url: ${ACQ_BATCH_DB_CONN_URL:jdbc:postgresql://${ACQ_BATCH_DB_HOST:localhost}:${ACQ_BATCH_DB_PORT:5433}/${ACQ_BATCH_DB_SCHEMA:postgres}}
     username: ${ACQ_BATCH_DB_USERNAME:postgres}
-    password: ${ACQ_BATCH_DBS_PASSWORD:root}
+    password: ${ACQ_BATCH_DB_PASSWORD:root}
     hikari:
       maximumPoolSize: ${ACQ_BATCH_DB_POOLSIZE:5}
       connectionTimeout: ${ACQ_BATCH_DB_TIMEOUT:6000}
