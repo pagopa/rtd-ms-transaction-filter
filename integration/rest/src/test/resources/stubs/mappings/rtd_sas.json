@@ -1,12 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "urlPath": "/rtd/csv-transaction/rtd/sas",
-    "headers": {
-      "User-Agent": {
-        "equalTo": "BatchService/1.1.0"
-      }
-    }
+    "urlPath": "/rtd/csv-transaction/rtd/sas"
   },
   "response": {
     "status": "201",

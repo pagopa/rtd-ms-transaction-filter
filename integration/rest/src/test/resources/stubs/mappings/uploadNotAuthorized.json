@@ -1,12 +1,7 @@
 {
   "request": {
     "method": "PUT",
-    "urlPath": "/pagopastorage/not-authorized-container/testFile",
-    "headers": {
-      "User-Agent": {
-        "equalTo": "BatchService/1.1.0"
-      }
-    }
+    "urlPath": "/pagopastorage/not-authorized-container/testFile"
   },
   "response": {
     "status": "404"
