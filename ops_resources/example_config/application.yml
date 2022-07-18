@@ -101,6 +101,9 @@ batchConfiguration:
       directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:ade-errors}
 
 rest-client:
+  user-agent:
+    prefix: BatchService
+    version: "@project.version@"
   hpan:
     serviceCode: hpan-service
     base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}
