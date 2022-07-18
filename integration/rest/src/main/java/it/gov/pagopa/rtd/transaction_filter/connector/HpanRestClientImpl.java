@@ -246,7 +246,6 @@ class HpanRestClientImpl implements HpanRestClient {
     headers.add(new BasicHeader("User-Agent", hpanRestConnectorConfig.getUserAgent()));
     headers.add(new BasicHeader("x-ms-blob-type", headerXMsBlobType));
     headers.add(new BasicHeader("x-ms-version", headerXMsVersion));
-    log.info(headers.toString());
 
     HpanRestConnectorConfig config = context.getBean(HpanRestConnectorConfig.class);
     SSLContext sslContext = config.getSSLContext();
