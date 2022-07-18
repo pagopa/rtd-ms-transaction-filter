@@ -100,6 +100,7 @@ class HpanRestClientImpl implements HpanRestClient {
   private String headerXMsVersion;
 
   private final HpanRestConnector hpanRestConnector;
+  private final HpanRestConnectorConfig hpanRestConnectorConfig;
 
   private LocalDateTime validationDate;
 
@@ -242,9 +243,10 @@ class HpanRestClientImpl implements HpanRestClient {
 
     List<Header> headers = new ArrayList<>();
     headers.add(new BasicHeader("Ocp-Apim-Subscription-Key", apiKey));
-    headers.add(new BasicHeader("User-Agent", HpanRestConnectorConfig.getUserAgent()));
+    headers.add(new BasicHeader("User-Agent", hpanRestConnectorConfig.getUserAgent()));
     headers.add(new BasicHeader("x-ms-blob-type", headerXMsBlobType));
     headers.add(new BasicHeader("x-ms-version", headerXMsVersion));
+    log.info(headers.toString());
 
     HpanRestConnectorConfig config = context.getBean(HpanRestConnectorConfig.class);
     SSLContext sslContext = config.getSSLContext();

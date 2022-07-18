@@ -68,12 +68,15 @@ public class HpanRestConnectorConfig {
     @Value("${rest-client.hpan.key-store.password}")
     private String keyStorePassword;
 
-    private static final String userAgentHeaderPrefix = "BatchService";
-    private static final String userAgentVersion = "1.1.0";
+    @Value("${rest-client.user-agent.prefix}")
+    private String userAgentHeaderPrefix;
+
+    @Value("${rest-client.user-agent.version}")
+    private String userAgentVersion;
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-    public static String getUserAgent() {
+    public String getUserAgent() {
         return userAgentHeaderPrefix + "/" + userAgentVersion;
     }
 
