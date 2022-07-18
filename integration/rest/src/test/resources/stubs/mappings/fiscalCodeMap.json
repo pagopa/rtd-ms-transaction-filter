@@ -1,12 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPath": "/rtd/abi-to-fiscalcode/conversion-map",
-    "headers": {
-      "User-Agent": {
-        "equalTo": "BatchService/1.1.0"
-      }
-    }
+    "urlPath": "/rtd/abi-to-fiscalcode/conversion-map"
   },
   "response": {
     "status": "200",
