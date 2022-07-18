@@ -4,12 +4,12 @@
     <parent>
         <artifactId>rtd-ms-transaction-filter</artifactId>
         <groupId>it.gov.pagopa.rtd.ms</groupId>
-        <version>1.2.2</version>
+        <version>1.2.3</version>
     </parent>
 
     <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
     <artifactId>transaction-filter-app</artifactId>
-    <version>1.2.2</version>
+    <version>1.2.3</version>
 
     <dependencies>
         <dependency>
@@ -34,7 +34,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <skip>false</skip>
-                    <finalName>${project.parent.artifactId}-${project.parent.version}-FATJAR</finalName>
+                    <finalName>${project.parent.artifactId}</finalName>
                     <outputDirectory>../target</outputDirectory>
                 </configuration>
             </plugin>

@@ -10,7 +10,7 @@ spring:
   datasource:
     url: ${ACQ_BATCH_DB_CONN_URL:jdbc:hsqldb:mem:${ACQ_BATCH_DB_NAME:batchdb};sql.enforce_strict_size=true;hsqldb.tx=mvcc}
     username: ${ACQ_BATCH_DB_USERNAME:sa}
-    password: ${ACQ_BATCH_DBS_PASSWORD:}
+    password: ${ACQ_BATCH_DB_PASSWORD:}
     hikari:
       maximumPoolSize: ${ACQ_BATCH_DB_POOLSIZE:5}
       connectionTimeout: ${ACQ_BATCH_DB_TIMEOUT:6000}
@@ -45,8 +45,6 @@ logging:
     it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:INFO}
   file: ${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}/${ACQ_BATCH_APP_LOG_FILE:application.log}
   pattern: ${ACQ_BATCH_APP_LOG_PATTERN:}
-  console: ${ACQ_BATCH_APP_LOG_CONSOLE:}
-  config: ${ACQ_BATCH_APP_LOG_CONFIG:}
 
 batchConfiguration:
   TransactionFilterBatch:
@@ -104,6 +102,9 @@ batchConfiguration:
       directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:ade-errors}
 
 rest-client:
+  user-agent:
+    prefix: BatchService
+    version: "@project.version@"
   hpan:
     serviceCode: hpan-service
     base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}
@@ -149,6 +150,9 @@ rest-client:
       type: ${HPAN_SERVICE_TRUST_STORE_TYPE:#{null}}
       algorithm: ${HPAN_SERVICE_TRUST_STORE_ALGORITHM:#{null}}
       password: ${HPAN_SERVICE_TRUST_STORE_PASSWORD:secret}
+    header:
+      blobType: BlockBlob
+      version: 2021-08-06
 
 feign:
   client:
