@@ -114,9 +114,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class TransactionFilterBatchInputFileChecksumDisabledTest {
 
     @Autowired
-    ApplicationContext context;
-
-    @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
@@ -194,11 +191,6 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
                 .addDate("startDateTime", new Date())
                 .toJobParameters());
-
-        // IMPORTANT: file handlers used by listeners must be closed explicitly, otherwise
-        // being unbuffered the log files will be created but there won't be any content inside
-        TransactionWriterService transactionWriterService = context.getBean(TransactionWriterServiceImpl.class);
-        transactionWriterService.closeAll();
 
         Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
 

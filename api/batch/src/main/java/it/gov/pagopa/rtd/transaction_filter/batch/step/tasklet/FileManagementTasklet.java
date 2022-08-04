@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FileManagementTasklet implements Tasklet, InitializingBean {
 
+    private TransactionWriterService transactionWriterService;
     private Boolean deleteProcessedFiles;
     private String deleteOutputFiles;
     private String manageHpanOnSuccess;
@@ -43,6 +45,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     private String errorPath;
     private String hpanDirectory;
     private String outputDirectory;
+    private String logsDirectory;
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -71,7 +74,9 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
-        Boolean executionWithErrors = false;
+        closeAllFileChannels();
+
+        boolean executionWithErrors = false;
         List<String> errorFilenames = new ArrayList<>();
         hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
 
@@ -172,6 +177,12 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         }
 
         return RepeatStatus.FINISHED;
+    }
+
+    private void closeAllFileChannels() {
+        if (transactionWriterService != null) {
+            transactionWriterService.closeAll();
+        }
     }
 
     @SneakyThrows
