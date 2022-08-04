@@ -78,11 +78,11 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
         boolean executionWithErrors = false;
         List<String> errorFilenames = new ArrayList<>();
-        hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
+        hpanDirectory = hpanDirectory.replace("\\\\","/");
 
-        List<String> hpanResources = Arrays.asList(resolver.getResources(hpanDirectory)).stream().map(resource -> {
+        List<String> hpanResources = Arrays.stream(resolver.getResources(hpanDirectory)).map(resource -> {
             try {
-                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+                return resource.getFile().getAbsolutePath().replace("\\\\","/");
             } catch (IOException e) {
                 log.error(e.getMessage(),e);
                 return null;
@@ -120,10 +120,10 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
                 try {
                     boolean isComplete = BatchStatus.COMPLETED.equals(stepExecution.getStatus()) &&
-                            stepExecution.getFailureExceptions().size() <= 0;
+                            stepExecution.getFailureExceptions().isEmpty();
                     executionWithErrors = executionWithErrors || !isComplete;
                     if (!isComplete) {
-                        String[] filename = file.replaceAll("\\\\", "/").split("/");
+                        String[] filename = file.replace("\\\\", "/").split("/");
                         ArrayList<String> filePartsArray = new ArrayList<>(Arrays.asList(
                                 filename[filename.length - 1].split("\\.")));
                         if (filePartsArray.size() == 1) {
@@ -136,8 +136,8 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         }
                     }
 
-                    boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
-                    if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
+                    boolean isHpanFile = hpanResources.contains(path.replace("\\\\","/"));
+                    if (Boolean.TRUE.equals(deleteProcessedFiles) || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
                     } else if (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
@@ -151,9 +151,9 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
             }
         }
 
-        if (deleteOutputFiles.equals("ALWAYS") || (deleteOutputFiles.equals("ERROR") && executionWithErrors)) {
+        if ("ALWAYS".equals(deleteOutputFiles) || ("ERROR".equals(deleteOutputFiles) && executionWithErrors)) {
             List<Resource> outputDirectoryResources =
-                    Arrays.asList(resolver.getResources(outputDirectory.replaceAll("\\\\", "/") + "/*"));
+                    Arrays.asList(resolver.getResources(outputDirectory.replace("\\\\", "/") + "/*"));
             outputDirectoryResources.forEach(outputDirectoryResource ->
             {
                 if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
@@ -188,9 +188,9 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     }
 
     @SneakyThrows
-    private void archiveFile(String file, String path, Boolean isCompleted) {
+    private void archiveFile(String file, String path, boolean isCompleted) {
         String archivalPath = isCompleted ? successPath : errorPath;
-        file = file.replaceAll("\\\\", "/");
+        file = file.replace("\\\\", "/");
         String[] filename = file.split("/");
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         archivalPath = resolver.getResources(archivalPath)[0].getFile().getAbsolutePath();
