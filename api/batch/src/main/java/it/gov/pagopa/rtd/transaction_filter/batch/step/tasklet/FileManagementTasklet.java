@@ -176,6 +176,8 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
             });
         }
 
+        deleteEmptyLogFiles();
+
         return RepeatStatus.FINISHED;
     }
 
@@ -197,4 +199,19 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         FileUtils.moveFile(FileUtils.getFile(path), destFile);
     }
 
+    @SneakyThrows
+    private void deleteEmptyLogFiles() {
+        if (logsDirectory == null) {
+            return;
+        }
+
+        FileUtils.listFiles(
+            resolver.getResources(logsDirectory)[0].getFile(), new String[]{"csv"},false)
+            .stream()
+            .filter(file -> FileUtils.sizeOf(file) == 0)
+            .forEach(file -> {
+                log.info("Removing empty log file: {}", file.getName());
+                FileUtils.deleteQuietly(file);
+            });
+    }
 }
