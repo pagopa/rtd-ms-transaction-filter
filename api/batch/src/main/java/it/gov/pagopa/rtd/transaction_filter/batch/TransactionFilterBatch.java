@@ -78,12 +78,13 @@ public class TransactionFilterBatch {
     private final PanReaderStep panReaderStep;
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
-    private final BeanFactory beanFactory;
     private final HpanConnectorService hpanConnectorService;
     private final AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
     private final SenderAdeAckRestClient senderAdeAckRestClient;
+    private final TransactionWriterService transactionWriterService;
+    private final StoreService storeService;
 
-    private final static String FAILED = "FAILED";
+    private static final String FAILED = "FAILED";
 
     @Value("${batchConfiguration.TransactionFilterBatch.isolationForCreate}")
     private String isolationForCreate;
@@ -121,20 +122,10 @@ public class TransactionFilterBatch {
     private String senderAdeAckFilesDirectoryPath;
 
     private DataSource dataSource;
-    private StoreService storeService;
-    private TransactionWriterServiceImpl transactionWriterService;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-
-    public void transactionWriterService() {
-        transactionWriterService = beanFactory.getBean(TransactionWriterServiceImpl.class);
-    }
 
     public void closeChannels() {
         transactionWriterService.closeAll();
-    }
-
-    public void createStoreService() {
-        this.storeService = batchStoreService();
     }
 
     public void clearStoreService() {
@@ -168,10 +159,6 @@ public class TransactionFilterBatch {
                     transactionResources.length, (transactionResources.length > 1 ? "resources" : "resource")
             );
 
-            if (transactionWriterService == null) {
-                transactionWriterService();
-            }
-            createStoreService();
             execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
@@ -446,10 +433,6 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
         return stepBuilderFactory.get("transaction-filter-file-management-step")
                 .tasklet(fileManagementTasklet).build();
-    }
-
-    public StoreService batchStoreService() {
-        return beanFactory.getBean(StoreService.class);
     }
 
 }
