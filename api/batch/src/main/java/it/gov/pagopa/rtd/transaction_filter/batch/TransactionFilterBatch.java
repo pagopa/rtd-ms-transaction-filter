@@ -19,7 +19,6 @@ import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
-import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -120,6 +119,8 @@ public class TransactionFilterBatch {
     private Boolean senderAdeAckFilesTaskletEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath}")
     private String senderAdeAckFilesDirectoryPath;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath}")
+    private String logsDirectoryPath;
 
     private DataSource dataSource;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -163,7 +164,6 @@ public class TransactionFilterBatch {
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
-            closeChannels();
             clearStoreService();
 
         } else {
@@ -424,6 +424,7 @@ public class TransactionFilterBatch {
     @Bean
     public Step fileManagementTask() {
         FileManagementTasklet fileManagementTasklet = new FileManagementTasklet();
+        fileManagementTasklet.setTransactionWriterService(transactionWriterService);
         fileManagementTasklet.setSuccessPath(successArchivePath);
         fileManagementTasklet.setErrorPath(errorArchivePath);
         fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanDirectoryPath());
@@ -431,6 +432,7 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
         fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
         fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
+        fileManagementTasklet.setLogsDirectory(logsDirectoryPath);
         return stepBuilderFactory.get("transaction-filter-file-management-step")
                 .tasklet(fileManagementTasklet).build();
     }
