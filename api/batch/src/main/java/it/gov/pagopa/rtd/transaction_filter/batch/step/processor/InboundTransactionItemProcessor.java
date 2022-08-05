@@ -40,10 +40,6 @@ public class InboundTransactionItemProcessor implements ItemProcessor<InboundTra
         Set<ConstraintViolation<InboundTransaction>> constraintViolations =
                 validator.validate(inboundTransaction);
         if (!constraintViolations.isEmpty()) {
-            constraintViolations.forEach(violation ->
-                log.warn("Validation failed on field: {}, value: {}, validation: {}, reason: {}",
-                    violation.getPropertyPath(), violation.getInvalidValue(),
-                    violation.getMessageTemplate(), violation.getMessage()));
             throw new ConstraintViolationException(constraintViolations);
         }
 
