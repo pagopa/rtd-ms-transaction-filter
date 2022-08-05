@@ -210,7 +210,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
             .stream()
             .filter(file -> FileUtils.sizeOf(file) == 0)
             .forEach(file -> {
-                log.info("Removing empty log file: {}", file.getName());
+                log.debug("Removing empty log file: {}", file.getName());
                 FileUtils.deleteQuietly(file);
             });
     }
