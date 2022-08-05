@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
+import javax.validation.ConstraintViolationException;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.ItemProcessListener;
@@ -85,14 +86,21 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
         transactionWriterService.storeErrorPans(item.getFilename()
                 .concat(String.valueOf(item.getLineNumber())));
 
-        if (enableOnErrorLogging) {
-            log.error("Error during during transaction processing, filename: {},line: {}",
-                    item.getFilename(), item.getLineNumber());
+        if (Boolean.TRUE.equals(enableOnErrorLogging)) {
+            if (throwable instanceof ConstraintViolationException) {
+                ((ConstraintViolationException) throwable).getConstraintViolations()
+                    .forEach(violation -> log.error("Error during record validation at line: {}, on field: {}, value: {}, validation: {}, reason: {}",
+                        item.getLineNumber(), violation.getPropertyPath(), violation.getInvalidValue(),
+                        violation.getMessageTemplate(), violation.getMessage()));
+
+            } else {
+                log.error("Error during transaction processing at line: {}", item.getLineNumber());
+            }
         }
 
-        if (enableOnErrorFileLogging) {
+        if (Boolean.TRUE.equals(enableOnErrorFileLogging)) {
             try {
-                String filename = item.getFilename().replaceAll("\\\\", "/");
+                String filename = item.getFilename().replace("\\\\", "/");
                 String[] fileArr = filename.split("/");
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()
