@@ -8,12 +8,14 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.FileEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicHeader;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +100,15 @@ class HpanRestClientImpl implements HpanRestClient {
 
   @Value("${rest-client.hpan.header.version}")
   private String headerXMsVersion;
+
+  @Value("${rest-client.hpan.proxy.enabled}")
+  private Boolean proxyEnabled;
+
+  @Value("${rest-client.hpan.proxy.host}")
+  private String proxyHost;
+
+  @Value("${rest-client.hpan.proxy.port}")
+  private Integer proxyPort;
 
   private final HpanRestConnector hpanRestConnector;
   private final HpanRestConnectorConfig hpanRestConnectorConfig;
@@ -249,11 +260,17 @@ class HpanRestClientImpl implements HpanRestClient {
 
     HpanRestConnectorConfig config = context.getBean(HpanRestConnectorConfig.class);
     SSLContext sslContext = config.getSSLContext();
+    HttpHost proxy = new HttpHost(proxyHost, proxyPort);
 
-    HttpClient httpclient = HttpClients.custom()
+    HttpClientBuilder httpClientBuilder = HttpClients.custom()
         .setSSLContext(sslContext)
-        .setDefaultHeaders(headers)
-        .build();
+        .setDefaultHeaders(headers);
+
+    if (Boolean.TRUE.equals(proxyEnabled)) {
+      httpClientBuilder.setProxy(proxy);
+    }
+
+    HttpClient httpclient = httpClientBuilder.build();
 
     String uri =
         baseUrl + "/" + storageName + "/" + authorizedContainer + "/" + fileToUpload.getName()
