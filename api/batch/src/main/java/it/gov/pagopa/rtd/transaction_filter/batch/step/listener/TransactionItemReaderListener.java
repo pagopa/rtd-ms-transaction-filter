@@ -27,7 +27,6 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     private Long loggingFrequency;
     private TransactionWriterService transactionWriterService;
     private String prefix;
-    String filename;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
@@ -35,7 +34,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
 
     public void afterRead(InboundTransaction item) {
 
-        if (enableAfterReadLogging) {
+        if (Boolean.TRUE.equals(enableAfterReadLogging)) {
             if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
                 log.info("Read {} lines on file: {}", item.getLineNumber(), item.getFilename());
             } else if (loggingFrequency == 1) {
@@ -49,14 +48,15 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     @SneakyThrows
     public void onReadError(Exception throwable) {
 
-        if (enableOnErrorLogging) {
-            log.error("Error while reading a transaction record - {}", throwable.getMessage());
+        if (Boolean.TRUE.equals(enableOnErrorLogging)) {
+        log.error("Error while reading a transaction record - {} - {}", throwable.getMessage(),
+            getStringNotParsedIfPresent(throwable.getCause()));
         }
 
-        if (enableOnErrorFileLogging && throwable instanceof FlatFileParseException) {
+        if (Boolean.TRUE.equals(enableOnErrorFileLogging) && throwable instanceof FlatFileParseException) {
             FlatFileParseException flatFileParseException = (FlatFileParseException) throwable;
             String filename =  flatFileParseException.getMessage().split("\\[",3)[2]
-                    .replaceAll("]","").replaceAll("\\\\", "/");
+                    .replace("]","").replace("\\\\", "/");
             String[] fileArr = filename.split("/");
             try {
                 String[] lineArray = flatFileParseException.getInput().split("_",2);
@@ -73,4 +73,10 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
 
     }
 
+    private String getStringNotParsedIfPresent(Throwable exception) {
+        if (exception != null && exception.getCause() != null) {
+            return exception.getCause().getMessage();
+        }
+        return "";
+    }
 }
