@@ -19,7 +19,6 @@ import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
-import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -78,12 +77,13 @@ public class TransactionFilterBatch {
     private final PanReaderStep panReaderStep;
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
-    private final BeanFactory beanFactory;
     private final HpanConnectorService hpanConnectorService;
     private final AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
     private final SenderAdeAckRestClient senderAdeAckRestClient;
+    private final TransactionWriterService transactionWriterService;
+    private final StoreService storeService;
 
-    private final static String FAILED = "FAILED";
+    private static final String FAILED = "FAILED";
 
     @Value("${batchConfiguration.TransactionFilterBatch.isolationForCreate}")
     private String isolationForCreate;
@@ -119,22 +119,14 @@ public class TransactionFilterBatch {
     private Boolean senderAdeAckFilesTaskletEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath}")
     private String senderAdeAckFilesDirectoryPath;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath}")
+    private String logsDirectoryPath;
 
     private DataSource dataSource;
-    private StoreService storeService;
-    private TransactionWriterServiceImpl transactionWriterService;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-
-    public void transactionWriterService() {
-        transactionWriterService = beanFactory.getBean(TransactionWriterServiceImpl.class);
-    }
 
     public void closeChannels() {
         transactionWriterService.closeAll();
-    }
-
-    public void createStoreService() {
-        this.storeService = batchStoreService();
     }
 
     public void clearStoreService() {
@@ -168,15 +160,10 @@ public class TransactionFilterBatch {
                     transactionResources.length, (transactionResources.length > 1 ? "resources" : "resource")
             );
 
-            if (transactionWriterService == null) {
-                transactionWriterService();
-            }
-            createStoreService();
             execution = jobLauncher().run(job(),
                     new JobParametersBuilder()
                             .addDate("startDateTime", startDate)
                             .toJobParameters());
-            closeChannels();
             clearStoreService();
 
         } else {
@@ -437,6 +424,7 @@ public class TransactionFilterBatch {
     @Bean
     public Step fileManagementTask() {
         FileManagementTasklet fileManagementTasklet = new FileManagementTasklet();
+        fileManagementTasklet.setTransactionWriterService(transactionWriterService);
         fileManagementTasklet.setSuccessPath(successArchivePath);
         fileManagementTasklet.setErrorPath(errorArchivePath);
         fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanDirectoryPath());
@@ -444,12 +432,9 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
         fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
         fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
+        fileManagementTasklet.setLogsDirectory(logsDirectoryPath);
         return stepBuilderFactory.get("transaction-filter-file-management-step")
                 .tasklet(fileManagementTasklet).build();
-    }
-
-    public StoreService batchStoreService() {
-        return beanFactory.getBean(StoreService.class);
     }
 
 }

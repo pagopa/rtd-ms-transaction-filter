@@ -1,5 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.util.Collection;
+import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
@@ -593,6 +597,69 @@ public class FileManagementTaskletTest {
             e.printStackTrace();
             Assert.fail();
         }
+    }
+
+    @SneakyThrows
+    @Test
+    public void whenLogFilesAreEmptyThenDeleteThem() {
+        tempFolder.newFolder("test");
+        tempFolder.newFolder("test","hpan");
+        tempFolder.newFolder("test","logs");
+
+        hpanFile =  tempFolder.newFile("test/hpan/hpan.pgp");
+
+        tempFolder.newFile("test/logs/empty-log-file.csv");
+        File logFileNotEmpty = tempFolder.newFile("test/logs/not-empty-log-file.csv");
+        FileUtils.write(logFileNotEmpty, "this;is;a;not;empty;log");
+
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+        archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
+            "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
+        archivalTasklet.setLogsDirectory("classpath:/test-encrypt/**/test/logs");
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        StepContext stepContext = new StepContext(execution);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        Collection<File> logFiles = FileUtils.listFiles(
+            resolver.getResources("classpath:/test-encrypt/**/test/logs")[0].getFile(),
+            new String[]{"csv"},false);
+
+        assertThat(logFiles).isNotEmpty().hasSize(1).contains(logFileNotEmpty);
+    }
+
+    @SneakyThrows
+    @Test
+    public void whenLogDirectoryIsNotSetThenTaskletDoNotDeleteEmptyLogs() {
+        tempFolder.newFolder("test");
+        tempFolder.newFolder("test","hpan");
+        tempFolder.newFolder("test","logs");
+
+        hpanFile =  tempFolder.newFile("test/hpan/hpan.pgp");
+
+        tempFolder.newFile("test/logs/empty-log-file.csv");
+        File logFileNotEmpty = tempFolder.newFile("test/logs/not-empty-log-file.csv");
+        FileUtils.write(logFileNotEmpty, "this;is;a;not;empty;log");
+
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+        archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
+            "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        StepContext stepContext = new StepContext(execution);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        Collection<File> logFiles = FileUtils.listFiles(
+            resolver.getResources("classpath:/test-encrypt/**/test/logs")[0].getFile(),
+            new String[]{"csv"},false);
+
+        assertThat(logFiles).isNotEmpty().hasSize(2);
     }
 
     @After

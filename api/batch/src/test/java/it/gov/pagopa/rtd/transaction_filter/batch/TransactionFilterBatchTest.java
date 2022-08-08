@@ -8,8 +8,6 @@ import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
-import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
-import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterServiceImpl;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -127,9 +125,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class TransactionFilterBatchTest {
 
     @Autowired
-    ApplicationContext context;
-
-    @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
@@ -199,8 +194,6 @@ public class TransactionFilterBatchTest {
                 .addDate("startDateTime", new Date())
                 .toJobParameters());
 
-        closeAllFileChannels();
-
         Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
 
         // Check that the HPAN store has been accessed as expected
@@ -258,7 +251,7 @@ public class TransactionFilterBatchTest {
         // Check that logs folder contains expected files
         Collection<File> outputLogsFiles = FileUtils.listFiles(
                 resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), new String[]{"csv"}, false);
-        Assert.assertEquals(4, outputLogsFiles.size());
+        Assert.assertEquals(2, outputLogsFiles.size());
 
         FileFilter fileFilter = new WildcardFileFilter("*_Rtd__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
@@ -268,13 +261,14 @@ public class TransactionFilterBatchTest {
         Collection<File> adeFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
         Assert.assertEquals(1, adeFilteredFiles.size());
 
+        // empty log files get deleted
         fileFilter = new WildcardFileFilter("*_Rtd__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
-        Assert.assertEquals(1, trxErrorFiles.size());
+        Assert.assertEquals(0, trxErrorFiles.size());
 
         fileFilter = new WildcardFileFilter("*_Ade__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> adeErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
-        Assert.assertEquals(1, adeErrorFiles.size());
+        Assert.assertEquals(0, adeErrorFiles.size());
 
         // Check that logs files contains expected lines
         File trxFilteredFile = trxFilteredFiles.iterator().next();
@@ -287,14 +281,6 @@ public class TransactionFilterBatchTest {
         List<String> adeFilteredContent = Files.readAllLines(adeFilteredFile.toPath().toAbsolutePath());
         Assert.assertEquals(1, adeFilteredContent.size());
         Assert.assertTrue(adeFilteredContent.contains("99999;00;01;pan5;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
-
-        File trxErrorFile = trxErrorFiles.iterator().next();
-        List<String> trxErrorContent = Files.readAllLines(trxErrorFile.toPath().toAbsolutePath());
-        Assert.assertEquals(0, trxErrorContent.size());
-
-        File adeErrorFile = adeErrorFiles.iterator().next();
-        List<String> adeErrorContent = Files.readAllLines(adeErrorFile.toPath().toAbsolutePath());
-        Assert.assertEquals(0, adeErrorContent.size());
     }
 
     @SneakyThrows
@@ -420,13 +406,6 @@ public class TransactionFilterBatchTest {
 
         outputFileTrn.createNewFile();
         return outputFileTrn;
-    }
-
-    private void closeAllFileChannels() {
-        // IMPORTANT: file handlers used by listeners must be closed explicitly, otherwise
-        // being unbuffered the log files will be created but there won't be any content inside
-        TransactionWriterService transactionWriterService = context.getBean(TransactionWriterServiceImpl.class);
-        transactionWriterService.closeAll();
     }
 
     @SneakyThrows

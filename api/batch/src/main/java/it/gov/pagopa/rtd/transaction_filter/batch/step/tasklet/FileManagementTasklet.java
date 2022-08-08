@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
+import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class FileManagementTasklet implements Tasklet, InitializingBean {
 
+    private TransactionWriterService transactionWriterService;
     private Boolean deleteProcessedFiles;
     private String deleteOutputFiles;
     private String manageHpanOnSuccess;
@@ -43,6 +45,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     private String errorPath;
     private String hpanDirectory;
     private String outputDirectory;
+    private String logsDirectory;
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -71,13 +74,15 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
-        Boolean executionWithErrors = false;
-        List<String> errorFilenames = new ArrayList<>();
-        hpanDirectory = hpanDirectory.replaceAll("\\\\","/");
+        closeAllFileChannels();
 
-        List<String> hpanResources = Arrays.asList(resolver.getResources(hpanDirectory)).stream().map(resource -> {
+        boolean executionWithErrors = false;
+        List<String> errorFilenames = new ArrayList<>();
+        hpanDirectory = hpanDirectory.replace("\\\\","/");
+
+        List<String> hpanResources = Arrays.stream(resolver.getResources(hpanDirectory)).map(resource -> {
             try {
-                return resource.getFile().getAbsolutePath().replaceAll("\\\\","/");
+                return resource.getFile().getAbsolutePath().replace("\\\\","/");
             } catch (IOException e) {
                 log.error(e.getMessage(),e);
                 return null;
@@ -115,10 +120,10 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
                 try {
                     boolean isComplete = BatchStatus.COMPLETED.equals(stepExecution.getStatus()) &&
-                            stepExecution.getFailureExceptions().size() <= 0;
+                            stepExecution.getFailureExceptions().isEmpty();
                     executionWithErrors = executionWithErrors || !isComplete;
                     if (!isComplete) {
-                        String[] filename = file.replaceAll("\\\\", "/").split("/");
+                        String[] filename = file.replace("\\\\", "/").split("/");
                         ArrayList<String> filePartsArray = new ArrayList<>(Arrays.asList(
                                 filename[filename.length - 1].split("\\.")));
                         if (filePartsArray.size() == 1) {
@@ -131,8 +136,8 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                         }
                     }
 
-                    boolean isHpanFile = hpanResources.contains(path.replaceAll("\\\\","/"));
-                    if (deleteProcessedFiles || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
+                    boolean isHpanFile = hpanResources.contains(path.replace("\\\\","/"));
+                    if (Boolean.TRUE.equals(deleteProcessedFiles) || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
                     } else if (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
@@ -146,9 +151,9 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
             }
         }
 
-        if (deleteOutputFiles.equals("ALWAYS") || (deleteOutputFiles.equals("ERROR") && executionWithErrors)) {
+        if ("ALWAYS".equals(deleteOutputFiles) || ("ERROR".equals(deleteOutputFiles) && executionWithErrors)) {
             List<Resource> outputDirectoryResources =
-                    Arrays.asList(resolver.getResources(outputDirectory.replaceAll("\\\\", "/") + "/*"));
+                    Arrays.asList(resolver.getResources(outputDirectory.replace("\\\\", "/") + "/*"));
             outputDirectoryResources.forEach(outputDirectoryResource ->
             {
                 if (deleteOutputFiles.equals("ALWAYS") || (errorFilenames.stream().anyMatch(
@@ -171,13 +176,21 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
             });
         }
 
+        deleteEmptyLogFiles();
+
         return RepeatStatus.FINISHED;
     }
 
+    private void closeAllFileChannels() {
+        if (transactionWriterService != null) {
+            transactionWriterService.closeAll();
+        }
+    }
+
     @SneakyThrows
-    private void archiveFile(String file, String path, Boolean isCompleted) {
+    private void archiveFile(String file, String path, boolean isCompleted) {
         String archivalPath = isCompleted ? successPath : errorPath;
-        file = file.replaceAll("\\\\", "/");
+        file = file.replace("\\\\", "/");
         String[] filename = file.split("/");
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         archivalPath = resolver.getResources(archivalPath)[0].getFile().getAbsolutePath();
@@ -186,4 +199,19 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         FileUtils.moveFile(FileUtils.getFile(path), destFile);
     }
 
+    @SneakyThrows
+    private void deleteEmptyLogFiles() {
+        if (logsDirectory == null) {
+            return;
+        }
+
+        FileUtils.listFiles(
+            resolver.getResources(logsDirectory)[0].getFile(), new String[]{"csv"},false)
+            .stream()
+            .filter(file -> FileUtils.sizeOf(file) == 0)
+            .forEach(file -> {
+                log.debug("Removing empty log file: {}", file.getName());
+                FileUtils.deleteQuietly(file);
+            });
+    }
 }
