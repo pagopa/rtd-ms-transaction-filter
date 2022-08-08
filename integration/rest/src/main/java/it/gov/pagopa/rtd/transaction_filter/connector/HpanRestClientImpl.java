@@ -260,14 +260,13 @@ class HpanRestClientImpl implements HpanRestClient {
 
     HpanRestConnectorConfig config = context.getBean(HpanRestConnectorConfig.class);
     SSLContext sslContext = config.getSSLContext();
-    HttpHost proxy = new HttpHost(proxyHost, proxyPort);
 
     HttpClientBuilder httpClientBuilder = HttpClients.custom()
         .setSSLContext(sslContext)
         .setDefaultHeaders(headers);
 
     if (Boolean.TRUE.equals(proxyEnabled)) {
-      httpClientBuilder.setProxy(proxy);
+      httpClientBuilder.setProxy(createProxy());
     }
 
     HttpClient httpclient = httpClientBuilder.build();
@@ -288,6 +287,14 @@ class HpanRestClientImpl implements HpanRestClient {
     log.info("File " + fileToUpload.getName() + " uploaded with success (status was: "
         + response.getStatusLine().getStatusCode() + ")");
     return null;
+  }
+
+  private HttpHost createProxy() {
+    if (proxyHost != null && proxyPort != null) {
+      return new HttpHost(proxyHost, proxyPort);
+    } else {
+      throw new IllegalArgumentException("One or more proxy parameters are null! Please set a value");
+    }
   }
 
   public void setValidationDate(LocalDateTime now) {
