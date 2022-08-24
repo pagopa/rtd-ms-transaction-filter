@@ -45,7 +45,7 @@ public class HpanWriterTest {
             BDDMockito.doReturn("testSalt").when(storeServiceMock).getSalt();
             HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, false);
             hpanWriter.write(Collections.emptyList());
-            BDDMockito.verifyZeroInteractions(storeServiceMock);
+            BDDMockito.verifyNoInteractions(storeServiceMock);
         } catch (Exception e) {
             e.printStackTrace();
             Assert.fail();
@@ -100,7 +100,7 @@ public class HpanWriterTest {
         BDDMockito.doReturn("testSalt").when(storeServiceMock).getSalt();
         expectedException.expect(NullPointerException.class);
         hpanWriter.write(null);
-        BDDMockito.verifyZeroInteractions(storeServiceMock);
+        BDDMockito.verifyNoInteractions(storeServiceMock);
     }
 
 }

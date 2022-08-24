@@ -95,7 +95,7 @@ public class HpanListRecoveryTaskletTest {
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
         hpanListRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
-        BDDMockito.verifyZeroInteractions(hpanConnectorServiceMock);
+        BDDMockito.verifyNoInteractions(hpanConnectorServiceMock);
         Assert.assertEquals(1, FileUtils.listFiles(hpanFolder, new String[]{"pgp"},false).size());
     }
 

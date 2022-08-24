@@ -151,7 +151,7 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
         }
     }
 
-    private boolean isComment(String line) {
+    protected boolean isComment(String line) {
         String[] var2 = this.comments;
         int var3 = var2.length;
 
