@@ -7,7 +7,6 @@
         <version>1.2.4</version>
     </parent>
 
-    <groupId>it.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
     <artifactId>rtd-ms-transaction-filter-api-batch</artifactId>
     <version>1.2.4</version>
 
@@ -23,26 +22,10 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcpg-jdk15on</artifactId>
-            <version>1.65</version>
         </dependency>
         <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
-            <version>6.1.5.Final</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.el</groupId>
-            <artifactId>javax.el-api</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish</groupId>
-            <artifactId>javax.el</artifactId>
-            <version>3.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -66,12 +49,10 @@
         <dependency>
             <groupId>jakarta.validation</groupId>
             <artifactId>jakarta.validation-api</artifactId>
-            <version>2.0.2</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpcore</artifactId>
-            <version>4.4.13</version>
         </dependency>
     </dependencies>
 
