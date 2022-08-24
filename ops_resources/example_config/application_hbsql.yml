@@ -94,7 +94,7 @@ rest-client:
     list:
       url: /rtd/payment-instrument-manager/hashed-pans
       attemptExtraction: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
-      checksumValidation: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_VALIDATION:true}
+      checksumValidation: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_VALIDATION:false}
       checksumHeaderName: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_HEADER:x-ms-meta-sha256}
       listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
       dateValidation: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION:false}
