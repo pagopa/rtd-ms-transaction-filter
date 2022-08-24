@@ -1,11 +1,11 @@
-FROM maven:3.8.4-jdk-11-slim as buildtime
+FROM maven:3.8.6-jdk-11-slim as buildtime
 
 WORKDIR /build
 COPY . .
 
 RUN mvn clean package
 
-FROM openjdk:19-slim-buster as runtime
+FROM amazoncorretto:11 as runtime
 
 WORKDIR /app
 
