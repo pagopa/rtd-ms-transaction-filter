@@ -72,13 +72,17 @@ public class SenderAdeAckFilesRecoveryTasklet implements Tasklet, InitializingBe
   }
 
   private File createOutputFile(String name) throws IOException {
+    if (name == null) {
+      throw new IllegalArgumentException("Ade ack file name is null.");
+    }
+
     // it's supposed the output directory already exists
     String rootPath = resolver.getResource(getPathToResolve(senderAdeAckDirectory)).getFile()
         .getAbsolutePath();
 
     return FileUtils.getFile(rootPath
         .concat("/")
-        .concat(name != null ? name : createRandomName()));
+        .concat(name));
   }
 
   private String getPathToResolve(String senderAdeAckDirectory) {
@@ -94,10 +98,6 @@ public class SenderAdeAckFilesRecoveryTasklet implements Tasklet, InitializingBe
         log.warn("Couldn't delete temporary files or directory");
       }
     }
-  }
-
-  private String createRandomName() {
-    return "adeAck".concat(RandomStringUtils.random(16, true, true)).concat(".csv");
   }
 
   @Override
