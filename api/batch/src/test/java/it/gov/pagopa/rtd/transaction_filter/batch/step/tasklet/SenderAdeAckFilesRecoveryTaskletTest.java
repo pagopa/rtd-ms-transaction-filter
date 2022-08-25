@@ -1,10 +1,12 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 
 import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -51,10 +54,12 @@ class SenderAdeAckFilesRecoveryTaskletTest {
   @Mock
   private SenderAdeAckRestClient restClient;
 
+  private AutoCloseable closeable;
+
   @SneakyThrows
   @BeforeEach
   void setup() {
-    MockitoAnnotations.initMocks(this);
+    closeable = MockitoAnnotations.openMocks(this);
 
     execution = MetaDataInstanceFactory.createStepExecution();
     StepContext stepContext = new StepContext(execution);
@@ -62,6 +67,12 @@ class SenderAdeAckFilesRecoveryTaskletTest {
 
     tasklet = createDefaultTasklet();
     defaultResponse = createDefaultFiles();
+  }
+
+  @SneakyThrows
+  @AfterEach
+  void cleanup() {
+    closeable.close();
   }
 
   @SneakyThrows
@@ -124,6 +135,36 @@ class SenderAdeAckFilesRecoveryTaskletTest {
     tasklet.execute(new StepContribution(execution), chunkContext);
 
     verify(restClient, Mockito.times(0)).getSenderAdeAckFiles();
+  }
+
+  @SneakyThrows
+  @Test
+  void whenFileHasNameNullThenThrowException() {
+    assertThatThrownBy(() -> tasklet.createOutputFile(null))
+        .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @SneakyThrows
+  @Test
+  void whenFileIsNotFoundThenThrowException() {
+    File fileNotExisting = new File("fileNotExisting");
+    BDDMockito.doReturn(Collections.singletonList(fileNotExisting)).when(restClient)
+        .getSenderAdeAckFiles();
+
+    StepContribution stepContribution = new StepContribution(execution);
+    assertThatThrownBy(() -> tasklet.execute(stepContribution, chunkContext))
+        .isInstanceOf(FileNotFoundException.class);
+  }
+
+  @SneakyThrows
+  @Test
+  void whenDirectoryIsNotSetThenThrowException() {
+    BDDMockito.doReturn(Collections.singletonList(defaultResponse.get(0))).when(restClient)
+        .getSenderAdeAckFiles();
+    tasklet.setSenderAdeAckDirectory(null);
+
+    assertThatThrownBy(() -> tasklet.afterPropertiesSet())
+        .isInstanceOf(IllegalArgumentException.class);
   }
 
   SenderAdeAckFilesRecoveryTasklet createDefaultTasklet() {
