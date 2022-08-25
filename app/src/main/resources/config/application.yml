@@ -104,7 +104,7 @@ batchConfiguration:
 rest-client:
   user-agent:
     prefix: BatchService
-    version: 1.2.4
+    version: 1.2.5
   hpan:
     serviceCode: hpan-service
     base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}
@@ -115,12 +115,12 @@ rest-client:
     api:
       key: ${HPAN_SERVICE_API_KEY:test}
     list:
-      url: /rtd/payment-instrument-manager/hashed-pans
+      url: /rtd/payment-instrument-manager/${ACQ_BATCH_HPAN_LIST_URL:hashed-pans}
       attemptExtraction: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
-      checksumValidation: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_VALIDATION:true}
+      checksumValidation: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_VALIDATION:false}
       checksumHeaderName: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_HEADER:x-ms-meta-sha256}
       listFilePattern: ${ACQ_BATCH_HPAN_LIST_FILE_PATTERN:.*}
-      dateValidation: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION:true}
+      dateValidation: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION:false}
       dateValidationHeaderName: ${ACQ_BATCH_HPAN_LIST_DATEVAL_HEADER:last-modified}
       dateValidationPattern: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION_PATTERN:}
     salt:

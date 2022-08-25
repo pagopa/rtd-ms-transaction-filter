@@ -5,12 +5,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -57,11 +57,14 @@ public class SenderAdeAckFilesRecoveryTasklet implements Tasklet, InitializingBe
   }
 
   void makePathSystemIndependent() {
-    senderAdeAckDirectory = senderAdeAckDirectory.replace("\\\\", "/");
+    senderAdeAckDirectory = senderAdeAckDirectory.replace("\\", "/");
   }
 
   private Optional<Path> getParentTemporaryDirectory(List<File> senderAdeAckFiles) {
-    return senderAdeAckFiles.stream().map(file -> file.getParentFile().toPath()).findAny();
+    return senderAdeAckFiles.stream()
+        .map(File::getParentFile)
+        .filter(Objects::nonNull)
+        .map(File::toPath).findAny();
   }
 
   private void saveFilesToOutputDirectory(List<File> senderAdeAckFiles) throws IOException {
@@ -71,14 +74,18 @@ public class SenderAdeAckFilesRecoveryTasklet implements Tasklet, InitializingBe
     }
   }
 
-  private File createOutputFile(String name) throws IOException {
+  protected File createOutputFile(String name) throws IOException {
+    if (name == null) {
+      throw new IllegalArgumentException("Ade ack file name is null.");
+    }
+
     // it's supposed the output directory already exists
     String rootPath = resolver.getResource(getPathToResolve(senderAdeAckDirectory)).getFile()
         .getAbsolutePath();
 
     return FileUtils.getFile(rootPath
         .concat("/")
-        .concat(name != null ? name : createRandomName()));
+        .concat(name));
   }
 
   private String getPathToResolve(String senderAdeAckDirectory) {
@@ -87,17 +94,11 @@ public class SenderAdeAckFilesRecoveryTasklet implements Tasklet, InitializingBe
   }
 
   private void cleanupTemporaryFiles(Path sourceDirectory) {
-    if (sourceDirectory != null) {
-      try {
-        FileUtils.deleteDirectory(sourceDirectory.toFile());
-      } catch (IOException e) {
-        log.warn("Couldn't delete temporary files or directory");
-      }
+    try {
+      FileUtils.deleteDirectory(sourceDirectory.toFile());
+    } catch (IOException e) {
+      log.warn("Couldn't delete temporary files or directory");
     }
-  }
-
-  private String createRandomName() {
-    return "adeAck".concat(RandomStringUtils.random(16, true, true)).concat(".csv");
   }
 
   @Override
