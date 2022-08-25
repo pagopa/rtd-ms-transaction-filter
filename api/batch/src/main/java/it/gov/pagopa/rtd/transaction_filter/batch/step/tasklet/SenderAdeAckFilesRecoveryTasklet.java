@@ -57,7 +57,7 @@ public class SenderAdeAckFilesRecoveryTasklet implements Tasklet, InitializingBe
   }
 
   void makePathSystemIndependent() {
-    senderAdeAckDirectory = senderAdeAckDirectory.replace("\\\\", "/");
+    senderAdeAckDirectory = senderAdeAckDirectory.replace("\\", "/");
   }
 
   private Optional<Path> getParentTemporaryDirectory(List<File> senderAdeAckFiles) {
