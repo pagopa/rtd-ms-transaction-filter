@@ -10,7 +10,7 @@
 
     <groupId>it.gov.pagopa.rtd.ms</groupId>
     <artifactId>rtd-ms-transaction-filter</artifactId>
-    <version>1.2.4</version>
+    <version>1.2.5</version>
 
     <packaging>pom</packaging>
 
@@ -27,7 +27,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.exclusions>**/enums/**,**/model/**,**/Constants*.java,**/*Config.java,**/*Application.java
         </sonar.exclusions>
-        <transaction-filter.version>1.2.4</transaction-filter.version>
+        <transaction-filter.version>1.2.5</transaction-filter.version>
     </properties>
 
     <dependencyManagement>
