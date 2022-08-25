@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
@@ -52,6 +53,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
+import wiremock.com.google.common.collect.Sets;
 
 @RunWith(SpringRunner.class)
 @SpringBatchTest
@@ -208,15 +210,11 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
         expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.csv.pgp");
         Assert.assertEquals(expectedPgpFilenames, outputPgpFilenames);
 
-        Collection<File> outputCsvFiles = FileUtils.listFiles(
-            resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[]{"csv"}, false);
-        Assert.assertEquals(2, outputCsvFiles.size());
-
-        Set<String> outputCsvFilenames = outputCsvFiles.stream().map(p -> p.getName()).collect(Collectors.toSet());
-        Set<String> expectedCsvFilenames = new HashSet<>();
-        expectedCsvFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv");
-        expectedCsvFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.csv");
-        Assert.assertEquals(expectedCsvFilenames, outputCsvFilenames);
+        Collection<String> outputCsvFilenames = FileUtils.listFiles(
+            resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[]{"csv"}, false)
+                .stream().map(File::getName).collect(Collectors.toSet());
+        Set<String> expectedCsvFilenames = getExpectedCsvFileNames();
+        assertThat(outputCsvFilenames).containsAll(expectedCsvFilenames);
 
         List<String> outputFileTrnContent = Files.readAllLines(outputFileTrn.toPath().toAbsolutePath());
         List<String> outputFileAdeContent = Files.readAllLines(outputFileAde.toPath().toAbsolutePath());
@@ -314,5 +312,9 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
         jobLauncherTestUtils.launchStep("hpan-recovery-master-step");
         BDDMockito.verify(storeServiceSpy, Mockito.times(0)).store(Mockito.any());
 
+    }
+
+    private Set<String> getExpectedCsvFileNames() {
+        return Sets.newHashSet("CSTAR.99999.TRNLOG.20220204.094652.001.csv", "ADE.99999.TRNLOG.20220204.094652.001.csv");
     }
 }
