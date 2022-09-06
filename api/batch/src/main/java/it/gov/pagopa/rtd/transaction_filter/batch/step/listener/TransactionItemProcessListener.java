@@ -78,8 +78,8 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
     public void onProcessError(InboundTransaction item, Exception throwable) {
 
-        if (transactionWriterService.hasErrorHpan(item.getFilename()
-                .concat(String.valueOf(item.getLineNumber())))) {
+        if (Boolean.TRUE.equals(transactionWriterService.hasErrorHpan(item.getFilename()
+                .concat(String.valueOf(item.getLineNumber()))))) {
             return;
         }
 
@@ -100,12 +100,12 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
         if (Boolean.TRUE.equals(enableOnErrorFileLogging)) {
             try {
-                String filename = item.getFilename().replace("\\\\", "/");
+                String filename = item.getFilename().replace("\\", "/");
                 String[] fileArr = filename.split("/");
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()
                         .concat("/".concat(executionDate))
-                        + "_" + prefix + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
+                        + "_" + prefix + "_ErrorRecords_" + fileArr[fileArr.length-1], buildCsv(item));
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
