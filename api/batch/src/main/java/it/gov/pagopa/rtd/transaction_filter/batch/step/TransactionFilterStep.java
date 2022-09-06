@@ -433,6 +433,7 @@ public class TransactionFilterStep {
             .noRetry(ConstraintViolationException.class)
             .noRollback(ConstraintViolationException.class)
             .listener(transactionAdeItemReaderListener(transactionWriterService, executionDate))
+            .listener(transactionAdeItemProcessListener(transactionWriterService, executionDate))
             .listener(transactionAdeStepListener(transactionWriterService, executionDate))
             .taskExecutor(batchConfig.readerTaskExecutor())
             .build();
@@ -551,6 +552,22 @@ public class TransactionFilterStep {
         transactionItemProcessListener.setEnableAfterProcessFileLogging(enableAfterProcessFileLogging);
         transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.setPrefix(LOG_PREFIX_TRN);
+        return transactionItemProcessListener;
+    }
+
+    @Bean
+    public TransactionItemProcessListener transactionAdeItemProcessListener(
+        TransactionWriterService transactionWriterService, String executionDate) {
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        transactionItemProcessListener.setExecutionDate(executionDate);
+        transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
+        transactionItemProcessListener.setEnableAfterProcessLogging(enableAfterProcessLogging);
+        transactionItemProcessListener.setLoggingFrequency(loggingFrequency);
+        transactionItemProcessListener.setEnableOnErrorFileLogging(enableOnProcessErrorFileLogging);
+        transactionItemProcessListener.setEnableOnErrorLogging(enableOnProcessErrorLogging);
+        transactionItemProcessListener.setEnableAfterProcessFileLogging(enableAfterProcessFileLogging);
+        transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
+        transactionItemProcessListener.setPrefix(LOG_PREFIX_ADE);
         return transactionItemProcessListener;
     }
 

@@ -58,7 +58,8 @@ public class TransactionAggregationReaderProcessor implements ItemProcessor<Inbo
             log.warn("Dirty data found on either VAT or POS type fields at line {}", inboundTransaction.getLineNumber());
         }
 
-        // Return null since we'll bound to a dummy writer
-        return null;
+        // Return the input transaction since it's needed by the listener to log validation errors
+        // The writer is dummy and do not require any value
+        return inboundTransaction;
     }
 }
