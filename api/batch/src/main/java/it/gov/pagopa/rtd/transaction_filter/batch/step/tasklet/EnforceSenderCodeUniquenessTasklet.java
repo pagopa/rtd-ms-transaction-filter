@@ -35,17 +35,20 @@ public class EnforceSenderCodeUniquenessTasklet implements Tasklet {
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext)
         throws IOException {
         SenderCodeFlyweight senderCodeFlyweight = storeService.getSenderCodeFlyweight();
-        if (senderCodeFlyweight.cacheSize() != 1) {
-            throw new IOException("Sender code is not unique within file content (n of distinct values: " + senderCodeFlyweight.cacheSize() + ")");
-        } else {
-            Collection<SenderCode> senderCodes = senderCodeFlyweight.values();
-            SenderCode code = senderCodes.iterator().next();
-            if (!code.getCode().equals(storeService.getTargetInputFileAbiPart())) {
-                throw new IOException("Sender code is not unique between file content and file name");
-            } else {
-                return RepeatStatus.FINISHED;
-            }
+        if (senderCodeFlyweight.cacheSize() == 0) {
+            throw new IOException("Input file is empty or every rows presents parsing/validation errors. Please check the logs above.");
         }
+        if (senderCodeFlyweight.cacheSize() > 1) {
+            throw new IOException("Sender code is not unique within file content (n of distinct values: " + senderCodeFlyweight.cacheSize() + ")");
+        }
+
+        Collection<SenderCode> senderCodes = senderCodeFlyweight.values();
+        SenderCode code = senderCodes.iterator().next();
+        if (!code.getCode().equals(storeService.getTargetInputFileAbiPart())) {
+            throw new IOException("Sender code is not unique between file content and file name");
+        }
+
+        return RepeatStatus.FINISHED;
     }
 
 }
