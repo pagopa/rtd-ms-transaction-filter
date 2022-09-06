@@ -87,30 +87,38 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 .concat(String.valueOf(item.getLineNumber())));
 
         if (Boolean.TRUE.equals(enableOnErrorLogging)) {
-            if (throwable instanceof ConstraintViolationException) {
-                ((ConstraintViolationException) throwable).getConstraintViolations()
-                    .forEach(violation -> log.error("Error during record validation at line: {}, on field: {}, value: {}, validation: {}, reason: {}",
-                        item.getLineNumber(), violation.getPropertyPath(), violation.getInvalidValue(),
-                        violation.getMessageTemplate(), violation.getMessage()));
-
-            } else {
-                log.error("Error during transaction processing at line: {}", item.getLineNumber());
-            }
+            logValidationErrors(item, throwable);
         }
 
         if (Boolean.TRUE.equals(enableOnErrorFileLogging)) {
-            try {
-                String filename = item.getFilename().replace("\\", "/");
-                String[] fileArr = filename.split("/");
-                transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
-                        .getFile().getAbsolutePath()
-                        .concat("/".concat(executionDate))
-                        + "_" + prefix + "_ErrorRecords_" + fileArr[fileArr.length-1], buildCsv(item));
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
+            logSkippedLinesOnFile(item);
         }
 
+    }
+
+    private void logValidationErrors(InboundTransaction item, Exception throwable) {
+        if (throwable instanceof ConstraintViolationException) {
+            ((ConstraintViolationException) throwable).getConstraintViolations()
+                .forEach(violation -> log.error("Error during record validation at line: {}, on field: {}, value: {}, validation: {}, reason: {}",
+                    item.getLineNumber(), violation.getPropertyPath(), violation.getInvalidValue(),
+                    violation.getMessageTemplate(), violation.getMessage()));
+
+        } else {
+            log.error("Error during transaction processing at line: {}", item.getLineNumber());
+        }
+    }
+
+    private void logSkippedLinesOnFile(InboundTransaction item) {
+        try {
+            String filename = item.getFilename().replace("\\", "/");
+            String[] fileArr = filename.split("/");
+            transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
+                .getFile().getAbsolutePath()
+                .concat("/".concat(executionDate))
+                + "_" + prefix + "_ErrorRecords_" + fileArr[fileArr.length-1], buildCsv(item));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     private String buildCsv(InboundTransaction inboundTransaction) {
