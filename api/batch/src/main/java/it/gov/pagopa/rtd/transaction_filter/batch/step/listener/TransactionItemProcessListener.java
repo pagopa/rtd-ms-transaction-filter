@@ -130,7 +130,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 .concat(Optional.ofNullable(inboundTransaction.getIdTrxAcquirer()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getIdTrxIssuer()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getCorrelationId()).orElse("")).concat(";")
-                .concat(inboundTransaction.getAmount() != null ? inboundTransaction.getAmount().toString() : "").concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getAmount()).orElse(0L).toString()).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getAmountCurrency()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getAcquirerId()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getMerchantId()).orElse("")).concat(";")
