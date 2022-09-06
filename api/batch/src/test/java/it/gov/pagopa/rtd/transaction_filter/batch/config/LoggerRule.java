@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch.config;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import java.util.List;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -35,5 +36,9 @@ public class LoggerRule implements TestRule {
         listAppender.stop();
         listAppender.list.clear();
         logger.detachAppender(listAppender);
+    }
+
+    public List<ILoggingEvent> getLogList() {
+        return listAppender.list;
     }
 }
