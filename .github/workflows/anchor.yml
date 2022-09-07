@@ -13,10 +13,10 @@ name: Anchore Container Scan
 
 on:
   push:
-    branches: [ "master", "main" ]
+    branches: [ "master", "main", "develop" ]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ "master", "main" ]
+    branches: [ "master", "main", "develop" ]
   schedule:
     - cron: '00 07 * * *'
 
