@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+  <appender name="mask" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+      <layout class="it.gov.pagopa.rtd.transaction_filter.logger.MaskingPatternLayout">
+        <maskPattern>Ocp-Apim-Subscription-Key\s*:\s*(.*)</maskPattern> <!-- apikey pattern -->
+        <maskPattern>((?!(getSalt] --->)|(getSalt] &lt;---))getSalt].*)</maskPattern> <!-- salt pattern -->
+        <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+      </layout>
+    </encoder>
+  </appender>
+
+  <root level="info">
+    <appender-ref ref="mask" />
+  </root>
+
+</configuration>
