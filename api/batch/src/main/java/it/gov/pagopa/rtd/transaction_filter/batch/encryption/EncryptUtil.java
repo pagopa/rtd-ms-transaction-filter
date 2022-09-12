@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.encryption;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -20,6 +21,7 @@ import java.util.Iterator;
 /**
  * Util class for file encryption/decryption using bouncycastle openPGP implementation
 **/
+@Slf4j
 public class EncryptUtil {
 
     /**
@@ -141,7 +143,7 @@ public class EncryptUtil {
         {
             if (e.getUnderlyingException() != null)
             {
-                e.getUnderlyingException().printStackTrace();
+                log.error("Error triggered by {}", e.getUnderlyingException().getMessage());
             }
             throw e;
 
@@ -238,7 +240,7 @@ public class EncryptUtil {
             System.err.println(e);
             if (e.getUnderlyingException() != null)
             {
-                e.getUnderlyingException().printStackTrace();
+                log.error("Error triggered by {}", e.getUnderlyingException().getMessage());
             }
         }
     }
