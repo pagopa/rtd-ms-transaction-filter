@@ -58,9 +58,6 @@ import java.util.Date;
  * @see TransactionFilterBatch#transactionJobBuilder() for the actual flow definition.
  * </p>
  *
- * <img alt="TransactionFilterBatch" src="uml/transactionFilterBatch.svg">
- * 
- * @plantUml uml/transactionFilterBatch.svg
  */
  
 
