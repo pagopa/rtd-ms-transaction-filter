@@ -242,7 +242,7 @@ public class TransactionFilterStep {
             @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
         PGPFlatFileItemWriter<InboundTransaction> itemWriter = new PGPFlatFileItemWriter<>(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
         itemWriter.setLineAggregator(transactionWriterAggregator());
-        file = file.replaceAll("\\\\", "/");
+        file = file.replace("\\", "/");
         String[] filename = file.split("/");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         itemWriter.setResource(resolver.getResource(outputDirectoryPath.concat("/".concat(filename[filename.length - 1]))));
@@ -267,7 +267,7 @@ public class TransactionFilterStep {
         @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
         PGPFlatFileItemWriter<AdeTransactionsAggregate> itemWriter = new PGPFlatFileItemWriter<>(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
         itemWriter.setLineAggregator(adeTransactionsAggregateLineAggregator());
-        file = file.replaceAll("\\\\", "/");
+        file = file.replace("\\", "/");
         String[] filename = file.split("/");
         String newFilename = ADE_OUTPUT_FILE_PREFIX + filename[filename.length - 1].substring(6);
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();

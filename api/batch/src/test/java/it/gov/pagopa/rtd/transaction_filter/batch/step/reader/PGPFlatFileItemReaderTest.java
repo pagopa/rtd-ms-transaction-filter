@@ -75,6 +75,7 @@ public class PGPFlatFileItemReaderTest {
 
         textTrxPgpFOS.close();
 
+//        Assert.assertThrows(PGPDecryptException.class, () -> )
         PGPFlatFileItemReader flatFileItemReader = new PGPFlatFileItemReader(
                 "file:/"+this.getClass().getResource("/test-encrypt").getFile() +
                         "/secretKey.asc", "test", true);

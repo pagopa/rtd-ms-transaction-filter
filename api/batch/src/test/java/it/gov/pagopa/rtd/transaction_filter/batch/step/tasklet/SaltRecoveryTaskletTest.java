@@ -53,7 +53,7 @@ public class SaltRecoveryTaskletTest {
     @Test
     public void testSalt_Ok() {
         BDDMockito.doReturn("testSalt").when(hpanConnectorServiceMock).getSalt();
-        BDDMockito.doNothing().when(storeServiceMock).storeSalt(Mockito.eq("testSalt"));
+        BDDMockito.doNothing().when(storeServiceMock).storeSalt("testSalt");
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
@@ -63,7 +63,7 @@ public class SaltRecoveryTaskletTest {
         saltRecoveryTasklet.setTaskletEnabled(true);
         saltRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
         BDDMockito.verify(hpanConnectorServiceMock).getSalt();
-        BDDMockito.verify(storeServiceMock).storeSalt(Mockito.eq("testSalt"));
+        BDDMockito.verify(storeServiceMock).storeSalt("testSalt");
     }
 
     @SneakyThrows

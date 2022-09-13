@@ -8,6 +8,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.BDDMockito;
@@ -46,14 +47,14 @@ public class InboundTransactionItemProcessorValidatorTest {
     @Mock
     private StoreService storeServiceMock;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         Mockito.reset(storeServiceMock);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", STRING_LEN_21})
-    public void processTransactionWithInvalidSenderCodeThrowsException(String senderCode) {
+    void processTransactionWithInvalidSenderCodeThrowsException(String senderCode) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setSenderCode(senderCode);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -62,8 +63,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"fae71", "27cd4dd11ea5859", STRING_LEN_20})
-    public void processTransactionWithValidSenderCode(String senderCode) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidSenderCode(String senderCode) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setSenderCode(senderCode);
@@ -75,7 +76,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", "010", "AA"})
-    public void processTransactionWithInvalidOperationTypeThrowsException(String operationType) {
+    void processTransactionWithInvalidOperationTypeThrowsException(String operationType) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setOperationType(operationType);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -84,8 +85,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"00", "01", "02", "03", "04"})
-    public void processTransactionWithValidOperationType(String operationType) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidOperationType(String operationType) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setOperationType(operationType);
@@ -97,7 +98,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", "010", "AA"})
-    public void processTransactionWithInvalidCircuitTypeThrowsException(String circuitType) {
+    void processTransactionWithInvalidCircuitTypeThrowsException(String circuitType) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setCircuitType(circuitType);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -106,8 +107,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10"})
-    public void processTransactionWithValidCircuitType(String circuitType) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidCircuitType(String circuitType) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setCircuitType(circuitType);
@@ -119,7 +120,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", STRING_LEN_65})
-    public void processTransactionWithInvalidPanThrowsException(String pan) {
+    void processTransactionWithInvalidPanThrowsException(String pan) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setPan(pan);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -128,8 +129,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_64})
-    public void processTransactionWithValidPan(String pan) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(pan));
+    void processTransactionWithValidPan(String pan) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(pan);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setPan(pan);
@@ -142,7 +143,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  "})
-    public void processTransactionWithInvalidTrxDateThrowsException(String trxDate) {
+    void processTransactionWithInvalidTrxDateThrowsException(String trxDate) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setTrxDate(trxDate);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -151,8 +152,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"2020-08-06T12:19:16.000+00:00", "2020-08-07T16:03:53.000+00:00"})
-    public void processTransactionWithValidTrxDate(String trxDate) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidTrxDate(String trxDate) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setTrxDate(trxDate);
@@ -164,7 +165,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", STRING_LEN_256})
-    public void processTransactionWithInvalidIdTrxAcquirerThrowsException(String idTrxAcquirer) {
+    void processTransactionWithInvalidIdTrxAcquirerThrowsException(String idTrxAcquirer) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setIdTrxAcquirer(idTrxAcquirer);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -173,8 +174,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
-    public void processTransactionWithValidIdTrxAcquirer(String idTrxAcquirer) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidIdTrxAcquirer(String idTrxAcquirer) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setIdTrxAcquirer(idTrxAcquirer);
@@ -186,7 +187,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", STRING_LEN_256})
-    public void processTransactionWithInvalidIdTrxIssuerThrowsException(String idTrxIssuer) {
+    void processTransactionWithInvalidIdTrxIssuerThrowsException(String idTrxIssuer) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setIdTrxIssuer(idTrxIssuer);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -195,8 +196,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
-    public void processTransactionWithValidIdTrxIssuer(String idTrxIssuer) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidIdTrxIssuer(String idTrxIssuer) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setIdTrxIssuer(idTrxIssuer);
@@ -208,7 +209,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {STRING_LEN_256})
-    public void processTransactionWithInvalidCorrelationIdThrowsException(String correlationId) {
+    void processTransactionWithInvalidCorrelationIdThrowsException(String correlationId) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setCorrelationId(correlationId);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -217,17 +218,20 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
-    public void processTransactionWithValidCorrelationId(String correlationId) {
+    void processTransactionWithValidCorrelationId(String correlationId) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
+        BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setCorrelationId(correlationId);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
-        processor.process(transaction);
+        InboundTransaction outbound = processor.process(transaction);
+        Assertions.assertNotNull(outbound);
     }
 
     @ParameterizedTest
     @ValueSource(longs = {1000, 200000})
-    public void processTransactionWithValidAmount(Long amount) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidAmount(Long amount) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setAmount(amount);
@@ -239,7 +243,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"1234", "412", "15", ""})
-    public void processTransactionWithInvalidAmountCurrencyThrowsException(String amountCurrency) {
+    void processTransactionWithInvalidAmountCurrencyThrowsException(String amountCurrency) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setAmountCurrency(amountCurrency);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -248,8 +252,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"978"})
-    public void processTransactionWithValidAmountCurrency(String amountCurrency) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidAmountCurrency(String amountCurrency) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setAmountCurrency(amountCurrency);
@@ -261,7 +265,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", STRING_LEN_256})
-    public void processTransactionWithInvalidAcquirerIdThrowsException(String acquirerId) {
+    void processTransactionWithInvalidAcquirerIdThrowsException(String acquirerId) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setAcquirerId(acquirerId);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -270,8 +274,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
-    public void processTransactionWithValidAcquirerId(String acquirerId) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidAcquirerId(String acquirerId) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setAcquirerId(acquirerId);
@@ -283,7 +287,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", STRING_LEN_256})
-    public void processTransactionWithInvalidMerchantIdThrowsException(String merchantId) {
+    void processTransactionWithInvalidMerchantIdThrowsException(String merchantId) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setMerchantId(merchantId);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -292,8 +296,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
-    public void processTransactionWithValidMerchantId(String merchantId) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidMerchantId(String merchantId) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setMerchantId(merchantId);
@@ -305,7 +309,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", STRING_LEN_256})
-    public void processTransactionWithInvalidTerminalIdThrowsException(String terminalId) {
+    void processTransactionWithInvalidTerminalIdThrowsException(String terminalId) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setTerminalId(terminalId);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -314,8 +318,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"fae71031e132166", "27cd4dd11ea58592f41aaecaa1d31bcd1538ea29c068141daf77744893a2a058", STRING_LEN_255})
-    public void processTransactionWithValidTerminalId(String terminalId) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidTerminalId(String terminalId) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setTerminalId(terminalId);
@@ -327,7 +331,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", "12345A", "1234567"})
-    public void processTransactionWithInvalidBinThrowsException(String bin) {
+    void processTransactionWithInvalidBinThrowsException(String bin) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setBin(bin);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -336,8 +340,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"123456", "12345678"})
-    public void processTransactionWithValidBin(String bin) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidBin(String bin) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setBin(bin);
@@ -349,7 +353,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", "123456"})
-    public void processTransactionWithInvalidMccThrowsException(String mcc) {
+    void processTransactionWithInvalidMccThrowsException(String mcc) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setMcc(mcc);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -358,8 +362,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"12345", "3000", "203"})
-    public void processTransactionWithValidMcc(String mcc) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidMcc(String mcc) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setMcc(mcc);
@@ -371,7 +375,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "    ", STRING_LEN_51})
-    public void processTransactionWithInvalidFiscalCodeThrowsException(String fiscalCode) {
+    void processTransactionWithInvalidFiscalCodeThrowsException(String fiscalCode) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setFiscalCode(fiscalCode);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -380,8 +384,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"15376371009", "DE256610065", STRING_LEN_50})
-    public void processTransactionWithValidFiscalCode(String fiscalCode) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidFiscalCode(String fiscalCode) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setFiscalCode(fiscalCode);
@@ -393,7 +397,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {STRING_LEN_51})
-    public void processTransactionWithInvalidVatThrowsException(String vat) {
+    void processTransactionWithInvalidVatThrowsException(String vat) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setVat(vat);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -402,8 +406,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", "15376371009", "DE256610065", STRING_LEN_50})
-    public void processTransactionWithValidVat(String vat) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidVat(String vat) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setVat(vat);
@@ -415,7 +419,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "  ", "02", "08", "010", "AA"})
-    public void processTransactionWithInvalidPosTypeThrowsException(String posType) {
+    void processTransactionWithInvalidPosTypeThrowsException(String posType) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setPosType(posType);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -424,8 +428,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"00", "01"})
-    public void processTransactionWithValidPosType(String posType) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidPosType(String posType) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setPosType(posType);
@@ -437,7 +441,7 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {STRING_LEN_256})
-    public void processTransactionWithInvalidParThrowsException(String par) {
+    void processTransactionWithInvalidParThrowsException(String par) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setPar(par);
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -446,8 +450,8 @@ public class InboundTransactionItemProcessorValidatorTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"a70352ebab7fba1d20d8c667c37495a458d4", "0a3eb9af89ef1d6735e0489ed7d09f84a76fa2eb8e332a4e0e1d37ed7", STRING_LEN_255})
-    public void processTransactionWithValidPar(String par) {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+    void processTransactionWithValidPar(String par) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setPar(par);

@@ -56,7 +56,7 @@ InboundTransaction {
     @NotNull
     @NotBlank
     @Size(min = 2, max = 2)
-    @Pattern(regexp = "[0-9]{2}")
+    @Pattern(regexp = "\\d{2}")
     String operationType;
 
     /**
@@ -65,7 +65,7 @@ InboundTransaction {
     @NotNull
     @NotBlank
     @Size(min = 2, max = 2)
-    @Pattern(regexp = "[0-9]{2}")
+    @Pattern(regexp = "\\d{2}")
     String circuitType;
 
     /**
@@ -133,7 +133,7 @@ InboundTransaction {
      * Bank identification number for the transaction
      */
     @NotNull
-    @Pattern(regexp = "([0-9]{6}|[0-9]{8})")
+    @Pattern(regexp = "(\\d{6}|\\d{8})")
     String bin;
 
     /**

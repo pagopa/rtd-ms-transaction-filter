@@ -42,7 +42,7 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 
-		if (scheduledEnabled.toLowerCase().equals("false")) {
+		if (scheduledEnabled.equalsIgnoreCase("false")) {
 
 			Date startDate = new Date();
 			if (log.isInfoEnabled()) {

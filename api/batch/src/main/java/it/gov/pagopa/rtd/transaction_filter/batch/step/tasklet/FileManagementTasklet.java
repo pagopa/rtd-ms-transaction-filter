@@ -55,12 +55,13 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
      */
     @Override
     public void afterPropertiesSet() throws Exception {
+        String assertionMessage = "directory must be set";
         Assert.notNull(resolver.getResources("file:" + successPath + "*.pgp"),
-                "directory must be set");
+            assertionMessage);
         Assert.notNull(resolver.getResources("file:" + errorPath + "*.pgp"),
-                "directory must be set");
+            assertionMessage);
         Assert.notNull(resolver.getResources(hpanDirectory),
-                "directory must be set");
+            assertionMessage);
     }
 
     /**

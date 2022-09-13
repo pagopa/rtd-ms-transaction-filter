@@ -31,11 +31,11 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
 
     @Override
     public void beforeWrite(List<? extends InboundTransaction> list) {
-
+        // do nothing
     }
 
     public void afterWrite(List<? extends InboundTransaction> inboundTransactions) {
-        if (enableAfterWriteLogging) {
+        if (Boolean.TRUE.equals(enableAfterWriteLogging)) {
             inboundTransactions.forEach(inboundTransaction -> {
                 if (loggingFrequency > 1 && inboundTransaction.getLineNumber() % loggingFrequency == 0) {
                     log.info("Written {} lines on file: {}",
@@ -52,14 +52,14 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
 
         inboundTransactions.forEach(inboundTransaction -> {
 
-            if (enableOnErrorLogging) {
+            if (Boolean.TRUE.equals(enableOnErrorLogging)) {
                 log.error("Error during during transaction record writing - {},filename: {},line: {}",
                         throwable.getMessage(), inboundTransaction.getFilename(), inboundTransaction.getLineNumber());
             }
 
-            if (enableOnErrorFileLogging) {
+            if (Boolean.TRUE.equals(enableOnErrorFileLogging)) {
                 try {
-                    String filename = inboundTransaction.getFilename().replaceAll("\\\\", "/");
+                    String filename = inboundTransaction.getFilename().replace("\\", "/");
                     String[] fileArr = filename.split("/");
                     transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                             .getFile().getAbsolutePath()
@@ -85,7 +85,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
                 .concat(Optional.ofNullable(inboundTransaction.getIdTrxAcquirer()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getIdTrxIssuer()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getCorrelationId()).orElse("")).concat(";")
-                .concat(inboundTransaction.getAmount() != null ? inboundTransaction.getAmount().toString() : "").concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getAmount()).orElse(0L).toString()).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getAmountCurrency()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getAcquirerId()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getMerchantId()).orElse("")).concat(";")
