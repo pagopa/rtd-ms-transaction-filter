@@ -3,6 +3,8 @@ package it.gov.pagopa.rtd.transaction_filter.batch.encryption;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
+import org.bouncycastle.bcpg.CompressionAlgorithmTags;
+import org.bouncycastle.bcpg.SymmetricKeyAlgorithmTags;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.*;
 import org.bouncycastle.openpgp.jcajce.JcaPGPObjectFactory;
@@ -24,6 +26,8 @@ import java.util.Iterator;
 @Slf4j
 public class EncryptUtil {
 
+    private EncryptUtil() { }
+
     /**
      * Search a secret key ring collection for a secret key corresponding to keyID if it
      * exists.
@@ -37,7 +41,7 @@ public class EncryptUtil {
      */
     @Nullable
     static PGPPrivateKey findSecretKey(PGPSecretKeyRingCollection pgpSec, long keyID, char[] pass)
-            throws PGPException, NoSuchProviderException
+            throws PGPException
     {
         PGPSecretKey pgpSecKey = pgpSec.getSecretKey(keyID);
 
@@ -59,7 +63,7 @@ public class EncryptUtil {
      *  PGPException description
      */
     public static byte[] decryptFile(InputStream input, InputStream keyInput, char[] passwd)
-            throws IOException, NoSuchProviderException, PGPException {
+            throws IOException, PGPException {
 
         Security.addProvider(new BouncyCastleProvider());
         input = PGPUtil.getDecoderStream(input);
@@ -87,7 +91,7 @@ public class EncryptUtil {
             //
             // find the secret key
             //
-            Iterator it = encrypted.getEncryptedDataObjects();
+            Iterator<PGPEncryptedData> it = encrypted.getEncryptedDataObjects();
             PGPPrivateKey sKey = null;
             PGPPublicKeyEncryptedData pbe = null;
             PGPSecretKeyRingCollection pgpSec = new PGPSecretKeyRingCollection(
@@ -173,15 +177,15 @@ public class EncryptUtil {
         PGPPublicKeyRingCollection pgpPub = new PGPPublicKeyRingCollection(
                 PGPUtil.getDecoderStream(input), new JcaKeyFingerprintCalculator());
 
-        Iterator keyRingIter = pgpPub.getKeyRings();
+        Iterator<PGPPublicKeyRing> keyRingIter = pgpPub.getKeyRings();
         while (keyRingIter.hasNext())
         {
-            PGPPublicKeyRing keyRing = (PGPPublicKeyRing)keyRingIter.next();
+            PGPPublicKeyRing keyRing = keyRingIter.next();
 
-            Iterator keyIter = keyRing.getPublicKeys();
+            Iterator<PGPPublicKey> keyIter = keyRing.getPublicKeys();
             while (keyIter.hasNext())
             {
-                PGPPublicKey key = (PGPPublicKey)keyIter.next();
+                PGPPublicKey key = keyIter.next();
 
                 if (key.isEncryptionKey())
                 {
@@ -199,7 +203,7 @@ public class EncryptUtil {
             PGPPublicKey    encKey,
             boolean         armor,
             boolean         withIntegrityCheck)
-            throws IOException, NoSuchProviderException
+            throws IOException
     {
 
         Security.addProvider(new BouncyCastleProvider());
@@ -212,7 +216,7 @@ public class EncryptUtil {
         try
         {
             PGPEncryptedDataGenerator cPk = new PGPEncryptedDataGenerator(
-                    new JcePGPDataEncryptorBuilder(PGPEncryptedData.CAST5)
+                    new JcePGPDataEncryptorBuilder(SymmetricKeyAlgorithmTags.CAST5)
                             .setWithIntegrityPacket(withIntegrityCheck)
                             .setSecureRandom(new SecureRandom()).setProvider("BC"));
 
@@ -221,7 +225,7 @@ public class EncryptUtil {
             OutputStream cOut = cPk.open(out, new byte[1 << 16]);
 
             PGPCompressedDataGenerator  comData = new PGPCompressedDataGenerator(
-                    PGPCompressedData.ZIP);
+                CompressionAlgorithmTags.ZIP);
 
             PGPUtil.writeFileToLiteralData(
                     comData.open(cOut), PGPLiteralData.BINARY, new File(fileName), new byte[1 << 16]);
@@ -237,7 +241,7 @@ public class EncryptUtil {
         }
         catch (PGPException e)
         {
-            System.err.println(e);
+            log.error(e.getMessage());
             if (e.getUnderlyingException() != null)
             {
                 log.error("Error triggered by {}", e.getUnderlyingException().getMessage());

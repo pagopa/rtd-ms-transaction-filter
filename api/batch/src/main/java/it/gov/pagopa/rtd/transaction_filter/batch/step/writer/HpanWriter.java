@@ -21,10 +21,8 @@ public class HpanWriter implements ItemWriter<String> {
 
     @Override
     public void write(List<? extends String> hpanList) {
-        hpanList.stream().forEach(hpan-> {
-            storeService.store(applyHashing ?
-                    DigestUtils.sha256Hex(hpan+ storeService.getSalt()) : hpan);
-        });
+        hpanList.forEach(hpan-> storeService.store(Boolean.TRUE.equals(applyHashing) ?
+                DigestUtils.sha256Hex(hpan+ storeService.getSalt()) : hpan));
     }
 
 }

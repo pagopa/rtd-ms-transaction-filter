@@ -112,10 +112,9 @@ public class PanReaderStep {
      *
      * @return worker step, defined as a standard reader/processor/writer process,
      * using chunk processing for scalability
-     * @throws Exception
      */
     @Bean
-    public Step hpanRecoveryWorkerStep(StoreService storeService) throws Exception {
+    public Step hpanRecoveryWorkerStep(StoreService storeService) {
         return stepBuilderFactory.get("hpan-recovery-worker-step")
                 .<String, String>chunk(chunkSize)
                 .reader(hpanItemReader(null))

@@ -41,7 +41,7 @@ public class HpanWriterTest {
     @Test
     public void write_OK_Empty() {
         try {
-            BDDMockito.doNothing().when(storeServiceMock).store(Mockito.eq("pan"));
+            BDDMockito.doNothing().when(storeServiceMock).store("pan");
             BDDMockito.doReturn("testSalt").when(storeServiceMock).getSalt();
             HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, false);
             hpanWriter.write(Collections.emptyList());
@@ -54,40 +54,40 @@ public class HpanWriterTest {
 
     @Test
     public void write_OK_MonoList_NoHash() {
-        BDDMockito.doNothing().when(storeServiceMock).store(Mockito.eq("pan"));
+        BDDMockito.doNothing().when(storeServiceMock).store("pan");
         BDDMockito.doReturn("").when(storeServiceMock).getSalt();
         HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, false);
         hpanWriter.write(Collections.singletonList("pan"));
-        BDDMockito.verify(storeServiceMock).store(Mockito.eq("pan"));
+        BDDMockito.verify(storeServiceMock).store("pan");
     }
 
     @Test
     public void write_OK_MonoList_HashWithSalt() {
-        BDDMockito.doNothing().when(storeServiceMock).store(Mockito.eq("pan"));
+        BDDMockito.doNothing().when(storeServiceMock).store("pan");
         BDDMockito.doReturn("testSalt").when(storeServiceMock).getSalt();
         HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, true);
         hpanWriter.write(Collections.singletonList("pan"));
-        BDDMockito.verify(storeServiceMock).store(Mockito.eq(DigestUtils.sha256Hex("pan"+"testSalt")));
+        BDDMockito.verify(storeServiceMock).store(DigestUtils.sha256Hex("pan"+"testSalt"));
     }
 
     @Test
     public void write_OK_MonoList_HashWithoutSalt() {
-        BDDMockito.doNothing().when(storeServiceMock).store(Mockito.eq("pan"));
+        BDDMockito.doNothing().when(storeServiceMock).store("pan");
         BDDMockito.doReturn("").when(storeServiceMock).getSalt();
         HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, true);
         hpanWriter.write(Collections.singletonList("pan"));
-        BDDMockito.verify(storeServiceMock).store(Mockito.eq(DigestUtils.sha256Hex("pan")));
+        BDDMockito.verify(storeServiceMock).store(DigestUtils.sha256Hex("pan"));
     }
 
     @Test
     public void write_OK_MultiList_HashWithoutSalt() {
         try {
-            BDDMockito.doNothing().when(storeServiceMock).store(Mockito.eq("pan"));
+            BDDMockito.doNothing().when(storeServiceMock).store("pan");
             BDDMockito.doReturn("").when(storeServiceMock).getSalt();
             HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, true);
             hpanWriter.write(Collections.nCopies(5,"pan"));
             BDDMockito.verify(storeServiceMock, Mockito.times(5))
-                    .store(Mockito.eq(DigestUtils.sha256Hex("pan")));
+                    .store(DigestUtils.sha256Hex("pan"));
         } catch (Exception e) {
             Assert.fail();
             e.printStackTrace();

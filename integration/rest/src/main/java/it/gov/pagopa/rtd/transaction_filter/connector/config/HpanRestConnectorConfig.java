@@ -83,9 +83,8 @@ public class HpanRestConnectorConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {
         // This interceptor injects the User-Agent header in each request made with the client.
-        return requestTemplate -> {
-            requestTemplate.header("User-Agent", getUserAgent());
-        };
+        return requestTemplate -> requestTemplate.header("User-Agent", getUserAgent());
+
     }
 
     @Bean
@@ -93,12 +92,12 @@ public class HpanRestConnectorConfig {
         try {
             SSLSocketFactory sslSocketFactory = null;
 
-            if (mtlsEnabled) {
+            if (Boolean.TRUE.equals(mtlsEnabled)) {
                 sslSocketFactory = getSSLContext().getSocketFactory();
                 log.debug("enabled socket factory: {}", sslSocketFactory);
             }
 
-            if (proxyEnabled) {
+            if (Boolean.TRUE.equals(proxyEnabled)) {
                 Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
                 if (proxyUsername != null && !proxyUsername.equals("") &&
                         proxyPassword != null && !proxyPassword.equals("")) {
@@ -106,6 +105,7 @@ public class HpanRestConnectorConfig {
                             proxyUsername, proxyPassword);
                     System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
                     Authenticator.setDefault(new Authenticator() {
+                        @Override
                         protected PasswordAuthentication getPasswordAuthentication() {
                             return new PasswordAuthentication(proxyUsername, proxyPassword.toCharArray());
                         }

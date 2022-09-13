@@ -31,11 +31,13 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
-    public void beforeProcess(InboundTransaction inboundTransaction) {}
+    public void beforeProcess(InboundTransaction inboundTransaction) {
+        // do nothing
+    }
 
     public void afterProcess(InboundTransaction item, @Nullable InboundTransaction result) {
 
-        if (enableAfterProcessLogging) {
+        if (Boolean.TRUE.equals(enableAfterProcessLogging)) {
 
             if (result == null) {
                 if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
@@ -61,7 +63,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
 
         if (Boolean.TRUE.equals(enableAfterProcessFileLogging) && result == null) {
             try {
-                String file = item.getFilename().replaceAll("\\\\", "/");
+                String file = item.getFilename().replace("\\", "/");
                 String[] fileArr = file.split("/");
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()

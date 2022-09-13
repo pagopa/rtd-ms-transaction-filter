@@ -28,7 +28,7 @@ public class SaltRecoveryTasklet implements Tasklet {
      */
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
-        if (taskletEnabled) {
+        if (Boolean.TRUE.equals(taskletEnabled)) {
             storeService.storeSalt(hpanConnectorService.getSalt());
         }
         return RepeatStatus.FINISHED;

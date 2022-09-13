@@ -131,7 +131,7 @@ class HpanRestClientImpl implements HpanRestClient {
     File localTempFile = tempFile;
     ResponseEntity<Resource> responseEntity = hpanRestConnector.getList(apiKey);
 
-    if (dateValidation) {
+    if (Boolean.TRUE.equals(dateValidation)) {
       String dateString = Objects.requireNonNull(responseEntity.getHeaders()
           .get(dateValidationHeaderName)).get(0);
       DateTimeFormatter dtf = dateValidationPattern != null && !dateValidationPattern.isEmpty() ?
@@ -140,7 +140,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
       ZonedDateTime fileCreationDateTime = LocalDateTime.parse(dateString, dtf)
           .atZone(ZoneId.of(dateValidationZone));
-      ;
+
       ZonedDateTime currentDate = validationDate != null ?
           validationDate.atZone(ZoneId.of(dateValidationZone)) :
           LocalDateTime.now().atZone(ZoneId.of(dateValidationZone));
@@ -154,7 +154,7 @@ class HpanRestClientImpl implements HpanRestClient {
       boolean sameMonth = ChronoUnit.MONTHS.between(fileCreationDateTime, currentDate) == 0;
       boolean sameDay = ChronoUnit.DAYS.between(fileCreationDateTime, currentDate) == 0;
 
-      if (!sameYear | !sameMonth | !sameDay) {
+      if (!sameYear || !sameMonth || !sameDay) {
         throw new Exception("Recovered PAN list exceeding a day");
       }
 
@@ -162,7 +162,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
     try (FileOutputStream tempFileFOS = new FileOutputStream(tempFile)) {
 
-      if (checksumValidation) {
+      if (Boolean.TRUE.equals(checksumValidation)) {
         String checksum = Objects.requireNonNull(
             responseEntity.getHeaders().get(checksumHeaderName)).get(0);
         if (!checksum.equals(DigestUtils.sha256Hex(Objects.requireNonNull(
@@ -175,7 +175,7 @@ class HpanRestClientImpl implements HpanRestClient {
           responseEntity.getBody()).getInputStream(), tempFileFOS);
     }
 
-    if (attemptExtraction) {
+    if (Boolean.TRUE.equals(attemptExtraction)) {
 
       try (ZipFile zipFile = new ZipFile(tempFile)) {
 
@@ -293,7 +293,8 @@ class HpanRestClientImpl implements HpanRestClient {
     if (proxyHost != null && proxyPort != null) {
       return new HttpHost(proxyHost, proxyPort);
     } else {
-      throw new IllegalArgumentException("One or more proxy parameters are null! Please set a value");
+      throw new IllegalArgumentException(
+          "One or more proxy parameters are null! Please set a value");
     }
   }
 

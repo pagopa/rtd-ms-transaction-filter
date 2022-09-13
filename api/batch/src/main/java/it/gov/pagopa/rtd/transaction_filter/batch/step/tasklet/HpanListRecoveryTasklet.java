@@ -51,13 +51,13 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
 
-        hpanListDirectory = hpanListDirectory.replaceAll("\\\\", "/");
+        hpanListDirectory = hpanListDirectory.replace("\\", "/");
         Resource[] resources = null;
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
         String currentDate = OffsetDateTime.now().format(fmt);
 
-        if (dailyRemovalTaskletEnabled) {
+        if (Boolean.TRUE.equals(dailyRemovalTaskletEnabled)) {
 
             resources = resolver.getResources("file:/"
                     .concat(hpanListDirectory.charAt(0) == '/' ?
@@ -70,12 +70,12 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
                 for (Resource resource : resources) {
                     BasicFileAttributes fileAttributes = Files.readAttributes(
                             resource.getFile().toPath(), BasicFileAttributes.class);
-                    Long fileLastModTime = fileAttributes.lastModifiedTime().toMillis();
+                    long fileLastModTime = fileAttributes.lastModifiedTime().toMillis();
                     Instant instant = Instant.ofEpochMilli(fileLastModTime);
                     LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
                     String fileLastModifiedDate = localDateTime.format(fmt);
                     if (!fileLastModifiedDate.equals(currentDate)) {
-                        resource.getFile().delete();
+                        Files.delete(resource.getFile().toPath());
                     }
 
                 }
@@ -86,7 +86,7 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
 
         }
 
-        if (recoveryTaskletEnabled) {
+        if (Boolean.TRUE.equals(recoveryTaskletEnabled)) {
             resources = resolver.getResources("file:/"
                     .concat(hpanListDirectory.charAt(0) == '/' ?
                             hpanListDirectory.replaceFirst("/","") : hpanListDirectory)

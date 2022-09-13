@@ -39,22 +39,20 @@ public class PGPFlatFileItemReader extends FlatFileItemReader<String> {
     /**
      * Override of {@link FlatFileItemReader#doOpen},introduces a
      * decrypt pass before calling on the parent implementation
-     * @throws Exception
      */
     @SneakyThrows
     @Override
-    protected void doOpen() throws Exception {
+    protected void doOpen() {
 
         Assert.notNull(this.resource, "Input resource must be set");
 
-        if (applyDecrypt) {
+        if (Boolean.TRUE.equals(applyDecrypt)) {
 
             File fileToProcess = resource.getFile();
-            FileInputStream fileToProcessIS = new FileInputStream(fileToProcess);
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             Resource secretKeyResource = resolver.getResource(secretFilePath);
-            FileInputStream secretFilePathIS = new FileInputStream(secretKeyResource.getFile());
-            try {
+            try (FileInputStream fileToProcessIS = new FileInputStream(fileToProcess);
+                FileInputStream secretFilePathIS = new FileInputStream(secretKeyResource.getFile())) {
                 byte[] decryptFileData = EncryptUtil.decryptFile(
                         fileToProcessIS,
                         secretFilePathIS,
@@ -65,9 +63,6 @@ public class PGPFlatFileItemReader extends FlatFileItemReader<String> {
             } catch (Exception e) {
                 log.error(e.getMessage(),e);
                 throw new PGPDecryptException(e.getMessage(),e);
-            } finally {
-                fileToProcessIS.close();
-                secretFilePathIS.close();
             }
 
         } else {

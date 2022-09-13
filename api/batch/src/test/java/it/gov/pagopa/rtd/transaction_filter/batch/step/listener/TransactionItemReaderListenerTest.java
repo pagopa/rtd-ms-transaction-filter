@@ -1,5 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
+import static org.mockito.ArgumentMatchers.any;
+
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.SneakyThrows;
@@ -34,18 +36,18 @@ public class TransactionItemReaderListenerTest {
         Mockito.reset(transactionWriterService);
         BDDMockito.doReturn(false)
                 .when(transactionWriterService)
-                .hasErrorHpan(Mockito.any());
+                .hasErrorHpan(any());
         BDDMockito.doNothing()
                 .when(transactionWriterService)
-                .storeErrorPans(Mockito.any());
+                .storeErrorPans(any());
         BDDMockito.doNothing()
                 .when(transactionWriterService)
-                .write(Mockito.any(), Mockito.any());
+                .write(any(), any());
     }
 
     @SneakyThrows
     @Test
-    public void beforeStep_OK() {
+    public void afterRead_OK() {
 
         File folder = tempFolder.newFolder("testListener");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -88,7 +90,7 @@ public class TransactionItemReaderListenerTest {
         transactionItemReaderListener.onReadError(new FlatFileParseException(
                 "Parsing error at line: 1 in resource=[[file:/input]]", new Exception(), "input", 1));
 
-        BDDMockito.verify(transactionWriterService).write(Mockito.any(),Mockito.any());
+        BDDMockito.verify(transactionWriterService).write(any(), any());
 
 
     }
@@ -113,7 +115,7 @@ public class TransactionItemReaderListenerTest {
         transactionItemReaderListener.onReadError(new FlatFileParseException("Parsing error at line: " +
                 1, new Exception(), "input", 1));
 
-        BDDMockito.verify(transactionWriterService, Mockito.times(0)).write(Mockito.any(),Mockito.any());
+        BDDMockito.verify(transactionWriterService, Mockito.times(0)).write(any(), any());
 
     }
 

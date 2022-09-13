@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.reader;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.batch.item.ReaderNotOpenException;
@@ -22,10 +23,10 @@ import java.util.HashMap;
  * Custom implementation of {@link FlatFileItemReader}, the source code is replicated
  * from the original class, and modified to manage proper record line awareness
  */
+@Slf4j
 public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTransaction> {
-    private static final Log logger = LogFactory.getLog(FlatFileItemReader.class);
     public static final String DEFAULT_CHARSET = Charset.defaultCharset().name();
-    public static final String[] DEFAULT_COMMENT_PREFIXES = new String[]{"#"};
+    protected static final String[] DEFAULT_COMMENT_PREFIXES = new String[]{"#"};
     private RecordSeparatorPolicy recordSeparatorPolicy = new SimpleRecordSeparatorPolicy();
     private Resource resource;
     private BufferedReader reader;
@@ -38,7 +39,6 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
     private LineCallbackHandler skippedLinesCallback;
     private boolean strict;
     private BufferedReaderFactory bufferedReaderFactory;
-    private HashMap<String,Integer> lineToRecordCount;
 
     public TransactionFlatFileItemReader() {
         this.comments = DEFAULT_COMMENT_PREFIXES;
@@ -48,46 +48,55 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
         this.strict = true;
         this.bufferedReaderFactory = new DefaultBufferedReaderFactory();
         this.setName(ClassUtils.getShortName(FlatFileItemReader.class));
-        this.lineToRecordCount = new HashMap<>();
     }
 
+    @Override
     public void setStrict(boolean strict) {
         this.strict = strict;
     }
 
+    @Override
     public void setSkippedLinesCallback(LineCallbackHandler skippedLinesCallback) {
         this.skippedLinesCallback = skippedLinesCallback;
     }
 
+    @Override
     public void setLinesToSkip(int linesToSkip) {
         this.linesToSkip = linesToSkip;
     }
 
+    @Override
     public void setLineMapper(LineMapper<InboundTransaction> lineMapper) {
         this.lineMapper = lineMapper;
     }
 
+    @Override
     public void setEncoding(String encoding) {
         this.encoding = encoding;
     }
 
+    @Override
     public void setBufferedReaderFactory(BufferedReaderFactory bufferedReaderFactory) {
         this.bufferedReaderFactory = bufferedReaderFactory;
     }
 
+    @Override
     public void setComments(String[] comments) {
         this.comments = new String[comments.length];
         System.arraycopy(comments, 0, this.comments, 0, comments.length);
     }
 
+    @Override
     public void setResource(Resource resource) {
         this.resource = resource;
     }
 
+    @Override
     public void setRecordSeparatorPolicy(RecordSeparatorPolicy recordSeparatorPolicy) {
         this.recordSeparatorPolicy = recordSeparatorPolicy;
     }
 
+    @Override
     @Nullable
     protected InboundTransaction doRead() throws Exception {
         if (this.noInput) {
@@ -118,7 +127,7 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
             throw new ReaderNotOpenException("Reader must be open before it can be read.");
         } else {
             String line = null;
-            Integer count = 0;
+            int count = 0;
 
             try {
                 line = this.reader.readLine();
@@ -151,6 +160,7 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
         }
     }
 
+    @Override
     protected boolean isComment(String line) {
         String[] var2 = this.comments;
         int var3 = var2.length;
@@ -165,6 +175,7 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
         return false;
     }
 
+    @Override
     protected void doClose() throws Exception {
         this.lineCount = 0;
         if (this.reader != null) {
@@ -173,6 +184,7 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
 
     }
 
+    @Override
     protected void doOpen() throws Exception {
         Assert.notNull(this.resource, "Input resource must be set");
         Assert.notNull(this.recordSeparatorPolicy, "RecordSeparatorPolicy must be set");
@@ -182,21 +194,21 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
                 throw new IllegalStateException("Input resource must exist (reader is in 'strict' mode): " +
                         this.resource);
             } else {
-                logger.warn("Input resource does not exist " + this.resource.getDescription());
+                log.warn("Input resource does not exist " + this.resource.getDescription());
             }
         } else if (!this.resource.isReadable()) {
             if (this.strict) {
                 throw new IllegalStateException("Input resource must be readable (reader is in 'strict' mode): " +
                         this.resource);
             } else {
-                logger.warn("Input resource is not readable " + this.resource.getDescription());
+                log.warn("Input resource is not readable " + this.resource.getDescription());
             }
         } else {
             this.reader = this.bufferedReaderFactory.create(this.resource, this.encoding);
 
             for(int i = 0; i < this.linesToSkip; ++i) {
                 String line = this.readLine();
-                if (this.skippedLinesCallback != null) {
+                if (this.skippedLinesCallback != null && line != null) {
                     this.skippedLinesCallback.handleLine(line);
                 }
             }
@@ -205,10 +217,12 @@ public class TransactionFlatFileItemReader  extends FlatFileItemReader<InboundTr
         }
     }
 
+    @Override
     public void afterPropertiesSet() throws Exception {
         Assert.notNull(this.lineMapper, "LineMapper is required");
     }
 
+    @Override
     protected void jumpToItem(int itemIndex) throws Exception {
         for(int i = 0; i < itemIndex; ++i) {
             this.readLine();
