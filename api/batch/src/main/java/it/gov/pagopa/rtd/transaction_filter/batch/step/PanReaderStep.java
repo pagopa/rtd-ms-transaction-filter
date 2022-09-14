@@ -4,6 +4,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.PGPFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.HpanWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
+import java.io.IOException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -87,7 +88,7 @@ public class PanReaderStep {
      */
     @Bean
     @JobScope
-    public Partitioner hpanRecoveryPartitioner() throws Exception {
+    public Partitioner hpanRecoveryPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         partitioner.setResources(resolver.getResources(hpanDirectoryPath));
@@ -102,7 +103,7 @@ public class PanReaderStep {
      * @throws Exception
      */
     @Bean
-    public Step hpanRecoveryMasterStep(StoreService storeService) throws Exception {
+    public Step hpanRecoveryMasterStep(StoreService storeService) throws IOException {
         return stepBuilderFactory.get("hpan-recovery-master-step").partitioner(hpanRecoveryWorkerStep(storeService))
                 .partitioner("partition", hpanRecoveryPartitioner())
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
