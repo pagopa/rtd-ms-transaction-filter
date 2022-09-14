@@ -61,12 +61,12 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
                     .replace("]","").replace("\\\\", "/");
             String[] fileArr = filename.split("/");
             try {
-                String[] lineArray = flatFileParseException.getInput().split("_",2);
+                String lineContent = flatFileParseException.getInput();
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()
                         .concat("/".concat(executionDate))
-                        + "_" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1],
-                        (lineArray.length > 1 ? lineArray[1] : lineArray[0]).concat("\n"));
+                        + "_" + prefix + "_FilteredRecords_" + fileArr[fileArr.length-1],
+                        lineContent.concat("\n"));
             } catch (Exception e) {
                 log.error(e.getMessage(),e);
             }

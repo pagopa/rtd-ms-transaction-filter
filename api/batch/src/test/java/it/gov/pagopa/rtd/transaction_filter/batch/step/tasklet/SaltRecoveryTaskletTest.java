@@ -5,11 +5,10 @@ import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.SneakyThrows;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -46,9 +45,6 @@ public class SaltRecoveryTaskletTest {
         Mockito.reset(hpanConnectorServiceMock, storeServiceMock);
     }
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
     @SneakyThrows
     @Test
     public void testSalt_Ok() {
@@ -78,8 +74,7 @@ public class SaltRecoveryTaskletTest {
         SaltRecoveryTasklet saltRecoveryTasklet = new SaltRecoveryTasklet();
         saltRecoveryTasklet.setHpanConnectorService(hpanConnectorServiceMock);
         saltRecoveryTasklet.setTaskletEnabled(true);
-        expectedException.expect(Exception.class);
-        saltRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
+        Assert.assertThrows(Exception.class, () -> saltRecoveryTasklet.execute(new StepContribution(execution),chunkContext));
         BDDMockito.verify(hpanConnectorServiceMock).getSalt();
     }
 

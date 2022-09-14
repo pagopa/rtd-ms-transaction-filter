@@ -1,7 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.reader;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
-import it.gov.pagopa.rtd.transaction_filter.batch.encryption.exception.PGPDecryptException;
+import it.gov.pagopa.rtd.transaction_filter.batch.encryption.exception.PGPDecryptThrowable;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,7 @@ public class PGPFlatFileItemReader extends FlatFileItemReader<String> {
                         new ByteArrayInputStream(decryptFileData)));
             } catch (Exception e) {
                 log.error(e.getMessage(),e);
-                throw new PGPDecryptException(e.getMessage(),e);
+                throw new PGPDecryptThrowable(e.getMessage(),e);
             }
 
         } else {

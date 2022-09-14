@@ -145,8 +145,7 @@ public class HpanListRecoveryTaskletTest {
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
         ChunkContext chunkContext = new ChunkContext(stepContext);
-        expectedException.expect(Exception.class);
-        hpanListRecoveryTasklet.execute(new StepContribution(execution),chunkContext);
+        Assert.assertThrows(Exception.class, () -> hpanListRecoveryTasklet.execute(new StepContribution(execution),chunkContext));
         BDDMockito.verify(hpanConnectorServiceMock).getHpanList();
         Assert.assertEquals(0, FileUtils.listFiles(hpanFolder, new String[]{"pgp"},false).size());
     }

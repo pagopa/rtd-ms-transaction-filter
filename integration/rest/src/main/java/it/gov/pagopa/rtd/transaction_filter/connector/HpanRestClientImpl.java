@@ -132,100 +132,102 @@ class HpanRestClientImpl implements HpanRestClient {
     ResponseEntity<Resource> responseEntity = hpanRestConnector.getList(apiKey);
 
     if (Boolean.TRUE.equals(dateValidation)) {
-      String dateString = Objects.requireNonNull(responseEntity.getHeaders()
-          .get(dateValidationHeaderName)).get(0);
-      DateTimeFormatter dtf = dateValidationPattern != null && !dateValidationPattern.isEmpty() ?
-          DateTimeFormatter.ofPattern(dateValidationPattern).withZone(ZoneId.systemDefault()) :
-          DateTimeFormatter.RFC_1123_DATE_TIME;
-
-      ZonedDateTime fileCreationDateTime = LocalDateTime.parse(dateString, dtf)
-          .atZone(ZoneId.of(dateValidationZone));
-
-      ZonedDateTime currentDate = validationDate != null ?
-          validationDate.atZone(ZoneId.of(dateValidationZone)) :
-          LocalDateTime.now().atZone(ZoneId.of(dateValidationZone));
-
-      DateTimeFormatter dayFormat = DateTimeFormatter.ofPattern("dd-M-yyyy hh:mm:ss a");
-
-      log.debug("currentDate is: {}", dayFormat.format(currentDate));
-      log.debug("fileCreationTime is {}", dayFormat.format(fileCreationDateTime));
-
-      boolean sameYear = ChronoUnit.YEARS.between(fileCreationDateTime, currentDate) == 0;
-      boolean sameMonth = ChronoUnit.MONTHS.between(fileCreationDateTime, currentDate) == 0;
-      boolean sameDay = ChronoUnit.DAYS.between(fileCreationDateTime, currentDate) == 0;
-
-      if (!sameYear || !sameMonth || !sameDay) {
-        throw new Exception("Recovered PAN list exceeding a day");
-      }
-
+      validateDate(responseEntity.getHeaders().get(dateValidationHeaderName));
     }
 
-    try (FileOutputStream tempFileFOS = new FileOutputStream(tempFile)) {
-
-      if (Boolean.TRUE.equals(checksumValidation)) {
-        String checksum = Objects.requireNonNull(
-            responseEntity.getHeaders().get(checksumHeaderName)).get(0);
-        if (!checksum.equals(DigestUtils.sha256Hex(Objects.requireNonNull(
-            responseEntity.getBody()).getInputStream()))) {
-          throw new Exception();
-        }
-      }
-
-      StreamUtils.copy(Objects.requireNonNull(
-          responseEntity.getBody()).getInputStream(), tempFileFOS);
+    if (Boolean.TRUE.equals(checksumValidation)) {
+      validateChecksum(responseEntity);
     }
+
+    copyZippedFileIntoTempFile(responseEntity.getBody());
 
     if (Boolean.TRUE.equals(attemptExtraction)) {
-
-      try (ZipFile zipFile = new ZipFile(tempFile)) {
-
-        tempDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
-
-        Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
-
-        while (enumeration.hasMoreElements()) {
-
-          FileOutputStream tempFileFOS = null;
-          InputStream zipEntryIS = null;
-
-          try {
-
-            ZipEntry zipEntry = enumeration.nextElement();
-            zipEntryIS = zipFile.getInputStream(zipEntry);
-            File newFile = new File(
-                tempDirWithPrefix.toFile().getAbsolutePath() +
-                    File.separator + zipEntry.getName());
-
-            if (!isFilenameValidInZipFile(zipEntry.getName())) {
-              throw new IOException("Illegal filename in archive: " + zipEntry.getName());
-            }
-
-            new File(newFile.getParent()).mkdirs();
-
-            tempFileFOS = new FileOutputStream(newFile);
-            IOUtils.copy(zipEntryIS, tempFileFOS);
-
-            if (zipEntry.getName().matches(listFilePattern)) {
-              localTempFile = newFile;
-            }
-
-          } finally {
-
-            if (zipEntryIS != null) {
-              zipEntryIS.close();
-            }
-
-            if (tempFileFOS != null) {
-              tempFileFOS.close();
-            }
-
-          }
-        }
-      }
+      localTempFile = extractZipFile(tempFile);
     }
 
     return localTempFile;
   }
+
+  private void validateDate(List<String> headers) {
+    String dateString = Objects.requireNonNull(headers).get(0);
+    DateTimeFormatter dtf = dateValidationPattern != null && !dateValidationPattern.isEmpty() ?
+        DateTimeFormatter.ofPattern(dateValidationPattern).withZone(ZoneId.systemDefault()) :
+        DateTimeFormatter.RFC_1123_DATE_TIME;
+
+    ZonedDateTime fileCreationDateTime = LocalDateTime.parse(dateString, dtf)
+        .atZone(ZoneId.of(dateValidationZone));
+
+    ZonedDateTime currentDate = validationDate != null ?
+        validationDate.atZone(ZoneId.of(dateValidationZone)) :
+        LocalDateTime.now().atZone(ZoneId.of(dateValidationZone));
+
+    DateTimeFormatter dayFormat = DateTimeFormatter.ofPattern("dd-M-yyyy hh:mm:ss a");
+
+    log.debug("currentDate is: {}", dayFormat.format(currentDate));
+    log.debug("fileCreationTime is {}", dayFormat.format(fileCreationDateTime));
+
+    boolean sameYear = ChronoUnit.YEARS.between(fileCreationDateTime, currentDate) == 0;
+    boolean sameMonth = ChronoUnit.MONTHS.between(fileCreationDateTime, currentDate) == 0;
+    boolean sameDay = ChronoUnit.DAYS.between(fileCreationDateTime, currentDate) == 0;
+
+    if (!sameYear || !sameMonth || !sameDay) {
+      throw new IllegalArgumentException("Recovered PAN list exceeding a day");
+    }
+  }
+
+  private void validateChecksum(ResponseEntity<Resource> responseEntity) throws IOException {
+    String checksum = Objects.requireNonNull(
+        responseEntity.getHeaders().get(checksumHeaderName)).get(0);
+    if (!checksum.equals(DigestUtils.sha256Hex(Objects.requireNonNull(
+        responseEntity.getBody()).getInputStream()))) {
+      throw new IllegalArgumentException("Error! Checksum does not match!");
+    }
+  }
+
+  @SneakyThrows
+  private void copyZippedFileIntoTempFile(Resource zipFile) {
+    try (FileOutputStream tempFileFOS = new FileOutputStream(tempFile)) {
+      StreamUtils.copy(Objects.requireNonNull(zipFile).getInputStream(), tempFileFOS);
+    }
+  }
+
+  @SneakyThrows
+  private File extractZipFile(File tempFile) {
+
+    File localTempFile = null;
+
+    try (ZipFile zipFile = new ZipFile(tempFile)) {
+
+      tempDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
+      Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
+
+      while (enumeration.hasMoreElements()) {
+
+        ZipEntry zipEntry = enumeration.nextElement();
+        File newFile = new File(
+            tempDirWithPrefix.toFile().getAbsolutePath() +
+                File.separator + zipEntry.getName());
+
+        if (!isFilenameValidInZipFile(zipEntry.getName())) {
+          throw new IOException("Illegal filename in archive: " + zipEntry.getName());
+        }
+
+        try (InputStream zipEntryIS = zipFile.getInputStream(zipEntry);
+            FileOutputStream tempFileFOS = new FileOutputStream(newFile)) {
+
+          new File(newFile.getParent()).mkdirs();
+
+          IOUtils.copy(zipEntryIS, tempFileFOS);
+
+          if (zipEntry.getName().matches(listFilePattern)) {
+            localTempFile = newFile;
+          }
+        }
+      }
+    }
+    return localTempFile;
+  }
+
 
   @Override
   public String getSalt() {

@@ -38,44 +38,53 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     public void afterProcess(InboundTransaction item, @Nullable InboundTransaction result) {
 
         if (Boolean.TRUE.equals(enableAfterProcessLogging)) {
-
             if (result == null) {
-                if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
-                    log.info("Filtered transaction record on filename: {},line: {}",
-                            item.getFilename(),
-                            item.getLineNumber());
-                } else if (loggingFrequency == 1) {
-                    log.debug("Filtered transaction record on filename: {},line: {}",
-                            item.getFilename(),
-                            item.getLineNumber());
-                }
-
+                logFilteredItem(item);
             } else {
-                if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
-                    log.info("Processed {} lines on file: {}", item.getLineNumber(), item.getFilename());
-                } else if (loggingFrequency == 1) {
-                    log.debug("Processed transaction record on filename: {}, line: {}",
-                            item.getFilename(), item.getLineNumber());
-                }
+                logProcessedItem(item);
             }
-
         }
 
         if (Boolean.TRUE.equals(enableAfterProcessFileLogging) && result == null) {
-            try {
-                String file = item.getFilename().replace("\\", "/");
-                String[] fileArr = file.split("/");
-                transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
-                        .getFile().getAbsolutePath()
-                        .concat("/".concat(executionDate))
-                        + "_" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1],buildCsv(item));
-            } catch (Exception e) {
-                if (log.isErrorEnabled()) {
-                    log.error(e.getMessage(), e);
-                }
-            }
+            logItemIntoFilteredRecordsFile(item);
         }
 
+    }
+
+    private void logFilteredItem(InboundTransaction item) {
+        if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
+            log.info("Filtered transaction record on filename: {},line: {}",
+                item.getFilename(),
+                item.getLineNumber());
+        } else if (loggingFrequency == 1) {
+            log.debug("Filtered transaction record on filename: {},line: {}",
+                item.getFilename(),
+                item.getLineNumber());
+        }
+    }
+
+    private void logProcessedItem(InboundTransaction item) {
+        if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
+            log.info("Processed {} lines on file: {}", item.getLineNumber(), item.getFilename());
+        } else if (loggingFrequency == 1) {
+            log.debug("Processed transaction record on filename: {}, line: {}",
+                item.getFilename(), item.getLineNumber());
+        }
+    }
+
+    private void logItemIntoFilteredRecordsFile(InboundTransaction item) {
+        try {
+            String file = item.getFilename().replace("\\", "/");
+            String[] fileArr = file.split("/");
+            transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
+                .getFile().getAbsolutePath()
+                .concat("/".concat(executionDate))
+                + "_" + prefix + "_FilteredRecords_" + fileArr[fileArr.length-1], buildCsv(item));
+        } catch (Exception e) {
+            if (log.isErrorEnabled()) {
+                log.error(e.getMessage(), e);
+            }
+        }
     }
 
     public void onProcessError(InboundTransaction item, Exception throwable) {
