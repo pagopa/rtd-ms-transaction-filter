@@ -1,12 +1,18 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
+import static org.mockito.ArgumentMatchers.any;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
+import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
 import lombok.SneakyThrows;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -24,9 +30,6 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.test.MetaDataInstanceFactory;
 import org.springframework.core.io.UrlResource;
-
-import java.io.File;
-import java.util.Objects;
 
 public class TransactionSenderRestTaskletTest {
 
@@ -97,8 +100,35 @@ public class TransactionSenderRestTaskletTest {
         ChunkContext chunkContext = new ChunkContext(stepContext);
         transactionSenderRestTasklet.execute(new StepContribution(execution), chunkContext);
 
-        BDDMockito.verify(hpanConnectorServiceMock, Mockito.times(0)).getSasToken(Mockito.any());
-        BDDMockito.verify(hpanConnectorServiceMock, Mockito.times(0)).uploadFile(Mockito.any(), Mockito.any(), Mockito.any());
+        BDDMockito.verify(hpanConnectorServiceMock, Mockito.times(0)).getSasToken(any());
+        BDDMockito.verify(hpanConnectorServiceMock, Mockito.times(0)).uploadFile(any(), any(), any());
+    }
+
+    @SneakyThrows
+    @Test
+    public void whenUploadFailsThenRetry() {
+        File fileToSend = tempFolder.newFile("test");
+        SasResponse sasResponseMock = new SasResponse();
+        sasResponseMock.setSas("sas-token");
+        sasResponseMock.setAuthorizedContainer("authorized-container");
+        BDDMockito.doReturn(sasResponseMock).when(hpanConnectorServiceMock).getSasToken(HpanRestClient.SasScope.ADE);
+        BDDMockito.given(hpanConnectorServiceMock.uploadFile(any(), any(), any()))
+            .willAnswer(invocation -> { throw new IOException("Upload failed!"); });
+
+        TransactionSenderRestTasklet transactionSenderRestTasklet = new TransactionSenderRestTasklet();
+        transactionSenderRestTasklet.setTaskletEnabled(true);
+        transactionSenderRestTasklet.setHpanConnectorService(this.hpanConnectorServiceMock);
+        transactionSenderRestTasklet.setResource(new UrlResource("file:/" + fileToSend.getPath()));
+        transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.ADE);
+        transactionSenderRestTasklet.setInitialDelayInSeconds(0);
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        StepContext stepContext = new StepContext(execution);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+        // after three retries the exception will be thrown out anyway
+        Assert.assertThrows(IOException.class, () -> transactionSenderRestTasklet.execute(new StepContribution(execution), chunkContext));
+
+        BDDMockito.verify(hpanConnectorServiceMock, Mockito.times(3)).uploadFile(any(), any(), any());
     }
 
     @After

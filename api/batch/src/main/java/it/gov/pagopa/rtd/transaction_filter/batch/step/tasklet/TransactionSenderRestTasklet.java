@@ -1,9 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
-import feign.FeignException;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
+import java.io.IOException;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import org.springframework.util.Assert;
 public class TransactionSenderRestTasklet implements Tasklet, InitializingBean {
 
     private static final int RETRY_MAX_ATTEMPTS = 3;
-    private static final int INITIAL_DELAY_SECS = 2;
+    private int initialDelayInSeconds = 2;
 
     private HpanConnectorService hpanConnectorService;
     private Resource resource;
@@ -29,19 +29,19 @@ public class TransactionSenderRestTasklet implements Tasklet, InitializingBean {
 
     @Override
     @SneakyThrows
-    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws IOException {
         if (taskletEnabled) {
             int remainingAttempts = RETRY_MAX_ATTEMPTS;
-            int delay = INITIAL_DELAY_SECS;
+            int delay = initialDelayInSeconds;
             boolean uploadSucceeded = false;
 
             SasResponse sasResponse;
-            while (!uploadSucceeded && remainingAttempts > 0) {
+            while (!uploadSucceeded) {
                 try {
                     sasResponse = hpanConnectorService.getSasToken(scope);
                     hpanConnectorService.uploadFile(resource.getFile(), sasResponse.getSas(), sasResponse.getAuthorizedContainer());
                     uploadSucceeded = true;
-                } catch (FeignException e) {
+                } catch (IOException e) {
                     remainingAttempts -= 1;
                     if (remainingAttempts < 1) {
                         throw e;
