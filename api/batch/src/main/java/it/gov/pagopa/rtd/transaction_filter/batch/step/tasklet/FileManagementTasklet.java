@@ -1,11 +1,11 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
+import java.security.SecureRandom;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
@@ -198,7 +198,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         String[] filename = file.split("/");
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         archivalPath = resolver.getResources(archivalPath)[0].getFile().getAbsolutePath();
-        File destFile = FileUtils.getFile(archivalPath + "/" + RandomUtils.nextLong() +
+        File destFile = FileUtils.getFile(archivalPath + "/" + SecureRandom.getInstanceStrong().nextLong() +
                 "_" + OffsetDateTime.now().format(fmt) + "_" + filename[filename.length - 1]);
         FileUtils.moveFile(FileUtils.getFile(path), destFile);
     }
