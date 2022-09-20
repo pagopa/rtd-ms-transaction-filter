@@ -63,6 +63,7 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
         File tempFile = createTempFile(fileName, temporaryDirectory);
         copyFromResourceToFile(resource, tempFile);
         filesDownloaded.add(tempFile);
+        sendAckReceivedConfirmation(fileName);
       } else {
         log.warn("received empty file");
       }
@@ -85,6 +86,12 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
         InputStream inputStream = resource.getInputStream()) {
       StreamUtils.copy(inputStream, tempFileFOS);
     }
+  }
+
+  private void sendAckReceivedConfirmation(String fileName) {
+    ResponseEntity<Void> responseEntity = hpanRestConnector.postAckReceived(apiKey, fileName);
+
+    resourceValidator.validateStatus(responseEntity.getStatusCode());
   }
 
   public void setTempDir(File tempDir) {

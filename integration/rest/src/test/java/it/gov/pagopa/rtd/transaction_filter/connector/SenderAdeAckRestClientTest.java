@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
+import feign.FeignException;
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
 import it.gov.pagopa.rtd.transaction_filter.validator.BasicResponseEntityValidator;
 import it.gov.pagopa.rtd.transaction_filter.validator.ValidatorConfig;
@@ -80,6 +82,7 @@ public class SenderAdeAckRestClientTest {
       .needClientAuth(true)
       .keystorePath("src/test/resources/certs/server-keystore.jks")
       .keystorePassword("secret")
+      .keyManagerPassword("secret")
       .trustStorePath("src/test/resources/certs/server-truststore.jks")
       .trustStorePassword("secret")
       .usingFilesUnderClasspath("stubs")
@@ -136,6 +139,16 @@ public class SenderAdeAckRestClientTest {
 
     assertThatThrownBy(() -> restClient.getSenderAdeAckFiles()).isInstanceOf(
         NullPointerException.class);
+  }
+
+  @SneakyThrows
+  @Test
+  public void whenPostAckReceivedReturns400ThenRaisesException() {
+    wireMockRule.stubFor(put(urlPathMatching("/rtd/file-register/ack-received/.*"))
+        .willReturn(aResponse().withStatus(400)));
+
+    assertThatThrownBy(() -> restClient.getSenderAdeAckFiles()).isInstanceOf(
+        FeignException.class);
   }
 
   public static class RandomPortInitializer implements
