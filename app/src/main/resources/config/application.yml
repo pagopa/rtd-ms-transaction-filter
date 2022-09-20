@@ -139,6 +139,8 @@ rest-client:
         url: /rtd/file-register/sender-ade-ack
       download-file:
         url: /ade/{id}
+      received:
+        url: /rtd/file-register/ack-received/{id}
     mtls:
       enabled: ${HPAN_SERVICE_MTLS_ENABLED:true}
     key-store:
