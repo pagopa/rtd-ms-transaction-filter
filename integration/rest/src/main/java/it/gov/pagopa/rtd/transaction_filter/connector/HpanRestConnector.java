@@ -41,5 +41,5 @@ public interface HpanRestConnector {
     ResponseEntity<Resource> getSenderAdeAckFile(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName);
 
     @PutMapping(value = "${rest-client.sender-ade-ack.received.url}")
-    ResponseEntity<Void> postAckReceived(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName);
+    ResponseEntity<Void> putAckReceived(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName);
 }
