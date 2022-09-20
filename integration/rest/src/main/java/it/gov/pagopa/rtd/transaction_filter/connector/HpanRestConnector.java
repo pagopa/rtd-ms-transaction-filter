@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 @FeignClient(name = "${rest-client.hpan.serviceCode}", url = "${rest-client.hpan.base-url}")
@@ -38,4 +39,7 @@ public interface HpanRestConnector {
 
     @GetMapping(value = "${rest-client.sender-ade-ack.download-file.url}")
     ResponseEntity<Resource> getSenderAdeAckFile(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName);
+
+    @PutMapping(value = "${rest-client.sender-ade-ack.received.url}")
+    ResponseEntity<Void> postAckReceived(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName);
 }
