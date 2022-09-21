@@ -83,7 +83,7 @@ public class SenderAdeAckRestClientTest {
       .needClientAuth(true)
       .keystorePath("src/test/resources/certs/server-keystore.jks")
       .keystorePassword("secret")
-      .keyManagerPassword("secret")
+//      .keyManagerPassword("secret")
       .trustStorePath("src/test/resources/certs/server-truststore.jks")
       .trustStorePassword("secret")
       .usingFilesUnderClasspath("stubs")
