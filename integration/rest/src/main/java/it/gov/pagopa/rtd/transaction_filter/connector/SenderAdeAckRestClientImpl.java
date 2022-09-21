@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
+import feign.FeignException;
 import it.gov.pagopa.rtd.transaction_filter.validator.BasicResponseEntityValidator;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -20,6 +21,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -59,12 +61,21 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
       resourceValidator.validateStatus(resourceResponseEntity.getStatusCode());
 
       Resource resource = resourceResponseEntity.getBody();
-      if (resource != null && resource.exists()) {
-        File tempFile = createTempFile(fileName, temporaryDirectory);
-        copyFromResourceToFile(resource, tempFile);
+      if (resource == null || !resource.exists()) {
+        log.warn("received empty file");
+        // skip to next file
+        continue;
+      }
+
+      File tempFile = createTempFile(fileName, temporaryDirectory);
+      copyFromResourceToFile(resource, tempFile);
+
+      boolean isDownloadConfirmed = sendAckReceivedConfirmation(fileName);
+      if (isDownloadConfirmed) {
         filesDownloaded.add(tempFile);
       } else {
-        log.warn("received empty file");
+        // if the download confirmation failed then the file is deleted and must be downloaded again
+        FileUtils.deleteQuietly(tempFile);
       }
     }
 
@@ -85,6 +96,17 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
         InputStream inputStream = resource.getInputStream()) {
       StreamUtils.copy(inputStream, tempFileFOS);
     }
+  }
+
+  private boolean sendAckReceivedConfirmation(String fileName) {
+    try {
+      ResponseEntity<Void> responseEntity = hpanRestConnector.putAckReceived(apiKey, fileName);
+      resourceValidator.validateStatus(responseEntity.getStatusCode());
+    } catch (FeignException | ResponseStatusException ex) {
+      log.error("Cannot confirm {} file download! It will be downloaded on the next run.", fileName);
+      return false;
+    }
+    return true;
   }
 
   public void setTempDir(File tempDir) {

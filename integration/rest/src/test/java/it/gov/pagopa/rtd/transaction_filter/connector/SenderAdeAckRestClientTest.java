@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,8 +15,10 @@ import it.gov.pagopa.rtd.transaction_filter.validator.BasicResponseEntityValidat
 import it.gov.pagopa.rtd.transaction_filter.validator.ValidatorConfig;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import lombok.SneakyThrows;
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -80,6 +83,7 @@ public class SenderAdeAckRestClientTest {
       .needClientAuth(true)
       .keystorePath("src/test/resources/certs/server-keystore.jks")
       .keystorePassword("secret")
+      .keyManagerPassword("secret")
       .trustStorePath("src/test/resources/certs/server-truststore.jks")
       .trustStorePassword("secret")
       .usingFilesUnderClasspath("stubs")
@@ -136,6 +140,28 @@ public class SenderAdeAckRestClientTest {
 
     assertThatThrownBy(() -> restClient.getSenderAdeAckFiles()).isInstanceOf(
         NullPointerException.class);
+  }
+
+  @SneakyThrows
+  @Test
+  public void whenPutAckReceivedReturns400ThenReturnsNoFilesAndDeleteTempOnes() {
+    wireMockRule.stubFor(put(urlPathMatching("/rtd/file-register/ack-received/.*"))
+        .willReturn(aResponse().withStatus(400)));
+
+    List<File> files = restClient.getSenderAdeAckFiles();
+
+    assertThat(files).isEmpty();
+  }
+
+  @SneakyThrows
+  @Test
+  public void whenPutAckReceivedReturnsSelective400ThenReturnsOnlyConfirmedFiles() {
+    wireMockRule.stubFor(put("/rtd/file-register/ack-received/rejectedFiscalCodes1.csv")
+        .willReturn(aResponse().withStatus(400)));
+
+    List<File> files = restClient.getSenderAdeAckFiles();
+
+    assertThat(files).hasSize(1).map(File::getName).contains("rejectedFiscalCodes2.csv");
   }
 
   public static class RandomPortInitializer implements
