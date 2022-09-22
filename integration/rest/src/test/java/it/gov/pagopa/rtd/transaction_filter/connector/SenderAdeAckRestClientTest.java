@@ -15,10 +15,8 @@ import it.gov.pagopa.rtd.transaction_filter.validator.BasicResponseEntityValidat
 import it.gov.pagopa.rtd.transaction_filter.validator.ValidatorConfig;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import lombok.SneakyThrows;
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -83,7 +81,6 @@ public class SenderAdeAckRestClientTest {
       .needClientAuth(true)
       .keystorePath("src/test/resources/certs/server-keystore.jks")
       .keystorePassword("secret")
-//      .keyManagerPassword("secret")
       .trustStorePath("src/test/resources/certs/server-truststore.jks")
       .trustStorePassword("secret")
       .usingFilesUnderClasspath("stubs")
