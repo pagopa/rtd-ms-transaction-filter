@@ -28,7 +28,6 @@
         <sonar.exclusions>**/enums/**,**/model/**,**/Constants*.java,**/*Config.java,**/*Application.java
         </sonar.exclusions>
         <transaction-filter.version>1.2.5</transaction-filter.version>
-        <spring-cloud.version>2021.0.4</spring-cloud.version>
     </properties>
 
     <dependencyManagement>
@@ -41,10 +40,14 @@
             </dependency>
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud.version}</version>
-                <scope>import</scope>
-                <type>pom</type>
+                <artifactId>spring-cloud-contract-wiremock</artifactId>
+                <version>3.1.3</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-openfeign</artifactId>
+                <version>3.1.3</version>
             </dependency>
             <dependency>
                 <groupId>org.yaml</groupId>
