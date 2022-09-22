@@ -100,7 +100,7 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
 
   private boolean sendAckReceivedConfirmation(String fileName) {
     try {
-      ResponseEntity<Void> responseEntity = hpanRestConnector.putAckReceived(apiKey, fileName);
+      ResponseEntity<Void> responseEntity = hpanRestConnector.putAckReceived(apiKey, fileName, "");
       resourceValidator.validateStatus(responseEntity.getStatusCode());
     } catch (FeignException | ResponseStatusException ex) {
       log.error("Cannot confirm {} file download! It will be downloaded on the next run.", fileName);

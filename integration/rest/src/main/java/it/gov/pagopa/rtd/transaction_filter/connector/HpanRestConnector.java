@@ -41,5 +41,7 @@ public interface HpanRestConnector {
     ResponseEntity<Resource> getSenderAdeAckFile(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName);
 
     @PutMapping(value = "${rest-client.sender-ade-ack.received.url}")
-    ResponseEntity<Void> putAckReceived(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName);
+    // @Param placeholder is there only to force Feign to add a 'Content-length' header to the request
+    ResponseEntity<Void> putAckReceived(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName,
+        @Param("placeholder") String placeholder);
 }
