@@ -132,7 +132,18 @@ public class SenderAdeAckRestClientTest {
 
   @SneakyThrows
   @Test
-  public void whenHttpApiReturnsEmptyBodyThenRaisesException() {
+  public void whenDownloadFileIsNotFoundThenDoNotSaveTheFile() {
+    wireMockRule.stubFor(get(urlPathMatching("/ade/.*"))
+        .willReturn(aResponse()));
+
+    List<File> files = restClient.getSenderAdeAckFiles();
+
+    assertThat(files).isNotNull().isEmpty();
+  }
+
+  @SneakyThrows
+  @Test
+  public void whenAdeAckListApiReturnsEmptyBodyThenRaisesException() {
     wireMockRule.stubFor(get("/rtd/file-register/sender-ade-ack")
         .willReturn(aResponse()));
 
