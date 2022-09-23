@@ -61,7 +61,7 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
       resourceValidator.validateStatus(resourceResponseEntity.getStatusCode());
 
       Resource resource = resourceResponseEntity.getBody();
-      if (resource == null || !resource.exists()) {
+      if (resource == null) {
         log.warn("received empty file");
         // skip to next file
         continue;
