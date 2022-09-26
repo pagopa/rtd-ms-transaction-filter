@@ -153,9 +153,9 @@ public class SenderAdeAckRestClientTest {
 
   @SneakyThrows
   @Test
-  public void whenPutAckReceivedReturns400ThenReturnsNoFilesAndDeleteTempOnes() {
+  public void whenPutAckReceivedReturns404ThenReturnsNoFilesAndDeleteTempOnes() {
     wireMockRule.stubFor(put(urlPathMatching("/rtd/file-register/ack-received/.*"))
-        .willReturn(aResponse().withStatus(400)));
+        .willReturn(aResponse().withStatus(404)));
 
     List<File> files = restClient.getSenderAdeAckFiles();
 
@@ -164,9 +164,9 @@ public class SenderAdeAckRestClientTest {
 
   @SneakyThrows
   @Test
-  public void whenPutAckReceivedReturnsSelective400ThenReturnsOnlyConfirmedFiles() {
+  public void whenPutAckReceivedReturnsSelective404ThenReturnsOnlyConfirmedFiles() {
     wireMockRule.stubFor(put("/rtd/file-register/ack-received/rejectedFiscalCodes1.csv")
-        .willReturn(aResponse().withStatus(400)));
+        .willReturn(aResponse().withStatus(404)));
 
     List<File> files = restClient.getSenderAdeAckFiles();
 
