@@ -275,7 +275,7 @@ public class TransactionFilterStep {
             .itemCountLimitPerResource(adeSplitThreshold)
             .resource(resolver.getResource(outputDirectoryPath))
             .resourceSuffixCreator(index -> "/" + getAdeOutputFileNameChunked(filename, index))
-            .delegate(getAdeItemWriter(storeService))
+            .delegate(createAdeItemWriter(storeService))
             .build();
     }
 
@@ -302,7 +302,7 @@ public class TransactionFilterStep {
      * @param storeService data structures shared between different steps
      * @return an item writer
      */
-    protected FlatFileItemWriter<AdeTransactionsAggregate> getAdeItemWriter(StoreService storeService) {
+    protected FlatFileItemWriter<AdeTransactionsAggregate> createAdeItemWriter(StoreService storeService) {
         PGPFlatFileItemWriter<AdeTransactionsAggregate> itemWriter = new PGPFlatFileItemWriter<>(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
         itemWriter.setLineAggregator(adeTransactionsAggregateLineAggregator());
         if (inputFileChecksumEnabled) {

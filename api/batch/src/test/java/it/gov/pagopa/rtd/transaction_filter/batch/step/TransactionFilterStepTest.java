@@ -7,15 +7,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.AdeTransactionsAggregate;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreServiceImpl;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -119,7 +116,7 @@ class TransactionFilterStepTest {
         StoreService storeService = new StoreServiceImpl(null);
         storeService.storeKey("pagopa", "prova");
 
-        ItemWriter<AdeTransactionsAggregate> itemWriter = transactionFilterStep.getAdeItemWriter(storeService);
+        ItemWriter<AdeTransactionsAggregate> itemWriter = transactionFilterStep.createAdeItemWriter(storeService);
 
         assertThat(itemWriter).isNotNull();
     }
