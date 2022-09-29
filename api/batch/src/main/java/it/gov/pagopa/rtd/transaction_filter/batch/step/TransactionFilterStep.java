@@ -19,6 +19,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSender
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.ChecksumHeaderWriter;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
@@ -123,12 +124,15 @@ public class TransactionFilterStep {
     private Long loggingFrequency;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize}")
     private Integer writerPoolSize;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderPending.enabled}")
+    private Boolean transactionSenderPendingEnabled;
 
     public static final String RTD_OUTPUT_FILE_PREFIX = "CSTAR.";
     public static final String ADE_OUTPUT_FILE_PREFIX = "ADE.";
     public static final String PAGOPA_PGP_PUBLIC_KEY_ID = "pagopa";
     private static final String LOG_PREFIX_TRN = "Rtd_";
     private static final String LOG_PREFIX_ADE = "Ade_";
+    private static final String REGEX_PGP_FILES = "*.pgp";
     private static final String PARTITIONER_WORKER_STEP_NAME = "partition";
     // [service].[ABI].[filetype].[date].[time].[nnn].csv
     private static final String TRX_FILENAME_PATTERN = "^CSTAR\\.\\w{5}\\.TRNLOG\\.\\d{8}\\.\\d{6}\\.\\d{3}\\.csv$";
@@ -582,7 +586,7 @@ public class TransactionFilterStep {
     public Partitioner transactionSenderRtdPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        String pathMatcher = outputDirectoryPath + File.separator + RTD_OUTPUT_FILE_PREFIX + "*.pgp";
+        String pathMatcher = outputDirectoryPath + File.separator + RTD_OUTPUT_FILE_PREFIX + REGEX_PGP_FILES;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
@@ -599,7 +603,7 @@ public class TransactionFilterStep {
     public Partitioner transactionSenderAdePartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        String pathMatcher = outputDirectoryPath + File.separator + ADE_OUTPUT_FILE_PREFIX + "*.pgp";
+        String pathMatcher = outputDirectoryPath + File.separator + ADE_OUTPUT_FILE_PREFIX + REGEX_PGP_FILES;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
@@ -703,6 +707,76 @@ public class TransactionFilterStep {
         transactionSenderRestTasklet.setTaskletEnabled(transactionSenderRtdEnabled);
         transactionSenderRestTasklet.setScope(HpanRestClient.SasScope.RTD);
         return transactionSenderRestTasklet;
+    }
+
+    /**
+     * Partitioning strategy for the upload of output files in pending directory.
+     *
+     * @return a partitioner instance
+     * @throws IOException
+     */
+    @Bean
+    @JobScope
+    public Partitioner transactionSenderPendingPartitioner() throws IOException {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        String pathMatcher = pendingDirectoryPath + File.separator + REGEX_PGP_FILES;
+        partitioner.setResources(resolver.getResources(pathMatcher));
+        partitioner.partition(partitionerSize);
+        return partitioner;
+    }
+
+    /**
+     * Master step for the upload of output files in pending directory.
+     *
+     * @param hpanConnectorService service to connect to rest client
+     * @return the AdE batch master step
+     * @throws IOException
+     */
+    @Bean
+    public Step transactionSenderPendingMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
+        return stepBuilderFactory.get("transaction-sender-pending-master-step")
+            .partitioner(transactionSenderPendingWorkerStep(hpanConnectorService))
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderPendingPartitioner())
+            .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * Worker step for the upload of output files in pending directory.
+     *
+     * @param hpanConnectorService service to connect to rest client
+     * @return the AdE batch worker step
+     */
+    @SneakyThrows
+    @Bean
+    public Step transactionSenderPendingWorkerStep(HpanConnectorService hpanConnectorService) {
+        return stepBuilderFactory.get("transaction-sender-pending-worker-step").tasklet(
+            transactionSenderPendingTasklet(null, hpanConnectorService)).build();
+    }
+
+    /**
+     * Tasklet responsible for the upload of transaction files via REST endpoints.
+     *
+     * @param file the file to upload remotely via REST
+     * @param hpanConnectorService service to connect to rest client
+     * @return an instance configured for the upload of a specified file
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public TransactionSenderRestTasklet transactionSenderPendingTasklet(
+        @Value("#{stepExecutionContext['fileName']}") String file,
+        HpanConnectorService hpanConnectorService) {
+        TransactionSenderRestTasklet transactionSenderRestTasklet = new TransactionSenderRestTasklet();
+        transactionSenderRestTasklet.setHpanConnectorService(hpanConnectorService);
+        transactionSenderRestTasklet.setResource(new UrlResource(file));
+        transactionSenderRestTasklet.setTaskletEnabled(transactionSenderPendingEnabled);
+        transactionSenderRestTasklet.setScope(getSasScopeByFileName(file));
+        return transactionSenderRestTasklet;
+    }
+
+    private SasScope getSasScopeByFileName(String file) {
+        return file.contains("ADE") ? SasScope.ADE : SasScope.RTD;
     }
 
     /**

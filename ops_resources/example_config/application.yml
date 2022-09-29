@@ -86,6 +86,8 @@ batchConfiguration:
       enabled: ${ACQ_BATCH_TRX_SENDER_RTD_ENABLED:true}
     transactionSenderAde:
       enabled: ${ACQ_BATCH_TRX_SENDER_ADE_ENABLED:true}
+    transactionSenderPending:
+      enabled: ${ACQ_BATCH_TRX_SENDER_PENDING_ENABLED:true}
     saltRecovery:
       enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:true}
     pagopaPublicKeyRecovery:

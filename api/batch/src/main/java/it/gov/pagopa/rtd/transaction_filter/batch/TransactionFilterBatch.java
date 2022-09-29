@@ -316,6 +316,7 @@ public class TransactionFilterBatch {
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
                 .on("*").to(senderAdeAckFilesRecoveryTask())
+                .on("*").to(transactionFilterStep.transactionSenderPendingMasterStep(this.hpanConnectorService))
                 .on("*").to(fileManagementTask())
                 .build();
     }
