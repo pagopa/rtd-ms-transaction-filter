@@ -88,6 +88,8 @@ public class TransactionFilterBatch {
     private String successArchivePath;
     @Value("${batchConfiguration.TransactionFilterBatch.errorArchivePath}")
     private String errorArchivePath;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.pendingDirectoryPath}")
+    private String pendingArchivePath;
     @Value("${batchConfiguration.TransactionFilterBatch.tablePrefix}")
     private String tablePrefix;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath}")
@@ -423,7 +425,7 @@ public class TransactionFilterBatch {
         FileManagementTasklet fileManagementTasklet = new FileManagementTasklet();
         fileManagementTasklet.setTransactionWriterService(transactionWriterService);
         fileManagementTasklet.setSuccessPath(successArchivePath);
-        fileManagementTasklet.setErrorPath(errorArchivePath);
+        fileManagementTasklet.setUploadPendingPath(pendingArchivePath);
         fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanDirectoryPath());
         fileManagementTasklet.setOutputDirectory(transactionFilterStep.getOutputDirectoryPath());
         fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);

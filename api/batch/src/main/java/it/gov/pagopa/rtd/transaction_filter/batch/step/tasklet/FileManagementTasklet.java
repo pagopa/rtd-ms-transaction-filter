@@ -42,7 +42,8 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     private String deleteOutputFiles;
     private String manageHpanOnSuccess;
     private String successPath;
-    private String errorPath;
+//    private String errorPath;
+    private String uploadPendingPath;
     private String hpanDirectory;
     private String outputDirectory;
     private String logsDirectory;
@@ -58,7 +59,9 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         String assertionMessage = "directory must be set";
         Assert.notNull(resolver.getResources("file:" + successPath + "*.pgp"),
             assertionMessage);
-        Assert.notNull(resolver.getResources("file:" + errorPath + "*.pgp"),
+//        Assert.notNull(resolver.getResources("file:" + errorPath + "*.pgp"),
+//            assertionMessage);
+        Assert.notNull(resolver.getResources("file:" + uploadPendingPath + "*.pgp"),
             assertionMessage);
         Assert.notNull(resolver.getResources(hpanDirectory),
             assertionMessage);
@@ -194,7 +197,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
     @SneakyThrows
     private void archiveFile(String file, String path, boolean isCompleted) {
-        String archivalPath = isCompleted ? successPath : errorPath;
+        String archivalPath = isCompleted ? successPath : uploadPendingPath;
         file = makePathSystemIndependent(file);
         String[] filename = file.split("/");
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
