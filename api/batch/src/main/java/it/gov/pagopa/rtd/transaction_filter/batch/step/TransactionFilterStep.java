@@ -84,6 +84,8 @@ public class TransactionFilterStep {
     private String transactionDirectoryPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath}")
     private String outputDirectoryPath;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.pendingDirectoryPath}")
+    private String pendingDirectoryPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.linesToSkip}")
     private Integer linesToSkip;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern}")
