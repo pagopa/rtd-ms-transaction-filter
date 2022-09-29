@@ -69,6 +69,7 @@ batchConfiguration:
     transactionFilter:
       transactionDirectoryPath: file:${ACQ_BATCH_TRX_INPUT_PATH:resources/transactions}/
       outputDirectoryPath: file:${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources}/output}
+      pendingDirectoryPath: file:${ACQ_BATCH_OUTPUT_PATH:resources/output}/pending
       partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
       chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000}
       skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
