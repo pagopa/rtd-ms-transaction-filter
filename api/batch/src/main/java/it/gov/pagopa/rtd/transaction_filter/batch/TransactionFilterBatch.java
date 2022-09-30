@@ -88,7 +88,7 @@ public class TransactionFilterBatch {
     private String successArchivePath;
     @Value("${batchConfiguration.TransactionFilterBatch.errorArchivePath}")
     private String errorArchivePath;
-    @Value("${batchConfiguration.TransactionFilterBatch.uploadArchivePath}")
+    @Value("${batchConfiguration.TransactionFilterBatch.pendingArchivePath}")
     private String pendingArchivePath;
     @Value("${batchConfiguration.TransactionFilterBatch.tablePrefix}")
     private String tablePrefix;
