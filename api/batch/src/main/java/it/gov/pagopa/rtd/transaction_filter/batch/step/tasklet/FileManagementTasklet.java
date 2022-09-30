@@ -42,7 +42,6 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     private String deleteOutputFiles;
     private String manageHpanOnSuccess;
     private String successPath;
-//    private String errorPath;
     private String uploadPendingPath;
     private String hpanDirectory;
     private String outputDirectory;
@@ -59,8 +58,6 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         String assertionMessage = "directory must be set";
         Assert.notNull(resolver.getResources("file:" + successPath + "*.pgp"),
             assertionMessage);
-//        Assert.notNull(resolver.getResources("file:" + errorPath + "*.pgp"),
-//            assertionMessage);
         Assert.notNull(resolver.getResources("file:" + uploadPendingPath + "*.pgp"),
             assertionMessage);
         Assert.notNull(resolver.getResources(hpanDirectory),
