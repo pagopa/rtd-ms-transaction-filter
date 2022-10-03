@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.transaction_filter.batch;
+package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
