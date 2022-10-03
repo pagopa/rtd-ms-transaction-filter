@@ -286,10 +286,10 @@ public class FileManagementTaskletTest {
             tempFolder.newFile("test2/output/error-trx-output-file.csv");
 
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/error");
-            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/success");
-            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/output");
-            archivalTasklet.setHpanDirectory("classpath:/test-encrypt/**/hpan");
+            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test2/error");
+            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test2/success");
+            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test2/output");
+            archivalTasklet.setHpanDirectory("classpath:/test-encrypt/**/test2/hpan");
             archivalTasklet.setDeleteProcessedFiles(true);
             archivalTasklet.setDeleteOutputFiles("ALWAYS");
             archivalTasklet.setManageHpanOnSuccess("DELETE");
