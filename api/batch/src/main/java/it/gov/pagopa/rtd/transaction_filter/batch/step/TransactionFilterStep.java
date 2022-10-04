@@ -1,16 +1,16 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
+import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionFieldSetMapper;
+import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.AdeTransactionsAggregate;
+import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemProcessListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemReaderListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionItemWriterListener;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.listener.TransactionReaderStepListener;
-import it.gov.pagopa.rtd.transaction_filter.batch.mapper.InboundTransactionFieldSetMapper;
-import it.gov.pagopa.rtd.transaction_filter.batch.mapper.LineAwareMapper;
-import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggregationReaderProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransactionItemProcessor;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggregationReaderProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggregationWriterProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.CustomIteratorItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
@@ -24,7 +24,21 @@ import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
+import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.validation.ConstraintViolationException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -37,13 +51,16 @@ import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.core.step.skip.SkipLimitExceededException;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.LineMapper;
+import org.springframework.batch.item.file.MultiResourceItemWriter;
+import org.springframework.batch.item.file.builder.MultiResourceItemWriterBuilder;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
-import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
-import org.springframework.batch.item.file.transform.LineTokenizer;
 import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
+import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.file.transform.LineAggregator;
+import org.springframework.batch.item.file.transform.LineTokenizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -52,20 +69,6 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
-import javax.validation.ConstraintViolationException;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor", "readerTaskExecutor"})
@@ -128,6 +131,8 @@ public class TransactionFilterStep {
     private Integer writerPoolSize;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderPending.enabled}")
     private Boolean transactionSenderPendingEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionWriterAde.splitThreshold}")
+    private int adeSplitThreshold;
 
     public static final String RTD_OUTPUT_FILE_PREFIX = "CSTAR.";
     public static final String ADE_OUTPUT_FILE_PREFIX = "ADE.";
@@ -150,6 +155,8 @@ public class TransactionFilterStep {
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
     private ExecutorService writerExecutor;
+
+    private PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     /**
      * @return instance of the LineTokenizer to be used in the itemReader configured for the job
@@ -250,7 +257,6 @@ public class TransactionFilterStep {
         itemWriter.setLineAggregator(transactionWriterAggregator());
         file = file.replace("\\", "/");
         String[] filename = file.split("/");
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         itemWriter.setResource(resolver.getResource(outputDirectoryPath.concat("/".concat(filename[filename.length - 1]))));
         if (inputFileChecksumEnabled) {
             ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
@@ -260,24 +266,52 @@ public class TransactionFilterStep {
     }
 
     /**
-     * Builds an ItemWriter for aggregated transactions. Implements encryption of the output file via PGP.
+     * Builds an MultiResourceItemWriter for aggregated transactions with file splitting feature based on threshold.
+     * Implements encryption of the output file via PGP.
      *
-     * @param file Late-Binding parameter to be used as the resource for the reader instance
+     * @param filename Late-Binding parameter to be used as the resource for the reader instance
      * @param storeService data structures shared between different steps
      * @return instance of an itemWriter to be used in the transactionAggregationWriterWorkerStep
      */
-    @SneakyThrows
-    @Bean(destroyMethod="")
+    @Bean
     @StepScope
-    public PGPFlatFileItemWriter<AdeTransactionsAggregate> transactionAggregateWriter(
-        @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
+    public MultiResourceItemWriter<AdeTransactionsAggregate> transactionAggregateMultiResourceWriter(
+        @Value("#{stepExecutionContext['fileName']}") String filename, StoreService storeService) {
+        return new MultiResourceItemWriterBuilder<AdeTransactionsAggregate>()
+            .name("aggregate-multi-resource-writer")
+            .itemCountLimitPerResource(adeSplitThreshold)
+            .resource(resolver.getResource(outputDirectoryPath))
+            .resourceSuffixCreator(index -> "/" + getAdeOutputFileNameChunked(filename, index))
+            .delegate(createAdeItemWriter(storeService))
+            .build();
+    }
+
+    /**
+     * Produce an ade output filename from an input file path. Supports the chunking based on index.
+     * @param filePath path of input file
+     * @param chunkIndex index of the chunk
+     * @return output filename based on chunk index
+     */
+    protected String getAdeOutputFileNameChunked(String filePath, int chunkIndex) {
+        String filePathTmp = filePath.replace("\\", "/");
+        String[] pathSplitted = filePathTmp.split("/");
+        String fileNameWithoutPrefixAndExtension = pathSplitted[pathSplitted.length - 1].substring(6,
+            pathSplitted[pathSplitted.length - 1].lastIndexOf("."));
+        String fileExtension = pathSplitted[pathSplitted.length - 1].substring(
+            pathSplitted[pathSplitted.length - 1].lastIndexOf("."));
+        return ADE_OUTPUT_FILE_PREFIX.concat(fileNameWithoutPrefixAndExtension)
+            .concat(String.format(".%02d", chunkIndex)).concat(fileExtension);
+    }
+
+    /**
+     * Builds an ItemWriter without resource to be used in a MultiResourceItemWriter. The resource
+     * will be assigned by the MultiResourceItemWriter during the step runtime.
+     * @param storeService data structures shared between different steps
+     * @return an item writer
+     */
+    protected FlatFileItemWriter<AdeTransactionsAggregate> createAdeItemWriter(StoreService storeService) {
         PGPFlatFileItemWriter<AdeTransactionsAggregate> itemWriter = new PGPFlatFileItemWriter<>(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
         itemWriter.setLineAggregator(adeTransactionsAggregateLineAggregator());
-        file = file.replace("\\", "/");
-        String[] filename = file.split("/");
-        String newFilename = ADE_OUTPUT_FILE_PREFIX + filename[filename.length - 1].substring(6);
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        itemWriter.setResource(resolver.getResource(outputDirectoryPath.concat("/".concat(newFilename))));
         if (inputFileChecksumEnabled) {
             ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
             itemWriter.setHeaderCallback(checksumHeaderWriter);
@@ -345,7 +379,6 @@ public class TransactionFilterStep {
     @JobScope
     public Partitioner transactionFilterPartitioner(StoreService storeService) throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         Resource[] resources = resolver.getResources(transactionDirectoryPath + "/*.csv");
         resources = filterValidFilenames(resources);
         resources = filterResourcesByFilename(resources, storeService.getTargetInputFile());
@@ -472,9 +505,8 @@ public class TransactionFilterStep {
             .<AggregationKey, AdeTransactionsAggregate>chunk(chunkSize)
             .reader(mapItemReader(storeService))
             .processor(transactionAggregationWriterProcessor(storeService))
-            .writer(transactionAggregateWriter(null, storeService))
+            .writer(transactionAggregateMultiResourceWriter(null, storeService))
             .faultTolerant()
-            .taskExecutor(batchConfig.readerTaskExecutor())
             .build();
     }
 

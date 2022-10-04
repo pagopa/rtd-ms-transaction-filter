@@ -55,7 +55,7 @@ public class FileManagementTaskletTest {
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test1/error");
+            archivalTasklet.setUploadPendingPath("classpath:/test-encrypt/**/test1/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
             archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
@@ -171,7 +171,7 @@ public class FileManagementTaskletTest {
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test1/error");
+            archivalTasklet.setUploadPendingPath("classpath:/test-encrypt/**/test1/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
             archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
@@ -396,7 +396,7 @@ public class FileManagementTaskletTest {
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test3/error");
+            archivalTasklet.setUploadPendingPath("classpath:/test-encrypt/**/test3/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test3/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test3/output");
             archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
@@ -506,7 +506,7 @@ public class FileManagementTaskletTest {
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test4/error");
+            archivalTasklet.setUploadPendingPath("classpath:/test-encrypt/**/test4/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test4/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test4/output");
             archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(

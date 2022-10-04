@@ -108,7 +108,8 @@ import wiremock.com.google.common.collect.Sets;
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorFileLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency=100",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize=5"
+                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize=5",
+                "batchConfiguration.TransactionFilterBatch.transactionWriterAde.splitThreshold=1000"
         }
 )
 public class TransactionFilterBatchInputFileChecksumDisabledTest {
@@ -181,7 +182,7 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
         }
 
         File outputFileAde = new File(resolver.getResource("classpath:/test-encrypt/output")
-            .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.csv");
+            .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.01.csv");
 
         if (!outputFileAde.exists()) {
             outputFileAde.createNewFile();
@@ -207,7 +208,7 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
         Set<String> outputPgpFilenames = outputPgpFiles.stream().map(p -> p.getName()).collect(Collectors.toSet());
         Set<String> expectedPgpFilenames = new HashSet<>();
         expectedPgpFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp");
-        expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.csv.pgp");
+        expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.01.csv.pgp");
         Assert.assertEquals(expectedPgpFilenames, outputPgpFilenames);
 
         Collection<String> outputCsvFilenames = FileUtils.listFiles(
@@ -315,6 +316,6 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
     }
 
     private Set<String> getExpectedCsvFileNames() {
-        return Sets.newHashSet("CSTAR.99999.TRNLOG.20220204.094652.001.csv", "ADE.99999.TRNLOG.20220204.094652.001.csv");
+        return Sets.newHashSet("CSTAR.99999.TRNLOG.20220204.094652.001.csv", "ADE.99999.TRNLOG.20220204.094652.001.01.csv");
     }
 }
