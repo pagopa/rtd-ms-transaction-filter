@@ -20,7 +20,6 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.ChecksumHeaderWrit
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
-import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
@@ -619,7 +618,6 @@ public class TransactionFilterStep {
     @JobScope
     public Partitioner transactionSenderRtdPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         String pathMatcher = outputDirectoryPath + File.separator + RTD_OUTPUT_FILE_PREFIX + REGEX_PGP_FILES;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
@@ -636,7 +634,6 @@ public class TransactionFilterStep {
     @JobScope
     public Partitioner transactionSenderAdePartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         String pathMatcher = outputDirectoryPath + File.separator + ADE_OUTPUT_FILE_PREFIX + REGEX_PGP_FILES;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
@@ -753,7 +750,6 @@ public class TransactionFilterStep {
     @JobScope
     public Partitioner transactionSenderPendingPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         String pathMatcher = pendingDirectoryPath + File.separator + REGEX_PGP_FILES;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);

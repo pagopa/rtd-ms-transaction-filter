@@ -2,10 +2,16 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
@@ -15,10 +21,6 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.scope.context.StepContext;
 import org.springframework.batch.test.MetaDataInstanceFactory;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class FileManagementTaskletTest {
@@ -286,7 +288,7 @@ public class FileManagementTaskletTest {
             tempFolder.newFile("test2/output/error-trx-output-file.csv");
 
             FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setErrorPath("classpath:/test-encrypt/**/test2/error");
+            archivalTasklet.setUploadPendingPath("classpath:/test-encrypt/**/test2/error");
             archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test2/success");
             archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test2/output");
             archivalTasklet.setHpanDirectory("classpath:/test-encrypt/**/test2/hpan");
