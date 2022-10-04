@@ -42,7 +42,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     private String deleteOutputFiles;
     private String manageHpanOnSuccess;
     private String successPath;
-    private String errorPath;
+    private String uploadPendingPath;
     private String hpanDirectory;
     private String outputDirectory;
     private String logsDirectory;
@@ -58,7 +58,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         String assertionMessage = "directory must be set";
         Assert.notNull(resolver.getResources("file:" + successPath + "*.pgp"),
             assertionMessage);
-        Assert.notNull(resolver.getResources("file:" + errorPath + "*.pgp"),
+        Assert.notNull(resolver.getResources("file:" + uploadPendingPath + "*.pgp"),
             assertionMessage);
         Assert.notNull(resolver.getResources(hpanDirectory),
             assertionMessage);
@@ -194,14 +194,28 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
     @SneakyThrows
     private void archiveFile(String file, String path, boolean isCompleted) {
-        String archivalPath = isCompleted ? successPath : errorPath;
-        file = makePathSystemIndependent(file);
-        String[] filename = file.split("/");
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-        archivalPath = resolver.getResources(archivalPath)[0].getFile().getAbsolutePath();
-        File destFile = FileUtils.getFile(archivalPath + "/" + SecureRandom.getInstanceStrong().nextLong() +
-                "_" + OffsetDateTime.now().format(fmt) + "_" + filename[filename.length - 1]);
-        FileUtils.moveFile(FileUtils.getFile(path), destFile);
+        File destinationFile = getDestionationFileByStatus(file, isCompleted);
+        FileUtils.moveFile(FileUtils.getFile(path), destinationFile);
+    }
+
+    @SneakyThrows
+    private File getDestionationFileByStatus(String sourceFilePath, boolean isCompleted) {
+
+        sourceFilePath = makePathSystemIndependent(sourceFilePath);
+        String[] pathSplitted = sourceFilePath.split("/");
+        String filename = pathSplitted[pathSplitted.length - 1];
+        String destinationPath;
+        if (isCompleted) {
+            String archivalPath = resolver.getResources(successPath)[0].getFile().getAbsolutePath();
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+            destinationPath = archivalPath + File.separator + SecureRandom.getInstanceStrong().nextLong() +
+                "_" + OffsetDateTime.now().format(fmt) + "_" + filename;
+        } else {
+            String archivalPath = resolver.getResources(uploadPendingPath)[0].getFile().getAbsolutePath();
+            destinationPath = archivalPath + File.separator + filename;
+        }
+
+        return FileUtils.getFile(destinationPath);
     }
 
     @SneakyThrows
