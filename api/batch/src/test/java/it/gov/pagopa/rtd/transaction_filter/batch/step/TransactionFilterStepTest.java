@@ -1,24 +1,32 @@
-package it.gov.pagopa.rtd.transaction_filter.batch;
+package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.BDDMockito;
-import org.mockito.Mockito;
-import org.springframework.core.io.Resource;
+import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.filterResourcesByFilename;
+import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.filterValidFilenames;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import it.gov.pagopa.rtd.transaction_filter.batch.model.AdeTransactionsAggregate;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreServiceImpl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.filterResourcesByFilename;
-import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.filterValidFilenames;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.BDDMockito;
+import org.mockito.Mockito;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 class TransactionFilterStepTest {
+
+    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     static Stream<Arguments> arrayProvider() {
         return Stream.of(
@@ -81,4 +89,35 @@ class TransactionFilterStepTest {
         Assertions.assertEquals(expectedFilenames, outputFilenames);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"/test/absolute/path/CSTAR.11111.20220925.101112.001.csv",
+        "test/relative/path/CSTAR.11111.20220925.101112.001.csv"
+    })
+    void whenAggregatesAreSplittedThenNamingConventionIsAsExpected(String filePath) {
+        TransactionFilterStep transactionFilterStep = new TransactionFilterStep(null, null);
+
+        String firstChunkName = transactionFilterStep.getAdeOutputFileNameChunked(filePath, 0);
+        String secondChunkName = transactionFilterStep.getAdeOutputFileNameChunked(filePath, 1);
+
+        assertThat(firstChunkName).isEqualTo("ADE.11111.20220925.101112.001.00.csv");
+        assertThat(secondChunkName).isEqualTo("ADE.11111.20220925.101112.001.01.csv");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"/test/absolute/path/CSTAR.11111.20220925.101112.001.csv",
+        "test/relative/path/CSTAR.11111.20220925.101112.001.csv"
+    })
+    void whenAggregatesAreSplittedThenGetItemWriterCorrect(String filePath) {
+        TransactionFilterStep transactionFilterStep = new TransactionFilterStep(null, null);
+        transactionFilterStep.setAdeSplitThreshold(100);
+        transactionFilterStep.setOutputDirectoryPath("classpath:/test-encrypt");
+        transactionFilterStep.setInputFileChecksumEnabled(false);
+        transactionFilterStep.setApplyEncrypt(false);
+        StoreService storeService = new StoreServiceImpl(null);
+        storeService.storeKey("pagopa", "prova");
+
+        ItemWriter<AdeTransactionsAggregate> itemWriter = transactionFilterStep.createAdeItemWriter(storeService);
+
+        assertThat(itemWriter).isNotNull();
+    }
 }

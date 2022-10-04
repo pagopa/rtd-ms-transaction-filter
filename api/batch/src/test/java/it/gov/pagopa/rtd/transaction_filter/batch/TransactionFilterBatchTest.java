@@ -118,7 +118,8 @@ import org.springframework.transaction.annotation.Transactional;
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorFileLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency=100",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize=5"
+                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize=5",
+                "batchConfiguration.TransactionFilterBatch.transactionWriterAde.splitThreshold=1000"
         }
 )
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
@@ -393,7 +394,7 @@ public class TransactionFilterBatchTest {
     @SneakyThrows
     private File createAdeOutputFile() {
         File outputFileAde = new File(resolver.getResource("classpath:/test-encrypt/output")
-            .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.csv");
+            .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.01.csv");
 
         outputFileAde.createNewFile();
         return outputFileAde;
@@ -417,7 +418,7 @@ public class TransactionFilterBatchTest {
     private Set<String> getExpectedPgpFilenames() {
         Set<String> expectedPgpFilenames = new HashSet<>();
         expectedPgpFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp");
-        expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.csv.pgp");
+        expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.01.csv.pgp");
         return expectedPgpFilenames;
     }
 
@@ -430,7 +431,7 @@ public class TransactionFilterBatchTest {
     private Set<String> getExpectedCsvFileNames() {
         Set<String> expectedCsvFilenames = new HashSet<>();
         expectedCsvFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv");
-        expectedCsvFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.csv");
+        expectedCsvFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.01.csv");
 
         return expectedCsvFilenames;
     }
