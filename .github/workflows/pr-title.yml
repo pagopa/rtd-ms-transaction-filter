@@ -55,4 +55,3 @@ jobs:
           validateSingleCommit: false
           # Related to `validateSingleCommit` you can opt-in to validate that the PR
           # title matches a single commit to avoid confusion.
-          validateSingleCommitMatchesPrTitle: false
