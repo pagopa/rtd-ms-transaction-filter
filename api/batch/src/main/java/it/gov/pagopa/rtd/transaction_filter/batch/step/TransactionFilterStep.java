@@ -315,6 +315,7 @@ public class TransactionFilterStep {
             ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
             itemWriter.setHeaderCallback(checksumHeaderWriter);
         }
+        itemWriter.setTransactional(false);
         return itemWriter;
     }
 

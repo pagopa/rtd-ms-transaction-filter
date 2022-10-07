@@ -225,6 +225,43 @@ public class TransactionFilterBatchAdeSplittingTest {
         "#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046",
         outputFileAdeContent.get(0));
 
+    // Check that encrypted output files have the same content of unencrypted ones
+    Collection<File> adeEncryptedFiles = outputPgpFiles.stream()
+        .filter(p -> p.getName().startsWith("ADE.99999.TRNLOG.20220204.094652.001")
+            && p.getName().endsWith(".pgp")).collect(Collectors.toList());
+    Set<String> encryptedFilesContent = new HashSet<>();
+    for (File adeEncryptedFile : adeEncryptedFiles) {
+
+      FileInputStream trxEncFileIS = new FileInputStream(adeEncryptedFile);
+      FileInputStream secretFilePathIS = null;
+      try {
+        String secretKeyPath =
+            "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/secretKey.asc";
+        Resource secretKeyResource = resolver.getResource(secretKeyPath);
+
+        secretFilePathIS = new FileInputStream(secretKeyResource.getFile());
+        byte[] trxEncFileDecryptedFileData = EncryptUtil.decryptFile(trxEncFileIS, secretFilePathIS,
+            "test".toCharArray());
+        File trxEncFileDecryptedFile = tempFolder.newFile(
+            "trxEncFileDecrypted_" + getChunkNumberFromFilename(adeEncryptedFile.getName())
+                + ".csv");
+        FileUtils.writeByteArrayToFile(trxEncFileDecryptedFile, trxEncFileDecryptedFileData);
+
+        List<String> trxEncFileDecryptedFileContent = Files.readAllLines(
+            trxEncFileDecryptedFile.toPath().toAbsolutePath());
+        encryptedFilesContent.addAll(trxEncFileDecryptedFileContent);
+      } finally {
+        trxEncFileIS.close();
+        secretFilePathIS.close();
+      }
+    }
+
+    Assert.assertEquals(expectedOutputFileAdeContent, encryptedFilesContent);
+
+  }
+
+  private String getChunkNumberFromFilename(String filename) {
+    return filename.split("\\.")[6];
   }
 
   private String createPublicKey() throws IOException {
