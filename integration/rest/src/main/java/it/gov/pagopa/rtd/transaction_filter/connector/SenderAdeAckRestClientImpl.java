@@ -79,6 +79,11 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
       }
     }
 
+    // if any files has been downloaded then delete temp folder
+    if (filesDownloaded.isEmpty()) {
+      FileUtils.deleteDirectory(temporaryDirectory.toFile());
+    }
+
     return filesDownloaded;
   }
 

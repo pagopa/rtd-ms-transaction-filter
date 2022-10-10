@@ -117,6 +117,7 @@ public class SenderAdeAckRestClientTest {
     List<File> files = restClient.getSenderAdeAckFiles();
 
     assertThat(files).isNotNull().isEmpty();
+    assertThat(tempDir.getRoot()).isEmptyDirectory();
   }
 
   @SneakyThrows
