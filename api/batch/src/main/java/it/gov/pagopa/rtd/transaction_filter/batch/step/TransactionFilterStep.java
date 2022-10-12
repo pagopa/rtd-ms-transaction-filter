@@ -309,7 +309,7 @@ public class TransactionFilterStep {
      * @return an item writer
      */
     protected FlatFileItemWriter<AdeTransactionsAggregate> createAdeItemWriter(StoreService storeService) {
-        PGPFlatFileItemWriter<AdeTransactionsAggregate> itemWriter = new PGPFlatFileItemWriter<>(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
+        FlatFileItemWriter<AdeTransactionsAggregate> itemWriter = new FlatFileItemWriter<>();
         itemWriter.setLineAggregator(adeTransactionsAggregateLineAggregator());
         if (inputFileChecksumEnabled) {
             ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
