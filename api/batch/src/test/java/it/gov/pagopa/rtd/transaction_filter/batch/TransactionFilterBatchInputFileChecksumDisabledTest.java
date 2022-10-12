@@ -133,21 +133,23 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
     public void setUp() {
         Mockito.reset(storeServiceSpy);
 
-        for (Resource resource : resolver.getResources("classpath:/test-encrypt/errorLogs/*.csv")) {
-            resource.getFile().delete();
-        }
+        deleteFiles("classpath:/test-encrypt/errorLogs/*.csv");
+        deleteFiles("classpath:/test-encrypt/output/*.pgp");
+        deleteFiles("classpath:/test-encrypt/output/*.csv");
     }
 
     @SneakyThrows
     @After
     public void tearDown() {
-        Resource[] resources = resolver.getResources("classpath:/test-encrypt/output/*.pgp");
-        if (resources.length > 1) {
-            for (Resource resource : resources) {
-                resource.getFile().delete();
-            }
-        }
         tempFolder.delete();
+    }
+
+    @SneakyThrows
+    private void deleteFiles(String classpath) {
+        Resource[] resources = resolver.getResources(classpath);
+        for (Resource resource : resources) {
+            resource.getFile().delete();
+        }
     }
 
     @SneakyThrows
@@ -261,7 +263,7 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
         // Check that logs folder contains expected files
         Collection<File> outputLogsFiles = FileUtils.listFiles(
                 resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), new String[]{"csv"}, false);
-        Assert.assertEquals(2, outputLogsFiles.size());
+        assertThat(outputLogsFiles).hasSize(2);
 
         FileFilter fileFilter = new WildcardFileFilter("*_Rtd__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
