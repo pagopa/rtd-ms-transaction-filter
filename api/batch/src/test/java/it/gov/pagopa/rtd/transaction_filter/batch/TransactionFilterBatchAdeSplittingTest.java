@@ -1,6 +1,8 @@
 package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
@@ -136,24 +138,22 @@ public class TransactionFilterBatchAdeSplittingTest {
     Mockito.reset(storeServiceSpy);
 
     deleteFiles("classpath:/test-encrypt/errorLogs/*.csv");
+    deleteFiles("classpath:/test-encrypt/output/*.pgp");
+    deleteFiles("classpath:/test-encrypt/output/*.csv");
   }
 
   @SneakyThrows
   @After
   public void tearDown() {
-    deleteFiles("classpath:/test-encrypt/output/*.pgp");
-
     tempFolder.delete();
   }
 
   @SneakyThrows
   private void deleteFiles(String classpath) {
     Resource[] resources = resolver.getResources(classpath);
-    if (resources.length > 1) {
       for (Resource resource : resources) {
         resource.getFile().delete();
       }
-    }
   }
 
   @After
@@ -181,6 +181,11 @@ public class TransactionFilterBatchAdeSplittingTest {
         .toJobParameters());
 
     Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+
+    // Check that the HPAN store has been accessed as expected
+    BDDMockito.verify(storeServiceSpy, times(3)).store(any());
+    BDDMockito.verify(storeServiceSpy, times(4)).hasHpan(any());
+    BDDMockito.verify(storeServiceSpy, times(3)).getKey(any());
 
     // Check that output folder contains expected files, and only those
     Collection<File> outputPgpFiles = getOutputPgpFiles();
@@ -225,6 +230,42 @@ public class TransactionFilterBatchAdeSplittingTest {
         "#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046",
         outputFileAdeContent.get(0));
 
+    // Check that encrypted output files have the same content of unencrypted ones
+    Collection<File> adeEncryptedFiles = outputPgpFiles.stream()
+        .filter(p -> p.getName().startsWith("ADE.99999.TRNLOG.20220204.094652.001")
+            && p.getName().endsWith(".pgp")).collect(Collectors.toList());
+    Set<String> encryptedFilesContent = new HashSet<>();
+    for (File adeEncryptedFile : adeEncryptedFiles) {
+
+      FileInputStream trxEncFileIS = new FileInputStream(adeEncryptedFile);
+      FileInputStream secretFilePathIS = null;
+      try {
+        String secretKeyPath =
+            "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/secretKey.asc";
+        Resource secretKeyResource = resolver.getResource(secretKeyPath);
+
+        secretFilePathIS = new FileInputStream(secretKeyResource.getFile());
+        byte[] trxEncFileDecryptedFileData = EncryptUtil.decryptFile(trxEncFileIS, secretFilePathIS,
+            "test".toCharArray());
+        File trxEncFileDecryptedFile = tempFolder.newFile(
+            "trxEncFileDecrypted_" + getChunkNumberFromFilename(adeEncryptedFile.getName())
+                + ".csv");
+        FileUtils.writeByteArrayToFile(trxEncFileDecryptedFile, trxEncFileDecryptedFileData);
+
+        List<String> trxEncFileDecryptedFileContent = Files.readAllLines(
+            trxEncFileDecryptedFile.toPath().toAbsolutePath());
+        encryptedFilesContent.addAll(trxEncFileDecryptedFileContent);
+      } finally {
+        trxEncFileIS.close();
+        secretFilePathIS.close();
+      }
+    }
+
+    Assert.assertEquals(expectedOutputFileAdeContent, encryptedFilesContent);
+  }
+
+  private String getChunkNumberFromFilename(String filename) {
+    return filename.split("\\.")[6];
   }
 
   private String createPublicKey() throws IOException {
