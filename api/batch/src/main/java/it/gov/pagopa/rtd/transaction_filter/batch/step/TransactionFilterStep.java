@@ -14,6 +14,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggr
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggregationWriterProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.CustomIteratorItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PGPEncrypterTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionChecksumTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.ChecksumHeaderWriter;
@@ -316,6 +317,79 @@ public class TransactionFilterStep {
             itemWriter.setHeaderCallback(checksumHeaderWriter);
         }
         return itemWriter;
+    }
+
+    /**
+     * @return master step to be used as the formal main step in the file encryption,
+     * partitioned for scalability on multiple file encryption
+     * @throws IOException
+     */
+    @Bean
+    public Step encryptAggregateChunksMasterStep(StoreService storeService) {
+        return stepBuilderFactory.get("encrypt-aggregate-chunks-master-step")
+            .partitioner(encryptAggregateChunksWorkerStep(storeService))
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, outputAdeFilesPartitioner(storeService))
+            .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    /**
+     * MultiResourcePartitioner that matches the ade output files generated in the current run
+     * @param storeService data structures shared between different steps
+     * @return a partitioner
+     */
+    @SneakyThrows
+    @Bean
+    @JobScope
+    public Partitioner outputAdeFilesPartitioner(StoreService storeService) {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        // do not match every file in output directory but only the ones generated from the input file
+        String outputFileRegex = getAdeFilesRegex(storeService.getTargetInputFile());
+        String pathMatcher = outputDirectoryPath + File.separator + outputFileRegex;
+        partitioner.setResources(resolver.getResources(pathMatcher));
+        partitioner.partition(partitionerSize);
+        return partitioner;
+    }
+
+    /**
+     * Turns filename into regex by removing chunk token with *
+     * e.g. ADE.11111.TNRLOG.YYYYMMDD.HHMMSS.001.00.csv into ADE.11111.TNRLOG.YYYYMMDD.HHMMSS.001.*.csv
+     *
+     * @param inputFile
+     * @return
+     */
+    private String getAdeFilesRegex(String inputFile) {
+        return getAdeOutputFileNameChunked(inputFile, 0).replace(".00.", ".*.");
+    }
+
+    /**
+     * Worker step that contains the tasklet step (must have as proxy since the tasklet is step scoped)
+     * @param storeService data structure shared
+     * @return worker Step
+     */
+    @Bean
+    public Step encryptAggregateChunksWorkerStep(StoreService storeService) {
+        return stepBuilderFactory
+            .get("encrypt-aggregate-chunks-worker-step")
+            .tasklet(getPGPEncrypterTasklet(null, storeService)).build();
+    }
+
+    /**
+     * Tasklet that execute the file encryption of the file set in step scope (partitioner does the job)
+     * @param file path of file to encrypt
+     * @param storeService data structure shared
+     * @return a tasklet
+     */
+    @SneakyThrows
+    @Bean
+    @StepScope
+    public PGPEncrypterTasklet getPGPEncrypterTasklet(
+        @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService
+    ) {
+        PGPEncrypterTasklet pgpEncrypterTasklet = new PGPEncrypterTasklet();
+        pgpEncrypterTasklet.setPublicKey(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID));
+        pgpEncrypterTasklet.setFileToEncrypt(new UrlResource(file));
+        pgpEncrypterTasklet.setTaskletEnabled(applyEncrypt);
+        return pgpEncrypterTasklet;
     }
 
     /**

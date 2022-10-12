@@ -167,24 +167,22 @@ public class TransactionFilterBatchTest {
         Mockito.reset(storeServiceSpy);
 
         deleteFiles("classpath:/test-encrypt/errorLogs/*.csv");
+        deleteFiles("classpath:/test-encrypt/output/*.pgp");
+        deleteFiles("classpath:/test-encrypt/sender-ade-ack/*.csv");
+        deleteFiles("classpath:/test-encrypt/output/*.csv");
     }
 
     @SneakyThrows
     @After
     public void tearDown() {
-        deleteFiles("classpath:/test-encrypt/output/*.pgp");
-        deleteFiles("classpath:/test-encrypt/sender-ade-ack/*.csv");
-
         tempFolder.delete();
     }
 
     @SneakyThrows
     private void deleteFiles(String classpath) {
         Resource[] resources = resolver.getResources(classpath);
-        if (resources.length > 1) {
-            for (Resource resource : resources) {
-                resource.getFile().delete();
-            }
+        for (Resource resource : resources) {
+            resource.getFile().delete();
         }
     }
 
