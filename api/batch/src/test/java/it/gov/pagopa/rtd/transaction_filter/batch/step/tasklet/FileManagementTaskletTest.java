@@ -29,6 +29,7 @@ public class FileManagementTaskletTest {
     File errorFile;
     File hpanFile;
     File errorHpanFile;
+    File outputFileCsv;
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
@@ -53,6 +54,7 @@ public class FileManagementTaskletTest {
             tempFolder.newFile("test1/output/error-trx-output-file.pgp");
             tempFolder.newFile("test1/output/success-trx-output-file.pgp");
             tempFolder.newFile("test1/output/error-trx-output-file.csv");
+            outputFileCsv = tempFolder.newFile("test1/output/success-trx-output-file.csv");
 
             PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -119,8 +121,13 @@ public class FileManagementTaskletTest {
 
             StepExecution stepExecution5 = MetaDataInstanceFactory.createStepExecution("E", 1L);
             stepExecution5.setStatus(BatchStatus.COMPLETED);
-            stepExecution5.getExecutionContext().put("fileName",successFile.getAbsolutePath());
+            stepExecution5.getExecutionContext().put("fileName", successFile.getAbsolutePath());
             stepExecutions.add(stepExecution5);
+
+            StepExecution stepExecution6 = MetaDataInstanceFactory.createStepExecution("F", 1L);
+            stepExecution6.setStatus(BatchStatus.COMPLETED);
+            stepExecution6.getExecutionContext().put("fileName",outputFileCsv.getAbsolutePath());
+            stepExecutions.add(stepExecution6);
 
             execution = MetaDataInstanceFactory.createStepExecution();
             stepContext = new StepContext(execution);
@@ -139,7 +146,7 @@ public class FileManagementTaskletTest {
                             resolver.getResources("classpath:/test-encrypt/**/test1/output")[0].getFile(),
                             new String[]{"pgp"},false).size());
 
-            Assert.assertEquals(1,
+            Assert.assertEquals(2,
                     FileUtils.listFiles(
                             resolver.getResources("classpath:/test-encrypt/**/test1/output")[0].getFile(),
                             new String[]{"csv"},false).size());
