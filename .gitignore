@@ -144,3 +144,12 @@ Desktop.ini
 # ESLint
 ######################
 .eslintcache
+
+######################
+# Acceptance tests
+######################
+acceptance_tests/**
+cstar-cli/**
+workdir/**
+
+
