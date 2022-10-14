@@ -8,6 +8,8 @@ acceptance_tests
     └── tests        <-- every test in a dedicated folder
 ```
 
+## Test environment configuration
+The precondition for the tests is to have the sender-auth properly configured with the association between the sender codes and sender api key.
 
 ## Usage
 
