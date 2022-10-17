@@ -39,7 +39,6 @@ then
 fi
 
 ### file generation
-git clone --depth 1 https://github.com/pagopa/cstar-cli.git
 cd cstar-cli || exit
 echo "Generating input file..."
 # file placeholder, Ade sender is disabled by batch service configuration
