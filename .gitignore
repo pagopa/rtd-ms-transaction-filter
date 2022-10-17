@@ -149,5 +149,3 @@ Desktop.ini
 # Acceptance tests
 ######################
 acceptance_tests/**
-cstar-cli/**
-workdir/**
