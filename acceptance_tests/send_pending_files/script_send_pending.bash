@@ -13,12 +13,6 @@ sh ../common/setup.sh
 N_AGGREGATES=18
 
 ### batch service configuration
-# git clone --depth 1 --branch RTD-699-fix-chunk-encrypting https://github.com/pagopa/rtd-ms-transaction-filter.git
-# cd rtd-ms-transaction-filter
-# echo "Packaging batch service..."
-# mvn clean package > /dev/null
-# cd ..
-# cp rtd-ms-transaction-filter/target/rtd-ms-transaction-filter.jar ./rtd-ms-transaction-filter.jar
 # shellcheck source=../common/setenv_env.sh
 source ../common/setenv_"$ENV".sh
 source setenv.sh
