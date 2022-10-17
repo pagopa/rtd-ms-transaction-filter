@@ -42,13 +42,13 @@ else
 fi
 
 # 2. check application log to find evidence of failed files upload
-N_UPLOADS_FAILED=$(grep -c "(status was: 400)" < workdir/logs/application.log)
-if [ "$N_UPLOADS_FAILED" -eq 1 ]
+N_UPLOADS_FAILED=$(grep -c "(status was: 401)" < workdir/logs/application.log)
+if [ "$N_UPLOADS_FAILED" -ne 0 ]
 then
-	echo "File not uploaded: [SUCCESS]"
+    echo "File not uploaded: [SUCCESS]"
 else
-	echo "File has been uploaded: [FAILED]"
-	exit 2
+    echo "File has been uploaded: [FAILED]"
+	  exit 2
 fi
 
 exit 0
