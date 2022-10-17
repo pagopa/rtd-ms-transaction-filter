@@ -1,0 +1,8 @@
+export ACQ_BATCH_TRX_SENDER_RTD_ENABLED=false
+export ACQ_BATCH_TRX_SENDER_ADE_ENABLED=true
+export ACQ_BATCH_TRX_SENDER_PENDING_ENABLED=false
+
+export ACQ_BATCH_DELETE_OUTPUT_FILE=KEEP
+export ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD=200
+# chunk size default is 1000. If the threshold is lower keep the values aligned
+export ACQ_BATCH_INPUT_CHUNK_SIZE=200
