@@ -107,8 +107,8 @@ do
 		RESPONSE=$(curl \
 	            --silent --output "$ADE_FILENAME_CHUNKED" \
 	            --write-out '%{http_code}' \
-	            --cert ../certificate.pem \
-	            --key ../batch_acquirer_am.key \
+	            --cert ../certs/certificate.pem \
+	            --key ../certs/private.key \
 	            --header "Ocp-Apim-Subscription-Key: $HPAN_SERVICE_API_KEY" \
 	            "$HPAN_SERVICE_URL/rtd/sftp-retrieve/$ADE_FILENAME_CHUNKED")
 
