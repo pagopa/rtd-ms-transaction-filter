@@ -81,14 +81,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         List<String> errorFilenames = new ArrayList<>();
         hpanDirectory = makePathSystemIndependent(hpanDirectory);
 
-        List<String> hpanResources = Arrays.stream(resolver.getResources(hpanDirectory)).map(resource -> {
-            try {
-                return makePathSystemIndependent(resource.getFile().getAbsolutePath());
-            } catch (IOException e) {
-                log.error(e.getMessage(),e);
-                return null;
-            }
-        }).collect(Collectors.toList());
+        List<String> hpanResources = getHpanFiles();
 
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
                 .getStepExecutions();
@@ -138,10 +131,11 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                     }
 
                     boolean isHpanFile = hpanResources.contains(makePathSystemIndependent(path));
+                    boolean isOutputFile = path.contains(getOutputDirectoryAbsolutePath());
                     if (Boolean.TRUE.equals(deleteProcessedFiles) || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
-                    } else if (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
+                    } else if (!isOutputFile && (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE"))) {
                         log.info("Archiving processed file: {}", file);
                         archiveFile(file, path, isComplete);
                     }
@@ -180,6 +174,30 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         deleteEmptyLogFiles();
 
         return RepeatStatus.FINISHED;
+    }
+
+    @SneakyThrows
+    private String getOutputDirectoryAbsolutePath() {
+        return Arrays.stream(resolver.getResources(outputDirectory)).map(resource -> {
+            try {
+                return makePathSystemIndependent(resource.getFile().getAbsolutePath());
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+                return "";
+            }
+        }).findAny().orElse(null);
+    }
+
+    @SneakyThrows
+    private List<String> getHpanFiles() {
+        return Arrays.stream(resolver.getResources(hpanDirectory)).map(resource -> {
+            try {
+                return makePathSystemIndependent(resource.getFile().getAbsolutePath());
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+                return null;
+            }
+        }).collect(Collectors.toList());
     }
 
     String makePathSystemIndependent(String path) {
