@@ -55,7 +55,6 @@ echo "Executing batch service..."
 java -jar ../common/rtd-ms-transaction-filter.jar
 
 #### ASSERTIONS
-
 # 1. check application log to find evidence of successful files upload
 N_UPLOADS=$(grep -c "uploaded with success (status was: 201)" < workdir/logs/application.log)
 if [ "$N_UPLOADS" -ne 2 ]
