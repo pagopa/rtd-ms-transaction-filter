@@ -1,65 +1,160 @@
 #!/bin/bash
 
-### create directories
-mkdir -p workdir/input
-mkdir -p workdir/hpans
-mkdir -p workdir/ade-errors
-mkdir -p workdir/output
-mkdir -p workdir/logs
+if [ $# -ne 1 ] ; then
+    echo "Illegal number of parameters (1 mandatory, was $#)" >&1
+    echo "usage: bash script_splitting.bash env" >&1
+    exit 2
+fi
+
+if [ "$1" != "uat" ]
+then
+    echo "uat only available for this test!"
+    exit 2
+fi
+
+ENV=$1
+
+sh ../common/setup.sh
 
 N_AGGREGATES=8
 
+generate_input_file() {
+    cd cstar-cli || exit
+    echo "Generating input file..."
+    poetry run cst sender aggregates --sender 12345 --action trx_and_aggr --aggr-qty $N_AGGREGATES --avg-trx 3
+    cd ..
+    FILENAME=$(basename cstar-cli/generated/*.csv)
+    echo "Generated: $FILENAME"
+    cp cstar-cli/generated/"$FILENAME" ./workdir/input/"$FILENAME"
+}
+download_senderack_list() {
+    ACKLIST_RESPONSE=$(curl \
+                      --silent --output senderack_list.txt \
+                      --write-out '%{http_code}' \
+                      --cert ../certs/certificate.pem \
+                      --key ../certs/private.key \
+                      --header "Ocp-Apim-Subscription-Key: $HPAN_SERVICE_API_KEY" \
+                      "$HPAN_SERVICE_URL/rtd/file-register/sender-ade-ack")
+}
+run_batch_service() {
+    java -jar ../common/rtd-ms-transaction-filter.jar
+}
+get_number_acks_to_download() {
+    ARRAY=$(grep -o '\[.*\]' < senderack_list.txt)
+    if [ ${#ARRAY} == 2  ]
+    then
+        echo 0
+    else
+        NUM_COMMAS=$(grep -o ',' < senderack_list.txt | wc -l)
+        if [ "$NUM_COMMAS" -eq 0 ]
+        then
+            echo 1
+        else
+            echo $(( NUM_COMMAS + 1 ))
+        fi
+    fi
+}
 ### file generation
-git clone --depth 1 https://github.com/pagopa/cstar-cli.git
-cd cstar-cli
-poetry install
-poetry run ./install.sh
-poetry run cst sender aggregates --sender 12345 --action trx_and_aggr --aggr-qty $N_AGGREGATES --avg-trx 3
-cd ..
-FILENAME=$(basename cstar-cli/generated/*.csv)
-cp cstar-cli/generated/$FILENAME ./workdir/input/$FILENAME
+generate_input_file
 
 ### batch service configuration
-# git clone --depth 1 --branch develop https://github.com/pagopa/rtd-ms-transaction-filter.git
-# cd rtd-ms-transaction-filter
-# echo "Packaging batch service..."
-# mvn clean package > /dev/null
-# cd ..
-# cp rtd-ms-transaction-filter/target/rtd-ms-transaction-filter.jar ./rtd-ms-transaction-filter.jar
+# shellcheck source=../common/setenv_env.sh
+source ../common/setenv_"$ENV".sh
 source setenv.sh
 
-# check env script
-# if [ $ACQ_BATCH_INPUT_CHUNK_SIZE -gt $ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD ]
-# then
-# 	echo "Please set the chunk size and ade threshold appropriately"
-# 	exit 2
-# fi
-
+echo "Executing batch service..."
 ### batch service run
-java -jar ../rtd-ms-transaction-filter.jar
+run_batch_service
 
 #### ASSERTIONS
 
+# check if file has been uploaded
+N_UPLOADS=$(grep -c "uploaded with success (status was: 201)" < workdir/logs/application.log)
+if [ "$N_UPLOADS" -ne 1 ]
+then
+	echo "Upload test not passed, $N_UPLOADS files uploaded: [FAILED]"
+	exit 2
+else
+	echo "Files uploaded with success: [SUCCESS]"
+fi
 
-OUTPUT_WITHOUT_EXTENSION="ADE.$(echo $FILENAME | cut -d'.' -f2-6)"
-
-#ciclo 10 volte
-	# sleep 1 minuto
-	# eseguo asserzione
-	# true test finito
-	# else false continuo il ciclo
-# test fallito
-
-# il timeout totale andrebbe parametrizzato in base alla dimensione del file di input
+# find file in ade container
 SLEEP_INTERVAL_IN_SECONDS=60
-ADE_FILENAME_WITHOUT_EXTENSION=AGGADE.$(echo $OUTPUT_WITHOUT_EXTENSION  | cut -d'.' -f2-6)
+# output without extension e.g. ADE.12345.TRNLOG.20221019.120524.001.01
+OUTPUT_FILENAME=$(basename workdir/output/ADE.*)
+# ade filename without extension e.g. AGGADE.12345.20221019.120524.001.01000
+ADE_FILENAME_WITHOUT_EXTENSION="AGGADE.$(echo "$OUTPUT_FILENAME" | cut -d'.' -f2,4-7)000"
+ADE_FILE_FOUND=true
 for i in {1..10}
 do
-	echo "Waiting $SLEEP_INTERVAL_IN_SECONDS seconds..."
-	sleep $SLEEP_INTERVAL_IN_SECONDS
+    echo "Waiting $SLEEP_INTERVAL_IN_SECONDS seconds..."
+    sleep $SLEEP_INTERVAL_IN_SECONDS
+    ADE_FILE_FOUND=true
 
+    if ! sh cstar-cli/integration_check/scripts/004-remote-file-check-UAT/script.sh workdir/output/"$OUTPUT_FILENAME" ../certs/certificate.pem ../certs/private.key "$HPAN_SERVICE_API_KEY"
+    then
+        echo "file $ADE_FILENAME_WITHOUT_EXTENSION not found in ade/in"
+        ADE_FILE_FOUND=false
+        echo "Retrying..."
+        continue
+    else
+        break
+    fi
+done
+
+if [ $ADE_FILE_FOUND == false ]
+then
+    echo "File not found in ade container: [FAILED]"
+    exit 2
+fi
+
+# inject file in ade/ack container
+if ! sh cstar-cli/integration_check/scripts/005a-extract-ade-ack-UAT/script.sh ./deposited-remotely/"$ADE_FILENAME_WITHOUT_EXTENSION" ../certs/certificate.pem ../certs/private.key "$HPAN_SERVICE_API_KEY"
+then
+    echo "test failed"
+    exit 2
+fi
+# timeout 1h, 60 minutes (schedule pipeline + execution time pipeline)
+TIMEOUT_IN_MINUTES=60
+#set batch service send to false in order to not send the placeholder files
+export ACQ_BATCH_TRX_SENDER_ADE_ENABLED=false
+for (( i=0 ; i <= TIMEOUT_IN_MINUTES; i++))
+do
+    echo "Waiting $SLEEP_INTERVAL_IN_SECONDS seconds..."
+    sleep $SLEEP_INTERVAL_IN_SECONDS
+
+    # call senderack_list
+    download_senderack_list
+
+    if [ "$ACKLIST_RESPONSE" -ne 200 ]
+    then
+        exit 2
+    fi
+
+    N_FILES_TO_DOWNLOAD=$(get_number_acks_to_download)
+    echo "$N_FILES_TO_DOWNLOAD files to download"
+
+    # if list do not contains files, sleep
+    if [ "$N_FILES_TO_DOWNLOAD" -eq 0 ]
+    then
+        continue
+    fi
+    # otherwise run batch service
+    generate_input_file
+    run_batch_service
+    # recall senderack_list
+    download_senderack_list
+    # numbers of files to download must be lesser than before
+    N_FILES_TO_DOWNLOAD_POST_BATCH=$(get_number_acks_to_download)
+
+    if [ "$N_FILES_TO_DOWNLOAD_POST_BATCH" -lt "$N_FILES_TO_DOWNLOAD" ]
+    then
+        echo "TEST [SUCCESS]"
+        break
+    else
+        echo "TEST [FAILED]"
+        exit 2
+    fi
 done
 
 exit 0
-
-
