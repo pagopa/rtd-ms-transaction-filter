@@ -1,28 +1,6 @@
-export LOG_LEVEL_RTD_TRANSACTION_FILTER=INFO
-export ACQ_BATCH_SCHEDULED=false
-export ACQ_BATCH_INPUT_CRON="0/10 * * * * *"
-export ACQ_BATCH_TRX_INPUT_PATH=workdir/input
-export ACQ_BATCH_HPAN_INPUT_PATH=workdir/hpans
-export ACQ_BATCH_TRX_LOGS_PATH=workdir/logs
-export ACQ_BATCH_OUTPUT_PATH=workdir/output
-export ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH=workdir/ade-errors
-export HPAN_SERVICE_URL=https://api.dev.cstar.pagopa.it
-export HPAN_SERVICE_API_KEY=249e262148534ecb8dc1dd12147db39b
-export HPAN_SERVICE_KEY_STORE_FILE=./certs.jks
-export HPAN_SERVICE_KEY_STORE_PASSWORD=cstardev
-export HPAN_SERVICE_TRUST_STORE_FILE=./certs.jks
-export HPAN_SERVICE_TRUST_STORE_PASSWORD=cstardev
-export JAVA_TOOL_OPTIONS="-Xms6g -Xmx6g"
-
-# Disable fetching of HPANs from remote service
-#export ACQ_BATCH_HPAN_RECOVERY_ENABLED=false
-# Avoid delete local resource
-#export ACQ_BATCH_HPAN_ON_SUCCESS=KEEP
-
 export ACQ_BATCH_TRX_SENDER_RTD_ENABLED=false
 export ACQ_BATCH_TRX_SENDER_ADE_ENABLED=true
 
 export ACQ_BATCH_DELETE_OUTPUT_FILE=KEEP
-#export REST_CLIENT_LOGGER_LEVEL=FULL
 export ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD=10
 export ACQ_BATCH_INPUT_CHUNK_SIZE=10
