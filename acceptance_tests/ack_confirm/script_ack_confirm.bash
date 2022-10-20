@@ -1,8 +1,8 @@
 #!/bin/bash
 
-if [ $# -ne 1 ] ; then
+if [ $# -lt 1 ] ; then
     echo "Illegal number of parameters (1 mandatory, was $#)" >&1
-    echo "usage: bash script_splitting.bash env" >&1
+    echo "usage: bash script_splitting.bash env [timeout_in_minutes]" >&1
     exit 2
 fi
 
@@ -13,6 +13,8 @@ then
 fi
 
 ENV=$1
+# timeout default 1h (schedule pipeline + execution time pipeline)
+TIMEOUT_IN_MINUTES="${2:-90}"
 
 sh ../common/setup.sh
 
@@ -114,8 +116,7 @@ then
     echo "test failed"
     exit 2
 fi
-# timeout 1h, 60 minutes (schedule pipeline + execution time pipeline)
-TIMEOUT_IN_MINUTES=60
+
 #set batch service send to false in order to not send the placeholder files
 export ACQ_BATCH_TRX_SENDER_ADE_ENABLED=false
 for (( i=0 ; i <= TIMEOUT_IN_MINUTES; i++))
