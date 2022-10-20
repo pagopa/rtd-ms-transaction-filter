@@ -152,8 +152,8 @@ do
     fi
 done
 
-# timeout 1h, 60 minutes (schedule pipeline + execution time pipeline)
-TIMEOUT_IN_MINUTES=60
+# test timeout 2h (schedule pipeline + execution time pipeline)
+TIMEOUT_IN_MINUTES=120
 #set batch service send to false in order to not send the placeholder files
 export ACQ_BATCH_TRX_SENDER_ADE_ENABLED=false
 for (( i=0 ; i <= TIMEOUT_IN_MINUTES; i++))
@@ -164,14 +164,14 @@ do
     # call senderack_list
     download_senderack_list
 
-#    if [ "$ACKLIST_RESPONSE" -ne 200 ]
-#    then
-#        exit 2
-#    fi
+    if [ "$ACKLIST_RESPONSE" -ne 200 ]
+    then
+        exit 2
+    fi
 
     IS_ASSERTION_SATISFIED=$(check_assertion)
 
-    # if list do not contains at least 2 files, sleep
+    # if list do not contains at least 2 files with the expected sender codes, sleep
     if [ "$IS_ASSERTION_SATISFIED" == true ]
     then
         # run batch service to clear the acks available
