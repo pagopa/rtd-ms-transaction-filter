@@ -706,9 +706,11 @@ public class TransactionFilterStep {
      */
     @Bean
     @JobScope
-    public Partitioner transactionSenderAdePartitioner() throws IOException {
+    public Partitioner transactionSenderAdePartitioner(StoreService storeService) throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-        String pathMatcher = outputDirectoryPath + File.separator + ADE_OUTPUT_FILE_PREFIX + REGEX_PGP_FILES;
+        String fileNameWithoutExtension = storeService.getTargetInputFile().replace(".csv", "");
+        String outputFilePrefix = fileNameWithoutExtension.replace("CSTAR", "ADE");
+        String pathMatcher = outputDirectoryPath + File.separator + outputFilePrefix + REGEX_PGP_FILES;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
@@ -722,10 +724,11 @@ public class TransactionFilterStep {
      * @throws IOException
      */
     @Bean
-    public Step transactionSenderAdeMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
+    public Step transactionSenderAdeMasterStep(HpanConnectorService hpanConnectorService,
+        StoreService storeService) throws IOException {
         return stepBuilderFactory.get("transaction-sender-ade-master-step")
             .partitioner(transactionSenderAdeWorkerStep(hpanConnectorService))
-            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderAdePartitioner())
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderAdePartitioner(storeService))
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
