@@ -82,7 +82,7 @@ batchConfiguration:
       enabled: ${ACQ_BATCH_SENDER_ADEACK_RECOVERY_ENABLED:true}
       directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:ade-errors}
     transactionWriterAde:
-      splitThreshold: ${ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD:1000000}
+      splitThreshold: ${ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD:2000000}
 
 rest-client:
   user-agent:
