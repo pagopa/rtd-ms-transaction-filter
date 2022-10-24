@@ -1,9 +1,8 @@
 #!/bin/bash
 
 # This script tests the ingestion of a file of big dimension.
-# By default it will generate a single chunk of 6M rows but it is
-# customizable by tuning N_AGGREGATES value.
-# Keep in mind N_AGGREGATES must not be bigger than the ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD.
+# By default it will generate a single chunk of 6M rows and expect the decrypter will generate
+# 3 output chunks.
 # The script does not support the generation of more than one chunk!
 
 if [ $# -ne 1 ] ; then
@@ -18,7 +17,7 @@ TIMEOUT_IN_MINUTES="${2:-250}"
 
 sh ../common/setup.sh
 
-N_AGGREGATES=6000000
+N_AGGREGATES=50
 
 ### file generation
 cd cstar-cli || exit
