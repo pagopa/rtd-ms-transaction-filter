@@ -17,7 +17,7 @@ TIMEOUT_IN_MINUTES="${2:-250}"
 
 sh ../common/setup.sh
 
-N_AGGREGATES=50
+N_AGGREGATES=6000000
 
 ### file generation
 cd cstar-cli || exit
