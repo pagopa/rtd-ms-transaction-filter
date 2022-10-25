@@ -48,7 +48,7 @@ public class JobListenerTest {
         JobListener jobListener = new JobListener();
         jobListener.afterJob(stepContext.getStepExecution().getJobExecution());
 
-        Assert.assertEquals(stepContext.getStepExecution().getJobExecution().getExitStatus(),ExitStatus.FAILED);
+        Assert.assertEquals(ExitStatus.FAILED, stepContext.getStepExecution().getJobExecution().getExitStatus());
 
     }
 

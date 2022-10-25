@@ -8,7 +8,9 @@ import org.springframework.batch.core.JobExecutionListener;
 public class JobListener implements JobExecutionListener {
 
     @Override
-    public void beforeJob(JobExecution jobExecution) {}
+    public void beforeJob(JobExecution jobExecution) {
+        // do nothing
+    }
 
     @Override
     public void afterJob(JobExecution jobExecution) {
@@ -16,7 +18,7 @@ public class JobListener implements JobExecutionListener {
                 (!ExitStatus.COMPLETED.equals(stepExecution.getExitStatus()) &&
                !stepExecution.getExitStatus().equals(new ExitStatus("COMPLETED WITH SKIPS"))) ||
                !BatchStatus.COMPLETED.equals(stepExecution.getStatus()) ||
-                stepExecution.getFailureExceptions().size() > 0);
+                !stepExecution.getFailureExceptions().isEmpty());
         if (hasErrors) {
             jobExecution.setExitStatus(ExitStatus.FAILED);
         }

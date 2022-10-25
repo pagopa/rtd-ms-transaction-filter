@@ -31,55 +31,66 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     @Override
-    public void beforeProcess(InboundTransaction inboundTransaction) {}
+    public void beforeProcess(InboundTransaction inboundTransaction) {
+        // do nothing
+    }
 
     public void afterProcess(InboundTransaction item, @Nullable InboundTransaction result) {
 
-        if (enableAfterProcessLogging) {
-
+        if (Boolean.TRUE.equals(enableAfterProcessLogging)) {
             if (result == null) {
-                if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
-                    log.info("Filtered transaction record on filename: {},line: {}",
-                            item.getFilename(),
-                            item.getLineNumber());
-                } else if (loggingFrequency == 1) {
-                    log.debug("Filtered transaction record on filename: {},line: {}",
-                            item.getFilename(),
-                            item.getLineNumber());
-                }
-
+                logFilteredItem(item);
             } else {
-                if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
-                    log.info("Processed {} lines on file: {}", item.getLineNumber(), item.getFilename());
-                } else if (loggingFrequency == 1) {
-                    log.debug("Processed transaction record on filename: {}, line: {}",
-                            item.getFilename(), item.getLineNumber());
-                }
+                logProcessedItem(item);
             }
-
         }
 
         if (Boolean.TRUE.equals(enableAfterProcessFileLogging) && result == null) {
-            try {
-                String file = item.getFilename().replaceAll("\\\\", "/");
-                String[] fileArr = file.split("/");
-                transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
-                        .getFile().getAbsolutePath()
-                        .concat("/".concat(executionDate))
-                        + "_" + prefix + "_FilteredRecords_"+fileArr[fileArr.length-1],buildCsv(item));
-            } catch (Exception e) {
-                if (log.isErrorEnabled()) {
-                    log.error(e.getMessage(), e);
-                }
-            }
+            logItemIntoFilteredRecordsFile(item);
         }
 
     }
 
+    private void logFilteredItem(InboundTransaction item) {
+        if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
+            log.info("Filtered transaction record on filename: {},line: {}",
+                item.getFilename(),
+                item.getLineNumber());
+        } else if (loggingFrequency == 1) {
+            log.debug("Filtered transaction record on filename: {},line: {}",
+                item.getFilename(),
+                item.getLineNumber());
+        }
+    }
+
+    private void logProcessedItem(InboundTransaction item) {
+        if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
+            log.info("Processed {} lines on file: {}", item.getLineNumber(), item.getFilename());
+        } else if (loggingFrequency == 1) {
+            log.debug("Processed transaction record on filename: {}, line: {}",
+                item.getFilename(), item.getLineNumber());
+        }
+    }
+
+    private void logItemIntoFilteredRecordsFile(InboundTransaction item) {
+        try {
+            String file = item.getFilename().replace("\\", "/");
+            String[] fileArr = file.split("/");
+            transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
+                .getFile().getAbsolutePath()
+                .concat("/".concat(executionDate))
+                + "_" + prefix + "_FilteredRecords_" + fileArr[fileArr.length-1], buildCsv(item));
+        } catch (Exception e) {
+            if (log.isErrorEnabled()) {
+                log.error(e.getMessage(), e);
+            }
+        }
+    }
+
     public void onProcessError(InboundTransaction item, Exception throwable) {
 
-        if (transactionWriterService.hasErrorHpan(item.getFilename()
-                .concat(String.valueOf(item.getLineNumber())))) {
+        if (Boolean.TRUE.equals(transactionWriterService.hasErrorHpan(item.getFilename()
+                .concat(String.valueOf(item.getLineNumber()))))) {
             return;
         }
 
@@ -87,30 +98,38 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 .concat(String.valueOf(item.getLineNumber())));
 
         if (Boolean.TRUE.equals(enableOnErrorLogging)) {
-            if (throwable instanceof ConstraintViolationException) {
-                ((ConstraintViolationException) throwable).getConstraintViolations()
-                    .forEach(violation -> log.error("Error during record validation at line: {}, on field: {}, value: {}, validation: {}, reason: {}",
-                        item.getLineNumber(), violation.getPropertyPath(), violation.getInvalidValue(),
-                        violation.getMessageTemplate(), violation.getMessage()));
-
-            } else {
-                log.error("Error during transaction processing at line: {}", item.getLineNumber());
-            }
+            logValidationErrors(item, throwable);
         }
 
         if (Boolean.TRUE.equals(enableOnErrorFileLogging)) {
-            try {
-                String filename = item.getFilename().replace("\\\\", "/");
-                String[] fileArr = filename.split("/");
-                transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
-                        .getFile().getAbsolutePath()
-                        .concat("/".concat(executionDate))
-                        + "_" + prefix + "_ErrorRecords_"+fileArr[fileArr.length-1]+".csv",buildCsv(item));
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
+            logSkippedLinesOnFile(item);
         }
 
+    }
+
+    private void logValidationErrors(InboundTransaction item, Exception throwable) {
+        if (throwable instanceof ConstraintViolationException) {
+            ((ConstraintViolationException) throwable).getConstraintViolations()
+                .forEach(violation -> log.error("Error during record validation at line: {}, on field: {}, value: {}, validation: {}, reason: {}",
+                    item.getLineNumber(), violation.getPropertyPath(), violation.getInvalidValue(),
+                    violation.getMessageTemplate(), violation.getMessage()));
+
+        } else {
+            log.error("Error during transaction processing at line: {}", item.getLineNumber());
+        }
+    }
+
+    private void logSkippedLinesOnFile(InboundTransaction item) {
+        try {
+            String filename = item.getFilename().replace("\\", "/");
+            String[] fileArr = filename.split("/");
+            transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
+                .getFile().getAbsolutePath()
+                .concat("/".concat(executionDate))
+                + "_" + prefix + "_ErrorRecords_" + fileArr[fileArr.length-1], buildCsv(item));
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+        }
     }
 
     private String buildCsv(InboundTransaction inboundTransaction) {
@@ -122,7 +141,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
                 .concat(Optional.ofNullable(inboundTransaction.getIdTrxAcquirer()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getIdTrxIssuer()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getCorrelationId()).orElse("")).concat(";")
-                .concat(inboundTransaction.getAmount() != null ? inboundTransaction.getAmount().toString() : "").concat(";")
+                .concat(Optional.ofNullable(inboundTransaction.getAmount()).orElse(0L).toString()).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getAmountCurrency()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getAcquirerId()).orElse("")).concat(";")
                 .concat(Optional.ofNullable(inboundTransaction.getMerchantId()).orElse("")).concat(";")

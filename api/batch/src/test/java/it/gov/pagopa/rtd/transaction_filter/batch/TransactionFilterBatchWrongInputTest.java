@@ -117,21 +117,23 @@ public class TransactionFilterBatchWrongInputTest {
     public void setUp() {
         Mockito.reset(hpanStoreServiceSpy);
 
-        for (Resource resource : resolver.getResources("classpath:/test-encrypt/errorLogs/*.csv")) {
-            resource.getFile().delete();
-        }
+        deleteFiles("classpath:/test-encrypt/errorLogs/*.csv");
+        deleteFiles("classpath:/test-encrypt/output/*.pgp");
+        deleteFiles("classpath:/test-encrypt/output/*.csv");
     }
 
     @SneakyThrows
     @After
     public void tearDown() {
-        Resource[] resources = resolver.getResources("classpath:/test-encrypt/output/*.pgp");
-        if (resources.length > 1) {
-            for (Resource resource : resources) {
-                resource.getFile().delete();
-            }
-        }
         tempFolder.delete();
+    }
+
+    @SneakyThrows
+    private void deleteFiles(String classpath) {
+        Resource[] resources = resolver.getResources(classpath);
+        for (Resource resource : resources) {
+            resource.getFile().delete();
+        }
     }
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();

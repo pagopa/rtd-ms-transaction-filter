@@ -1,11 +1,11 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
+import java.security.SecureRandom;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.StepExecution;
@@ -42,7 +42,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     private String deleteOutputFiles;
     private String manageHpanOnSuccess;
     private String successPath;
-    private String errorPath;
+    private String uploadPendingPath;
     private String hpanDirectory;
     private String outputDirectory;
     private String logsDirectory;
@@ -55,12 +55,13 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
      */
     @Override
     public void afterPropertiesSet() throws Exception {
+        String assertionMessage = "directory must be set";
         Assert.notNull(resolver.getResources("file:" + successPath + "*.pgp"),
-                "directory must be set");
-        Assert.notNull(resolver.getResources("file:" + errorPath + "*.pgp"),
-                "directory must be set");
+            assertionMessage);
+        Assert.notNull(resolver.getResources("file:" + uploadPendingPath + "*.pgp"),
+            assertionMessage);
         Assert.notNull(resolver.getResources(hpanDirectory),
-                "directory must be set");
+            assertionMessage);
     }
 
     /**
@@ -80,14 +81,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         List<String> errorFilenames = new ArrayList<>();
         hpanDirectory = makePathSystemIndependent(hpanDirectory);
 
-        List<String> hpanResources = Arrays.stream(resolver.getResources(hpanDirectory)).map(resource -> {
-            try {
-                return makePathSystemIndependent(resource.getFile().getAbsolutePath());
-            } catch (IOException e) {
-                log.error(e.getMessage(),e);
-                return null;
-            }
-        }).collect(Collectors.toList());
+        List<String> hpanResources = getHpanFiles();
 
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
                 .getStepExecutions();
@@ -137,10 +131,11 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                     }
 
                     boolean isHpanFile = hpanResources.contains(makePathSystemIndependent(path));
+                    boolean isOutputFile = path.contains(getOutputDirectoryAbsolutePath());
                     if (Boolean.TRUE.equals(deleteProcessedFiles) || (isComplete && isHpanFile && manageHpanOnSuccess.equals("DELETE"))) {
                         log.info("Removing processed file: {}", file);
                         FileUtils.forceDelete(FileUtils.getFile(path));
-                    } else if (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
+                    } else if (!isOutputFile && (!isHpanFile || !isComplete || manageHpanOnSuccess.equals("ARCHIVE"))) {
                         log.info("Archiving processed file: {}", file);
                         archiveFile(file, path, isComplete);
                     }
@@ -181,6 +176,30 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         return RepeatStatus.FINISHED;
     }
 
+    @SneakyThrows
+    private String getOutputDirectoryAbsolutePath() {
+        return Arrays.stream(resolver.getResources(outputDirectory)).map(resource -> {
+            try {
+                return makePathSystemIndependent(resource.getFile().getAbsolutePath());
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
+                return "";
+            }
+        }).findAny().orElse(null);
+    }
+
+    @SneakyThrows
+    private List<String> getHpanFiles() {
+        return Arrays.stream(resolver.getResources(hpanDirectory)).map(resource -> {
+            try {
+                return makePathSystemIndependent(resource.getFile().getAbsolutePath());
+            } catch (IOException e) {
+                log.error(e.getMessage(),e);
+                return null;
+            }
+        }).collect(Collectors.toList());
+    }
+
     String makePathSystemIndependent(String path) {
         return path.replace("\\", "/");
     }
@@ -193,14 +212,28 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
 
     @SneakyThrows
     private void archiveFile(String file, String path, boolean isCompleted) {
-        String archivalPath = isCompleted ? successPath : errorPath;
-        file = makePathSystemIndependent(file);
-        String[] filename = file.split("/");
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-        archivalPath = resolver.getResources(archivalPath)[0].getFile().getAbsolutePath();
-        File destFile = FileUtils.getFile(archivalPath + "/" + RandomUtils.nextLong() +
-                "_" + OffsetDateTime.now().format(fmt) + "_" + filename[filename.length - 1]);
-        FileUtils.moveFile(FileUtils.getFile(path), destFile);
+        File destinationFile = getDestionationFileByStatus(file, isCompleted);
+        FileUtils.moveFile(FileUtils.getFile(path), destinationFile);
+    }
+
+    @SneakyThrows
+    private File getDestionationFileByStatus(String sourceFilePath, boolean isCompleted) {
+
+        sourceFilePath = makePathSystemIndependent(sourceFilePath);
+        String[] pathSplitted = sourceFilePath.split("/");
+        String filename = pathSplitted[pathSplitted.length - 1];
+        String destinationPath;
+        if (isCompleted) {
+            String archivalPath = resolver.getResources(successPath)[0].getFile().getAbsolutePath();
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+            destinationPath = archivalPath + File.separator + SecureRandom.getInstanceStrong().nextLong() +
+                "_" + OffsetDateTime.now().format(fmt) + "_" + filename;
+        } else {
+            String archivalPath = resolver.getResources(uploadPendingPath)[0].getFile().getAbsolutePath();
+            destinationPath = archivalPath + File.separator + filename;
+        }
+
+        return FileUtils.getFile(destinationPath);
     }
 
     @SneakyThrows

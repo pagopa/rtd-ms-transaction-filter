@@ -83,44 +83,39 @@ public class HpanRestConnectorConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {
         // This interceptor injects the User-Agent header in each request made with the client.
-        return requestTemplate -> {
-            requestTemplate.header("User-Agent", getUserAgent());
-        };
+        return requestTemplate -> requestTemplate.header("User-Agent", getUserAgent());
+
     }
 
     @Bean
-    public Client getFeignClient() throws Exception {
-        try {
-            SSLSocketFactory sslSocketFactory = null;
+    public Client getFeignClient() {
+        SSLSocketFactory sslSocketFactory = null;
 
-            if (mtlsEnabled) {
-                sslSocketFactory = getSSLContext().getSocketFactory();
-                log.debug("enabled socket factory: {}", sslSocketFactory);
-            }
+        if (Boolean.TRUE.equals(mtlsEnabled)) {
+            sslSocketFactory = getSSLContext().getSocketFactory();
+            log.debug("enabled socket factory: {}", sslSocketFactory);
+        }
 
-            if (proxyEnabled) {
-                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
-                if (proxyUsername != null && !proxyUsername.equals("") &&
-                        proxyPassword != null && !proxyPassword.equals("")) {
-                    Client client = new Client.Proxied(sslSocketFactory,null, proxy,
-                            proxyUsername, proxyPassword);
-                    System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
-                    Authenticator.setDefault(new Authenticator() {
-                        protected PasswordAuthentication getPasswordAuthentication() {
-                            return new PasswordAuthentication(proxyUsername, proxyPassword.toCharArray());
-                        }
-                    });
-                    return client;
-                } else {
-                    return new Client.Proxied(sslSocketFactory,null, proxy);
-                }
-
+        if (Boolean.TRUE.equals(proxyEnabled)) {
+            Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
+            if (proxyUsername != null && !proxyUsername.equals("") &&
+                    proxyPassword != null && !proxyPassword.equals("")) {
+                Client client = new Client.Proxied(sslSocketFactory,null, proxy,
+                        proxyUsername, proxyPassword);
+                System.setProperty("jdk.http.auth.tunneling.disabledSchemes", "");
+                Authenticator.setDefault(new Authenticator() {
+                    @Override
+                    protected PasswordAuthentication getPasswordAuthentication() {
+                        return new PasswordAuthentication(proxyUsername, proxyPassword.toCharArray());
+                    }
+                });
+                return client;
             } else {
-                return new Client.Default(sslSocketFactory, null);
+                return new Client.Proxied(sslSocketFactory,null, proxy);
             }
-        } catch (Exception e) {
-            log.error(e.getMessage(),e);
-            throw new Exception("Error occurred while initializing feign client", e);
+
+        } else {
+            return new Client.Default(sslSocketFactory, null);
         }
     }
 

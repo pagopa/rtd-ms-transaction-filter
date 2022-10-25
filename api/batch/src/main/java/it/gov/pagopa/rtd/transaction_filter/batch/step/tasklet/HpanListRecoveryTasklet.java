@@ -1,7 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
+import java.io.IOException;
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.batch.core.StepContribution;
@@ -49,51 +51,27 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
      * @throws Exception
      */
     @Override
-    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext)
+        throws IOException {
 
-        hpanListDirectory = hpanListDirectory.replaceAll("\\\\", "/");
+        hpanListDirectory = hpanListDirectory.replace("\\", "/");
         Resource[] resources = null;
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd");
         String currentDate = OffsetDateTime.now().format(fmt);
 
-        if (dailyRemovalTaskletEnabled) {
-
-            resources = resolver.getResources("file:/"
-                    .concat(hpanListDirectory.charAt(0) == '/' ?
-                            hpanListDirectory.replaceFirst("/","") : hpanListDirectory)
-                    .concat("/")
-                    .concat(hpanFilePattern));
-
-            try {
-
-                for (Resource resource : resources) {
-                    BasicFileAttributes fileAttributes = Files.readAttributes(
-                            resource.getFile().toPath(), BasicFileAttributes.class);
-                    Long fileLastModTime = fileAttributes.lastModifiedTime().toMillis();
-                    Instant instant = Instant.ofEpochMilli(fileLastModTime);
-                    LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
-                    String fileLastModifiedDate = localDateTime.format(fmt);
-                    if (!fileLastModifiedDate.equals(currentDate)) {
-                        resource.getFile().delete();
-                    }
-
-                }
-
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-
+        if (Boolean.TRUE.equals(dailyRemovalTaskletEnabled)) {
+            deleteHpanFilesOlderThan(currentDate, fmt);
         }
 
-        if (recoveryTaskletEnabled) {
+        if (Boolean.TRUE.equals(recoveryTaskletEnabled)) {
             resources = resolver.getResources("file:/"
                     .concat(hpanListDirectory.charAt(0) == '/' ?
                             hpanListDirectory.replaceFirst("/","") : hpanListDirectory)
                     .concat("/")
                     .concat(hpanFilePattern));
             File outputFile = FileUtils.getFile(hpanListDirectory
-                    .concat("/".concat(OffsetDateTime.now().format(fmt).concat("_")
+                    .concat("/".concat(currentDate.concat("_")
                             .concat(fileName != null ? fileName : "hpanList"))));
             if (resources.length == 0 || !outputFile.exists()) {
                 File hpanListTempFile = hpanConnectorService.getHpanList();
@@ -104,6 +82,36 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
             }
         }
         return RepeatStatus.FINISHED;
+    }
+
+    private void deleteHpanFilesOlderThan(String currentDate, DateTimeFormatter dateTimeFormatter) {
+        Resource[] resources = retrieveExistingHpanFiles();
+
+        try {
+            for (Resource resource : resources) {
+                BasicFileAttributes fileAttributes = Files.readAttributes(
+                    resource.getFile().toPath(), BasicFileAttributes.class);
+                long fileLastModTime = fileAttributes.lastModifiedTime().toMillis();
+                Instant instant = Instant.ofEpochMilli(fileLastModTime);
+                LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+                String fileLastModifiedDate = localDateTime.format(dateTimeFormatter);
+                if (!fileLastModifiedDate.equals(currentDate)) {
+                    Files.delete(resource.getFile().toPath());
+                }
+            }
+
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    @SneakyThrows
+    private Resource[] retrieveExistingHpanFiles() {
+        return resolver.getResources("file:/"
+            .concat(hpanListDirectory.charAt(0) == '/' ?
+                hpanListDirectory.replaceFirst("/","") : hpanListDirectory)
+            .concat("/")
+            .concat(hpanFilePattern));
     }
 
     @Override

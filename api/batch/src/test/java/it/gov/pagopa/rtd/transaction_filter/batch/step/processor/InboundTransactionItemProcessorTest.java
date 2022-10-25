@@ -47,7 +47,7 @@ public class InboundTransactionItemProcessorTest {
 
     @Test
     public void processTransactionWithHashingDisabled() {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
         InboundTransaction transaction = processor.process(fakeInboundTransaction());
@@ -59,7 +59,7 @@ public class InboundTransactionItemProcessorTest {
     @Test
     public void processTransactionWithHashingEnabled() {
         String hashPan = DigestUtils.sha256Hex(FAKE_ENROLLED_PAN + FAKE_SALT);
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(hashPan));
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(hashPan);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, true);
         InboundTransaction transaction = processor.process(fakeInboundTransaction());
@@ -70,7 +70,7 @@ public class InboundTransactionItemProcessorTest {
 
     @Test
     public void processTransactionPanNotMatching() {
-        BDDMockito.doReturn(false).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        BDDMockito.doReturn(false).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
         InboundTransaction outboundTransaction = processor.process(fakeInboundTransaction());
@@ -79,7 +79,7 @@ public class InboundTransactionItemProcessorTest {
 
     @Test
     public void process_OK_SaveHashing() {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor =
                 new InboundTransactionItemProcessor(storeServiceMock, false);
@@ -89,13 +89,13 @@ public class InboundTransactionItemProcessorTest {
         InboundTransaction expectedTransaction = fakeInboundTransaction();
         expectedTransaction.setPan(DigestUtils.sha256Hex(expectedTransaction.getPan() + FAKE_SALT));
         Assert.assertEquals(expectedTransaction, inboundTransaction);
-        BDDMockito.verify(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        BDDMockito.verify(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
     }
 
     @Test
     public void process_OK_AllHashing() {
         String hashPan = DigestUtils.sha256Hex(FAKE_ENROLLED_PAN + FAKE_SALT);
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(hashPan));
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(hashPan);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor =
                 new InboundTransactionItemProcessor(storeServiceMock, true);
@@ -105,13 +105,13 @@ public class InboundTransactionItemProcessorTest {
         InboundTransaction expectedTransaction = fakeInboundTransaction();
         expectedTransaction.setPan(DigestUtils.sha256Hex(expectedTransaction.getPan() + FAKE_SALT));
         Assert.assertEquals(expectedTransaction, inboundTransaction);
-        BDDMockito.verify(storeServiceMock).hasHpan(Mockito.eq(hashPan));
+        BDDMockito.verify(storeServiceMock).hasHpan(hashPan);
     }
 
     @Test
     public void process_OK_AllHashing_NoSalt() {
         String hashPan = DigestUtils.sha256Hex(FAKE_ENROLLED_PAN);
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(hashPan));
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(hashPan);
         BDDMockito.doReturn("").when(storeServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor =
                 new InboundTransactionItemProcessor(storeServiceMock, true);
@@ -121,7 +121,7 @@ public class InboundTransactionItemProcessorTest {
         InboundTransaction expectedTransaction = fakeInboundTransaction();
         expectedTransaction.setPan(DigestUtils.sha256Hex(expectedTransaction.getPan()));
         Assert.assertEquals(expectedTransaction, inboundTransaction);
-        BDDMockito.verify(storeServiceMock).hasHpan(Mockito.eq(hashPan));
+        BDDMockito.verify(storeServiceMock).hasHpan(hashPan);
     }
 
     @Test
@@ -129,18 +129,18 @@ public class InboundTransactionItemProcessorTest {
         String hashPan = DigestUtils.sha256Hex(FAKE_ENROLLED_PAN);
         BDDMockito.doAnswer(invocationOnMock -> {
             throw new Exception();
-        }).when(storeServiceMock).hasHpan(Mockito.eq(hashPan));
+        }).when(storeServiceMock).hasHpan(hashPan);
         BDDMockito.doReturn("").when(storeServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor =
                 new InboundTransactionItemProcessor(storeServiceMock, true);
         expectedException.expect(Exception.class);
         inboundTransactionItemProcessor.process(fakeInboundTransaction());
-        BDDMockito.verify(storeServiceMock).hasHpan(Mockito.eq(hashPan));
+        BDDMockito.verify(storeServiceMock).hasHpan(hashPan);
     }
 
     @Test
     public void process_OK_validForReturn() {
-        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
         InboundTransactionItemProcessor inboundTransactionItemProcessor = new InboundTransactionItemProcessor(storeServiceMock, false);
 
@@ -150,7 +150,7 @@ public class InboundTransactionItemProcessorTest {
         InboundTransaction outboundTransaction = inboundTransactionItemProcessor.process(fakeInboundTransaction());
         Assert.assertNotNull(outboundTransaction);
         Assert.assertEquals(fakeInboundTransaction(), outboundTransaction);
-        BDDMockito.verify(storeServiceMock).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        BDDMockito.verify(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
 
         inboundTransaction = fakeInboundTransaction();
         inboundTransaction.setOperationType("01");
@@ -158,7 +158,7 @@ public class InboundTransactionItemProcessorTest {
         outboundTransaction = inboundTransactionItemProcessor.process(inboundTransaction);
         Assert.assertNotNull(outboundTransaction);
         Assert.assertEquals(fakeInboundTransaction(), outboundTransaction);
-        BDDMockito.verify(storeServiceMock, Mockito.times(2)).hasHpan(Mockito.eq(FAKE_ENROLLED_PAN));
+        BDDMockito.verify(storeServiceMock, Mockito.times(2)).hasHpan(FAKE_ENROLLED_PAN);
     }
 
     private InboundTransaction fakeInboundTransaction() {

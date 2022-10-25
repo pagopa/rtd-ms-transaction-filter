@@ -42,7 +42,8 @@ spring:
 logging:
   level:
     it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:INFO}
-  file: ${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}/${ACQ_BATCH_APP_LOG_FILE:application.log}
+  file:
+    name: ${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}/${ACQ_BATCH_APP_LOG_FILE:application.log}
   pattern: ${ACQ_BATCH_APP_LOG_PATTERN:}
 
 batchConfiguration:
@@ -59,17 +60,18 @@ batchConfiguration:
       hpanDirectoryPath: file:${ACQ_BATCH_HPAN_INPUT_PATH:resources/hpans}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
       secretKeyPath: file:${ACQ_BATCH_INPUT_SECRET_KEYPATH:}
       passphrase: ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:}
-      partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
-      chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000}
-      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
+      partitionerSize: ${ACQ_BATCH_HPAN_PARTITIONER_SIZE:10}
+      chunkSize: ${ACQ_BATCH_HPAN_CHUNK_SIZE:1000}
+      skipLimit: ${ACQ_BATCH_HPAN_SKIP_LIMIT:0}
       applyDecrypt: ${ACQ_BATCH_PAN_LIST_APPLY_DECRYPT:false}
       applyHashing: ${ACQ_BATCH_PAN_LIST_APPLY_HASHING:false}
     transactionFilter:
       transactionDirectoryPath: file:${ACQ_BATCH_TRX_INPUT_PATH:resources/transactions}/
       outputDirectoryPath: file:${ACQ_BATCH_OUTPUT_PATH:${ACQ_BATCH_TRX_INPUT_PATH:resources}/output}
+      pendingArchivePath: file:${ACQ_BATCH_PENDING_PATH:${ACQ_BATCH_OUTPUT_PATH:}/pending}
       partitionerSize: ${ACQ_BATCH_INPUT_PARTITIONER_SIZE:10}
       chunkSize: ${ACQ_BATCH_INPUT_CHUNK_SIZE:1000}
-      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:1000}
+      skipLimit: ${ACQ_BATCH_INPUT_SKIP_LIMIT:0}
       timestampPattern: ${ACQ_BATCH_INPUT_TIMESTAMP_PATTERN:yyyy-MM-dd'T'HH:mm:ss.SSSXXXXX}
       applyHashing: ${ACQ_BATCH_TRX_LIST_APPLY_HASHING:true}
       applyEncrypt: ${ACQ_BATCH_TRX_LIST_APPLY_ENCRYPT:true}
@@ -84,6 +86,8 @@ batchConfiguration:
       enabled: ${ACQ_BATCH_TRX_SENDER_RTD_ENABLED:true}
     transactionSenderAde:
       enabled: ${ACQ_BATCH_TRX_SENDER_ADE_ENABLED:true}
+    transactionSenderPending:
+      enabled: ${ACQ_BATCH_TRX_SENDER_PENDING_ENABLED:true}
     saltRecovery:
       enabled: ${ACQ_BATCH_SALT_RECOVERY_ENABLED:true}
     pagopaPublicKeyRecovery:
@@ -99,11 +103,13 @@ batchConfiguration:
     senderAdeAckFilesRecovery:
       enabled: ${ACQ_BATCH_SENDER_ADEACK_RECOVERY_ENABLED:true}
       directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:ade-errors}
+    transactionWriterAde:
+      splitThreshold: ${ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD:2000000}
 
 rest-client:
   user-agent:
     prefix: BatchService
-    version: 1.2.5
+    version: 1.3.0
   hpan:
     serviceCode: hpan-service
     base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}
@@ -114,7 +120,7 @@ rest-client:
     api:
       key: ${HPAN_SERVICE_API_KEY:test}
     list:
-      url: /rtd/payment-instrument-manager/${ACQ_BATCH_HPAN_LIST_URL:hashed-pans}
+      url: /rtd/payment-instrument-manager/${ACQ_BATCH_HPAN_LIST_URL:v2/hashed-pans}
       attemptExtraction: ${ACQ_BATCH_HPAN_LIST_ATTEMPT_EXTRACT:true}
       checksumValidation: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_VALIDATION:false}
       checksumHeaderName: ${ACQ_BATCH_HPAN_LIST_CHECKSUM_HEADER:x-ms-meta-sha256}
@@ -123,7 +129,7 @@ rest-client:
       dateValidationHeaderName: ${ACQ_BATCH_HPAN_LIST_DATEVAL_HEADER:last-modified}
       dateValidationPattern: ${ACQ_BATCH_HPAN_LIST_DATE_VALIDATION_PATTERN:}
     salt:
-      url: /rtd/payment-instrument-manager/salt
+      url: /rtd/payment-instrument-manager/${ACQ_BATCH_HPAN_SALT_URL:v2/salt}
     adesas:
       url: /rtd/csv-transaction/ade/sas
     rtdsas:
@@ -137,6 +143,8 @@ rest-client:
         url: /rtd/file-register/sender-ade-ack
       download-file:
         url: /ade/{id}
+      received:
+        url: /rtd/file-register/ack-received/{id}
     mtls:
       enabled: ${HPAN_SERVICE_MTLS_ENABLED:true}
     key-store:
@@ -151,7 +159,7 @@ rest-client:
       password: ${HPAN_SERVICE_TRUST_STORE_PASSWORD:secret}
     header:
       blobType: BlockBlob
-      version: 2021-08-06
+      version: "2021-08-06"
 
 feign:
   client:
@@ -159,4 +167,4 @@ feign:
       hpan-service:
         connectTimeout: ${REST_CLIENT_CONNECT_TIMEOUT:${HPAN_REST_CLIENT_CONNECT_TIMEOUT:5000}}
         readTimeout: ${REST_CLIENT_READ_TIMEOUT:${HPAN_REST_CLIENT_READ_TIMEOUT:5000}}
-        loggerLevel: ${REST_CLIENT_LOGGER_LEVEL:${HPAN_REST_CLIENT_LOGGER_LEVEL:FULL}}
+        loggerLevel: ${REST_CLIENT_LOGGER_LEVEL:${HPAN_REST_CLIENT_LOGGER_LEVEL:BASIC}}

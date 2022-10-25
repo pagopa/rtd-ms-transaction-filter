@@ -1,13 +1,12 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.reader;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
-import it.gov.pagopa.rtd.transaction_filter.batch.encryption.exception.PGPDecryptException;
+import it.gov.pagopa.rtd.transaction_filter.batch.encryption.exception.PGPDecryptThrowable;
 import lombok.SneakyThrows;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.file.FlatFileItemReader;
@@ -24,10 +23,6 @@ public class PGPFlatFileItemReaderTest {
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
             new File(getClass().getResource("/test-encrypt").getFile()));
-
-
-    @Rule
-    public ExpectedException exceptionRule = ExpectedException.none();
 
     @SneakyThrows
     @Test
@@ -82,8 +77,7 @@ public class PGPFlatFileItemReaderTest {
         flatFileItemReader.setLineMapper(new PassThroughLineMapper());
         ExecutionContext executionContext = MetaDataInstanceFactory.createStepExecution().getExecutionContext();
         flatFileItemReader.update(executionContext);
-        exceptionRule.expect(PGPDecryptException.class);
-        flatFileItemReader.open(executionContext);
+        Assert.assertThrows(PGPDecryptThrowable.class, () -> flatFileItemReader.open(executionContext));
         Assert.assertEquals(0, executionContext
                 .getInt(ClassUtils.getShortName(FlatFileItemReader.class) + ".read.count"));
     }

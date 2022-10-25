@@ -1,11 +1,17 @@
 package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
+import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.io.File;
@@ -18,6 +24,7 @@ import java.nio.file.Files;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -43,7 +50,9 @@ import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
@@ -54,7 +63,6 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cloud.openfeign.FeignAutoConfiguration;
-import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.test.annotation.DirtiesContext;
@@ -100,12 +108,14 @@ import org.springframework.transaction.annotation.Transactional;
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles=ERROR",
                 "batchConfiguration.TransactionFilterBatch.successArchivePath=classpath:/test-encrypt/success",
                 "batchConfiguration.TransactionFilterBatch.errorArchivePath=classpath:/test-encrypt/error",
+                "batchConfiguration.TransactionFilterBatch.pendingArchivePath=classpath:/test-encrypt/output/pending",
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled=true",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
+                "batchConfiguration.TransactionFilterBatch.transactionSenderPending.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.enabled=true",
                 "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath=classpath:/test-encrypt/sender-ade-ack",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
@@ -118,7 +128,8 @@ import org.springframework.transaction.annotation.Transactional;
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorFileLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency=100",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize=5"
+                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize=5",
+                "batchConfiguration.TransactionFilterBatch.transactionWriterAde.splitThreshold=1000"
         }
 )
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
@@ -139,6 +150,12 @@ public class TransactionFilterBatchTest {
     @SpyBean
     StoreService storeServiceSpy;
 
+    @SpyBean
+    HpanRestClient hpanRestClient;
+
+    @Autowired
+    private TransactionFilterStep transactionFilterStep;
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(new File(getClass().getResource("/test-encrypt").getFile()));
 
@@ -150,24 +167,22 @@ public class TransactionFilterBatchTest {
         Mockito.reset(storeServiceSpy);
 
         deleteFiles("classpath:/test-encrypt/errorLogs/*.csv");
+        deleteFiles("classpath:/test-encrypt/output/*.pgp");
+        deleteFiles("classpath:/test-encrypt/sender-ade-ack/*.csv");
+        deleteFiles("classpath:/test-encrypt/output/*.csv");
     }
 
     @SneakyThrows
     @After
     public void tearDown() {
-        deleteFiles("classpath:/test-encrypt/output/*.pgp");
-        deleteFiles("classpath:/test-encrypt/sender-ade-ack/*.csv");
-
         tempFolder.delete();
     }
 
     @SneakyThrows
     private void deleteFiles(String classpath) {
         Resource[] resources = resolver.getResources(classpath);
-        if (resources.length > 1) {
-            for (Resource resource : resources) {
-                resource.getFile().delete();
-            }
+        for (Resource resource : resources) {
+            resource.getFile().delete();
         }
     }
 
@@ -197,9 +212,9 @@ public class TransactionFilterBatchTest {
         Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
 
         // Check that the HPAN store has been accessed as expected
-        BDDMockito.verify(storeServiceSpy, Mockito.times(3)).store(Mockito.any());
-        BDDMockito.verify(storeServiceSpy, Mockito.times(4)).hasHpan(Mockito.any());
-        BDDMockito.verify(storeServiceSpy, Mockito.times(2)).getKey(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, times(3)).store(any());
+        BDDMockito.verify(storeServiceSpy, times(4)).hasHpan(any());
+        BDDMockito.verify(storeServiceSpy, times(2)).getKey(any());
 
         // Check that output folder contains expected files, and only those
         Collection<File> outputPgpFiles = getOutputPgpFiles();
@@ -351,8 +366,35 @@ public class TransactionFilterBatchTest {
         panPgpFOS.close();
 
         jobLauncherTestUtils.launchStep("hpan-recovery-master-step");
-        BDDMockito.verify(storeServiceSpy, Mockito.times(0)).store(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, times(0)).store(any());
 
+    }
+
+    @SneakyThrows
+    @Test
+    public void whenSenderPendingIsEnabledThenSendAllFilesPending() {
+        // enable the sender pending step, dirty context guarantees that is valid only for this test
+        transactionFilterStep.setTransactionSenderPendingEnabled(true);
+        SasResponse genericSasResponse = new SasResponse();
+        genericSasResponse.setSas("defaultSas");
+        genericSasResponse.setAuthorizedContainer("defaultContainer");
+        BDDMockito.doReturn(genericSasResponse).when(hpanRestClient).getSasToken(any());
+        BDDMockito.doNothing().when(hpanRestClient).uploadFile(any(), any(), any());
+
+        JobExecution jobExecution = jobLauncherTestUtils.launchStep("transaction-sender-pending-master-step",
+            new JobParameters());
+
+        Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
+        assertThat(stepExecutions.stream().map(StepExecution::getStepName)
+            .collect(Collectors.toList())).containsAll(getStepSendingPartitionNames());
+        Mockito.verify(hpanRestClient, times(1)).getSasToken(SasScope.ADE);
+        Mockito.verify(hpanRestClient, times(1)).getSasToken(SasScope.RTD);
+        Mockito.verify(hpanRestClient, times(2)).uploadFile(any(), any(), any());
+    }
+
+    private Collection<String> getStepSendingPartitionNames() {
+        return Arrays.asList("transaction-sender-pending-worker-step:partition0",
+            "transaction-sender-pending-worker-step:partition1");
     }
 
     private String createPublicKey() throws IOException {
@@ -393,7 +435,7 @@ public class TransactionFilterBatchTest {
     @SneakyThrows
     private File createAdeOutputFile() {
         File outputFileAde = new File(resolver.getResource("classpath:/test-encrypt/output")
-            .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.csv");
+            .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.01.csv");
 
         outputFileAde.createNewFile();
         return outputFileAde;
@@ -417,7 +459,7 @@ public class TransactionFilterBatchTest {
     private Set<String> getExpectedPgpFilenames() {
         Set<String> expectedPgpFilenames = new HashSet<>();
         expectedPgpFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp");
-        expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.csv.pgp");
+        expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.01.csv.pgp");
         return expectedPgpFilenames;
     }
 
@@ -430,7 +472,7 @@ public class TransactionFilterBatchTest {
     private Set<String> getExpectedCsvFileNames() {
         Set<String> expectedCsvFilenames = new HashSet<>();
         expectedCsvFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv");
-        expectedCsvFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.csv");
+        expectedCsvFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.01.csv");
 
         return expectedCsvFilenames;
     }

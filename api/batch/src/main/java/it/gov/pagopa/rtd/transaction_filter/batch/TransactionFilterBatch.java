@@ -11,14 +11,16 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.HpanListRecoveryT
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PagopaPublicKeyRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PreventReprocessingFilenameAlreadySeenTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PurgeAggregatesFromMemoryTasklet;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SenderAdeAckFilesRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInputFileTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SenderAdeAckFilesRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
+import java.util.Date;
+import javax.sql.DataSource;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -35,7 +37,6 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -49,18 +50,12 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
-import java.util.Date;
-
 /**
  * <p>
  * Batch responsible for the filtering and secure transmission of transaction files provided by the acquirers.
  * @see TransactionFilterBatch#transactionJobBuilder() for the actual flow definition.
  * </p>
  *
- * <img alt="TransactionFilterBatch" src="uml/transactionFilterBatch.svg">
- * 
- * @plantUml uml/transactionFilterBatch.svg
  */
  
 
@@ -91,6 +86,8 @@ public class TransactionFilterBatch {
     private String successArchivePath;
     @Value("${batchConfiguration.TransactionFilterBatch.errorArchivePath}")
     private String errorArchivePath;
+    @Value("${batchConfiguration.TransactionFilterBatch.pendingArchivePath}")
+    private String pendingArchivePath;
     @Value("${batchConfiguration.TransactionFilterBatch.tablePrefix}")
     private String tablePrefix;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.directoryPath}")
@@ -298,12 +295,15 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
+                .on("*").to(transactionFilterStep.encryptAggregateChunksMasterStep(this.storeService))
+                .on(FAILED).to(fileManagementTask())
+                .from(transactionFilterStep.encryptAggregateChunksMasterStep(this.storeService))
                 .on("*").to(purgeAggregatesFromMemoryTask(this.storeService))
                 .on(FAILED).to(fileManagementTask())
                 .from(purgeAggregatesFromMemoryTask(this.storeService))
-                .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
+                .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService, this.storeService))
                 .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService))
+                .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService, this.storeService))
                 .on("*").to(hpanListRecoveryTask())
                 .on(FAILED).to(fileManagementTask())
                 .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.storeService))
@@ -319,6 +319,7 @@ public class TransactionFilterBatch {
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
                 .on("*").to(senderAdeAckFilesRecoveryTask())
+                .on("*").to(transactionFilterStep.transactionSenderPendingMasterStep(this.hpanConnectorService))
                 .on("*").to(fileManagementTask())
                 .build();
     }
@@ -426,7 +427,7 @@ public class TransactionFilterBatch {
         FileManagementTasklet fileManagementTasklet = new FileManagementTasklet();
         fileManagementTasklet.setTransactionWriterService(transactionWriterService);
         fileManagementTasklet.setSuccessPath(successArchivePath);
-        fileManagementTasklet.setErrorPath(errorArchivePath);
+        fileManagementTasklet.setUploadPendingPath(pendingArchivePath);
         fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanDirectoryPath());
         fileManagementTasklet.setOutputDirectory(transactionFilterStep.getOutputDirectoryPath());
         fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);

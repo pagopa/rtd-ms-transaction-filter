@@ -27,7 +27,7 @@ public class TransactionReaderStepListener implements StepExecutionListener {
     public void beforeStep(StepExecution stepExecution) {
         String filename = String.valueOf(stepExecution.getExecutionContext().get("fileName"));
         log.info("Starting processing for file: {}", filename);
-        String file = filename.replaceAll("\\\\", "/");
+        String file = filename.replace("\\", "/");
         String[] fileArr = file.split("/");
         PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
         try {

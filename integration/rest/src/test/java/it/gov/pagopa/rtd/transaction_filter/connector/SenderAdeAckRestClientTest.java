@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -80,6 +81,7 @@ public class SenderAdeAckRestClientTest {
       .needClientAuth(true)
       .keystorePath("src/test/resources/certs/server-keystore.jks")
       .keystorePassword("secret")
+      .keyManagerPassword("secret")
       .trustStorePath("src/test/resources/certs/server-truststore.jks")
       .trustStorePassword("secret")
       .usingFilesUnderClasspath("stubs")
@@ -115,6 +117,7 @@ public class SenderAdeAckRestClientTest {
     List<File> files = restClient.getSenderAdeAckFiles();
 
     assertThat(files).isNotNull().isEmpty();
+    assertThat(tempDir.getRoot()).isEmptyDirectory();
   }
 
   @SneakyThrows
@@ -130,12 +133,45 @@ public class SenderAdeAckRestClientTest {
 
   @SneakyThrows
   @Test
-  public void whenHttpApiReturnsEmptyBodyThenRaisesException() {
+  public void whenDownloadFileIsNotFoundThenDoNotSaveTheFile() {
+    wireMockRule.stubFor(get(urlPathMatching("/ade/.*"))
+        .willReturn(aResponse()));
+
+    List<File> files = restClient.getSenderAdeAckFiles();
+
+    assertThat(files).isNotNull().isEmpty();
+  }
+
+  @SneakyThrows
+  @Test
+  public void whenAdeAckListApiReturnsEmptyBodyThenRaisesException() {
     wireMockRule.stubFor(get("/rtd/file-register/sender-ade-ack")
         .willReturn(aResponse()));
 
     assertThatThrownBy(() -> restClient.getSenderAdeAckFiles()).isInstanceOf(
         NullPointerException.class);
+  }
+
+  @SneakyThrows
+  @Test
+  public void whenPutAckReceivedReturns404ThenReturnsNoFilesAndDeleteTempOnes() {
+    wireMockRule.stubFor(put(urlPathMatching("/rtd/file-register/ack-received/.*"))
+        .willReturn(aResponse().withStatus(404)));
+
+    List<File> files = restClient.getSenderAdeAckFiles();
+
+    assertThat(files).isEmpty();
+  }
+
+  @SneakyThrows
+  @Test
+  public void whenPutAckReceivedReturnsSelective404ThenReturnsOnlyConfirmedFiles() {
+    wireMockRule.stubFor(put("/rtd/file-register/ack-received/rejectedFiscalCodes1.csv")
+        .willReturn(aResponse().withStatus(404)));
+
+    List<File> files = restClient.getSenderAdeAckFiles();
+
+    assertThat(files).hasSize(1).map(File::getName).contains("rejectedFiscalCodes2.csv");
   }
 
   public static class RandomPortInitializer implements

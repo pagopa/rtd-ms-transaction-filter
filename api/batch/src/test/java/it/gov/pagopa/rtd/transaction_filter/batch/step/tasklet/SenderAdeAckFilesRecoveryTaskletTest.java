@@ -8,6 +8,7 @@ import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -112,8 +113,9 @@ class SenderAdeAckFilesRecoveryTaskletTest {
     tasklet.execute(new StepContribution(execution), chunkContext);
 
     List<File> files = retrieveSavedFiles();
-    String fileContent = FileUtils.readFileToString(files.get(0));
+    String fileContent = FileUtils.readFileToString(files.get(0), Charset.defaultCharset());
     assertThat(fileContent).isEqualTo("12345;fiscalcode");
+    assertThat(temporarySourcePath.toFile()).doesNotExist();
   }
 
   @SneakyThrows
