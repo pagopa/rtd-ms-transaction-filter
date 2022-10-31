@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.connector.model;
 
-import java.time.LocalDateTime;
+import java.util.Collection;
 import lombok.Builder;
 import lombok.Data;
 
@@ -8,7 +8,5 @@ import lombok.Data;
 @Builder
 public class FileReport {
 
-  String fileName;
-  long size;
-  LocalDateTime transmissionDate;
+  Collection<FileMetadata> files;
 }
