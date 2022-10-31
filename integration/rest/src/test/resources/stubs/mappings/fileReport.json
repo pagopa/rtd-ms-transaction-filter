@@ -1,0 +1,31 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/rtd/file-register/file-report",
+      "queryParameters": {
+        "daysAgo": {
+          "matches": "[0-9]+"
+        }
+      }
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "files": [
+        {
+          "fileName": "ADE.file1.pgp",
+          "transmissionDate": "2022-10-30T10:00:00.123Z",
+          "size": 200
+        },
+        {
+          "fileName": "ADE.file2.pgp",
+          "transmissionDate": "2022-10-31T10:00:00.123Z",
+          "size": 500
+        }
+      ]
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
