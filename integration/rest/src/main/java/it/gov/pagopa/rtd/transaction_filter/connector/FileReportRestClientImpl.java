@@ -25,7 +25,7 @@ class FileReportRestClientImpl implements FileReportRestClient {
   private String apiKey;
   private final HpanRestConnector hpanRestConnector;
   private final BasicResponseEntityValidator<FileReport> reportValidator;
-  private final Validator fileValidator = Validation.buildDefaultValidatorFactory().getValidator();
+  private final Validator fileValidator;
 
   @Override
   public FileReport getFileReport(int daysAgo) {
