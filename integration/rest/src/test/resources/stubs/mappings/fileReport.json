@@ -11,7 +11,7 @@
   "response": {
     "status": "200",
     "jsonBody": {
-      "files": [
+      "filesReceivedFromSender": [
         {
           "fileName": "ADE.file1.pgp",
           "transmissionDate": "2022-10-30T10:00:00.123Z",
