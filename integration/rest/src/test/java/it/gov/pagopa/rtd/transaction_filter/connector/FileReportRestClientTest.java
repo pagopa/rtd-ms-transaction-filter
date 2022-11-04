@@ -42,18 +42,18 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
 @TestPropertySource(
     locations = "classpath:config/rest-client.properties",
     properties = {
-    "rest-client.hpan.list.url=/rtd/payment-instrument-manager/hashed-pans",
-    "rest-client.hpan.salt.url=/rtd/payment-instrument-manager/salt",
-    "rest-client.hpan.adesas.url=/rtd/csv-transaction/ade/sas",
-    "rest-client.hpan.rtdsas.url=/rtd/csv-transaction/rtd/sas",
-    "rest-client.hpan.mtls.enabled=true", "rest-client.hpan.list.checksumHeaderName=checksum",
-    "rest-client.hpan.dateValidation.enabled=true",
-    "rest-client.hpan.list.dateValidationHeaderName=date",
-    "rest-client.hpan.key-store.file=classpath:certs/client-keystore.jks",
-    "rest-client.hpan.key-store.password=secret",
-    "rest-client.hpan.trust-store.file=classpath:certs/client-truststore.jks",
-    "rest-client.hpan.trust-store.password=secret",
-    "spring.application.name=rtd-ms-transaction-filter-integration-rest"})
+        "rest-client.hpan.list.url=/rtd/payment-instrument-manager/hashed-pans",
+        "rest-client.hpan.salt.url=/rtd/payment-instrument-manager/salt",
+        "rest-client.hpan.adesas.url=/rtd/csv-transaction/ade/sas",
+        "rest-client.hpan.rtdsas.url=/rtd/csv-transaction/rtd/sas",
+        "rest-client.hpan.mtls.enabled=true", "rest-client.hpan.list.checksumHeaderName=checksum",
+        "rest-client.hpan.dateValidation.enabled=true",
+        "rest-client.hpan.list.dateValidationHeaderName=date",
+        "rest-client.hpan.key-store.file=classpath:certs/client-keystore.jks",
+        "rest-client.hpan.key-store.password=secret",
+        "rest-client.hpan.trust-store.file=classpath:certs/client-truststore.jks",
+        "rest-client.hpan.trust-store.password=secret",
+        "spring.application.name=rtd-ms-transaction-filter-integration-rest"})
 @ContextConfiguration(initializers = FileReportRestClientTest.RandomPortInitializer.class, classes = {
     HpanRestConnectorConfig.class, FileReportRestClientImpl.class,
     BasicResponseEntityValidator.class, ValidatorConfig.class, HpanRestConnector.class,
@@ -66,16 +66,18 @@ public class FileReportRestClientTest {
   ObjectMapper mapper = new ObjectMapper();
 
   @ClassRule
-  public static WireMockClassRule wireMockRule = new WireMockClassRule(
-      wireMockConfig()
-          .dynamicHttpsPort()
-          .dynamicPort()
-          .needClientAuth(true)
-          .keystorePath("src/test/resources/certs/server-keystore.jks").keystorePassword("secret")
-          .keyManagerPassword("secret")
-          .trustStorePath("src/test/resources/certs/server-truststore.jks")
-          .trustStorePassword("secret").usingFilesUnderClasspath("stubs")
-          .extensions(new ResponseTemplateTransformer(true)));
+  public static WireMockClassRule wireMockRule = new WireMockClassRule(wireMockConfig()
+      .dynamicHttpsPort()
+      .dynamicPort()
+      .needClientAuth(true)
+      .keystorePath("src/test/resources/certs/server-keystore.jks")
+      .keystorePassword("secret")
+      .keyManagerPassword("secret")
+      .trustStorePath("src/test/resources/certs/server-truststore.jks")
+      .trustStorePassword("secret")
+      .usingFilesUnderClasspath("stubs")
+      .extensions(new ResponseTemplateTransformer(true))
+  );
 
   @After
   public void cleanup() {
