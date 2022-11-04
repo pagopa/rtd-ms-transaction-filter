@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 public class FileReport {
 
-  Collection<FileMetadata> files;
+  Collection<FileMetadata> filesReceivedFromSender;
 }
