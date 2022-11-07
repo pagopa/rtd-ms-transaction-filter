@@ -83,8 +83,8 @@ public class FileReportRestClientTest {
   public void whenGetFileReportThenFileNameAndContentMatch() {
     FileReport fileReport = restClient.getFileReport(7);
 
-    assertThat(fileReport).isNotNull().extracting("filesReceivedFromSender").asList().hasSize(2);
-    assertThat(fileReport.getFilesReceivedFromSender()).containsAll(getDefaultReport());
+    assertThat(fileReport).isNotNull().extracting("filesUploaded").asList().hasSize(2);
+    assertThat(fileReport.getFilesUploaded()).containsAll(getDefaultReport());
   }
 
   @SneakyThrows
@@ -99,7 +99,7 @@ public class FileReportRestClientTest {
 
     FileReport fileReport = restClient.getFileReport(daysAgo);
 
-    assertThat(fileReport).isNotNull().extracting("filesReceivedFromSender").asList().isEmpty();
+    assertThat(fileReport).isNotNull().extracting("filesUploaded").asList().isEmpty();
   }
 
   @SneakyThrows
@@ -143,7 +143,7 @@ public class FileReportRestClientTest {
 
   private FileReport getEmptyFileReport() {
     FileReport fileReport = new FileReport();
-    fileReport.setFilesReceivedFromSender(Collections.emptyList());
+    fileReport.setFilesUploaded(Collections.emptyList());
     return fileReport;
   }
 
@@ -152,7 +152,7 @@ public class FileReportRestClientTest {
     FileMetadata file = new FileMetadata();
     // missing mandatory fields like filename
     file.setSize(200);
-    fileReport.setFilesReceivedFromSender(Collections.singleton(file));
+    fileReport.setFilesUploaded(Collections.singleton(file));
     return fileReport;
   }
 
