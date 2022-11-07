@@ -26,5 +26,7 @@ public class FileMetadata {
   @NotNull
   private LocalDateTime transmissionDate;
 
+  @NotNull
+  @NotBlank
   private String status;
 }
