@@ -4,12 +4,12 @@
     <parent>
         <artifactId>rtd-ms-transaction-filter-integration</artifactId>
         <groupId>it.gov.pagopa.rtd.ms.transaction_filter</groupId>
-        <version>1.3.0</version>
+        <version>1.3.2</version>
     </parent>
 
     <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
     <artifactId>rtd-ms-transaction-filter-integration-jpa</artifactId>
-    <version>1.3.0</version>
+    <version>1.3.2</version>
 
     <dependencies>
         <dependency>
