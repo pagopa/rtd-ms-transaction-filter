@@ -133,10 +133,12 @@ public class FileReportRestClientTest {
     FileMetadata file1 = new FileMetadata();
     file1.setFileName("ADE.file1.pgp");
     file1.setSize(200);
+    file1.setStatus("SUCCESS");
     file1.setTransmissionDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000));
     FileMetadata file2 = new FileMetadata();
     file2.setFileName("ADE.file2.pgp");
     file2.setSize(500);
+    file2.setStatus("SUCCESS");
     file2.setTransmissionDate(LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000));
     return Lists.list(file1, file2);
   }
