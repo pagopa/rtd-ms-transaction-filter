@@ -25,4 +25,6 @@ public class FileMetadata {
   @JsonDeserialize(using = LocalDateTimeDeserializer.class)
   @NotNull
   private LocalDateTime transmissionDate;
+
+  private String status;
 }
