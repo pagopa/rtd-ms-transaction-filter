@@ -10,6 +10,7 @@ import java.util.Optional;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileExistsException;
 import org.apache.commons.io.FileUtils;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
@@ -70,7 +71,11 @@ public class SenderAdeAckFilesRecoveryTasklet implements Tasklet, InitializingBe
   private void saveFilesToOutputDirectory(List<File> senderAdeAckFiles) throws IOException {
     for (File sourceFile : senderAdeAckFiles) {
       File outputFile = createOutputFile(sourceFile.getName());
-      FileUtils.moveFile(sourceFile, outputFile);
+      try {
+        FileUtils.moveFile(sourceFile, outputFile);
+      } catch(FileExistsException exception) {
+        log.debug("File {} already exists and will not be downloaded.", outputFile.getName());
+      }
     }
   }
 
