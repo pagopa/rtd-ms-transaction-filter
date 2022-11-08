@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @FeignClient(name = "${rest-client.hpan.serviceCode}", url = "${rest-client.hpan.base-url}")
 public interface HpanRestConnector {
@@ -48,6 +47,5 @@ public interface HpanRestConnector {
         @Param("placeholder") String placeholder);
 
     @GetMapping(value = "${rest-client.file-report.url}")
-    ResponseEntity<FileReport> getFileReport(@RequestHeader("Ocp-Apim-Subscription-Key") String token,
-        @RequestParam(name = "daysAgo") int daysAgo);
+    ResponseEntity<FileReport> getFileReport(@RequestHeader("Ocp-Apim-Subscription-Key") String token);
 }
