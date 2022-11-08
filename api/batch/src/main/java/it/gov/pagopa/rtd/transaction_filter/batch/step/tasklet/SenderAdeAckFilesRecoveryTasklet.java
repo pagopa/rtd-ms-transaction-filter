@@ -74,7 +74,7 @@ public class SenderAdeAckFilesRecoveryTasklet implements Tasklet, InitializingBe
       try {
         FileUtils.moveFile(sourceFile, outputFile);
       } catch(FileExistsException exception) {
-        log.debug("File {} already exists and will not be downloaded.", outputFile.getName());
+        log.debug("File {} already exists and will not be overwritten.", outputFile.getName());
       }
     }
   }
