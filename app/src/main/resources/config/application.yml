@@ -139,13 +139,6 @@ rest-client:
       url: /rtd/csv-transaction/publickey
     abi-to-fiscalcode-map:
       url: /rtd/abi-to-fiscalcode/conversion-map
-    sender-ade-ack:
-      list:
-        url: /rtd/file-register/sender-ade-ack
-      download-file:
-        url: /ade/{id}
-      received:
-        url: /rtd/file-register/ack-received/{id}
     mtls:
       enabled: ${HPAN_SERVICE_MTLS_ENABLED:true}
     key-store:
@@ -161,6 +154,13 @@ rest-client:
     header:
       blobType: BlockBlob
       version: "2021-08-06"
+  sender-ade-ack:
+    list:
+      url: /rtd/file-register/sender-ade-ack
+    download-file:
+      url: /ade/{id}
+    received:
+      url: /rtd/file-register/ack-received/{id}
 
 feign:
   client:
