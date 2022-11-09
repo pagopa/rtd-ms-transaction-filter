@@ -1,7 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -81,7 +80,7 @@ public class FileReportRestClientTest {
   @SneakyThrows
   @Test
   public void whenGetFileReportThenFileNameAndContentMatch() {
-    FileReport fileReport = restClient.getFileReport(7);
+    FileReport fileReport = restClient.getFileReport();
 
     assertThat(fileReport).isNotNull().extracting("filesUploaded").asList().hasSize(2);
     assertThat(fileReport.getFilesUploaded()).containsAll(getDefaultReport());
@@ -90,14 +89,13 @@ public class FileReportRestClientTest {
   @SneakyThrows
   @Test
   public void whenGetFileReportWithEmptyBodyThenReportIsEmpty() {
-    int daysAgo = 7;
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-register/file-report")).withQueryParam("daysAgo",
-            equalTo(String.valueOf(daysAgo))).willReturn(
-            aResponse().withBody(mapper.writeValueAsString(getEmptyFileReport()))
-                .withHeader("Content-type", "application/json")));
+        get(urlPathEqualTo("/rtd/file-register/file-report"))
+            .willReturn(
+                aResponse().withBody(mapper.writeValueAsString(getEmptyFileReport()))
+                    .withHeader("Content-type", "application/json")));
 
-    FileReport fileReport = restClient.getFileReport(daysAgo);
+    FileReport fileReport = restClient.getFileReport();
 
     assertThat(fileReport).isNotNull().extracting("filesUploaded").asList().isEmpty();
   }
@@ -105,27 +103,26 @@ public class FileReportRestClientTest {
   @SneakyThrows
   @Test
   public void givenStatus404WhenGetFileReportThenThrowException() {
-    int daysAgo = 60;
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-register/file-report")).withQueryParam("daysAgo",
-            equalTo(String.valueOf(daysAgo))).willReturn(
-            aResponse().withStatus(404).withBody(mapper.writeValueAsString(getEmptyFileReport()))
-                .withHeader("Content-type", "application/json")));
+        get(urlPathEqualTo("/rtd/file-register/file-report"))
+            .willReturn(
+                aResponse().withStatus(404)
+                    .withBody(mapper.writeValueAsString(getEmptyFileReport()))
+                    .withHeader("Content-type", "application/json")));
 
-    assertThatThrownBy(() -> restClient.getFileReport(daysAgo)).isInstanceOf(FeignException.class);
+    assertThatThrownBy(() -> restClient.getFileReport()).isInstanceOf(FeignException.class);
   }
 
   @SneakyThrows
   @Test
   public void givenMalformedBodyWhenGetFileReportThenThrowException() {
-    int daysAgo = 7;
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-register/file-report")).withQueryParam("daysAgo",
-            equalTo(String.valueOf(daysAgo))).willReturn(
-            aResponse().withBody(mapper.writeValueAsString(getMalformedReport()))
-                .withHeader("Content-type", "application/json")));
+        get(urlPathEqualTo("/rtd/file-register/file-report"))
+            .willReturn(
+                aResponse().withBody(mapper.writeValueAsString(getMalformedReport()))
+                    .withHeader("Content-type", "application/json")));
 
-    assertThatThrownBy(() -> restClient.getFileReport(daysAgo)).isInstanceOf(
+    assertThatThrownBy(() -> restClient.getFileReport()).isInstanceOf(
         ValidationException.class);
   }
 

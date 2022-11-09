@@ -1,12 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPath": "/rtd/file-register/file-report",
-      "queryParameters": {
-        "daysAgo": {
-          "matches": "[0-9]+"
-        }
-      }
+    "urlPath": "/rtd/file-register/file-report"
   },
   "response": {
     "status": "200",

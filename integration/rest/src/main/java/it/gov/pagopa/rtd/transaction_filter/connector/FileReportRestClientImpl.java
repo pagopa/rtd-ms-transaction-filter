@@ -7,9 +7,7 @@ import java.util.Objects;
 import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
-import javax.validation.Validation;
 import javax.validation.Validator;
-import javax.validation.ValidatorFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,8 +26,8 @@ class FileReportRestClientImpl implements FileReportRestClient {
   private final Validator fileValidator;
 
   @Override
-  public FileReport getFileReport(int daysAgo) {
-    ResponseEntity<FileReport> fileReportResponse = hpanRestConnector.getFileReport(apiKey, daysAgo);
+  public FileReport getFileReport() {
+    ResponseEntity<FileReport> fileReportResponse = hpanRestConnector.getFileReport(apiKey);
 
     reportValidator.validate(fileReportResponse);
     for (FileMetadata file : Objects.requireNonNull(fileReportResponse.getBody()).getFilesUploaded()) {
