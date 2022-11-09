@@ -38,7 +38,7 @@ class MaskingPatternLayoutTest {
     String stringWithSalt =
         "[HpanRestConnector#getSalt] ---> GET https://api.dev.cstar.pagopa.it/rtd/payment-instrument-manager/v2/salt HTTP/1.1\n"
             + "[HpanRestConnector#getSalt] Ocp-Apim-Subscription-Key: ciao\n"
-            + "[HpanRestConnector#getSalt] User-Agent: BatchService/1.3.0\n"
+            + "[HpanRestConnector#getSalt] User-Agent: BatchService/1.3.2\n"
             + "[HpanRestConnector#getSalt] ---> END HTTP (0-byte body)\n"
             + "[HpanRestConnector#getSalt] <--- HTTP/1.1 200 OK (57ms)\n"
             + "[HpanRestConnector#getSalt] connection: keep-alive\n"

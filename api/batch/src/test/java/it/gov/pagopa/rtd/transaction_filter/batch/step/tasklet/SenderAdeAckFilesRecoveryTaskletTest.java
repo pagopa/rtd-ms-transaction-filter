@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 
@@ -167,6 +168,19 @@ class SenderAdeAckFilesRecoveryTaskletTest {
 
     assertThatThrownBy(() -> tasklet.afterPropertiesSet())
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @SneakyThrows
+  @Test
+  void givenAFileAlreadySavedWhenGetAdeAckFilesThenDoNotThrowException() {
+    Files.createFile(temporaryOutputPath.resolve("senderAdeAck1.txt"));
+    BDDMockito.doReturn(Collections.singletonList(defaultResponse.get(0))).when(restClient)
+        .getSenderAdeAckFiles();
+
+    // assert that FileExistsException is not thrown
+    StepContribution stepContribution = new StepContribution(execution);
+    assertThatCode(() -> tasklet.execute(stepContribution, chunkContext))
+        .doesNotThrowAnyException();
   }
 
   SenderAdeAckFilesRecoveryTasklet createDefaultTasklet() {
