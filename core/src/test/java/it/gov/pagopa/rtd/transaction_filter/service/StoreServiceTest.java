@@ -280,4 +280,20 @@ public class StoreServiceTest {
             .isEqualTo((Integer.MAX_VALUE - 1) * 2L);
     }
 
+    @Test
+    public void whenSumOverflowLongThenThrowArithmeticException() {
+        AggregationKey key = new AggregationKey();
+        key.setTerminalId("1");
+        key.setMerchantId("1");
+        key.setAcquirerId(storeService.flyweightAcquirerId("1"));
+        key.setSenderCode(storeService.flyweightSenderCode("code"));
+        key.setFiscalCode("FC");
+        key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
+        key.setOperationType((byte)0);
+
+        storeService.storeAggregate(key, Long.MAX_VALUE - 1, "vat", "00");
+
+        assertThatThrownBy(() -> storeService.storeAggregate(key, Integer.MAX_VALUE - 1, "vat", "00"))
+            .isInstanceOf(ArithmeticException.class);
+    }
 }

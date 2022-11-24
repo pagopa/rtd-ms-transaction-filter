@@ -24,7 +24,7 @@ public class AggregationData {
   }
 
   public void incTotalAmount(long amount) {
-    this.totalAmount += amount;
+    this.totalAmount = Math.addExact(this.totalAmount, amount);
   }
 
   public boolean updateVatOrMarkAsDirty(String vat) {
