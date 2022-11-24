@@ -1,5 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.model;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import lombok.*;
 
 import javax.validation.constraints.NotBlank;
@@ -84,8 +86,11 @@ InboundTransaction {
 
     /**
      * Transaction amount
+     * max value: 999.999.999,99€
      */
     @NotNull
+    @Min(value = 0)
+    @Max(value = 99999999999L)
     Long amount;
 
     /**
