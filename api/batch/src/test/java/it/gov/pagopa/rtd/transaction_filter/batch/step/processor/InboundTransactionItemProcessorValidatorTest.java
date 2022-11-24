@@ -229,7 +229,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(longs = {1000, 200000, Integer.MAX_VALUE + 1L, 3000000000L, 99999999999L})
+    @ValueSource(longs = {0, 1000, 200000, Integer.MAX_VALUE + 1L, 3000000000L, 99999999999L})
     void processTransactionWithValidAmount(Long amount) {
         BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
@@ -242,7 +242,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(longs = {100000000000L})
+    @ValueSource(longs = {-100L, 100000000000L})
     void processTransactionWithInvalidAmount(Long amount) {
         BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
