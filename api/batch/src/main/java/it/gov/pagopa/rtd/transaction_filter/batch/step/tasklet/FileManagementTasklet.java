@@ -226,7 +226,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         if (isCompleted) {
             String archivalPath = resolver.getResources(successPath)[0].getFile().getAbsolutePath();
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-            destinationPath = archivalPath + File.separator + SecureRandom.getInstanceStrong().nextLong() +
+            destinationPath = archivalPath + File.separator + SecureRandom.getInstanceStrong().nextLong(Long.MAX_VALUE) +
                 "_" + OffsetDateTime.now().format(fmt) + "_" + filename;
         } else {
             String archivalPath = resolver.getResources(uploadPendingPath)[0].getFile().getAbsolutePath();
