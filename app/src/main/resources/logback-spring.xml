@@ -14,7 +14,7 @@
   </appender>
 
   <!--  file appender-->
-  <appender name="fileMask" class="ch.qos.logback.core.FileAppender">
+  <appender name="fileMask" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>${LOG_FILE}</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <!-- daily rollover -->
