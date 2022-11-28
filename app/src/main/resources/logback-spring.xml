@@ -16,6 +16,15 @@
   <!--  file appender-->
   <appender name="fileMask" class="ch.qos.logback.core.FileAppender">
     <file>${LOG_FILE}</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <!-- daily rollover -->
+      <fileNamePattern>${LOG_FILE}.%d.gz</fileNamePattern>
+
+      <!-- keep 15 days' worth of history capped at 100MB total size -->
+      <maxHistory>15</maxHistory>
+      <totalSizeCap>100MB</totalSizeCap>
+    </rollingPolicy>
+
     <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
       <layout class="it.gov.pagopa.rtd.transaction_filter.logger.MaskingPatternLayout">
         <maskPattern>Ocp-Apim-Subscription-Key\s*:\s*(.*)</maskPattern> <!-- apikey pattern -->
