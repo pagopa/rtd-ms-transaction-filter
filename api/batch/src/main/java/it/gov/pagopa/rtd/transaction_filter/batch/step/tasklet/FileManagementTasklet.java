@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import java.security.SecureRandom;
+import java.util.UUID;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -226,7 +227,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         if (isCompleted) {
             String archivalPath = resolver.getResources(successPath)[0].getFile().getAbsolutePath();
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
-            destinationPath = archivalPath + File.separator + SecureRandom.getInstanceStrong().nextLong() +
+            destinationPath = archivalPath + File.separator + UUID.randomUUID().toString().replace("-", "").substring(0, 20) +
                 "_" + OffsetDateTime.now().format(fmt) + "_" + filename;
         } else {
             String archivalPath = resolver.getResources(uploadPendingPath)[0].getFile().getAbsolutePath();
