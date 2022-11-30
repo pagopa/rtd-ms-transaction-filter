@@ -229,7 +229,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(longs = {1000, 200000})
+    @ValueSource(longs = {0, 1000, 200000, Integer.MAX_VALUE + 1L, 3000000000L, 99999999999L})
     void processTransactionWithValidAmount(Long amount) {
         BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
@@ -239,6 +239,17 @@ public class InboundTransactionItemProcessorValidatorTest {
         InboundTransaction outbound = processor.process(transaction);
         Assertions.assertNotNull(outbound);
         Assertions.assertEquals(amount, outbound.getAmount());
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {-100L, 100000000000L})
+    void processTransactionWithInvalidAmount(Long amount) {
+        BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
+        BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();
+        InboundTransaction transaction = fakeInboundTransaction();
+        transaction.setAmount(amount);
+        InboundTransactionItemProcessor processor = new InboundTransactionItemProcessor(storeServiceMock, false);
+        Assertions.assertThrows(ConstraintViolationException.class, () -> processor.process(transaction));
     }
 
     @ParameterizedTest

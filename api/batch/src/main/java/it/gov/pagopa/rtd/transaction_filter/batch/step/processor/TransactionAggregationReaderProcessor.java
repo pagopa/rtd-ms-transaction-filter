@@ -51,7 +51,7 @@ public class TransactionAggregationReaderProcessor implements ItemProcessor<Inbo
         }
         key.setAccountingDate(storeService.flyweightAccountingDate(
             inboundTransaction.getTrxDate().substring(0, 10)));
-        boolean dirtyDataFound = storeService.storeAggregate(key, Math.toIntExact(inboundTransaction.getAmount()), inboundTransaction.getVat(),
+        boolean dirtyDataFound = storeService.storeAggregate(key, inboundTransaction.getAmount(), inboundTransaction.getVat(),
             inboundTransaction.getPosType());
 
         if (dirtyDataFound) {

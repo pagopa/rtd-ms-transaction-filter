@@ -15,7 +15,7 @@ public class AggregationData {
   private int numTrx;
   // Integer should be fine until we aggregate on daily basis.
   // Remember to re-evaluate the data type in case the aggregation period would be increased.
-  private int totalAmount;
+  private long totalAmount;
   private String vat = INIT_VAT;
   private byte posType = INIT_POS_TYPE;
 
@@ -23,8 +23,8 @@ public class AggregationData {
     this.numTrx += 1;
   }
 
-  public void incTotalAmount(int amount) {
-    this.totalAmount += amount;
+  public void incTotalAmount(long amount) {
+    this.totalAmount = Math.addExact(this.totalAmount, amount);
   }
 
   public boolean updateVatOrMarkAsDirty(String vat) {

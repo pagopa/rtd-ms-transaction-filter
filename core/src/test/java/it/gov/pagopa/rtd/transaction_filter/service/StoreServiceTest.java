@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ch.qos.logback.classic.Level;
@@ -120,7 +121,7 @@ public class StoreServiceTest {
         storeService.storeAggregate(key, 1000, null, "01");
         AggregationData expectedData = new AggregationData();
         expectedData.setNumTrx(1);
-        expectedData.setTotalAmount(1000);
+        expectedData.setTotalAmount(1000L);
         expectedData.setPosType((byte)1);
         expectedData.setVat(null);
         Assert.assertEquals(expectedData, storeService.getAggregate(key));
@@ -140,7 +141,7 @@ public class StoreServiceTest {
         storeService.storeAggregate(key, 2500, null, "01");
         AggregationData expectedData = new AggregationData();
         expectedData.setNumTrx(2);
-        expectedData.setTotalAmount(3500);
+        expectedData.setTotalAmount(3500L);
         expectedData.setPosType((byte)1);
         expectedData.setVat(null);
         Assert.assertEquals(expectedData, storeService.getAggregate(key));
@@ -260,4 +261,39 @@ public class StoreServiceTest {
         Assert.assertNull(storeService.getTargetInputFile());
     }
 
+    @Test
+    public void testTotalAmountIntegerLimit() {
+        AggregationKey key = new AggregationKey();
+        key.setTerminalId("1");
+        key.setMerchantId("1");
+        key.setAcquirerId(storeService.flyweightAcquirerId("1"));
+        key.setSenderCode(storeService.flyweightSenderCode("code"));
+        key.setFiscalCode("FC");
+        key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
+        key.setOperationType((byte)0);
+
+        storeService.storeAggregate(key, Integer.MAX_VALUE - 1, "vat", "00");
+        storeService.storeAggregate(key, Integer.MAX_VALUE - 1, "vat", "00");
+
+        assertThat(storeService.getAggregate(key).getTotalAmount())
+            .isNotNegative()
+            .isEqualTo((Integer.MAX_VALUE - 1) * 2L);
+    }
+
+    @Test
+    public void whenSumOverflowLongThenThrowArithmeticException() {
+        AggregationKey key = new AggregationKey();
+        key.setTerminalId("1");
+        key.setMerchantId("1");
+        key.setAcquirerId(storeService.flyweightAcquirerId("1"));
+        key.setSenderCode(storeService.flyweightSenderCode("code"));
+        key.setFiscalCode("FC");
+        key.setAccountingDate(storeService.flyweightAccountingDate("2022-04-07"));
+        key.setOperationType((byte)0);
+
+        storeService.storeAggregate(key, Long.MAX_VALUE - 1, "vat", "00");
+
+        assertThatThrownBy(() -> storeService.storeAggregate(key, Integer.MAX_VALUE - 1, "vat", "00"))
+            .isInstanceOf(ArithmeticException.class);
+    }
 }
