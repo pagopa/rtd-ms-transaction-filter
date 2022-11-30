@@ -164,8 +164,6 @@ rest-client:
       url: /rtd/file-register/ack-received/{id}
   file-report:
     url: /rtd/file-reporter/file-report
-  fileReportRecovery:
-    directoryPath: ${ACQ_BATCH_FILE_REPORT_PATH:resources/reports}
 
 feign:
   client:
