@@ -162,7 +162,7 @@ rest-client:
     received:
       url: /rtd/file-register/ack-received/{id}
   file-report:
-    url: /rtd/file-register/file-report
+    url: /rtd/file-reporter/file-report
 
 feign:
   client:
