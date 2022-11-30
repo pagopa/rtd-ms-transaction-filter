@@ -30,7 +30,7 @@ class FileReportRestClientImpl implements FileReportRestClient {
     ResponseEntity<FileReport> fileReportResponse = hpanRestConnector.getFileReport(apiKey);
 
     reportValidator.validate(fileReportResponse);
-    for (FileMetadata file : Objects.requireNonNull(fileReportResponse.getBody()).getFilesUploaded()) {
+    for (FileMetadata file : Objects.requireNonNull(fileReportResponse.getBody()).getFilesRecentlyUploaded()) {
       validateFileMetadata(file);
     }
 

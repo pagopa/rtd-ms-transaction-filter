@@ -1,20 +1,20 @@
 {
   "request": {
     "method": "GET",
-    "urlPath": "/rtd/file-register/file-report"
+    "urlPath": "/rtd/file-reporter/file-report"
   },
   "response": {
     "status": "200",
     "jsonBody": {
-      "filesUploaded": [
+      "filesRecentlyUploaded": [
         {
-          "fileName": "ADE.file1.pgp",
+          "name": "ADE.file1.pgp",
           "transmissionDate": "2022-10-30T10:00:00.123Z",
           "size": 200,
           "status": "SUCCESS"
         },
         {
-          "fileName": "ADE.file2.pgp",
+          "name": "ADE.file2.pgp",
           "transmissionDate": "2022-10-31T10:00:00.123Z",
           "size": 500,
           "status": "SUCCESS"

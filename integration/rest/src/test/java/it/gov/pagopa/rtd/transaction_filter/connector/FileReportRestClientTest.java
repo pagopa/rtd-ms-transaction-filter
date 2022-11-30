@@ -82,29 +82,29 @@ public class FileReportRestClientTest {
   public void whenGetFileReportThenFileNameAndContentMatch() {
     FileReport fileReport = restClient.getFileReport();
 
-    assertThat(fileReport).isNotNull().extracting("filesUploaded").asList().hasSize(2);
-    assertThat(fileReport.getFilesUploaded()).containsAll(getDefaultReport());
+    assertThat(fileReport).isNotNull().extracting(FileReport::getFilesRecentlyUploaded).asList().hasSize(2);
+    assertThat(fileReport.getFilesRecentlyUploaded()).containsAll(getDefaultReport());
   }
 
   @SneakyThrows
   @Test
   public void whenGetFileReportWithEmptyBodyThenReportIsEmpty() {
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-register/file-report"))
+        get(urlPathEqualTo("/rtd/file-reporter/file-report"))
             .willReturn(
                 aResponse().withBody(mapper.writeValueAsString(getEmptyFileReport()))
                     .withHeader("Content-type", "application/json")));
 
     FileReport fileReport = restClient.getFileReport();
 
-    assertThat(fileReport).isNotNull().extracting("filesUploaded").asList().isEmpty();
+    assertThat(fileReport).isNotNull().extracting(FileReport::getFilesRecentlyUploaded).asList().isEmpty();
   }
 
   @SneakyThrows
   @Test
   public void givenStatus404WhenGetFileReportThenThrowException() {
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-register/file-report"))
+        get(urlPathEqualTo("/rtd/file-reporter/file-report"))
             .willReturn(
                 aResponse().withStatus(404)
                     .withBody(mapper.writeValueAsString(getEmptyFileReport()))
@@ -117,7 +117,7 @@ public class FileReportRestClientTest {
   @Test
   public void givenMalformedBodyWhenGetFileReportThenThrowException() {
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-register/file-report"))
+        get(urlPathEqualTo("/rtd/file-reporter/file-report"))
             .willReturn(
                 aResponse().withBody(mapper.writeValueAsString(getMalformedReport()))
                     .withHeader("Content-type", "application/json")));
@@ -128,13 +128,13 @@ public class FileReportRestClientTest {
 
   private List<FileMetadata> getDefaultReport() {
     FileMetadata file1 = new FileMetadata();
-    file1.setFileName("ADE.file1.pgp");
-    file1.setSize(200);
+    file1.setName("ADE.file1.pgp");
+    file1.setSize(200L);
     file1.setStatus("SUCCESS");
     file1.setTransmissionDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000));
     FileMetadata file2 = new FileMetadata();
-    file2.setFileName("ADE.file2.pgp");
-    file2.setSize(500);
+    file2.setName("ADE.file2.pgp");
+    file2.setSize(500L);
     file2.setStatus("SUCCESS");
     file2.setTransmissionDate(LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000));
     return Lists.list(file1, file2);
@@ -142,7 +142,7 @@ public class FileReportRestClientTest {
 
   private FileReport getEmptyFileReport() {
     FileReport fileReport = new FileReport();
-    fileReport.setFilesUploaded(Collections.emptyList());
+    fileReport.setFilesRecentlyUploaded(Collections.emptyList());
     return fileReport;
   }
 
@@ -150,8 +150,8 @@ public class FileReportRestClientTest {
     FileReport fileReport = new FileReport();
     FileMetadata file = new FileMetadata();
     // missing mandatory fields like filename
-    file.setSize(200);
-    fileReport.setFilesUploaded(Collections.singleton(file));
+    file.setSize(200L);
+    fileReport.setFilesRecentlyUploaded(Collections.singleton(file));
     return fileReport;
   }
 
