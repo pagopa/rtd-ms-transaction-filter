@@ -6,5 +6,5 @@ import lombok.Data;
 @Data
 public class FileReport {
 
-  Collection<FileMetadata> filesUploaded;
+  Collection<FileMetadata> filesRecentlyUploaded;
 }
