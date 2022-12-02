@@ -9,10 +9,13 @@ import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.model.FileMetadata;
+import it.gov.pagopa.rtd.transaction_filter.connector.model.FileReport;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.io.File;
 import java.io.FileFilter;
@@ -21,11 +24,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -118,6 +123,8 @@ import org.springframework.transaction.annotation.Transactional;
                 "batchConfiguration.TransactionFilterBatch.transactionSenderPending.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.enabled=true",
                 "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath=classpath:/test-encrypt/sender-ade-ack",
+                "batchConfiguration.TransactionFilterBatch.fileReportRecovery.directoryPath=classpath:/test-encrypt/reports",
+                "batchConfiguration.TransactionFilterBatch.fileReportRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorLogging=true",
@@ -147,6 +154,9 @@ public class TransactionFilterBatchTest {
     @MockBean
     private SenderAdeAckRestClient senderAdeAckRestClient;
 
+    @MockBean
+    private FileReportRestClient fileReportRestClient;
+
     @SpyBean
     StoreService storeServiceSpy;
 
@@ -170,6 +180,7 @@ public class TransactionFilterBatchTest {
         deleteFiles("classpath:/test-encrypt/output/*.pgp");
         deleteFiles("classpath:/test-encrypt/sender-ade-ack/*.csv");
         deleteFiles("classpath:/test-encrypt/output/*.csv");
+        deleteFiles("classpath:/test-encrypt/reports/*.csv");
     }
 
     @SneakyThrows
@@ -198,7 +209,7 @@ public class TransactionFilterBatchTest {
         String publicKey = createPublicKey();
 
         BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
-
+        BDDMockito.doReturn(new FileReport()).when(fileReportRestClient).getFileReport();
         createPanPGP();
 
         File outputFileTrn = createTrnOutputFile();
@@ -390,6 +401,71 @@ public class TransactionFilterBatchTest {
         Mockito.verify(hpanRestClient, times(1)).getSasToken(SasScope.ADE);
         Mockito.verify(hpanRestClient, times(1)).getSasToken(SasScope.RTD);
         Mockito.verify(hpanRestClient, times(2)).uploadFile(any(), any(), any());
+    }
+
+    @SneakyThrows
+    @Test
+    public void whenFileReportStepIsEnabledThenSaveTheReportOnFile() {
+        LocalDateTime currentDate = LocalDateTime.now();
+        BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient).getFileReport();
+
+        jobLauncherTestUtils.launchStep("file-report-recovery-step",
+            new JobParameters());
+
+        Mockito.verify(fileReportRestClient, times(1)).getFileReport();
+        Collection<File> fileReportSaved = getFileReportSaved();
+
+        assertThat(fileReportSaved).isNotNull().hasSize(1);
+
+        List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
+            .orElse(new File("")).toPath());
+
+        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate",
+            "file1;RECEIVED;200;" + currentDate);
+    }
+
+//    @SneakyThrows
+//    @Test
+//    public void whenGetFileReportIsEnabledThenTheJobWorksCorrectly() {
+//        String publicKey = createPublicKey();
+//        createPanPGP();
+//        createTrnOutputFile();
+//        createAdeOutputFile();
+//        LocalDateTime currentDate = LocalDateTime.now();
+//        BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
+//        BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient)
+//            .getFileReport();
+//        System.setProperty("batchConfiguration.TransactionFilterBatch.fileReportRecovery.enabled", "true");
+//
+//        JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
+//            .addDate("startDateTime", new Date())
+//            .toJobParameters());
+//        Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+//
+//        Collection<File> fileReportSaved = getFileReportSaved();
+//        assertThat(fileReportSaved).isNotNull().hasSize(1);
+//
+//        List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
+//            .orElse(new File("")).toPath());
+//        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate",
+//            "file1;RECEIVED;200;" + currentDate);
+//    }
+
+    @SneakyThrows
+    private Collection<File> getFileReportSaved() {
+        return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/reports")[0].getFile(), new String[]{"csv"}, false);
+    }
+
+    private FileReport getStubFileReport(LocalDateTime dateTime) {
+        FileReport fileReport = new FileReport();
+        FileMetadata fileMetadata = new FileMetadata();
+        fileMetadata.setName("file1");
+        fileMetadata.setSize(200L);
+        fileMetadata.setTransmissionDate(dateTime);
+        fileMetadata.setStatus("RECEIVED");
+        fileReport.setFilesRecentlyUploaded(Collections.singleton(fileMetadata));
+
+        return fileReport;
     }
 
     private Collection<String> getStepSendingPartitionNames() {

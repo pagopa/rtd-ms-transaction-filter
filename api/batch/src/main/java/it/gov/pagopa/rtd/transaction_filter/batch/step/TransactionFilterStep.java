@@ -13,14 +13,17 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.InboundTransact
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggregationReaderProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.processor.TransactionAggregationWriterProcessor;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.CustomIteratorItemReader;
+import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.FileReportItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.TransactionFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PGPEncrypterTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionChecksumTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.ChecksumHeaderWriter;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
+import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
+import it.gov.pagopa.rtd.transaction_filter.connector.model.FileMetadata;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
@@ -54,6 +57,7 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.MultiResourceItemWriter;
+import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.file.builder.MultiResourceItemWriterBuilder;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
@@ -66,6 +70,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -133,6 +138,10 @@ public class TransactionFilterStep {
     private Boolean transactionSenderPendingEnabled;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionWriterAde.splitThreshold}")
     private int adeSplitThreshold;
+    @Value("${batchConfiguration.TransactionFilterBatch.fileReportRecovery.directoryPath}")
+    private String fileReportDirectory;
+    @Value("${batchConfiguration.TransactionFilterBatch.fileReportRecovery.fileNamePrefix}")
+    private String fileReportPrefixName;
 
     public static final String RTD_OUTPUT_FILE_PREFIX = "CSTAR.";
     public static final String ADE_OUTPUT_FILE_PREFIX = "ADE.";
@@ -150,7 +159,10 @@ public class TransactionFilterStep {
         "senderCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
         "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
         "terminalId", "bin", "mcc", "fiscalCode", "vat", "posType", "par"};
+    private static final String[] REPORT_CSV_FIELDS = new String[]{
+        "name", "status", "size", "transmissionDate"};
     private static final String CSV_DELIMITER = ";";
+    private static final String DATE_FORMAT_FOR_FILENAME = "yyyyMMddHHmmssSSS";
 
     private final BatchConfig batchConfig;
     private final StepBuilderFactory stepBuilderFactory;
@@ -236,6 +248,16 @@ public class TransactionFilterStep {
         BeanWrapperFieldExtractor<AdeTransactionsAggregate> extractor = new BeanWrapperFieldExtractor<>();
         extractor.setNames(ADE_CSV_FIELDS);
         DelimitedLineAggregator<AdeTransactionsAggregate> delimitedLineAggregator = new DelimitedLineAggregator<>();
+        delimitedLineAggregator.setDelimiter(CSV_DELIMITER);
+        delimitedLineAggregator.setFieldExtractor(extractor);
+        return delimitedLineAggregator;
+    }
+
+    @Bean
+    public LineAggregator<FileMetadata> fileReportLineAggregator() {
+        BeanWrapperFieldExtractor<FileMetadata> extractor = new BeanWrapperFieldExtractor<>();
+        extractor.setNames(REPORT_CSV_FIELDS);
+        DelimitedLineAggregator<FileMetadata> delimitedLineAggregator = new DelimitedLineAggregator<>();
         delimitedLineAggregator.setDelimiter(CSV_DELIMITER);
         delimitedLineAggregator.setFieldExtractor(extractor);
         return delimitedLineAggregator;
@@ -392,6 +414,49 @@ public class TransactionFilterStep {
         return pgpEncrypterTasklet;
     }
 
+    @Bean
+    public Step fileReportRecoveryStep(FileReportRestClient restClient) {
+        return stepBuilderFactory.get("file-report-recovery-step")
+            .<FileMetadata, FileMetadata>chunk(chunkSize)
+            .reader(fileReportReader(restClient))
+            .writer(fileReportWriter())
+            .faultTolerant()
+            .taskExecutor(batchConfig.readerTaskExecutor())
+            .build();
+    }
+
+    @Bean
+    public ItemReader<FileMetadata> fileReportReader(FileReportRestClient restClient) {
+        return new FileReportItemReader(restClient);
+    }
+
+    @SneakyThrows
+    @Bean
+    public ItemWriter<FileMetadata> fileReportWriter() {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern(DATE_FORMAT_FOR_FILENAME);
+        String currentDate = OffsetDateTime.now().format(fmt);
+
+        Resource outputResource = new FileSystemResource(resolver.getResource(
+                getPathToResolve(fileReportDirectory)).getFile().getAbsolutePath()
+            .concat("/")
+            .concat(fileReportPrefixName)
+            .concat("-")
+            .concat(currentDate)
+            .concat(".csv"));
+
+        return new FlatFileItemWriterBuilder<FileMetadata>()
+            .name("file-report-item-writer")
+            .resource(outputResource)
+            .headerCallback(writer -> writer.write(String.join(CSV_DELIMITER, REPORT_CSV_FIELDS)))
+            .lineAggregator(fileReportLineAggregator())
+            .build();
+    }
+
+    private String getPathToResolve(String directory) {
+        return directory.startsWith("classpath:") ? directory
+            : "file:".concat(directory);
+    }
+
     /**
      * Builds a dummy ItemWriter to use during transaction aggregation.
      * Since we're reading from a chunk-oriented ItemReader and aggregating data in-memory
@@ -479,7 +544,7 @@ public class TransactionFilterStep {
      */
     @Bean
     public Step transactionFilterWorkerStep(StoreService storeService, TransactionWriterService transactionWriterService) {
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern(DATE_FORMAT_FOR_FILENAME);
         String executionDate = OffsetDateTime.now().format(fmt);
         return stepBuilderFactory.get("transaction-filter-worker-step")
                 .<InboundTransaction, InboundTransaction>chunk(chunkSize)
@@ -528,7 +593,7 @@ public class TransactionFilterStep {
      */
     @Bean
     public Step transactionAggregationReaderWorkerStep(StoreService storeService, TransactionWriterService transactionWriterService) {
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern(DATE_FORMAT_FOR_FILENAME);
         String executionDate = OffsetDateTime.now().format(fmt);
         return stepBuilderFactory.get("transaction-aggregation-reader-worker-step")
             .<InboundTransaction, InboundTransaction>chunk(chunkSize)

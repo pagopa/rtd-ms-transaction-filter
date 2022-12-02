@@ -15,6 +15,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTaskl
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInputFileTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SenderAdeAckFilesRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
@@ -29,10 +30,13 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.job.builder.FlowJobBuilder;
+import org.springframework.batch.core.job.flow.FlowExecutionStatus;
+import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
@@ -75,6 +79,7 @@ public class TransactionFilterBatch {
     private final HpanConnectorService hpanConnectorService;
     private final AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
     private final SenderAdeAckRestClient senderAdeAckRestClient;
+    private final FileReportRestClient fileReportRestClient;
     private final TransactionWriterService transactionWriterService;
     private final StoreService storeService;
 
@@ -118,13 +123,11 @@ public class TransactionFilterBatch {
     private String senderAdeAckFilesDirectoryPath;
     @Value("${batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath}")
     private String logsDirectoryPath;
+    @Value("${batchConfiguration.TransactionFilterBatch.fileReportRecovery.enabled}")
+    private Boolean fileReportRecoveryEnabled;
 
     private DataSource dataSource;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-
-    public void closeChannels() {
-        transactionWriterService.closeAll();
-    }
 
     public void clearStoreService() {
         storeService.clearAll();
@@ -275,6 +278,11 @@ public class TransactionFilterBatch {
                 .listener(jobListener())
                 .start(pagopaPublicKeyRecoveryTask(this.storeService))
                 .on(FAILED).end()
+                .on("*").to(decider(fileReportRecoveryEnabled))
+                .on("TRUE").to(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
+                .from(decider(fileReportRecoveryEnabled))
+                .on("FALSE").to(selectTargetInputFileTask(this.storeService))
+                .from(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
                 .on("*").to(selectTargetInputFileTask(this.storeService))
                 .on(FAILED).end()
                 .on("*").to(preventReprocessingFilenameAlreadySeenTask(this.storeService, this.transactionWriterService))
@@ -327,6 +335,12 @@ public class TransactionFilterBatch {
     @Bean
     public JobListener jobListener() {
         return new JobListener();
+    }
+
+    @Bean
+    public JobExecutionDecider decider(Boolean enabled) {
+        return (JobExecution jobExecution, StepExecution stepExecution) ->
+            Boolean.TRUE.equals(enabled) ? new FlowExecutionStatus("TRUE") : new FlowExecutionStatus("FALSE");
     }
 
     @Bean
