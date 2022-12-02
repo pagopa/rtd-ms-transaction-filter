@@ -9,10 +9,13 @@ import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.model.FileMetadata;
+import it.gov.pagopa.rtd.transaction_filter.connector.model.FileReport;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.io.File;
 import java.io.FileFilter;
@@ -21,11 +24,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -118,6 +123,8 @@ import org.springframework.transaction.annotation.Transactional;
                 "batchConfiguration.TransactionFilterBatch.transactionSenderPending.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.enabled=true",
                 "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath=classpath:/test-encrypt/sender-ade-ack",
+                "batchConfiguration.TransactionFilterBatch.fileReportRecovery.directoryPath=classpath:/test-encrypt/reports",
+                "batchConfiguration.TransactionFilterBatch.fileReportRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorLogging=true",
@@ -198,7 +205,6 @@ public class TransactionFilterBatchTest {
         String publicKey = createPublicKey();
 
         BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
-
         createPanPGP();
 
         File outputFileTrn = createTrnOutputFile();
@@ -390,6 +396,23 @@ public class TransactionFilterBatchTest {
         Mockito.verify(hpanRestClient, times(1)).getSasToken(SasScope.ADE);
         Mockito.verify(hpanRestClient, times(1)).getSasToken(SasScope.RTD);
         Mockito.verify(hpanRestClient, times(2)).uploadFile(any(), any(), any());
+    }
+
+    @SneakyThrows
+    private Collection<File> getFileReportSaved() {
+        return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/reports")[0].getFile(), new String[]{"csv"}, false);
+    }
+
+    private FileReport getStubFileReport(LocalDateTime dateTime) {
+        FileReport fileReport = new FileReport();
+        FileMetadata fileMetadata = new FileMetadata();
+        fileMetadata.setName("file1");
+        fileMetadata.setSize(200L);
+        fileMetadata.setTransmissionDate(dateTime);
+        fileMetadata.setStatus("RECEIVED");
+        fileReport.setFilesRecentlyUploaded(Collections.singleton(fileMetadata));
+
+        return fileReport;
     }
 
     private Collection<String> getStepSendingPartitionNames() {
