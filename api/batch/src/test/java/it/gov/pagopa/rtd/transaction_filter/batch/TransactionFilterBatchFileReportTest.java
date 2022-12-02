@@ -307,7 +307,7 @@ public class TransactionFilterBatchFileReportTest {
 
     @SneakyThrows
     @Test
-    public void givenFileReportStepWhenLaunchItThenSaveTheReportOnFile() {
+    public void givenAReportWhenLaunchItThenSaveTheReportOnFile() {
         LocalDateTime currentDate = LocalDateTime.now();
         BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient).getFileReport();
 
@@ -327,6 +327,25 @@ public class TransactionFilterBatchFileReportTest {
     }
 
     @SneakyThrows
+    @Test
+    public void givenEmptyReportWhenLaunchItThenSaveTheReportWithHeaderOnly() {
+        BDDMockito.doReturn(getStubEmptyReport()).when(fileReportRestClient).getFileReport();
+
+        jobLauncherTestUtils.launchStep("file-report-recovery-step",
+            new JobParameters());
+
+        Mockito.verify(fileReportRestClient, times(1)).getFileReport();
+        Collection<File> fileReportSaved = getFileReportSaved();
+
+        assertThat(fileReportSaved).isNotNull().hasSize(1);
+
+        List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
+            .orElse(new File("")).toPath());
+
+        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate");
+    }
+
+    @SneakyThrows
     private Collection<File> getFileReportSaved() {
         return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/reports")[0].getFile(), new String[]{"csv"}, false);
     }
@@ -339,6 +358,13 @@ public class TransactionFilterBatchFileReportTest {
         fileMetadata.setTransmissionDate(dateTime);
         fileMetadata.setStatus("RECEIVED");
         fileReport.setFilesRecentlyUploaded(Collections.singleton(fileMetadata));
+
+        return fileReport;
+    }
+
+    private FileReport getStubEmptyReport() {
+        FileReport fileReport = new FileReport();
+        fileReport.setFilesRecentlyUploaded(Collections.emptyList());
 
         return fileReport;
     }
