@@ -91,7 +91,7 @@ batchConfiguration:
 rest-client:
   user-agent:
     prefix: BatchService
-    version: 1.4.1
+    version: 1.5.0
   hpan:
     serviceCode: hpan-service
     base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}
