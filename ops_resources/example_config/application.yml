@@ -105,11 +105,15 @@ batchConfiguration:
       directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:ade-errors}
     transactionWriterAde:
       splitThreshold: ${ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD:2000000}
+    fileReportRecovery:
+      enabled: ${ACQ_BATCH_FILE_REPORT_RECOVERY_ENABLED:true}
+      directoryPath: ${ACQ_BATCH_FILE_REPORT_PATH:resources/reports}
+      fileNamePrefix: ${ACQ_BATCH_FILE_REPORTS_PREFIX:report-tae}
 
 rest-client:
   user-agent:
     prefix: BatchService
-    version: 1.4.1
+    version: 1.5.0
   hpan:
     serviceCode: hpan-service
     base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}
@@ -160,6 +164,8 @@ rest-client:
       url: /ade/{id}
     received:
       url: /rtd/file-register/ack-received/{id}
+  file-report:
+    url: /rtd/file-reporter/file-report
 
 feign:
   client:

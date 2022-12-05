@@ -4,11 +4,11 @@
     <parent>
         <artifactId>rtd-ms-transaction-filter-api</artifactId>
         <groupId>it.gov.pagopa.rtd.ms.transaction_filter.api</groupId>
-        <version>1.4.1</version>
+        <version>1.5.0</version>
     </parent>
 
     <artifactId>rtd-ms-transaction-filter-api-batch</artifactId>
-    <version>1.4.1</version>
+    <version>1.5.0</version>
 
     <dependencies>
         <dependency>

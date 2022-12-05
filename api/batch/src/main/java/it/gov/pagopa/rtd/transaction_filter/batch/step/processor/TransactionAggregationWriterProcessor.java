@@ -35,7 +35,7 @@ public class TransactionAggregationWriterProcessor implements ItemProcessor<Aggr
         aggregate.setTransmissionDate(transmissionDate);
         aggregate.setAccountingDate(key.getAccountingDate().getDate());
         aggregate.setNumTrx(storeService.getAggregate(key).getNumTrx());
-        aggregate.setTotalAmount((long) storeService.getAggregate(key).getTotalAmount());
+        aggregate.setTotalAmount(storeService.getAggregate(key).getTotalAmount());
         aggregate.setCurrency("978");
         aggregate.setAcquirerId(key.getAcquirerId().getId());
         aggregate.setMerchantId(key.getMerchantId());

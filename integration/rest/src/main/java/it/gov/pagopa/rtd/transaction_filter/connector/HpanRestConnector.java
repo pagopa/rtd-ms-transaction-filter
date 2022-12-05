@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import feign.Param;
+import it.gov.pagopa.rtd.transaction_filter.connector.model.FileReport;
 import java.util.Map;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.core.io.Resource;
@@ -44,4 +45,7 @@ public interface HpanRestConnector {
     // @Param placeholder is there only to force Feign to add a 'Content-length' header to the request
     ResponseEntity<Void> putAckReceived(@RequestHeader("Ocp-Apim-Subscription-Key") String token, @PathVariable(name = "id") String fileName,
         @Param("placeholder") String placeholder);
+
+    @GetMapping(value = "${rest-client.file-report.url}")
+    ResponseEntity<FileReport> getFileReport(@RequestHeader("Ocp-Apim-Subscription-Key") String token);
 }
