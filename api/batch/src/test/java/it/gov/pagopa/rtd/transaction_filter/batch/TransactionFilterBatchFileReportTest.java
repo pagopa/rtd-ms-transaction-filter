@@ -346,6 +346,26 @@ public class TransactionFilterBatchFileReportTest {
     }
 
     @SneakyThrows
+    @Test
+    public void givenMalformedReportWhenLaunchItThenSaveTheReportWithHeaderOnly() {
+        // returns report with null field list
+        BDDMockito.doReturn(new FileReport()).when(fileReportRestClient).getFileReport();
+
+        jobLauncherTestUtils.launchStep("file-report-recovery-step",
+            new JobParameters());
+
+        Mockito.verify(fileReportRestClient, times(1)).getFileReport();
+        Collection<File> fileReportSaved = getFileReportSaved();
+
+        assertThat(fileReportSaved).isNotNull().hasSize(1);
+
+        List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
+            .orElse(new File("")).toPath());
+
+        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate");
+    }
+
+    @SneakyThrows
     private Collection<File> getFileReportSaved() {
         return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/reports")[0].getFile(), new String[]{"csv"}, false);
     }

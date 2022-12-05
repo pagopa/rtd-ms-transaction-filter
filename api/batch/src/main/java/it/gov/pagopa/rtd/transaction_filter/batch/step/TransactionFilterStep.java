@@ -253,6 +253,10 @@ public class TransactionFilterStep {
         return delimitedLineAggregator;
     }
 
+    /**
+     * Composes CSV lines from file report model.
+     * @return a line aggregator
+     */
     @Bean
     public LineAggregator<FileMetadata> fileReportLineAggregator() {
         BeanWrapperFieldExtractor<FileMetadata> extractor = new BeanWrapperFieldExtractor<>();
@@ -414,6 +418,11 @@ public class TransactionFilterStep {
         return pgpEncrypterTasklet;
     }
 
+    /**
+     * Step that retrieve and write on file a file report
+     * @param restClient file report rest client
+     * @return a step
+     */
     @Bean
     public Step fileReportRecoveryStep(FileReportRestClient restClient) {
         return stepBuilderFactory.get("file-report-recovery-step")
@@ -425,11 +434,21 @@ public class TransactionFilterStep {
             .build();
     }
 
+    /**
+     * ItemReader that retrieve a file report JSON from a rest client and converts it to FileMetadata
+     * @param restClient file report rest client
+     * @return a itemReader
+     */
     @Bean
     public ItemReader<FileMetadata> fileReportReader(FileReportRestClient restClient) {
         return new FileReportItemReader(restClient);
     }
 
+    /**
+     * ItemWriter that save on file the file report. It implements a headerCallback with the field names
+     * and a line aggregator to convert the pojo into a CSV file with ";" as delimiter.
+     * @return a itemWriter
+     */
     @SneakyThrows
     @Bean
     public ItemWriter<FileMetadata> fileReportWriter() {
@@ -452,6 +471,11 @@ public class TransactionFilterStep {
             .build();
     }
 
+    /**
+     * Convert a path adding the prefix "file:" if it does not contain "classpath:" already. For test purpose.
+     * @param directory
+     * @return
+     */
     private String getPathToResolve(String directory) {
         return directory.startsWith("classpath:") ? directory
             : "file:".concat(directory);
