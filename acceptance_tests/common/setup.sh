@@ -4,6 +4,7 @@ mkdir -p workdir/hpans
 mkdir -p workdir/ade-errors
 mkdir -p workdir/output/pending
 mkdir -p workdir/logs
+mkdir -p workdir/reports
 
 git clone --depth 1 https://github.com/pagopa/cstar-cli.git
 cd cstar-cli || exit
