@@ -338,6 +338,12 @@ public class TransactionFilterBatch {
         return new JobListener();
     }
 
+    /**
+     * Returns a Decider utilized to alter the job flow based on a condition. Status returned is "TRUE"
+     * if the boolean parameter is true, "FALSE" otherwise.
+     * @param enabled boolean value
+     * @return a job execution decider
+     */
     @Bean
     public JobExecutionDecider decider(Boolean enabled) {
         return (JobExecution jobExecution, StepExecution stepExecution) ->
