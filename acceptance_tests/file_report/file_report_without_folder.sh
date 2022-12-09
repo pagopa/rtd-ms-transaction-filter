@@ -83,16 +83,6 @@ then
   exit 2
 fi
 
-# check if file has been uploaded
-N_UPLOADS=$(grep -c "uploaded with success (status was: 201)" < workdir/logs/application.log)
-if [ "$N_UPLOADS" -ne 1 ]
-then
-	echo "Upload test not passed, $N_UPLOADS files uploaded: [FAILED]"
-	exit 2
-else
-	echo "Files uploaded with success: [SUCCESS]"
-fi
-
 SLEEP_INTERVAL_IN_SECONDS=10
 
 #set batch service send to false in order to not send the placeholder files
