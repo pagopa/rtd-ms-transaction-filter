@@ -37,7 +37,7 @@ run_batch_service() {
 get_file_sent_occurrence_in_report() {
      OUTPUT_FILENAME=$(ls workdir/output | grep -E "ADE.*.pgp")
      FILE_REPORT_NAME=$(ls -v "$REPORT_DIR" | tail -n 1)
-     FILE_SENT_OCCURRANCE_IN_REPORT=$(grep -c $OUTPUT_FILENAME < "$REPORT_DIR"/"$FILE_REPORT_NAME")
+     FILE_SENT_OCCURRENCE_IN_REPORT=$(grep -c $OUTPUT_FILENAME < "$REPORT_DIR"/"$FILE_REPORT_NAME")
  }
 
 ### file generation
@@ -77,9 +77,9 @@ fi
 
 # the file sent is not in the report
 get_file_sent_occurrence_in_report
-if [ "$FILE_SENT_OCCURRANCE_IN_REPORT" != 0 ]
+if [ "$FILE_SENT_OCCURRENCE_IN_REPORT" != 0 ]
 then
-  echo "File $FILE_SENT_OCCURRANCE_IN_REPORT sent has been found in report but it was not supposed to: [FAILED]"
+  echo "File $FILE_SENT_OCCURRENCE_IN_REPORT sent has been found in report but it was not supposed to: [FAILED]"
   exit 2
 fi
 
@@ -100,7 +100,7 @@ do
     get_file_sent_occurrence_in_report
 
     # if report does contain the file sent the exit loop
-    if [ "$FILE_SENT_OCCURRANCE_IN_REPORT" -gt 0 ]
+    if [ "$FILE_SENT_OCCURRENCE_IN_REPORT" -gt 0 ]
     then
         echo "file found in report: [SUCCESS]"
         break
