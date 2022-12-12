@@ -50,6 +50,7 @@ source setenv.sh
 
 # force reports directory to be workdir/reports
 export ACQ_BATCH_FILE_REPORT_PATH="$REPORT_DIR"
+export ACQ_BATCH_TRX_SENDER_ADE_ENABLED=false
 
 echo "Executing batch service..."
 ### batch service run
@@ -82,31 +83,6 @@ then
   echo "File $FILE_SENT_OCCURRENCE_IN_REPORT sent has been found in report but it was not supposed to: [FAILED]"
   exit 2
 fi
-
-SLEEP_INTERVAL_IN_SECONDS=10
-
-#set batch service send to false in order to not send the placeholder files
-export ACQ_BATCH_TRX_SENDER_ADE_ENABLED=false
-for (( i=0 ; i <= TIMEOUT_IN_MINUTES * 60 / SLEEP_INTERVAL_IN_SECONDS; i++))
-do
-    echo "Waiting $SLEEP_INTERVAL_IN_SECONDS seconds..."
-    sleep $SLEEP_INTERVAL_IN_SECONDS
-
-    # run batch service with dummy file
-    cp cstar-cli/generated/"$FILENAME" ./workdir/input/"$FILENAME"
-    run_batch_service
-
-    # check if file sent in the previous run has been received inside the report
-    get_file_sent_occurrence_in_report
-
-    # if report does contain the file sent the exit loop
-    if [ "$FILE_SENT_OCCURRENCE_IN_REPORT" -gt 0 ]
-    then
-        echo "file found in report: [SUCCESS]"
-        break
-    fi
-
-done
 
 rm -rf cstar-cli
 rm -rf workdir
