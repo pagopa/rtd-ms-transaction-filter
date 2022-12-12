@@ -82,7 +82,7 @@ run_batch_service
 run_batch_service
 
 #### ASSERTIONS
-check_two_file_sent
+check_two_files_sent
 
 SLEEP_INTERVAL_IN_SECONDS=10
 
