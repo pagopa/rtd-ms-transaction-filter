@@ -103,7 +103,7 @@ do
     get_file_sent_occurrence_in_report
 
     # if report does contain the files sent the exit loop
-    if [ "$FILES_SENT_OCCURRENCES_IN_REPORT" -gt 0 ]
+    if [ "$FILES_SENT_OCCURRENCES_IN_REPORT" -eq 2 ]
     then
         echo "Files found in report: [SUCCESS]"
         break
