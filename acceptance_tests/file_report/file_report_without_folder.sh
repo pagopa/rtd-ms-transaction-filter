@@ -57,16 +57,6 @@ echo "Executing batch service..."
 run_batch_service
 #### ASSERTIONS
 
-# check if file has been uploaded
-N_UPLOADS=$(grep -c "uploaded with success (status was: 201)" < workdir/logs/application.log)
-if [ "$N_UPLOADS" -ne 1 ]
-then
-	echo "Upload test not passed, $N_UPLOADS files uploaded: [FAILED]"
-	exit 2
-else
-	echo "Files uploaded with success: [SUCCESS]"
-fi
-
 # expected result: job went fine and report directory has been created
 if [ -d "$ACQ_BATCH_FILE_REPORT_PATH" ]
 then
@@ -76,11 +66,12 @@ else
   exit 2
 fi
 
-# the file sent is not in the report
-get_file_sent_occurrence_in_report
-if [ "$FILE_SENT_OCCURRENCE_IN_REPORT" != 0 ]
+# one report is downloaded
+if [ "$(ls -1 "$REPORT_DIR" | wc -l)" -eq 1 ]
 then
-  echo "File $FILE_SENT_OCCURRENCE_IN_REPORT sent has been found in report but it was not supposed to: [FAILED]"
+  echo "Directory "$REPORT_DIR" is not empty: [SUCCESS]"
+else
+  echo "Directory "$REPORT_DIR" is empty: [FAILED]"
   exit 2
 fi
 
