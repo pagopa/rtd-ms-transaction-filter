@@ -1,31 +1,39 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.PGPFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.HpanWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.Partitioner;
+import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.file.mapping.PassThroughLineMapper;
+import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-import java.io.FileNotFoundException;
-
 @Configuration
+@Slf4j
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
 @RequiredArgsConstructor
 @Data
@@ -129,5 +137,22 @@ public class PanReaderStep {
                 .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
     }
+
+  @Bean
+  public Step bloomFilterRecoveryStep(StoreService storeService) throws IOException {
+      PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+      Resource[] bloomFilterResource = resolver.getResources(hpanDirectoryPath);
+      Tasklet tasklet = (stepContribution, chunkContext) -> {
+        BloomFilter<String> bloomFilter = BloomFilter.readFrom(
+            Files.newInputStream(bloomFilterResource[0].getFile().toPath()),
+            Funnels.stringFunnel(StandardCharsets.UTF_8));
+        storeService.storeBloomFilter(bloomFilter);
+        return RepeatStatus.FINISHED;
+      };
+
+    return stepBuilderFactory
+          .get("bloom-filter-recovery-step")
+          .tasklet(tasklet).build();
+  }
 
 }

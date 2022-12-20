@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import com.google.common.hash.BloomFilter;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDate;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDateFlyweight;
 import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCode;
@@ -34,6 +35,7 @@ public class StoreServiceImpl implements StoreService {
     private AcquirerIdFlyweight acquirerIdFlyweight = new AcquirerIdFlyweight();
     private AccountingDateFlyweight accountingDateFlyweight = new AccountingDateFlyweight();
     private Map<String, String> fakeAbiToFiscalCodeMap = new HashMap<>();
+    private BloomFilter<String> bloomFilter;
 
     @Override
     public String getSalt() {
@@ -61,8 +63,13 @@ public class StoreServiceImpl implements StoreService {
     }
 
     @Override
+    public void storeBloomFilter(BloomFilter<String> filter) {
+        this.bloomFilter = filter;
+    }
+
+    @Override
     public boolean hasHpan(String hpan) {
-        return hpanSet.contains(hpan);
+        return hpan != null && bloomFilter != null && bloomFilter.mightContain(hpan);
     }
 
     @Override

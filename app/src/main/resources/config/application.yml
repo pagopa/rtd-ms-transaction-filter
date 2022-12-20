@@ -58,7 +58,7 @@ batchConfiguration:
     readerCorePoolSize: ${ACQ_BATCH_INPUT_PART_READ_CORE_POOL_SIZE:5}
     tablePrefix: ${ACQ_BATCH_INPUT_TABLE_PREFIX:BATCH_}
     panList:
-      hpanDirectoryPath: file:${ACQ_BATCH_HPAN_INPUT_PATH:resources/hpans}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.csv}
+      hpanDirectoryPath: file:${ACQ_BATCH_HPAN_INPUT_PATH:resources/hpans}/${ACQ_BATCH_INPUT_FILE_PATTERN:*.bloomfilter}
       secretKeyPath: file:${ACQ_BATCH_INPUT_SECRET_KEYPATH:}
       passphrase: ${ACQ_BATCH_INPUT_SECRET_PASSPHRASE:}
       partitionerSize: ${ACQ_BATCH_HPAN_PARTITIONER_SIZE:10}

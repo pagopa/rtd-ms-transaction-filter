@@ -98,7 +98,7 @@ import org.springframework.transaction.annotation.Transactional;
                 "batchConfiguration.TransactionFilterBatch.panList.secretKeyPath=classpath:/test-encrypt/secretKey.asc",
                 "batchConfiguration.TransactionFilterBatch.panList.passphrase=test",
                 "batchConfiguration.TransactionFilterBatch.panList.skipLimit=0",
-                "batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath=classpath:/test-encrypt/**/hpan/*pan*.pgp",
+                "batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath=classpath:/test-encrypt/**/hpan/*.bloomfilter",
                 "batchConfiguration.TransactionFilterBatch.panList.linesToSkip=0",
                 "batchConfiguration.TransactionFilterBatch.panList.applyDecrypt=true",
                 "batchConfiguration.TransactionFilterBatch.panList.applyHashing=true",
@@ -430,6 +430,22 @@ public class TransactionFilterBatchTest {
 
     @SneakyThrows
     private void createPanPGP() {
+        tempFolder.newFolder("hpan");
+        File panPgp = tempFolder.newFile("hpan/pan.pgp");
+
+        FileOutputStream panPgpFOS = new FileOutputStream(panPgp);
+
+        EncryptUtil.encryptFile(panPgpFOS,
+            Objects.requireNonNull(this.getClass().getResource("/test-encrypt/pan")).getFile() + "/pan.csv",
+            EncryptUtil.readPublicKey(
+                this.getClass().getResourceAsStream("/test-encrypt/publicKey.asc")),
+            false, false);
+
+        panPgpFOS.close();
+    }
+
+    @SneakyThrows
+    private void createBloomFilter() {
         tempFolder.newFolder("hpan");
         File panPgp = tempFolder.newFile("hpan/pan.pgp");
 

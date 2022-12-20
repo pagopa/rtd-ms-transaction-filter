@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.service;
 
+import com.google.common.hash.BloomFilter;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AccountingDate;
 import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCode;
 import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCodeFlyweight;
@@ -57,6 +58,8 @@ public interface StoreService {
      * @param hpan Hashed PAN
      */
     void store(String hpan);
+
+    void storeBloomFilter(BloomFilter<String> filter);
 
     /**
      * Method to be called for verifying the presence of a hpan in the store.

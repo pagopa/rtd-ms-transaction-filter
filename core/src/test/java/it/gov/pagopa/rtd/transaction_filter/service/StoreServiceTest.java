@@ -5,9 +5,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import com.google.common.hash.BloomFilter;
+import com.google.common.hash.Funnels;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AcquirerId;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationData;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -49,8 +52,10 @@ public class StoreServiceTest {
 
     @Test
     public void hasHpanReturnsTrueWhenPreviouslyStored() {
+        BloomFilter<String> bloomFilter = BloomFilter.create(Funnels.stringFunnel(StandardCharsets.UTF_8), 2, 0.01);
         String hpan = "SyIC2A1MZNoXLd1I";
-        storeService.store(hpan);
+        bloomFilter.put(hpan);
+        storeService.storeBloomFilter(bloomFilter);
         Assert.assertTrue(storeService.hasHpan(hpan));
     }
 
@@ -61,9 +66,8 @@ public class StoreServiceTest {
     }
 
     @Test
-    public void hasHpanNullThrowsNullPointerException() {
-        expectedException.expect(NullPointerException.class);
-        storeService.hasHpan(null);
+    public void hasHpanNullReturnsFalse() {
+        Assert.assertFalse(storeService.hasHpan(null));
     }
 
     @Test
