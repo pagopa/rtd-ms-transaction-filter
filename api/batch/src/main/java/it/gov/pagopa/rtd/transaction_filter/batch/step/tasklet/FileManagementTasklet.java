@@ -271,9 +271,9 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     }
 
     private void manageHpanFiles(String file, String path, boolean isComplete) {
-        if (isComplete && manageHpanOnSuccess.equals("DELETE")) {
+        if (isComplete && "DELETE".equals(manageHpanOnSuccess)) {
             deleteFile(new File(path));
-        } else if (!isComplete || manageHpanOnSuccess.equals("ARCHIVE")) {
+        } else if (!isComplete || "ARCHIVE".equals(manageHpanOnSuccess)) {
             archiveFile(file, path, isComplete);
         }
     }

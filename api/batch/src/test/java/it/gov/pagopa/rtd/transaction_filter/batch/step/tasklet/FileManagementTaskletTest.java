@@ -385,6 +385,43 @@ class FileManagementTaskletTest {
     }
 
     @SneakyThrows
+    @Test
+    void testFileManagement_ArchiveHpan() {
+
+        createDefaultDirectories();
+
+        hpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/hpan.pgp")).toFile();
+        errorHpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/error-hpan.pgp")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ERROR.name());
+        archivalTasklet.setManageHpanOnSuccess("ARCHIVE");
+        archivalTasklet.afterPropertiesSet();
+
+        assertThat(getHpanFiles()).hasSize(2);
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("HPAN_OK", BatchStatus.COMPLETED, "file:" + hpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepExecution stepExecution2 = createStepExecution("HPAN_FAILED", BatchStatus.FAILED, "file:" + errorHpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        assertThat(getSuccessFiles()).hasSize(1);
+        assertThat(getHpanFiles()).isEmpty();
+        assertThat(getErrorFiles()).hasSize(1);
+    }
+
+    @SneakyThrows
     @EnumSource(DeleteOutputFilesEnum.class)
     @ParameterizedTest
     void givenDeleteOutputFilesPolicyWhenRunFileManagementThenMovePgpOutputFilesToPendingFolder(DeleteOutputFilesEnum deleteOutputFilesFlag) {
