@@ -83,7 +83,6 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
      * transaction-filter-worker-step               - input file
      * transaction-sender-rtd-worker-step           - output pgp file rtd
      *
-
      * @return Status of the tasklet execution
      */
     @Override
@@ -170,45 +169,42 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         }
     }
 
-    @SneakyThrows
-    private String getOutputDirectoryAbsolutePath() {
-        return Arrays.stream(resolver.getResources(outputDirectory)).map(resource -> {
-            try {
-                return makePathSystemIndependent(resource.getFile().getAbsolutePath());
-            } catch (IOException e) {
-                log.error(e.getMessage(), e);
-                return "";
-            }
-        }).findAny().orElse(null);
-    }
+
 
     private void manageFilesBasedOnFilenameAndStatus(List<String> hpanResources,
         Map<String, BatchStatus> filenameWithStatusMap) {
         filenameWithStatusMap.forEach((file, status) -> {
-            String path = getPathFromFile(file);
+            String absolutePath = getAbsolutePathFromFile(file);
             boolean isComplete = BatchStatus.COMPLETED.equals(status);
 
             // output file
-            boolean isOutputFile = path.contains(getOutputDirectoryAbsolutePath());
+            boolean isOutputFile = isFileInsideOutputDirectory(absolutePath);
             if (isOutputFile) {
-                manageOutputFile(path, isComplete);
+                manageOutputFile(absolutePath, isComplete);
                 return;
                 // the csv output files are not handled here, Should they? No, they must be deleted or left in output folder
             }
 
-            boolean isHpanFile = hpanResources.contains(makePathSystemIndependent(path));
+            // pending file
+            boolean isPendingFile = isFileInsidePendingDirectory(absolutePath);
+            if (isPendingFile) {
+                managePendingFiles(absolutePath, isComplete);
+                return;
+            }
+
+            boolean isHpanFile = hpanResources.contains(makePathSystemIndependent(absolutePath));
             if (Boolean.TRUE.equals(deleteProcessedFiles)) {
-                deleteFile(new File(path));
+                deleteFile(new File(absolutePath));
             } else if (isHpanFile) {
-                manageHpanFiles(file, path, isComplete);
+                manageHpanFiles(file, absolutePath, isComplete);
             } else {
                 // handle input file archive
-                archiveFile(file, path, isComplete);
+                archiveFile(file, absolutePath, isComplete);
             }
         });
     }
 
-    private String getPathFromFile(String file) {
+    private String getAbsolutePathFromFile(String file) {
         String path;
 
         try {
@@ -220,12 +216,29 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         return path;
     }
 
+    private boolean isFileInsideOutputDirectory(String absolutePath) {
+        String pathWithoutFile = absolutePath.substring(0, absolutePath.lastIndexOf("/"));
+        return pathWithoutFile.equals(getAbsolutePathFromFile(outputDirectory));
+    }
+
     private void manageOutputFile(String path, boolean isComplete) {
         // move every pgp file that failed into pending folder
         if (isOutputFileToMoveToPending(path, isComplete)) {
             moveToPendingDirectory(path);
         } else if (isOutputFileToDelete(isComplete)) {
             deleteFile(FileUtils.getFile(path));
+        }
+    }
+
+    private boolean isFileInsidePendingDirectory(String absolutePath) {
+        String pathWithoutFile = absolutePath.substring(0, absolutePath.lastIndexOf("/"));
+        return pathWithoutFile.equals(getAbsolutePathFromFile(uploadPendingPath));
+    }
+
+    private void managePendingFiles(String absolutePath, boolean isComplete) {
+        // delete the pending files if they have been sent, otherwise leave them in directory pending
+        if (isComplete) {
+            deleteFile(new File(absolutePath));
         }
     }
 

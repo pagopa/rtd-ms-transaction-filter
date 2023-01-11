@@ -568,6 +568,66 @@ class FileManagementTaskletTest {
         assertThat(getErrorFiles()).hasSize(1);
     }
 
+    @SneakyThrows
+    @EnumSource(DeleteOutputFilesEnum.class)
+    @ParameterizedTest
+    void givenPendingFilesWhenSendPendingStepFailThenFilesAreNotMoved(DeleteOutputFilesEnum deleteOutputFilesFlag) {
+
+        createDefaultDirectories();
+
+        File pendingFile = Files.createFile(tempDir.resolve(PENDING_PATH + File.separator + "file-to-send-again.pgp")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(deleteOutputFilesFlag.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("SEND_PENDING_STEP", BatchStatus.FAILED, "file:" + pendingFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the file pgp has been moved from output to output/pending
+        assertThat(getPgpPendingFiles()).hasSize(1);
+    }
+
+    @SneakyThrows
+    @EnumSource(DeleteOutputFilesEnum.class)
+    @ParameterizedTest
+    void givenPendingFilesWhenSendPendingStepSuccessThenFilesAreDeleted(DeleteOutputFilesEnum deleteOutputFilesFlag) {
+
+        createDefaultDirectories();
+
+        File pendingFile = Files.createFile(tempDir.resolve(PENDING_PATH + File.separator + "file-to-send-again.pgp")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(deleteOutputFilesFlag.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("SEND_PENDING_STEP", BatchStatus.COMPLETED, "file:" + pendingFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the file pgp has been moved from output to output/pending
+        assertThat(getPgpPendingFiles()).isEmpty();
+    }
+
     private FileManagementTasklet createTaskletWithDefaultDirectories() {
         FileManagementTasklet archivalTasklet = new FileManagementTasklet();
         archivalTasklet.setUploadPendingPath("file:" + tempDir + File.separator + PENDING_PATH);
