@@ -158,7 +158,7 @@ public class FileReportRestClientTest {
     FileMetadata file = new FileMetadata();
     // missing mandatory fields like filename
     file.setSize(200L);
-    fileReport.setFilesRecentlyUploaded(Collections.singleton(file));
+    fileReport.setFilesRecentlyUploaded(Collections.singletonList(file));
     return fileReport;
   }
 

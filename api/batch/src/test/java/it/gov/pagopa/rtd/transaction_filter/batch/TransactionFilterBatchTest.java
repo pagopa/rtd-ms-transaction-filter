@@ -410,7 +410,7 @@ public class TransactionFilterBatchTest {
         fileMetadata.setSize(200L);
         fileMetadata.setTransmissionDate(dateTime);
         fileMetadata.setStatus("RECEIVED");
-        fileReport.setFilesRecentlyUploaded(Collections.singleton(fileMetadata));
+        fileReport.setFilesRecentlyUploaded(Collections.singletonList(fileMetadata));
 
         return fileReport;
     }
