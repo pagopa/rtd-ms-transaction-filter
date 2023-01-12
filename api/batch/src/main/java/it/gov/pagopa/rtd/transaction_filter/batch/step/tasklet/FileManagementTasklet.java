@@ -99,6 +99,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
                 .getStepExecutions();
 
+        // map to keep track of the worst status associated to a filename among all steps with the same filename
         Map<String, BatchStatus> filenameWithStatusMap = new HashMap<>();
 
         for (StepExecution stepExecution : stepExecutions) {
