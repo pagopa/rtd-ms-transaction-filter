@@ -193,9 +193,9 @@ class FileManagementTaskletTest {
         errorFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/error-trx.csv")).toFile();
         hpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/hpan.pgp")).toFile();
         errorHpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/error-hpan.pgp")).toFile();
-        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.pgp"));
+        File pgpFileFailed = Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.pgp")).toFile();
         Files.createFile(tempDir.resolve(OUTPUT_PATH + "/success-trx-output-file.pgp"));
-        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.csv"));
+        File csvOutputFile = Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.csv")).toFile();
 
         FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
         archivalTasklet.setDeleteProcessedFiles(true);
@@ -219,6 +219,12 @@ class FileManagementTaskletTest {
 
         StepExecution stepExecution4 = createStepExecution("HPAN_FAILED", BatchStatus.FAILED, "file:" + errorHpanFile.getAbsolutePath());
         stepExecutions.add(stepExecution4);
+
+        StepExecution stepExecution6 = createStepExecution("PGP_SEND_FAILED", BatchStatus.FAILED, "file:" + pgpFileFailed.getAbsolutePath());
+        stepExecutions.add(stepExecution6);
+
+        StepExecution stepExecution7 = createStepExecution("ENCRYPT_FILE_CSV", BatchStatus.FAILED, "file:" + csvOutputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution7);
 
         StepContext stepContext = new StepContext(execution);
         stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
