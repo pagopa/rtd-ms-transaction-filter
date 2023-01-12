@@ -114,7 +114,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
                 // errorFilenames is populated with the filename of steps that went in error.
                 // this list will be compared with the files in the output directory to delete those which matches
                 if (!isComplete) {
-                    populateErrorFilenameCollection(errorFilenames, file);
+                    errorFilenames.add(getFilenameWithoutExtension(file));
                 }
 
                 filenameWithStatusMap.merge(file, stepExecution.getStatus(),
@@ -155,22 +155,6 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     private String makePathSystemIndependent(String path) {
         return path.replace("\\", "/");
     }
-
-    private void populateErrorFilenameCollection(List<String> errorFilenames, String file) {
-        String[] filename = makePathSystemIndependent(file).split("/");
-        ArrayList<String> filePartsArray = new ArrayList<>(Arrays.asList(
-            filename[filename.length - 1].split("\\.")));
-        if (filePartsArray.size() == 1) {
-            errorFilenames.add(filePartsArray.get(0));
-        } else {
-            filePartsArray.remove(filePartsArray.size()-1);
-            String[] fileParts = new String[0];
-            fileParts = filePartsArray.toArray(fileParts);
-            errorFilenames.add(String.join(".", fileParts));
-        }
-    }
-
-
 
     private void manageFilesBasedOnFilenameAndStatus(List<String> hpanResources,
         Map<String, BatchStatus> filenameWithStatusMap) {
@@ -284,7 +268,12 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     }
 
     private String getFilenameWithoutExtension(File outputFilename) {
-        return outputFilename.getName().substring(0, outputFilename.getName().lastIndexOf("."));
+        return getFilenameWithoutExtension(outputFilename.getAbsolutePath());
+    }
+
+    private String getFilenameWithoutExtension(String file) {
+        String filename = getFilenameFromPath(file);
+        return filename.substring(0, filename.lastIndexOf("."));
     }
 
     private void manageHpanFiles(String file, String path, boolean isComplete) {
