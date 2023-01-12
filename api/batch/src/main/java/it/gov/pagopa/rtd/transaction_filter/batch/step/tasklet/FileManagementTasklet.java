@@ -269,11 +269,10 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     @SneakyThrows
     private void deleteOutputFilesRtdBasedOnFlags(boolean executionWithErrors, List<String> errorFilenames) {
         if ("ALWAYS".equals(deleteOutputFiles) || ("ERROR".equals(deleteOutputFiles) && executionWithErrors)) {
-
             Arrays.stream(resolver.getResources(makePathSystemIndependent(outputDirectory) + "/*"))
                 .map(this::getFileFromResource)
                 .filter(File::isFile)
-                .filter(outputFilename -> "ALWAYS".equals(deleteOutputFiles) || errorFilenames.contains(outputFilename.getName()))
+                .filter(outputFilename -> "ALWAYS".equals(deleteOutputFiles) || errorFilenames.contains(getFilenameWithoutExtension(outputFilename)))
                 .forEach(this::deleteFile);
         }
     }
@@ -281,6 +280,10 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     @SneakyThrows
     private File getFileFromResource(Resource outputDirectoryResource) {
         return outputDirectoryResource.getFile();
+    }
+
+    private String getFilenameWithoutExtension(File outputFilename) {
+        return outputFilename.getName().substring(0, outputFilename.getName().lastIndexOf("."));
     }
 
     private void manageHpanFiles(String file, String path, boolean isComplete) {

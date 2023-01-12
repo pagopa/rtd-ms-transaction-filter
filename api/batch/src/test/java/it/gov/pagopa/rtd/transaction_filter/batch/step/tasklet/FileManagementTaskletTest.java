@@ -254,12 +254,12 @@ class FileManagementTaskletTest {
         createDefaultDirectories();
 
         successFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/success-trx.csv")).toFile();
-        errorFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/CSTAR.12345.20221010.123456.001.01.csv")).toFile();
-        hpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/hpan.pgp")).toFile();
-        errorHpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/error-hpan.pgp")).toFile();
+        errorFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/CSTAR.12345.TRNLOG.20221010.123456.001.csv")).toFile();
         File pgpFileFailed = Files.createFile(tempDir.resolve(OUTPUT_PATH + "/ADE.12345.20221010.123456.001.01.csv.pgp")).toFile();
+        File csvOutputFile = Files.createFile(tempDir.resolve(OUTPUT_PATH + "/ADE.12345.20221010.123456.001.01.csv")).toFile();
         Files.createFile(tempDir.resolve(OUTPUT_PATH + "/success-trx-output-file.pgp"));
-        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.csv"));
+        // test file csv deletion without filename been explicitly handled by any step, only valid for RTD files right now
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/CSTAR.12345.TRNLOG.20221010.123456.001.csv"));
 
         FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
         archivalTasklet.setDeleteProcessedFiles(false);
@@ -278,14 +278,11 @@ class FileManagementTaskletTest {
         StepExecution stepExecution2 = createStepExecution("INPUT_FAILED", BatchStatus.FAILED, "file:" + errorFile.getAbsolutePath());
         stepExecutions.add(stepExecution2);
 
-        StepExecution stepExecution3 = createStepExecution("HPAN_OK", BatchStatus.COMPLETED, "file:" + hpanFile.getAbsolutePath());
+        StepExecution stepExecution3 = createStepExecution("PGP_SEND_FAILED", BatchStatus.FAILED, "file:" + pgpFileFailed.getAbsolutePath());
         stepExecutions.add(stepExecution3);
 
-        StepExecution stepExecution4 = createStepExecution("HPAN_FAILED", BatchStatus.FAILED, "file:" + errorHpanFile.getAbsolutePath());
+        StepExecution stepExecution4 = createStepExecution("ENCRYPT_FILE_CSV", BatchStatus.FAILED, "file:" + csvOutputFile.getAbsolutePath());
         stepExecutions.add(stepExecution4);
-
-        StepExecution stepExecution6 = createStepExecution("PGP_SEND_FAILED", BatchStatus.FAILED, "file:" + pgpFileFailed.getAbsolutePath());
-        stepExecutions.add(stepExecution6);
 
         StepContext stepContext = new StepContext(execution);
         stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
@@ -294,7 +291,10 @@ class FileManagementTaskletTest {
         archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
         assertThat(getSuccessFiles()).hasSize(1);
-        assertThat(getErrorFiles()).hasSize(2);
+        assertThat(getErrorFiles()).hasSize(1);
+        assertThat(getPgpPendingFiles()).hasSize(1);
+        assertThat(getCsvOutputFiles()).isEmpty();
+        assertThat(getPgpOutputFiles()).hasSize(1);
 
         successFile.createNewFile();
 
@@ -459,9 +459,10 @@ class FileManagementTaskletTest {
         assertThat(getPgpPendingFiles()).hasSize(1);
         switch (deleteOutputFilesFlag) {
             case KEEP:
-            case ERROR:
                 assertThat(getCsvOutputFiles()).hasSize(1); break;
-            case ALWAYS:assertThat(getCsvOutputFiles()).isEmpty();
+            case ERROR:
+            case ALWAYS:
+                assertThat(getCsvOutputFiles()).isEmpty();
         }
     }
 
@@ -626,6 +627,37 @@ class FileManagementTaskletTest {
 
         // the file pgp has been moved from output to output/pending
         assertThat(getPgpPendingFiles()).isEmpty();
+    }
+
+    @SneakyThrows
+    @Test
+    void givenOutputFilesFromPreviousRunsWhenDeleteOutputFilesIsAlwaysThenDoRemoveOldFilesToo() {
+        createDefaultDirectories();
+
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "old-file.pgp")).toFile();
+        File outputFileToSend = Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "file-to-send.pgp")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ALWAYS.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
+
+        assertThat(getPgpOutputFiles()).hasSize(2);
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("SEND_OUTPUT_FILE", BatchStatus.COMPLETED, "file:" + outputFileToSend.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the file pgp has been moved from output to output/pending
+        assertThat(getPgpOutputFiles()).isEmpty();
     }
 
     private FileManagementTasklet createTaskletWithDefaultDirectories() {
