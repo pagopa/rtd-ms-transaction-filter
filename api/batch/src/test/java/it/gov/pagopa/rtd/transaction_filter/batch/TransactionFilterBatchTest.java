@@ -9,7 +9,6 @@ import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
-import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
@@ -552,7 +551,6 @@ public class TransactionFilterBatchTest {
         Files.write(secondFile.toPath(), secondFileContent);
         files.add(secondFile);
 
-        files.forEach(file -> System.out.println(file.getAbsolutePath()));
         return files;
     }
 }
