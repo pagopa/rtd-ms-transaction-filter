@@ -62,7 +62,6 @@ import org.springframework.transaction.PlatformTransactionManager;
  *
  */
 
-
 @Configuration
 @Data
 @PropertySource("classpath:config/transactionFilterBatch.properties")
