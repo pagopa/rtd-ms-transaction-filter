@@ -281,9 +281,9 @@ public class TransactionFilterBatch {
                 .listener(jobListener())
                 .start(pagopaPublicKeyRecoveryTask(this.storeService))
                 .on(FAILED).end()
-                .on("*").to(fleReportStepDecider(fileReportRecoveryEnabled))
+                .on("*").to(fileReportStepDecider(fileReportRecoveryEnabled))
                 .on(TRUE).to(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
-                .from(fleReportStepDecider(fileReportRecoveryEnabled))
+                .from(fileReportStepDecider(fileReportRecoveryEnabled))
                 .on(FALSE).to(selectTargetInputFileTask(this.storeService))
                 .from(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
                 .on("*").to(selectTargetInputFileTask(this.storeService))
@@ -351,7 +351,7 @@ public class TransactionFilterBatch {
      * @return a job execution decider
      */
     @Bean
-    public JobExecutionDecider fleReportStepDecider(Boolean enabled) {
+    public JobExecutionDecider fileReportStepDecider(Boolean enabled) {
         return (JobExecution jobExecution, StepExecution stepExecution) -> decider(enabled);
     }
 
