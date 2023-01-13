@@ -283,11 +283,11 @@ class HpanRestClientImpl implements HpanRestClient {
     httpput.setEntity(entity);
     final HttpResponse response = httpclient.execute(httpput);
     if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
-      throw new IOException("Upload failed for file " + fileToUpload.getName() + " (status was: "
-          + response.getStatusLine().getStatusCode() + ")");
+      handleErrorStatus(response.getStatusLine().getStatusCode(), fileToUpload.getName());
+    } else {
+      log.info("File {} uploaded with success (status was: {})", fileToUpload.getName(),
+          response.getStatusLine().getStatusCode());
     }
-    log.info("File " + fileToUpload.getName() + " uploaded with success (status was: "
-        + response.getStatusLine().getStatusCode() + ")");
     return null;
   }
 
@@ -297,6 +297,16 @@ class HpanRestClientImpl implements HpanRestClient {
     } else {
       throw new IllegalArgumentException(
           "One or more proxy parameters are null! Please set a value");
+    }
+  }
+
+  private void handleErrorStatus(int statusCode, String filename) throws IOException {
+    if (statusCode == HttpStatus.SC_CONFLICT) {
+      log.error("Upload failed for file {} (status was {}: File with same name has already been uploaded)",
+          filename, HttpStatus.SC_CONFLICT);
+    } else {
+      throw new IOException("Upload failed for file " + filename + " (status was: "
+          + statusCode + ")");
     }
   }
 
