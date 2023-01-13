@@ -1,10 +1,10 @@
 package it.gov.pagopa.rtd.transaction_filter.connector.model;
 
-import java.util.Collection;
+import java.util.List;
 import lombok.Data;
 
 @Data
 public class FileReport {
 
-  Collection<FileMetadata> filesRecentlyUploaded;
+  List<FileMetadata> filesRecentlyUploaded;
 }

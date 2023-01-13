@@ -430,7 +430,6 @@ public class TransactionFilterStep {
             .reader(fileReportReader(restClient))
             .writer(fileReportWriter())
             .faultTolerant()
-            .taskExecutor(batchConfig.readerTaskExecutor())
             .build();
     }
 

@@ -301,13 +301,15 @@ public class TransactionFilterBatchFileReportTest {
 
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
             .orElse(new File("")).toPath());
-        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate",
-            "file1;RECEIVED;200;" + currentDate);
+        assertThat(fileReportContent).isNotNull().containsExactly("name;status;size;transmissionDate",
+            "file1;RECEIVED;200;" + currentDate,
+            "file2;RECEIVED;300;" + currentDate.minusDays(4),
+            "file3;RECEIVED;400;" + currentDate.minusDays(10));
     }
 
     @SneakyThrows
     @Test
-    public void givenAReportWhenLaunchItThenSaveTheReportOnFile() {
+    public void givenAReportWhenLaunchFileReportStepThenSaveTheReportOnFile() {
         LocalDateTime currentDate = LocalDateTime.now();
         BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient).getFileReport();
 
@@ -322,13 +324,15 @@ public class TransactionFilterBatchFileReportTest {
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
             .orElse(new File("")).toPath());
 
-        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate",
-            "file1;RECEIVED;200;" + currentDate);
+        assertThat(fileReportContent).isNotNull().containsExactly("name;status;size;transmissionDate",
+            "file1;RECEIVED;200;" + currentDate,
+            "file2;RECEIVED;300;" + currentDate.minusDays(4),
+            "file3;RECEIVED;400;" + currentDate.minusDays(10));
     }
 
     @SneakyThrows
     @Test
-    public void givenEmptyReportWhenLaunchItThenSaveTheReportWithHeaderOnly() {
+    public void givenEmptyReportWhenLaunchFileReportStepThenSaveTheReportWithHeaderOnly() {
         BDDMockito.doReturn(getStubEmptyReport()).when(fileReportRestClient).getFileReport();
 
         jobLauncherTestUtils.launchStep("file-report-recovery-step",
@@ -347,7 +351,7 @@ public class TransactionFilterBatchFileReportTest {
 
     @SneakyThrows
     @Test
-    public void givenMalformedReportWhenLaunchItThenSaveTheReportWithHeaderOnly() {
+    public void givenMalformedReportWhenLaunchFileReportStepThenSaveTheReportWithHeaderOnly() {
         // returns report with null field list
         BDDMockito.doReturn(new FileReport()).when(fileReportRestClient).getFileReport();
 
@@ -372,12 +376,30 @@ public class TransactionFilterBatchFileReportTest {
 
     private FileReport getStubFileReport(LocalDateTime dateTime) {
         FileReport fileReport = new FileReport();
+        List<FileMetadata> files = new ArrayList<>();
+
         FileMetadata fileMetadata = new FileMetadata();
         fileMetadata.setName("file1");
         fileMetadata.setSize(200L);
         fileMetadata.setTransmissionDate(dateTime);
         fileMetadata.setStatus("RECEIVED");
-        fileReport.setFilesRecentlyUploaded(Collections.singleton(fileMetadata));
+        files.add(fileMetadata);
+
+        fileMetadata = new FileMetadata();
+        fileMetadata.setName("file2");
+        fileMetadata.setSize(300L);
+        fileMetadata.setTransmissionDate(dateTime.minusDays(4));
+        fileMetadata.setStatus("RECEIVED");
+        files.add(fileMetadata);
+
+        fileMetadata = new FileMetadata();
+        fileMetadata.setName("file3");
+        fileMetadata.setSize(400L);
+        fileMetadata.setTransmissionDate(dateTime.minusDays(10));
+        fileMetadata.setStatus("RECEIVED");
+        files.add(fileMetadata);
+
+        fileReport.setFilesRecentlyUploaded(files);
 
         return fileReport;
     }
