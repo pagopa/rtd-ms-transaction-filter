@@ -304,7 +304,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
             destinationPath = archivalPath + File.separator + addRandomPrefixToFilename(filename);
         } else {
             String archivalPath = resolver.getResources(errorPath)[0].getFile().getAbsolutePath();
-            destinationPath = archivalPath + File.separator + filename;
+            destinationPath = archivalPath + File.separator + addRandomPrefixToFilename(filename);
         }
 
         return FileUtils.getFile(destinationPath);
