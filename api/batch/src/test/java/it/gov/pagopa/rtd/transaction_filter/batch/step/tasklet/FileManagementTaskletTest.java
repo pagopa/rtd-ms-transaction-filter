@@ -10,8 +10,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -95,8 +97,10 @@ class FileManagementTaskletTest {
 
         archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-        assertThat(getSuccessFiles()).hasSize(1);
-        assertThat(getErrorFiles()).hasSize(2);
+        assertThat(getSuccessFiles()).hasSize(1)
+            .extracting(File::getName).has(getNamePrefixCondition());
+        assertThat(getErrorFiles()).hasSize(2)
+            .extracting(File::getName).has(getNamePrefixCondition());
 
         successFile.createNewFile();
 
@@ -422,9 +426,11 @@ class FileManagementTaskletTest {
 
         archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-        assertThat(getSuccessFiles()).hasSize(1);
+        assertThat(getSuccessFiles()).hasSize(1)
+            .extracting(File::getName).has(getNamePrefixCondition());
         assertThat(getHpanFiles()).isEmpty();
-        assertThat(getErrorFiles()).hasSize(1);
+        assertThat(getErrorFiles()).hasSize(1)
+            .extracting(File::getName).has(getNamePrefixCondition());;
     }
 
     @SneakyThrows
@@ -462,10 +468,12 @@ class FileManagementTaskletTest {
         archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
         // the file pgp has been moved from output to output/pending
-        assertThat(getPgpPendingFiles()).hasSize(1);
+        assertThat(getPgpPendingFiles()).hasSize(1)
+            .extracting(File::getName).containsExactly(outputFilePgp.getName());
         switch (deleteOutputFilesFlag) {
             case KEEP:
-                assertThat(getCsvOutputFiles()).hasSize(1); break;
+                assertThat(getCsvOutputFiles()).hasSize(1)
+                    .extracting(File::getName).containsExactly(outputFileCsv.getName()); break;
             case ERROR:
             case ALWAYS:
                 assertThat(getCsvOutputFiles()).isEmpty();
@@ -742,6 +750,12 @@ class FileManagementTaskletTest {
         return FileUtils.listFiles(
             new File(tempDir + File.separator + PENDING_PATH),
             new String[]{"pgp"},false);
+    }
+
+    private Condition<? super List<? extends String>> getNamePrefixCondition() {
+        String prefixArchivedFileRegex = "[a-zA-Z\\d]{20}_[0-9]{17}_.*";
+        return new Condition<>(list -> list.stream().allMatch(name -> Pattern.matches(prefixArchivedFileRegex, name)),
+            "random name prefix");
     }
 
     @SneakyThrows
