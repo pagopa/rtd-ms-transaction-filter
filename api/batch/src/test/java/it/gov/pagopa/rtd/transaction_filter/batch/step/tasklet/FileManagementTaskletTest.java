@@ -640,7 +640,7 @@ class FileManagementTaskletTest {
     void givenOutputFilesFromPreviousRunsWhenDeleteOutputFilesIsAlwaysThenDoRemoveOldFilesToo() {
         createDefaultDirectories();
 
-        Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "old-file.pgp")).toFile();
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "old-file.pgp"));
         File outputFileToSend = Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "file-to-send.pgp")).toFile();
 
         FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
