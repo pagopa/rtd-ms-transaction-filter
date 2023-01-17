@@ -50,6 +50,8 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
                 "rest-client.hpan.key-store.password=secret",
                 "rest-client.hpan.trust-store.file=classpath:certs/client-truststore.jks",
                 "rest-client.hpan.trust-store.password=secret",
+                "rest-client.basic-auth.username=user",
+                "rest-client.basic-auth.password=pwd",
                 "spring.application.name=rtd-ms-transaction-filter-integration-rest"
         }
 )
