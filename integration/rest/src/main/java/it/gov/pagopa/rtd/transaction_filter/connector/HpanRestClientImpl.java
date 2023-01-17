@@ -1,6 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -109,6 +112,12 @@ class HpanRestClientImpl implements HpanRestClient {
 
   @Value("${rest-client.hpan.proxy.port}")
   private Integer proxyPort;
+
+  @Value("${rest-client.basic-auth.username}")
+  private String basicAuthUsername;
+
+  @Value("${rest-client.basic-auth.password}")
+  private String basicAuthPassword;
 
   private final HpanRestConnector hpanRestConnector;
   private final HpanRestConnectorConfig hpanRestConnectorConfig;
@@ -259,6 +268,7 @@ class HpanRestClientImpl implements HpanRestClient {
     headers.add(new BasicHeader("User-Agent", hpanRestConnectorConfig.getUserAgent()));
     headers.add(new BasicHeader("x-ms-blob-type", headerXMsBlobType));
     headers.add(new BasicHeader("x-ms-version", headerXMsVersion));
+    addBasicAuthHeader(headers);
 
     HpanRestConnectorConfig config = context.getBean(HpanRestConnectorConfig.class);
     SSLContext sslContext = config.getSSLContext();
@@ -289,6 +299,17 @@ class HpanRestClientImpl implements HpanRestClient {
           response.getStatusLine().getStatusCode());
     }
     return null;
+  }
+
+  private void addBasicAuthHeader(@NotNull List<Header> headers) {
+    if (basicAuthUsername != null && basicAuthPassword != null) {
+      String user = new String(Base64.getDecoder().decode(basicAuthUsername));
+      String pwd = new String(Base64.getDecoder().decode(basicAuthUsername));
+      String basicAuthCredentials = String.format("%s:%s", user, pwd);
+      String encodedBasicAuthCredentials = Base64.getEncoder().encodeToString(
+          basicAuthCredentials.getBytes(StandardCharsets.UTF_8));
+      headers.add(new BasicHeader("Authorization", "Basic " + encodedBasicAuthCredentials));
+    }
   }
 
   private HttpHost createProxy() {
