@@ -2,7 +2,10 @@ package it.gov.pagopa.rtd.transaction_filter.connector.config;
 
 import feign.Client;
 import feign.RequestInterceptor;
+import feign.RequestTemplate;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestConnector;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,6 +77,12 @@ public class HpanRestConnectorConfig {
     @Value("${rest-client.user-agent.version}")
     private String userAgentVersion;
 
+    @Value("${rest-client.basic-auth.username}")
+    private String basicAuthUsername;
+
+    @Value("${rest-client.basic-auth.password}")
+    private String basicAuthPassword;
+
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     public String getUserAgent() {
@@ -83,8 +92,27 @@ public class HpanRestConnectorConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {
         // This interceptor injects the User-Agent header in each request made with the client.
-        return requestTemplate -> requestTemplate.header("User-Agent", getUserAgent());
+        return this::addHeadersToRequest;
+    }
 
+    private void addHeadersToRequest(RequestTemplate requestTemplate) {
+        addUserAgentHeader(requestTemplate);
+        addBasicAuthHeader(requestTemplate);
+    }
+
+    private void addUserAgentHeader(RequestTemplate requestTemplate) {
+        requestTemplate.header("User-Agent", getUserAgent());
+    }
+
+    private void addBasicAuthHeader(RequestTemplate requestTemplate) {
+        if (basicAuthUsername != null && basicAuthPassword != null) {
+            String user = new String(Base64.getDecoder().decode(basicAuthUsername));
+            String pwd = new String(Base64.getDecoder().decode(basicAuthUsername));
+            String basicAuthCredentials = String.format("%s:%s", user, pwd);
+            String encodedBasicAuthCredentials = Base64.getEncoder().encodeToString(
+                basicAuthCredentials.getBytes(StandardCharsets.UTF_8));
+            requestTemplate.header("Authorization", "Basic " + encodedBasicAuthCredentials);
+        }
     }
 
     @Bean
