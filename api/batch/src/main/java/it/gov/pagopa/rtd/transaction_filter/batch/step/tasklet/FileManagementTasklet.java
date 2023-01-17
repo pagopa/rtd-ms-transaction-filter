@@ -94,8 +94,6 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         List<String> errorFilenames = new ArrayList<>();
         hpanDirectory = makePathSystemIndependent(hpanDirectory);
 
-        List<String> hpanResources = getHpanFiles();
-
         Collection<StepExecution> stepExecutions = chunkContext.getStepContext().getStepExecution().getJobExecution()
             .getStepExecutions();
 
@@ -106,7 +104,6 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
             if (stepExecution.getExecutionContext().containsKey("fileName")) {
 
                 String file = stepExecution.getExecutionContext().getString("fileName");
-                log.info("stepname: {}, filename: {}", stepExecution.getStepName(), file);
 
                 boolean isComplete = BatchStatus.COMPLETED.equals(stepExecution.getStatus()) &&
                     stepExecution.getFailureExceptions().isEmpty();
@@ -123,7 +120,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         }
 
         // evaluate only the worst case status among steps with the same filename (e.g. checksum and transaction processing steps)
-        manageFilesBasedOnFilenameAndStatus(hpanResources, filenameWithStatusMap);
+        manageFilesBasedOnFilenameAndStatus(filenameWithStatusMap);
 
         // this code removes only the RTD files because the input filename matches the output filename (without extensions)
         // in order to maintain the retro compatibility with the RTD files, this code will stay until the splitting on RTD is implemented
@@ -156,8 +153,8 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
         return path.replace("\\", "/");
     }
 
-    private void manageFilesBasedOnFilenameAndStatus(List<String> hpanResources,
-        Map<String, BatchStatus> filenameWithStatusMap) {
+    private void manageFilesBasedOnFilenameAndStatus(Map<String, BatchStatus> filenameWithStatusMap) {
+        List<String> hpanResources = getHpanFiles();
         filenameWithStatusMap.forEach((file, status) -> {
             String absolutePath = getAbsolutePathFromFile(file);
             boolean isComplete = BatchStatus.COMPLETED.equals(status);
