@@ -2,6 +2,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import it.gov.pagopa.rtd.transaction_filter.batch.model.DeleteOutputFilesEnum;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -9,11 +10,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
+import org.assertj.core.api.Condition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepContribution;
@@ -62,7 +67,7 @@ class FileManagementTaskletTest {
 
         FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
         archivalTasklet.setDeleteProcessedFiles(false);
-        archivalTasklet.setDeleteOutputFiles("KEEP");
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.KEEP.name());
         archivalTasklet.setManageHpanOnSuccess("DELETE");
 
         assertThat(getSuccessFiles()).isEmpty();
@@ -92,8 +97,10 @@ class FileManagementTaskletTest {
 
         archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-        assertThat(getSuccessFiles()).hasSize(1);
-        assertThat(getErrorFiles()).isEmpty();
+        assertThat(getSuccessFiles()).hasSize(1)
+            .extracting(File::getName).has(getNamePrefixCondition());
+        assertThat(getErrorFiles()).hasSize(2)
+            .extracting(File::getName).has(getNamePrefixCondition());
 
         successFile.createNewFile();
 
@@ -130,7 +137,7 @@ class FileManagementTaskletTest {
 
         FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
         archivalTasklet.setDeleteProcessedFiles(false);
-        archivalTasklet.setDeleteOutputFiles("KEEP");
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.KEEP.name());
         archivalTasklet.setManageHpanOnSuccess("DELETE");
 
         assertThat(getSuccessFiles()).isEmpty();
@@ -159,7 +166,7 @@ class FileManagementTaskletTest {
         archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
         assertThat(getSuccessFiles()).hasSize(1);
-        assertThat(getErrorFiles()).isEmpty();
+        assertThat(getErrorFiles()).hasSize(2);
 
         successFile.createNewFile();
 
@@ -196,7 +203,7 @@ class FileManagementTaskletTest {
 
         FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
         archivalTasklet.setDeleteProcessedFiles(true);
-        archivalTasklet.setDeleteOutputFiles("ALWAYS");
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ALWAYS.name());
         archivalTasklet.setManageHpanOnSuccess("DELETE");
 
         assertThat(getSuccessFiles()).isEmpty();
@@ -266,7 +273,7 @@ class FileManagementTaskletTest {
 
         FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
         archivalTasklet.setDeleteProcessedFiles(false);
-        archivalTasklet.setDeleteOutputFiles("ERROR");
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ERROR.name());
         archivalTasklet.setManageHpanOnSuccess("DELETE");
 
         assertThat(getSuccessFiles()).isEmpty();
@@ -294,8 +301,8 @@ class FileManagementTaskletTest {
         archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
         assertThat(getSuccessFiles()).hasSize(1);
-        assertThat(getErrorFiles()).isEmpty();
-        assertThat(getPgpPendingFiles()).isEmpty();
+        assertThat(getErrorFiles()).hasSize(1);
+        assertThat(getPgpPendingFiles()).hasSize(1);
         assertThat(getCsvOutputFiles()).isEmpty();
         assertThat(getPgpOutputFiles()).hasSize(1);
 
@@ -333,7 +340,7 @@ class FileManagementTaskletTest {
 
         FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
         archivalTasklet.setDeleteProcessedFiles(false);
-        archivalTasklet.setDeleteOutputFiles("ERROR");
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ERROR.name());
         archivalTasklet.setManageHpanOnSuccess("KEEP");
 
         assertThat(getSuccessFiles()).isEmpty();
@@ -366,7 +373,7 @@ class FileManagementTaskletTest {
 
         assertThat(getSuccessFiles()).hasSize(1);
         assertThat(getHpanFiles()).hasSize(1);
-        assertThat(getErrorFiles()).isEmpty();
+        assertThat(getErrorFiles()).hasSize(2);
 
         successFile.createNewFile();
 
@@ -398,7 +405,7 @@ class FileManagementTaskletTest {
 
         FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
         archivalTasklet.setDeleteProcessedFiles(false);
-        archivalTasklet.setDeleteOutputFiles("ERROR");
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ERROR.name());
         archivalTasklet.setManageHpanOnSuccess("ARCHIVE");
         archivalTasklet.afterPropertiesSet();
 
@@ -419,9 +426,58 @@ class FileManagementTaskletTest {
 
         archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-        assertThat(getSuccessFiles()).hasSize(1);
+        assertThat(getSuccessFiles()).hasSize(1)
+            .extracting(File::getName).has(getNamePrefixCondition());
         assertThat(getHpanFiles()).isEmpty();
-        assertThat(getErrorFiles()).isEmpty();
+        assertThat(getErrorFiles()).hasSize(1)
+            .extracting(File::getName).has(getNamePrefixCondition());;
+    }
+
+    @SneakyThrows
+    @EnumSource(DeleteOutputFilesEnum.class)
+    @ParameterizedTest
+    void givenDeleteOutputFilesPolicyWhenRunFileManagementThenMovePgpOutputFilesToPendingFolder(DeleteOutputFilesEnum deleteOutputFilesFlag) {
+
+        createDefaultDirectories();
+
+        File outputFilePgp = Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "trx-output-file.pgp")).toFile();
+        File outputFileCsv = Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "trx-output-file.csv")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(deleteOutputFilesFlag.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
+
+        // pre-condition on initial setup
+        assertThat(getPgpOutputFiles()).hasSize(1);
+        assertThat(getCsvOutputFiles()).hasSize(1);
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("SEND_PGP_STEP", BatchStatus.FAILED, "file:" + outputFilePgp.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepExecution stepExecution2 = createStepExecution("ENCRYPT_AGGREGATE_STEP", BatchStatus.COMPLETED, "file:" + outputFileCsv.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the file pgp has been moved from output to output/pending
+        assertThat(getPgpPendingFiles()).hasSize(1)
+            .extracting(File::getName).containsExactly(outputFilePgp.getName());
+        switch (deleteOutputFilesFlag) {
+            case KEEP:
+                assertThat(getCsvOutputFiles()).hasSize(1)
+                    .extracting(File::getName).containsExactly(outputFileCsv.getName()); break;
+            case ERROR:
+            case ALWAYS:
+                assertThat(getCsvOutputFiles()).isEmpty();
+        }
     }
 
     @SneakyThrows
@@ -475,15 +531,129 @@ class FileManagementTaskletTest {
 
     @SneakyThrows
     @Test
+    void whenThereAreMoreStepsWithSameFilenameThenEvaluateWorstStatus() {
+
+        createDefaultDirectories();
+
+        File inputFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/success-trx.csv")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.KEEP.name());
+        archivalTasklet.setManageHpanOnSuccess("KEEP");
+
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).isEmpty();
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("INPUT_FILE_SUCCESS_EG_CHECKSUM", BatchStatus.COMPLETED, "file:" + inputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepExecution stepExecution2 = createStepExecution("INPUT_FILE_ERROR_EG_TRANSACTION_PROCESS", BatchStatus.FAILED, "file:" + inputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the FAILED status is evaluated and the file is moved into "error" folder
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).hasSize(1);
+
+        // invert the orders of the steps and retest
+        stepExecutions = new ArrayList<>();
+        stepExecution1 = createStepExecution("INPUT_FILE_ERROR_EG_TRANSACTION_PROCESS", BatchStatus.FAILED, "file:" + inputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        stepExecution2 = createStepExecution("INPUT_FILE_SUCCESS_EG_CHECKSUM", BatchStatus.COMPLETED, "file:" + inputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
+
+        stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the assertion must be step order-independent
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).hasSize(1);
+    }
+
+    @SneakyThrows
+    @EnumSource(DeleteOutputFilesEnum.class)
+    @ParameterizedTest
+    void givenPendingFilesWhenSendPendingStepFailThenFilesAreNotMoved(DeleteOutputFilesEnum deleteOutputFilesFlag) {
+
+        createDefaultDirectories();
+
+        File pendingFile = Files.createFile(tempDir.resolve(PENDING_PATH + File.separator + "file-to-send-again.pgp")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(deleteOutputFilesFlag.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("SEND_PENDING_STEP", BatchStatus.FAILED, "file:" + pendingFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the file pgp has been moved from output to output/pending
+        assertThat(getPgpPendingFiles()).hasSize(1);
+    }
+
+    @SneakyThrows
+    @EnumSource(DeleteOutputFilesEnum.class)
+    @ParameterizedTest
+    void givenPendingFilesWhenSendPendingStepSuccessThenFilesAreDeleted(DeleteOutputFilesEnum deleteOutputFilesFlag) {
+
+        createDefaultDirectories();
+
+        File pendingFile = Files.createFile(tempDir.resolve(PENDING_PATH + File.separator + "file-to-send-again.pgp")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(deleteOutputFilesFlag.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("SEND_PENDING_STEP", BatchStatus.COMPLETED, "file:" + pendingFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the file pgp has been moved from output to output/pending
+        assertThat(getPgpPendingFiles()).isEmpty();
+    }
+
+    @SneakyThrows
+    @Test
     void givenOutputFilesFromPreviousRunsWhenDeleteOutputFilesIsAlwaysThenDoRemoveOldFilesToo() {
         createDefaultDirectories();
 
-        Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "old-file.pgp")).toFile();
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "old-file.pgp"));
         File outputFileToSend = Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "file-to-send.pgp")).toFile();
 
         FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
         archivalTasklet.setDeleteProcessedFiles(false);
-        archivalTasklet.setDeleteOutputFiles("ALWAYS");
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ALWAYS.name());
         archivalTasklet.setManageHpanOnSuccess("DELETE");
 
         assertThat(getPgpOutputFiles()).hasSize(2);
@@ -511,6 +681,7 @@ class FileManagementTaskletTest {
         archivalTasklet.setOutputDirectory("file:" + tempDir + File.separator + OUTPUT_PATH);
         archivalTasklet.setHpanDirectory("file:" + tempDir + File.separator + HPAN_PATH + "/*.pgp");
         archivalTasklet.setLogsDirectory("file:" + tempDir + File.separator + LOGS_PATH);
+        archivalTasklet.setErrorPath("file:" + tempDir + File.separator + ERROR_PATH);
 
         return archivalTasklet;
     }
@@ -579,6 +750,12 @@ class FileManagementTaskletTest {
         return FileUtils.listFiles(
             new File(tempDir + File.separator + PENDING_PATH),
             new String[]{"pgp"},false);
+    }
+
+    private Condition<? super List<? extends String>> getNamePrefixCondition() {
+        String prefixArchivedFileRegex = "[a-zA-Z\\d]{20}_[0-9]{17}_.*";
+        return new Condition<>(list -> list.stream().allMatch(name -> Pattern.matches(prefixArchivedFileRegex, name)),
+            "random name prefix");
     }
 
     @SneakyThrows

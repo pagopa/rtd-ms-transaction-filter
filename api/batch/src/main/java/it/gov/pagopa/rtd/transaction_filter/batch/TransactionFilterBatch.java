@@ -34,7 +34,6 @@ import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.job.builder.FlowJobBuilder;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
@@ -62,7 +61,6 @@ import org.springframework.transaction.PlatformTransactionManager;
  * </p>
  *
  */
- 
 
 @Configuration
 @Data
@@ -126,7 +124,11 @@ public class TransactionFilterBatch {
     private String logsDirectoryPath;
     @Value("${batchConfiguration.TransactionFilterBatch.fileReportRecovery.enabled}")
     private Boolean fileReportRecoveryEnabled;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionSenderPending.enabled}")
+    private Boolean sendPendingFilesStepEnabled;
 
+    private static final String FALSE = Boolean.FALSE.toString();
+    private static final String TRUE = Boolean.TRUE.toString();
     private DataSource dataSource;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
@@ -248,20 +250,20 @@ public class TransactionFilterBatch {
     }
 
     /**
-     * This method builds a flow which can be decomposed in the following  
+     * This method builds a flow which can be decomposed in the following
      * steps:
      * <ol>
-     * <li>Attempts panlist recovery, if enabled. In case of a failure in the 
+     * <li>Attempts panlist recovery, if enabled. In case of a failure in the
      * execution, the process is stopped.</li>
-     * <li>Attempts salt recovery, if enabled. In case of a failure in the 
-     * execution, the process is stopped. Otherwise, the panList step is 
+     * <li>Attempts salt recovery, if enabled. In case of a failure in the
+     * execution, the process is stopped. Otherwise, the panList step is
      * executed</li>
-     * <li>The panList step is executed, to store the .csv files including the 
-     * list of active pans. If the step fails, the file archival tasklet is 
+     * <li>The panList step is executed, to store the .csv files including the
+     * list of active pans. If the step fails, the file archival tasklet is
      * called, otherwise the transaction filter step is called.</li>
-     * <li>The transaction filter step checks the records with the stored pans, 
-     * writing the matching records in the output file. If the process fails, 
-     * the file management tasklet is called, otherwise the transaction sender 
+     * <li>The transaction filter step checks the records with the stored pans,
+     * writing the matching records in the output file. If the process fails,
+     * the file management tasklet is called, otherwise the transaction sender
      * step si called.</li>
      * <li>Attempts sending the output files through an REST channel, if
      * enabled. The file management tasklet is always called, after the step
@@ -279,10 +281,10 @@ public class TransactionFilterBatch {
                 .listener(jobListener())
                 .start(pagopaPublicKeyRecoveryTask(this.storeService))
                 .on(FAILED).end()
-                .on("*").to(decider(fileReportRecoveryEnabled))
-                .on("TRUE").to(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
-                .from(decider(fileReportRecoveryEnabled))
-                .on("FALSE").to(selectTargetInputFileTask(this.storeService))
+                .on("*").to(fileReportStepDecider(fileReportRecoveryEnabled))
+                .on(TRUE).to(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
+                .from(fileReportStepDecider(fileReportRecoveryEnabled))
+                .on(FALSE).to(selectTargetInputFileTask(this.storeService))
                 .from(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
                 .on("*").to(selectTargetInputFileTask(this.storeService))
                 .on(FAILED).end()
@@ -328,7 +330,11 @@ public class TransactionFilterBatch {
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService))
                 .on("*").to(senderAdeAckFilesRecoveryTask())
-                .on("*").to(transactionFilterStep.transactionSenderPendingMasterStep(this.hpanConnectorService))
+                .next(pendingStepDecider(sendPendingFilesStepEnabled))
+                .on(TRUE).to(transactionFilterStep.transactionSenderPendingMasterStep(this.hpanConnectorService))
+                .from(pendingStepDecider(sendPendingFilesStepEnabled))
+                .on(FALSE).to(fileManagementTask())
+                .from(transactionFilterStep.transactionSenderPendingMasterStep(this.hpanConnectorService))
                 .on("*").to(fileManagementTask())
                 .build();
     }
@@ -345,9 +351,17 @@ public class TransactionFilterBatch {
      * @return a job execution decider
      */
     @Bean
-    public JobExecutionDecider decider(Boolean enabled) {
-        return (JobExecution jobExecution, StepExecution stepExecution) ->
-            Boolean.TRUE.equals(enabled) ? new FlowExecutionStatus("TRUE") : new FlowExecutionStatus("FALSE");
+    public JobExecutionDecider fileReportStepDecider(Boolean enabled) {
+        return (JobExecution jobExecution, StepExecution stepExecution) -> decider(enabled);
+    }
+
+    @Bean
+    public JobExecutionDecider pendingStepDecider(Boolean enabled) {
+        return (JobExecution jobExecution, StepExecution stepExecution) -> decider(enabled);
+    }
+
+    FlowExecutionStatus decider(Boolean enabled) {
+        return Boolean.TRUE.equals(enabled) ? new FlowExecutionStatus(TRUE) : new FlowExecutionStatus(FALSE);
     }
 
     @Bean
@@ -449,6 +463,7 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setTransactionWriterService(transactionWriterService);
         fileManagementTasklet.setSuccessPath(successArchivePath);
         fileManagementTasklet.setUploadPendingPath(pendingArchivePath);
+        fileManagementTasklet.setErrorPath(errorArchivePath);
         fileManagementTasklet.setHpanDirectory(panReaderStep.getHpanDirectoryPath());
         fileManagementTasklet.setOutputDirectory(transactionFilterStep.getOutputDirectoryPath());
         fileManagementTasklet.setDeleteProcessedFiles(deleteProcessedFiles);
