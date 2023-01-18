@@ -19,7 +19,6 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PGPEncrypterTaskl
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionChecksumTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.ChecksumHeaderWriter;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.PGPFlatFileItemWriter;
 import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
@@ -277,18 +276,61 @@ public class TransactionFilterStep {
     @SneakyThrows
     @Bean(destroyMethod="")
     @StepScope
-    public PGPFlatFileItemWriter<InboundTransaction> transactionItemWriter(
+    public FlatFileItemWriter<InboundTransaction> transactionItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
-        PGPFlatFileItemWriter<InboundTransaction> itemWriter = new PGPFlatFileItemWriter<>(storeService.getKey(PAGOPA_PGP_PUBLIC_KEY_ID), applyEncrypt);
+        FlatFileItemWriter<InboundTransaction> itemWriter = new FlatFileItemWriter<>();
         itemWriter.setLineAggregator(transactionWriterAggregator());
-        file = file.replace("\\", "/");
-        String[] filename = file.split("/");
-        itemWriter.setResource(resolver.getResource(outputDirectoryPath.concat("/".concat(filename[filename.length - 1]))));
+        // code to move to rtd partitioner for splitting
+//        String outputFileRegex = getOutputFilesRegex(file, RTD_OUTPUT_FILE_PREFIX);
+//        String pathMatcher = outputDirectoryPath + File.separator + outputFileRegex;
+        String[] filenameSplitted = file.split("/");
+        String outputFile = outputDirectoryPath + File.separator + filenameSplitted[filenameSplitted.length - 1];
+        itemWriter.setResource(resolver.getResource(outputFile));
         if (inputFileChecksumEnabled) {
             ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
             itemWriter.setHeaderCallback(checksumHeaderWriter);
         }
         return itemWriter;
+    }
+
+    /**
+     * @return master step to be used as the formal main step in the file encryption,
+     * partitioned for scalability on multiple files
+     */
+    @Bean
+    public Step encryptTransactionChunksMasterStep(StoreService storeService) {
+        return stepBuilderFactory.get("encrypt-transaction-chunks-master-step")
+            .partitioner(encryptTransactionChunksWorkerStep(storeService))
+            .partitioner(PARTITIONER_WORKER_STEP_NAME, outputRtdFilesPartitioner(storeService))
+            .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
+    }
+
+    @Bean
+    public Step encryptTransactionChunksWorkerStep(StoreService storeService) {
+        return stepBuilderFactory
+            .get("encrypt-transaction-chunks-worker-step")
+            .tasklet(getPGPEncrypterTasklet(null, storeService)).build();
+    }
+
+    /**
+     * MultiResourcePartitioner that matches the rtd output files generated in the current run
+     * @param storeService data structures shared between different steps
+     * @return a partitioner
+     */
+    @SneakyThrows
+    @Bean
+    @JobScope
+    public Partitioner outputRtdFilesPartitioner(StoreService storeService) {
+        MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
+        // do not match every file in output directory but only the ones generated from the input file
+        // decomment this code when the splitting is up
+//        String outputFileRegex = getOutputFilesRegex(storeService.getTargetInputFile(), RTD_OUTPUT_FILE_PREFIX);
+//        String pathMatcher = outputDirectoryPath + File.separator + outputFileRegex;
+        String[] filenameSplitted = storeService.getTargetInputFile().split("/");
+        String outputFile = outputDirectoryPath + File.separator + filenameSplitted[filenameSplitted.length - 1];
+        partitioner.setResources(resolver.getResources(outputFile));
+        partitioner.partition(partitionerSize);
+        return partitioner;
     }
 
     /**
@@ -307,25 +349,28 @@ public class TransactionFilterStep {
             .name("aggregate-multi-resource-writer")
             .itemCountLimitPerResource(adeSplitThreshold)
             .resource(resolver.getResource(outputDirectoryPath))
-            .resourceSuffixCreator(index -> "/" + getAdeOutputFileNameChunked(filename, index))
+            .resourceSuffixCreator(index -> "/" + getOutputFileNameChunkedWithPrefix(filename, index,
+                ADE_OUTPUT_FILE_PREFIX))
             .delegate(createAdeItemWriter(storeService))
             .build();
     }
 
     /**
-     * Produce an ade output filename from an input file path. Supports the chunking based on index.
+     * Produce an output filename from an input file path, a chunk number and a prefix.
+     * Supports the chunking based on index.
      * @param filePath path of input file
      * @param chunkIndex index of the chunk
+     * @param prefix output file prefix (e.g. ADE or CSTAR)
      * @return output filename based on chunk index
      */
-    protected String getAdeOutputFileNameChunked(String filePath, int chunkIndex) {
+    protected String getOutputFileNameChunkedWithPrefix(String filePath, int chunkIndex, String prefix) {
         String filePathTmp = filePath.replace("\\", "/");
         String[] pathSplitted = filePathTmp.split("/");
         String fileNameWithoutPrefixAndExtension = pathSplitted[pathSplitted.length - 1].substring(6,
             pathSplitted[pathSplitted.length - 1].lastIndexOf("."));
         String fileExtension = pathSplitted[pathSplitted.length - 1].substring(
             pathSplitted[pathSplitted.length - 1].lastIndexOf("."));
-        return ADE_OUTPUT_FILE_PREFIX.concat(fileNameWithoutPrefixAndExtension)
+        return prefix.concat(fileNameWithoutPrefixAndExtension)
             .concat(String.format(".%02d", chunkIndex)).concat(fileExtension);
     }
 
@@ -347,8 +392,7 @@ public class TransactionFilterStep {
 
     /**
      * @return master step to be used as the formal main step in the file encryption,
-     * partitioned for scalability on multiple file encryption
-     * @throws IOException
+     * partitioned for scalability on multiple files
      */
     @Bean
     public Step encryptAggregateChunksMasterStep(StoreService storeService) {
@@ -369,7 +413,7 @@ public class TransactionFilterStep {
     public Partitioner outputAdeFilesPartitioner(StoreService storeService) {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         // do not match every file in output directory but only the ones generated from the input file
-        String outputFileRegex = getAdeFilesRegex(storeService.getTargetInputFile());
+        String outputFileRegex = getOutputFilesRegex(storeService.getTargetInputFile(), ADE_OUTPUT_FILE_PREFIX);
         String pathMatcher = outputDirectoryPath + File.separator + outputFileRegex;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
@@ -380,11 +424,13 @@ public class TransactionFilterStep {
      * Turns filename into regex by removing chunk token with *
      * e.g. ADE.11111.TNRLOG.YYYYMMDD.HHMMSS.001.00.csv into ADE.11111.TNRLOG.YYYYMMDD.HHMMSS.001.*.csv
      *
-     * @param inputFile
-     * @return
+     * @param inputFile input filename to be converted
+     * @param prefix prefix needed to turn input filename into output one
+     * @return a string containing the output files regex
      */
-    private String getAdeFilesRegex(String inputFile) {
-        return getAdeOutputFileNameChunked(inputFile, 0).replace(".00.", ".*.");
+    private String getOutputFilesRegex(String inputFile, String prefix) {
+        return getOutputFileNameChunkedWithPrefix(inputFile, 0, prefix)
+            .replace(".00.", ".*.");
     }
 
     /**
