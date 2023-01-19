@@ -83,6 +83,8 @@ batchConfiguration:
       directoryPath: ${ACQ_BATCH_SENDER_ADEACK_OUTPUT_PATH:ade-errors}
     transactionWriterAde:
       splitThreshold: ${ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD:2000000}
+    transactionWriterRtd:
+      splitThreshold: ${ACQ_BATCH_WRITER_RTD_SPLIT_THRESHOLD:1000000}
     fileReportRecovery:
       enabled: ${ACQ_BATCH_FILE_REPORT_RECOVERY_ENABLED:true}
       directoryPath: ${ACQ_BATCH_FILE_REPORT_PATH:resources/reports}
