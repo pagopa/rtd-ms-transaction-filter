@@ -55,7 +55,6 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.LineMapper;
-import org.springframework.batch.item.file.MultiResourceItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.file.builder.MultiResourceItemWriterBuilder;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
@@ -64,6 +63,7 @@ import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.file.transform.LineAggregator;
 import org.springframework.batch.item.file.transform.LineTokenizer;
+import org.springframework.batch.item.support.builder.SynchronizedItemStreamWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -141,6 +141,8 @@ public class TransactionFilterStep {
     private String fileReportDirectory;
     @Value("${batchConfiguration.TransactionFilterBatch.fileReportRecovery.fileNamePrefix}")
     private String fileReportPrefixName;
+    @Value("${batchConfiguration.TransactionFilterBatch.transactionWriterRtd.splitThreshold}")
+    private int rtdSplitThreshold;
 
     public static final String RTD_OUTPUT_FILE_PREFIX = "CSTAR.";
     public static final String ADE_OUTPUT_FILE_PREFIX = "ADE.";
@@ -267,27 +269,28 @@ public class TransactionFilterStep {
     }
 
     /**
-     * Builds an ItemWriter for filtered transactions. Implements encryption of the output file via PGP.
+     * Builds a MultiResourceItemWriter for filtered transactions.
+     * The usage of the decorator SynchronizedItemStreamWriterBuilder is needed because the
+     * MultiResourceItemWriter is not thread safe.
      *
-     * @param file Late-Binding parameter to be used as the resource for the reader instance
+     * @param filename Late-Binding parameter to be used as the resource for the reader instance
      * @param storeService data structures shared between different steps
      * @return instance of an itemWriter to be used in the transactionFilterWorkerStep
      */
-    @SneakyThrows
-    @Bean(destroyMethod="")
+    @Bean
     @StepScope
-    public FlatFileItemWriter<InboundTransaction> transactionItemWriter(
-            @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
-        FlatFileItemWriter<InboundTransaction> itemWriter = new FlatFileItemWriter<>();
-        itemWriter.setLineAggregator(transactionWriterAggregator());
-        String[] filenameSplitted = file.split("/");
-        String outputFile = outputDirectoryPath + File.separator + filenameSplitted[filenameSplitted.length - 1];
-        itemWriter.setResource(resolver.getResource(outputFile));
-        if (inputFileChecksumEnabled) {
-            ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
-            itemWriter.setHeaderCallback(checksumHeaderWriter);
-        }
-        return itemWriter;
+    public ItemWriter<InboundTransaction> transactionMultiResourceItemWriter(
+            @Value("#{stepExecutionContext['fileName']}") String filename, StoreService storeService) {
+        return new SynchronizedItemStreamWriterBuilder<InboundTransaction>()
+            .delegate(new MultiResourceItemWriterBuilder<InboundTransaction>()
+                .name("transaction-multi-resource-writer")
+                .itemCountLimitPerResource(rtdSplitThreshold)
+                .resource(resolver.getResource(outputDirectoryPath))
+                .resourceSuffixCreator(index -> "/" + getOutputFileNameChunkedWithPrefix(filename, index,
+                    RTD_OUTPUT_FILE_PREFIX))
+                .delegate(createItemWriter(storeService, transactionWriterAggregator()))
+                .build())
+            .build();
     }
 
     /**
@@ -320,9 +323,9 @@ public class TransactionFilterStep {
     public Partitioner outputRtdFilesPartitioner(StoreService storeService) {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         // do not match every file in output directory but only the ones generated from the input file
-        String[] filenameSplitted = storeService.getTargetInputFile().split("/");
-        String outputFile = outputDirectoryPath + File.separator + filenameSplitted[filenameSplitted.length - 1];
-        partitioner.setResources(resolver.getResources(outputFile));
+        String outputFileRegex = getOutputFilesRegex(storeService.getTargetInputFile(), RTD_OUTPUT_FILE_PREFIX);
+        String pathMatcher = outputDirectoryPath + File.separator + outputFileRegex;
+        partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
     }
@@ -330,6 +333,8 @@ public class TransactionFilterStep {
     /**
      * Builds an MultiResourceItemWriter for aggregated transactions with file splitting feature based on threshold.
      * Implements encryption of the output file via PGP.
+     * The usage of the decorator SynchronizedItemStreamWriterBuilder is needed because the
+     * MultiResourceItemWriter is not thread safe.
      *
      * @param filename Late-Binding parameter to be used as the resource for the reader instance
      * @param storeService data structures shared between different steps
@@ -374,9 +379,9 @@ public class TransactionFilterStep {
      * @param storeService data structures shared between different steps
      * @return an item writer
      */
-    protected FlatFileItemWriter<AdeTransactionsAggregate> createAdeItemWriter(StoreService storeService) {
-        FlatFileItemWriter<AdeTransactionsAggregate> itemWriter = new FlatFileItemWriter<>();
-        itemWriter.setLineAggregator(adeTransactionsAggregateLineAggregator());
+    protected <T> FlatFileItemWriter<T> createItemWriter(StoreService storeService, LineAggregator<T> lineAggregator) {
+        FlatFileItemWriter<T> itemWriter = new FlatFileItemWriter<>();
+        itemWriter.setLineAggregator(lineAggregator);
         if (inputFileChecksumEnabled) {
             ChecksumHeaderWriter checksumHeaderWriter = new ChecksumHeaderWriter(storeService.getTargetInputFileHash());
             itemWriter.setHeaderCallback(checksumHeaderWriter);
@@ -613,7 +618,7 @@ public class TransactionFilterStep {
                 .<InboundTransaction, InboundTransaction>chunk(chunkSize)
                 .reader(transactionItemReader(null))
                 .processor(transactionItemProcessor(storeService))
-                .writer(transactionItemWriter(null, storeService))
+                .writer(transactionMultiResourceItemWriter(null, storeService))
                 .faultTolerant()
                 .skipLimit(skipLimit)
                 .noSkip(FileNotFoundException.class)
@@ -818,10 +823,10 @@ public class TransactionFilterStep {
      */
     @Bean
     @JobScope
-    public Partitioner transactionSenderRtdPartitioner() throws IOException {
+    public Partitioner transactionSenderRtdPartitioner(StoreService storeService) throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-        String pathMatcher = resolver.getResource(outputDirectoryPath).getURI() + File.separator +
-            RTD_OUTPUT_FILE_PREFIX + REGEX_PGP_FILES;
+        String fileNameWithoutExtension = storeService.getTargetInputFile().replace(".csv", "");
+        String pathMatcher = resolver.getResource(outputDirectoryPath).getURI() + File.separator + fileNameWithoutExtension + REGEX_PGP_FILES;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
@@ -905,10 +910,11 @@ public class TransactionFilterStep {
      * @throws IOException
      */
     @Bean
-    public Step transactionSenderRtdMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
+    public Step transactionSenderRtdMasterStep(HpanConnectorService hpanConnectorService,
+        StoreService storeService) throws IOException {
         return stepBuilderFactory.get("transaction-sender-rtd-master-step")
                 .partitioner(transactionSenderRtdWorkerStep(hpanConnectorService))
-                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderRtdPartitioner())
+                .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderRtdPartitioner(storeService))
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
