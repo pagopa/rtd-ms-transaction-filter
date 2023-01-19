@@ -242,7 +242,7 @@ public class TransactionFilterBatchFileReportTest {
             outputFileAdeContent.get(0));
 
         // Check that encrypted output files have the same content of unencrypted ones
-        File trxEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp")).collect(Collectors.toList()).iterator().next();
+        File trxEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("CSTAR.99999.TRNLOG.20220204.094652.001.01.csv.pgp")).collect(Collectors.toList()).iterator().next();
 
         FileInputStream trxEncFileIS = new FileInputStream(trxEncFile);
         FileInputStream secretFilePathIS = null;
@@ -447,7 +447,7 @@ public class TransactionFilterBatchFileReportTest {
     @SneakyThrows
     private File createTrnOutputFile() {
         File outputFileTrn = new File(resolver.getResource("classpath:/test-encrypt/output")
-            .getFile().getAbsolutePath() + "/CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+            .getFile().getAbsolutePath() + "/CSTAR.99999.TRNLOG.20220204.094652.001.01.csv");
 
         outputFileTrn.createNewFile();
         return outputFileTrn;
@@ -461,7 +461,7 @@ public class TransactionFilterBatchFileReportTest {
 
     private Set<String> getExpectedPgpFilenames() {
         Set<String> expectedPgpFilenames = new HashSet<>();
-        expectedPgpFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv.pgp");
+        expectedPgpFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.01.csv.pgp");
         expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.01.csv.pgp");
         return expectedPgpFilenames;
     }
@@ -474,7 +474,7 @@ public class TransactionFilterBatchFileReportTest {
 
     private Set<String> getExpectedCsvFileNames() {
         Set<String> expectedCsvFilenames = new HashSet<>();
-        expectedCsvFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+        expectedCsvFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.01.csv");
         expectedCsvFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.01.csv");
 
         return expectedCsvFilenames;

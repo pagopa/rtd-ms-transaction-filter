@@ -117,7 +117,8 @@ class TransactionFilterStepTest {
         StoreService storeService = new StoreServiceImpl(null);
         storeService.storeKey("pagopa", "prova");
 
-        ItemWriter<AdeTransactionsAggregate> itemWriter = transactionFilterStep.createAdeItemWriter(storeService);
+        ItemWriter<AdeTransactionsAggregate> itemWriter = transactionFilterStep.createItemWriter(storeService,
+            transactionFilterStep.adeTransactionsAggregateLineAggregator());
 
         assertThat(itemWriter).isNotNull();
     }
