@@ -280,9 +280,6 @@ public class TransactionFilterStep {
             @Value("#{stepExecutionContext['fileName']}") String file, StoreService storeService) {
         FlatFileItemWriter<InboundTransaction> itemWriter = new FlatFileItemWriter<>();
         itemWriter.setLineAggregator(transactionWriterAggregator());
-        // code to move to rtd partitioner for splitting
-//        String outputFileRegex = getOutputFilesRegex(file, RTD_OUTPUT_FILE_PREFIX);
-//        String pathMatcher = outputDirectoryPath + File.separator + outputFileRegex;
         String[] filenameSplitted = file.split("/");
         String outputFile = outputDirectoryPath + File.separator + filenameSplitted[filenameSplitted.length - 1];
         itemWriter.setResource(resolver.getResource(outputFile));
@@ -323,9 +320,6 @@ public class TransactionFilterStep {
     public Partitioner outputRtdFilesPartitioner(StoreService storeService) {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         // do not match every file in output directory but only the ones generated from the input file
-        // decomment this code when the splitting is up
-//        String outputFileRegex = getOutputFilesRegex(storeService.getTargetInputFile(), RTD_OUTPUT_FILE_PREFIX);
-//        String pathMatcher = outputDirectoryPath + File.separator + outputFileRegex;
         String[] filenameSplitted = storeService.getTargetInputFile().split("/");
         String outputFile = outputDirectoryPath + File.separator + filenameSplitted[filenameSplitted.length - 1];
         partitioner.setResources(resolver.getResources(outputFile));
