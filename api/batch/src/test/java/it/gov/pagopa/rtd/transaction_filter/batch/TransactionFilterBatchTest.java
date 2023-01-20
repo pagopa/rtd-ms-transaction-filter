@@ -9,7 +9,6 @@ import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
-import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
@@ -398,23 +397,6 @@ public class TransactionFilterBatchTest {
         Mockito.verify(hpanRestClient, times(2)).uploadFile(any(), any(), any());
     }
 
-    @SneakyThrows
-    private Collection<File> getFileReportSaved() {
-        return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/reports")[0].getFile(), new String[]{"csv"}, false);
-    }
-
-    private FileReport getStubFileReport(LocalDateTime dateTime) {
-        FileReport fileReport = new FileReport();
-        FileMetadata fileMetadata = new FileMetadata();
-        fileMetadata.setName("file1");
-        fileMetadata.setSize(200L);
-        fileMetadata.setTransmissionDate(dateTime);
-        fileMetadata.setStatus("RECEIVED");
-        fileReport.setFilesRecentlyUploaded(Collections.singletonList(fileMetadata));
-
-        return fileReport;
-    }
-
     private Collection<String> getStepSendingPartitionNames() {
         return Arrays.asList("transaction-sender-pending-worker-step:partition0",
             "transaction-sender-pending-worker-step:partition1");
@@ -552,7 +534,6 @@ public class TransactionFilterBatchTest {
         Files.write(secondFile.toPath(), secondFileContent);
         files.add(secondFile);
 
-        files.forEach(file -> System.out.println(file.getAbsolutePath()));
         return files;
     }
 }
