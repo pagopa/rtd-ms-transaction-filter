@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -113,11 +114,12 @@ import org.springframework.transaction.annotation.Transactional;
         "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency=100",
         "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize=5",
         "batchConfiguration.TransactionFilterBatch.transactionWriterAde.splitThreshold=2",
-        "batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize=2"
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize=2",
+        "batchConfiguration.TransactionFilterBatch.transactionWriterRtd.splitThreshold=2"
     }
 )
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
-public class TransactionFilterBatchAdeSplittingTest {
+public class TransactionFilterBatchSplittingTest {
 
   @Autowired
   private JobLauncherTestUtils jobLauncherTestUtils;
@@ -174,9 +176,6 @@ public class TransactionFilterBatchAdeSplittingTest {
     BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
     createPanPGP();
 
-    File outputFileTrn = createTrnOutputFile();
-    Set<File> outputFilesAde = createAdeOutputFiles();
-
     // Check that the job exited with the right exit status
     JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
         .addDate("startDateTime", new Date())
@@ -187,11 +186,11 @@ public class TransactionFilterBatchAdeSplittingTest {
     // Check that the HPAN store has been accessed as expected
     BDDMockito.verify(storeServiceSpy, times(3)).store(any());
     BDDMockito.verify(storeServiceSpy, times(4)).hasHpan(any());
-    BDDMockito.verify(storeServiceSpy, times(3)).getKey(any());
+    BDDMockito.verify(storeServiceSpy, times(4)).getKey(any());
 
     // Check that output folder contains expected files, and only those
     Collection<File> outputPgpFiles = getOutputPgpFiles();
-    Assert.assertEquals(3, outputPgpFiles.size());
+    Assert.assertEquals(4, outputPgpFiles.size());
 
     Set<String> outputPgpFilenames = outputPgpFiles.stream().map(File::getName)
         .collect(Collectors.toSet());
@@ -203,17 +202,24 @@ public class TransactionFilterBatchAdeSplittingTest {
     Set<String> expectedCsvFilenames = getExpectedCsvFileNames();
     assertThat(outputCsvFilenames).containsAll(expectedCsvFilenames);
 
-    List<String> outputFileTrnContent = Files.readAllLines(outputFileTrn.toPath().toAbsolutePath());
-    List<String> outputFirstChunkAdeContent = Files.readAllLines(Objects.requireNonNull(
-        outputFilesAde.stream().filter(file -> file.getName().contains("01.csv")).map(File::toPath)
-            .findFirst().orElse(null)));
+    Set<File> outputFileTrn = getTrnOutputFile();
+    List<String> outputFirstChunkRtdContent = getChunkContentByIndex(outputFileTrn, 1);
+    assertThat(outputFirstChunkRtdContent).hasSize(3);
+
+    List<String> outputSecondChunkRtdContent = getChunkContentByIndex(outputFileTrn, 2);
+    assertThat(outputSecondChunkRtdContent).hasSize(2);
+
+    Set<File> outputFilesAde = getAdeOutputFiles();
+    List<String> outputFirstChunkAdeContent = getChunkContentByIndex(outputFilesAde, 1);
     // 2 aggregates records which corresponds to split threshold plus the checksum header
     assertThat(outputFirstChunkAdeContent).hasSize(3);
 
-    List<String> outputSecondChunkAdeContent = Files.readAllLines(Objects.requireNonNull(
-        outputFilesAde.stream().filter(file -> file.getName().contains("02.csv")).map(File::toPath)
-            .findFirst().orElse(null)));
+    List<String> outputSecondChunkAdeContent = getChunkContentByIndex(outputFilesAde, 2);
     assertThat(outputSecondChunkAdeContent).hasSize(2);
+
+    List<String> outputFileTrnContent = Stream.concat(outputFirstChunkRtdContent.stream(),
+            outputSecondChunkRtdContent.stream())
+        .collect(Collectors.toList());
 
     List<String> outputFileAdeContent = Stream.concat(outputFirstChunkAdeContent.stream(),
             outputSecondChunkAdeContent.stream())
@@ -223,10 +229,9 @@ public class TransactionFilterBatchAdeSplittingTest {
     Set<String> expectedOutputFileTrnContent = getExpectedTrnOutputFileContent();
     Set<String> expectedOutputFileAdeContent = getExpectedAdeOutputFileContent();
 
-    Assert.assertEquals(expectedOutputFileTrnContent, new HashSet<>(outputFileTrnContent));
-    Assert.assertEquals(
-        "#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046",
-        outputFileTrnContent.get(0));
+    assertThat(outputFileTrnContent).containsAll(expectedOutputFileTrnContent);
+    assertThat(outputFileTrnContent.get(0))
+        .isEqualTo("#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046");
     Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
     Assert.assertEquals(
         "#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046",
@@ -266,6 +271,15 @@ public class TransactionFilterBatchAdeSplittingTest {
     Assert.assertEquals(expectedOutputFileAdeContent, encryptedFilesContent);
   }
 
+  @SneakyThrows
+  private List<String> getChunkContentByIndex(Set<File> files, int index) {
+    return Files.readAllLines(Objects.requireNonNull(
+        files.stream()
+            .filter(file -> file.getName().contains(String.format("%02d.csv", index)))
+            .map(File::toPath)
+            .findFirst().orElse(null)));
+  }
+
   private String getChunkNumberFromFilename(String filename) {
     return filename.split("\\.")[6];
   }
@@ -296,27 +310,31 @@ public class TransactionFilterBatchAdeSplittingTest {
   }
 
   @SneakyThrows
-  private Set<File> createAdeOutputFiles() {
-    Set<File> files = new HashSet<>();
-    files.add(new File(resolver.getResource("classpath:/test-encrypt/output")
-        .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.01.csv"));
-    files.add(new File(resolver.getResource("classpath:/test-encrypt/output")
-        .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.02.csv"));
-
-    for (File file : files) {
-      file.createNewFile();
-    }
-
-    return files;
+  private Set<File> getAdeOutputFiles() {
+    return Arrays.stream(resolver.getResources("classpath:/test-encrypt/output/ADE*.csv"))
+        .map(resource -> {
+          try {
+            return resource.getFile();
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .filter(File::isFile)
+        .collect(Collectors.toSet());
   }
 
   @SneakyThrows
-  private File createTrnOutputFile() {
-    File outputFileTrn = new File(resolver.getResource("classpath:/test-encrypt/output")
-        .getFile().getAbsolutePath() + "/CSTAR.99999.TRNLOG.20220204.094652.001.01.csv");
-
-    outputFileTrn.createNewFile();
-    return outputFileTrn;
+  private Set<File> getTrnOutputFile() {
+    return Arrays.stream(resolver.getResources("classpath:/test-encrypt/output/CSTAR*.csv"))
+        .map(resource -> {
+          try {
+            return resource.getFile();
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        })
+        .filter(File::isFile)
+        .collect(Collectors.toSet());
   }
 
   @SneakyThrows
@@ -329,6 +347,7 @@ public class TransactionFilterBatchAdeSplittingTest {
   private Set<String> getExpectedPgpFilenames() {
     Set<String> expectedPgpFilenames = new HashSet<>();
     expectedPgpFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.01.csv.pgp");
+    expectedPgpFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.02.csv.pgp");
     expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.01.csv.pgp");
     expectedPgpFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.02.csv.pgp");
     return expectedPgpFilenames;
@@ -344,6 +363,7 @@ public class TransactionFilterBatchAdeSplittingTest {
   private Set<String> getExpectedCsvFileNames() {
     Set<String> expectedCsvFilenames = new HashSet<>();
     expectedCsvFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.01.csv");
+    expectedCsvFilenames.add("CSTAR.99999.TRNLOG.20220204.094652.001.02.csv");
     expectedCsvFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.01.csv");
     expectedCsvFilenames.add("ADE.99999.TRNLOG.20220204.094652.001.02.csv");
     return expectedCsvFilenames;
