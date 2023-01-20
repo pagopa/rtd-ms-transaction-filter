@@ -342,7 +342,7 @@ public class TransactionFilterStep {
      */
     @Bean
     @StepScope
-    public ItemWriter<AdeTransactionsAggregate> transactionAggregateResourceWriter(
+    public ItemWriter<AdeTransactionsAggregate> transactionAggregateMultiResourceWriter(
         @Value("#{stepExecutionContext['fileName']}") String filename, StoreService storeService) {
         return new SynchronizedItemStreamWriterBuilder<AdeTransactionsAggregate>()
             .delegate(new MultiResourceItemWriterBuilder<AdeTransactionsAggregate>()
@@ -713,7 +713,7 @@ public class TransactionFilterStep {
             .<AggregationKey, AdeTransactionsAggregate>chunk(chunkSize)
             .reader(mapItemReader(storeService))
             .processor(transactionAggregationWriterProcessor(storeService))
-            .writer(transactionAggregateResourceWriter(null, storeService))
+            .writer(transactionAggregateMultiResourceWriter(null, storeService))
             .faultTolerant()
             .taskExecutor(batchConfig.readerTaskExecutor())
             .build();
