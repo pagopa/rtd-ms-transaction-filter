@@ -114,7 +114,7 @@ import org.springframework.transaction.annotation.Transactional;
         "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency=100",
         "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize=5",
         "batchConfiguration.TransactionFilterBatch.transactionWriterAde.splitThreshold=2",
-        "batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize=2",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.chunkSize=1",
         "batchConfiguration.TransactionFilterBatch.transactionWriterRtd.splitThreshold=2"
     }
 )
