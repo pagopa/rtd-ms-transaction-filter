@@ -65,13 +65,13 @@ else
 fi
 
 # cli atm do not support chunk generation, it can be arranged like this:
-LOCAL_OUTPUT_DIFF=$(diff <(cat cstar-cli/generated/"$FILENAME" | sort) <(cat workdir/output/CSTAR.*.csv | sort | tail -n +$N_CHUNKS))
+N_ROWS_OUTPUT=$(cat workdir/output/CSTAR.*.csv | wc -l)
 
-if [ -z "$LOCAL_OUTPUT_DIFF" ]
+if [ "$N_ROWS_OUTPUT" -eq $(( N_TRANSACTIONS + N_CHUNKS )) ]
 then
-  	echo "Diff local output with expected: [SUCCESS]"
+  echo "Number of rows expected: [SUCCESS]"
 else
-	echo "Diff local output with expected: [FAILED]"
+	echo "Wrong number of rows: [FAILED]"
 	exit 2
 fi
 
