@@ -342,7 +342,7 @@ public class TransactionFilterStep {
      */
     @Bean
     @StepScope
-    public MultiResourceItemWriter<AdeTransactionsAggregate> transactionAggregateMultiResourceWriter(
+    public ItemWriter<AdeTransactionsAggregate> transactionAggregateMultiResourceWriter(
         @Value("#{stepExecutionContext['fileName']}") String filename, StoreService storeService) {
         return new MultiResourceItemWriterBuilder<AdeTransactionsAggregate>()
             .name("aggregate-multi-resource-writer")
@@ -350,7 +350,7 @@ public class TransactionFilterStep {
             .resource(resolver.getResource(outputDirectoryPath))
             .resourceSuffixCreator(index -> "/" + getOutputFileNameChunkedWithPrefix(filename, index,
                 ADE_OUTPUT_FILE_PREFIX))
-            .delegate(createAdeItemWriter(storeService))
+            .delegate(createItemWriter(storeService, adeTransactionsAggregateLineAggregator()))
             .build();
     }
 
