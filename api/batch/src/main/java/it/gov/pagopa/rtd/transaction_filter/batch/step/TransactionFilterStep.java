@@ -342,15 +342,17 @@ public class TransactionFilterStep {
      */
     @Bean
     @StepScope
-    public ItemWriter<AdeTransactionsAggregate> transactionAggregateMultiResourceWriter(
+    public ItemWriter<AdeTransactionsAggregate> transactionAggregateResourceWriter(
         @Value("#{stepExecutionContext['fileName']}") String filename, StoreService storeService) {
-        return new MultiResourceItemWriterBuilder<AdeTransactionsAggregate>()
-            .name("aggregate-multi-resource-writer")
-            .itemCountLimitPerResource(adeSplitThreshold)
-            .resource(resolver.getResource(outputDirectoryPath))
-            .resourceSuffixCreator(index -> "/" + getOutputFileNameChunkedWithPrefix(filename, index,
-                ADE_OUTPUT_FILE_PREFIX))
-            .delegate(createItemWriter(storeService, adeTransactionsAggregateLineAggregator()))
+        return new SynchronizedItemStreamWriterBuilder<AdeTransactionsAggregate>()
+            .delegate(new MultiResourceItemWriterBuilder<AdeTransactionsAggregate>()
+                .name("aggregate-multi-resource-writer")
+                .itemCountLimitPerResource(adeSplitThreshold)
+                .resource(resolver.getResource(outputDirectoryPath))
+                .resourceSuffixCreator(index -> "/" + getOutputFileNameChunkedWithPrefix(filename, index,
+                    ADE_OUTPUT_FILE_PREFIX))
+                .delegate(createItemWriter(storeService, adeTransactionsAggregateLineAggregator()))
+                .build())
             .build();
     }
 
@@ -711,8 +713,9 @@ public class TransactionFilterStep {
             .<AggregationKey, AdeTransactionsAggregate>chunk(chunkSize)
             .reader(mapItemReader(storeService))
             .processor(transactionAggregationWriterProcessor(storeService))
-            .writer(transactionAggregateMultiResourceWriter(null, storeService))
+            .writer(transactionAggregateResourceWriter(null, storeService))
             .faultTolerant()
+            .taskExecutor(batchConfig.readerTaskExecutor())
             .build();
     }
 
