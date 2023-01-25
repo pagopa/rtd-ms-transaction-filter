@@ -55,6 +55,7 @@ import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.LineMapper;
+import org.springframework.batch.item.file.MultiResourceItemWriter;
 import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.file.builder.MultiResourceItemWriterBuilder;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
@@ -63,7 +64,6 @@ import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.file.transform.LineAggregator;
 import org.springframework.batch.item.file.transform.LineTokenizer;
-import org.springframework.batch.item.support.builder.SynchronizedItemStreamWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -279,17 +279,15 @@ public class TransactionFilterStep {
      */
     @Bean
     @StepScope
-    public ItemWriter<InboundTransaction> transactionMultiResourceItemWriter(
+    public MultiResourceItemWriter<InboundTransaction> transactionMultiResourceItemWriter(
             @Value("#{stepExecutionContext['fileName']}") String filename, StoreService storeService) {
-        return new SynchronizedItemStreamWriterBuilder<InboundTransaction>()
-            .delegate(new MultiResourceItemWriterBuilder<InboundTransaction>()
-                .name("transaction-multi-resource-writer")
-                .itemCountLimitPerResource(rtdSplitThreshold)
-                .resource(resolver.getResource(outputDirectoryPath))
-                .resourceSuffixCreator(index -> "/" + getOutputFileNameChunkedWithPrefix(filename, index,
-                    RTD_OUTPUT_FILE_PREFIX))
-                .delegate(createItemWriter(storeService, transactionWriterAggregator()))
-                .build())
+        return new MultiResourceItemWriterBuilder<InboundTransaction>()
+            .name("transaction-multi-resource-writer")
+            .itemCountLimitPerResource(rtdSplitThreshold)
+            .resource(resolver.getResource(outputDirectoryPath))
+            .resourceSuffixCreator(index -> "/" + getOutputFileNameChunkedWithPrefix(filename, index,
+                RTD_OUTPUT_FILE_PREFIX))
+            .delegate(createItemWriter(storeService, transactionWriterAggregator()))
             .build();
     }
 
@@ -342,7 +340,7 @@ public class TransactionFilterStep {
      */
     @Bean
     @StepScope
-    public ItemWriter<AdeTransactionsAggregate> transactionAggregateMultiResourceWriter(
+    public MultiResourceItemWriter<AdeTransactionsAggregate> transactionAggregateMultiResourceWriter(
         @Value("#{stepExecutionContext['fileName']}") String filename, StoreService storeService) {
         return new MultiResourceItemWriterBuilder<AdeTransactionsAggregate>()
             .name("aggregate-multi-resource-writer")
@@ -632,7 +630,6 @@ public class TransactionFilterStep {
                 .listener(transactionItemProcessListener(transactionWriterService, executionDate))
                 .listener(transactionItemWriteListener(transactionWriterService, executionDate))
                 .listener(transactionStepListener(transactionWriterService, executionDate))
-                .taskExecutor(batchConfig.readerTaskExecutor())
                 .build();
     }
 
