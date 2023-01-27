@@ -370,7 +370,7 @@ public class TransactionFilterStep {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         // do not match every file in output directory but only the ones generated from the input file
         String outputFileRegex = getAdeFilesRegex(storeService.getTargetInputFile());
-        String pathMatcher = outputDirectoryPath + File.separator + outputFileRegex;
+        String pathMatcher = resolver.getResource(outputDirectoryPath).getURI() + File.separator + outputFileRegex;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
@@ -780,7 +780,8 @@ public class TransactionFilterStep {
     @JobScope
     public Partitioner transactionSenderRtdPartitioner() throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-        String pathMatcher = outputDirectoryPath + File.separator + RTD_OUTPUT_FILE_PREFIX + REGEX_PGP_FILES;
+        String pathMatcher = resolver.getResource(outputDirectoryPath).getURI() + File.separator +
+            RTD_OUTPUT_FILE_PREFIX + REGEX_PGP_FILES;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
@@ -798,7 +799,8 @@ public class TransactionFilterStep {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
         String fileNameWithoutExtension = storeService.getTargetInputFile().replace(".csv", "");
         String outputFilePrefix = fileNameWithoutExtension.replace("CSTAR", "ADE");
-        String pathMatcher = outputDirectoryPath + File.separator + outputFilePrefix + REGEX_PGP_FILES;
+        String pathMatcher = resolver.getResource(outputDirectoryPath).getURI() + File.separator +
+            outputFilePrefix + REGEX_PGP_FILES;
         partitioner.setResources(resolver.getResources(pathMatcher));
         partitioner.partition(partitionerSize);
         return partitioner;
