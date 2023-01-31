@@ -270,8 +270,7 @@ public class TransactionFilterStep {
 
     /**
      * Builds a MultiResourceItemWriter for filtered transactions.
-     * The usage of the decorator SynchronizedItemStreamWriterBuilder is needed because the
-     * MultiResourceItemWriter is not thread safe.
+     * Remember MultiResourceItemWriter is not thread safe.
      *
      * @param filename Late-Binding parameter to be used as the resource for the reader instance
      * @param storeService data structures shared between different steps
