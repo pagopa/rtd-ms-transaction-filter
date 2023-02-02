@@ -1,7 +1,18 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.put;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
+import java.io.File;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import lombok.SneakyThrows;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -13,6 +24,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.http.HttpMessageConvertersAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.OutputCaptureRule;
 import org.springframework.cloud.openfeign.FeignAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -20,15 +32,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.TestPropertySourceUtils;
-
-import java.io.File;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Objects;
-
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
@@ -70,6 +73,9 @@ public class HpanRestClientTest {
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
             new File(Objects.requireNonNull(getClass().getResource("/")).getFile()));
+
+    @Rule
+    public OutputCaptureRule output = new OutputCaptureRule();
 
     @ClassRule
     public static WireMockClassRule wireMockRule = new WireMockClassRule(wireMockConfig()
@@ -155,6 +161,18 @@ public class HpanRestClientTest {
         File fileToUpload = tempFolder.newFile("testFile");
         expectedException.expect(IOException.class);
         hpanRestClient.uploadFile(fileToUpload, "sas-token", "not-authorized-container");
+    }
+
+    @Test
+    public void whenUploadFileReturns409ThenLogErrorAndDoNotRaiseException() throws IOException {
+        wireMockRule.stubFor(put(urlPathEqualTo("/pagopastorage/authorized-container/testFile"))
+            .willReturn(aResponse()
+                .withStatus(409)));
+
+        File fileToUpload = tempFolder.newFile("testFile");
+        hpanRestClient.uploadFile(fileToUpload, "sas", "authorized-container");
+
+        assertThat(output).contains("Upload failed", "status was 409");
     }
 
     public static class RandomPortInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

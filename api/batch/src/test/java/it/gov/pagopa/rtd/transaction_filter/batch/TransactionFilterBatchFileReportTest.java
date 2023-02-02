@@ -5,10 +5,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED;
 
+import it.gov.pagopa.rtd.transaction_filter.batch.TransactionFilterBatch;
 import it.gov.pagopa.rtd.transaction_filter.batch.config.TestConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.encryption.EncryptUtil;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
+import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
@@ -116,14 +118,14 @@ import org.springframework.transaction.annotation.Transactional;
                 "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled=true",
+                "batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.transactionSenderPending.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.enabled=true",
+                "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.enabled=false",
                 "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath=classpath:/test-encrypt/sender-ade-ack",
                 "batchConfiguration.TransactionFilterBatch.fileReportRecovery.directoryPath=classpath:/test-encrypt/reports",
-                "batchConfiguration.TransactionFilterBatch.fileReportRecovery.enabled=false",
+                "batchConfiguration.TransactionFilterBatch.fileReportRecovery.enabled=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=true",
                 "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorLogging=true",
@@ -139,7 +141,7 @@ import org.springframework.transaction.annotation.Transactional;
         }
 )
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
-public class TransactionFilterBatchTest {
+public class TransactionFilterBatchFileReportTest {
 
     @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
@@ -148,19 +150,10 @@ public class TransactionFilterBatchTest {
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
     @MockBean
-    private AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
-
-    @MockBean
-    private SenderAdeAckRestClient senderAdeAckRestClient;
+    private FileReportRestClient fileReportRestClient;
 
     @SpyBean
     StoreService storeServiceSpy;
-
-    @SpyBean
-    HpanRestClient hpanRestClient;
-
-    @Autowired
-    private TransactionFilterStep transactionFilterStep;
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(new File(getClass().getResource("/test-encrypt").getFile()));
@@ -176,6 +169,7 @@ public class TransactionFilterBatchTest {
         deleteFiles("classpath:/test-encrypt/output/*.pgp");
         deleteFiles("classpath:/test-encrypt/sender-ade-ack/*.csv");
         deleteFiles("classpath:/test-encrypt/output/*.csv");
+        deleteFiles("classpath:/test-encrypt/reports/*.csv");
     }
 
     @SneakyThrows
@@ -200,10 +194,10 @@ public class TransactionFilterBatchTest {
     @SneakyThrows
     @Test
     public void jobExecutionProducesExpectedFiles() {
-
+        LocalDateTime currentDate = LocalDateTime.now();
         String publicKey = createPublicKey();
-
         BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
+        BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient).getFileReport();
         createPanPGP();
 
         File outputFileTrn = createTrnOutputFile();
@@ -301,105 +295,120 @@ public class TransactionFilterBatchTest {
         List<String> adeFilteredContent = Files.readAllLines(adeFilteredFile.toPath().toAbsolutePath());
         Assert.assertEquals(1, adeFilteredContent.size());
         Assert.assertTrue(adeFilteredContent.contains("99999;00;01;pan5;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+
+        Collection<File> fileReportSaved = getFileReportSaved();
+        assertThat(fileReportSaved).isNotNull().hasSize(1);
+
+        List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
+            .orElse(new File("")).toPath());
+        assertThat(fileReportContent).isNotNull().containsExactly("name;status;size;transmissionDate",
+            "file1;RECEIVED;200;" + currentDate,
+            "file2;RECEIVED;300;" + currentDate.minusDays(4),
+            "file3;RECEIVED;400;" + currentDate.minusDays(10));
     }
 
     @SneakyThrows
     @Test
-    public void whenAbiToFiscalCodeMapIsSetThenOutputMustHaveConvertedAcquirerId() {
-        String publicKey = createPublicKey();
-        createPanPGP();
-        createTrnOutputFile();
-        File outputFileAde = createAdeOutputFile();
-        BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
-        BDDMockito.doReturn(createAbiToFiscalCodeMap()).when(abiToFiscalCodeRestClient)
-            .getFakeAbiToFiscalCodeMap();
+    public void givenAReportWhenLaunchFileReportStepThenSaveTheReportOnFile() {
+        LocalDateTime currentDate = LocalDateTime.now();
+        BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient).getFileReport();
 
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
-            .addDate("startDateTime", new Date())
-            .toJobParameters());
-        Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
-
-        List<String> outputFileAdeContent = Files.readAllLines(outputFileAde.toPath().toAbsolutePath());
-        Set<String> expectedOutputFileAdeContent = getExpectedAdeOutputFileContentWithAbiConverted();
-
-        Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
-    }
-
-    @SneakyThrows
-    @Test
-    public void whenSenderAdeAckTaskletIsSetThenMatchExpectedOutputFiles() {
-        String publicKey = createPublicKey();
-        createPanPGP();
-        createTrnOutputFile();
-        createAdeOutputFile();
-        BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
-        BDDMockito.doReturn(createSenderAdeAckFiles()).when(senderAdeAckRestClient)
-            .getSenderAdeAckFiles();
-
-        JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
-            .addDate("startDateTime", new Date())
-            .toJobParameters());
-        Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
-
-        Collection<File> filesSaved = getSenderAdeAckFilesSavedByTasklet();
-        assertThat(filesSaved).isNotNull().isNotEmpty();
-        assertThat(filesSaved.stream()
-            .filter(file -> "CSTAR.STPAY.ADEACK.20220801.211940.001.csv".equals(file.getName()))
-            .findAny().orElse(null))
-            .hasContent("12345;fiscalcode");
-        assertThat(filesSaved.stream()
-            .filter(file -> "senderAdeAck2.csv".equals(file.getName()))
-            .findAny().orElse(null))
-            .hasContent("7890123;stringdefault");
-    }
-
-    @SneakyThrows
-    @Test
-    public void jobExecutionFails() {
-
-        tempFolder.newFolder("hpan");
-        File panPgp = tempFolder.newFile("hpan/pan.pgp");
-
-        FileOutputStream panPgpFOS = new FileOutputStream(panPgp);
-
-        EncryptUtil.encryptFile(panPgpFOS,
-                this.getClass().getResource("/test-encrypt/pan").getFile() + "/pan.csv",
-                EncryptUtil.readPublicKey(
-                        this.getClass().getResourceAsStream("/test-encrypt/otherPublicKey.asc")),
-                false, false);
-
-        panPgpFOS.close();
-
-        jobLauncherTestUtils.launchStep("hpan-recovery-master-step");
-        BDDMockito.verify(storeServiceSpy, times(0)).store(any());
-
-    }
-
-    @SneakyThrows
-    @Test
-    public void whenSenderPendingIsEnabledThenSendAllFilesPending() {
-        // enable the sender pending step, dirty context guarantees that is valid only for this test
-        transactionFilterStep.setTransactionSenderPendingEnabled(true);
-        SasResponse genericSasResponse = new SasResponse();
-        genericSasResponse.setSas("defaultSas");
-        genericSasResponse.setAuthorizedContainer("defaultContainer");
-        BDDMockito.doReturn(genericSasResponse).when(hpanRestClient).getSasToken(any());
-        BDDMockito.doNothing().when(hpanRestClient).uploadFile(any(), any(), any());
-
-        JobExecution jobExecution = jobLauncherTestUtils.launchStep("transaction-sender-pending-master-step",
+        jobLauncherTestUtils.launchStep("file-report-recovery-step",
             new JobParameters());
 
-        Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
-        assertThat(stepExecutions.stream().map(StepExecution::getStepName)
-            .collect(Collectors.toList())).containsAll(getStepSendingPartitionNames());
-        Mockito.verify(hpanRestClient, times(1)).getSasToken(SasScope.ADE);
-        Mockito.verify(hpanRestClient, times(1)).getSasToken(SasScope.RTD);
-        Mockito.verify(hpanRestClient, times(2)).uploadFile(any(), any(), any());
+        Mockito.verify(fileReportRestClient, times(1)).getFileReport();
+        Collection<File> fileReportSaved = getFileReportSaved();
+
+        assertThat(fileReportSaved).isNotNull().hasSize(1);
+
+        List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
+            .orElse(new File("")).toPath());
+
+        assertThat(fileReportContent).isNotNull().containsExactly("name;status;size;transmissionDate",
+            "file1;RECEIVED;200;" + currentDate,
+            "file2;RECEIVED;300;" + currentDate.minusDays(4),
+            "file3;RECEIVED;400;" + currentDate.minusDays(10));
     }
 
-    private Collection<String> getStepSendingPartitionNames() {
-        return Arrays.asList("transaction-sender-pending-worker-step:partition0",
-            "transaction-sender-pending-worker-step:partition1");
+    @SneakyThrows
+    @Test
+    public void givenEmptyReportWhenLaunchFileReportStepThenSaveTheReportWithHeaderOnly() {
+        BDDMockito.doReturn(getStubEmptyReport()).when(fileReportRestClient).getFileReport();
+
+        jobLauncherTestUtils.launchStep("file-report-recovery-step",
+            new JobParameters());
+
+        Mockito.verify(fileReportRestClient, times(1)).getFileReport();
+        Collection<File> fileReportSaved = getFileReportSaved();
+
+        assertThat(fileReportSaved).isNotNull().hasSize(1);
+
+        List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
+            .orElse(new File("")).toPath());
+
+        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate");
+    }
+
+    @SneakyThrows
+    @Test
+    public void givenMalformedReportWhenLaunchFileReportStepThenSaveTheReportWithHeaderOnly() {
+        // returns report with null field list
+        BDDMockito.doReturn(new FileReport()).when(fileReportRestClient).getFileReport();
+
+        jobLauncherTestUtils.launchStep("file-report-recovery-step",
+            new JobParameters());
+
+        Mockito.verify(fileReportRestClient, times(1)).getFileReport();
+        Collection<File> fileReportSaved = getFileReportSaved();
+
+        assertThat(fileReportSaved).isNotNull().hasSize(1);
+
+        List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
+            .orElse(new File("")).toPath());
+
+        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate");
+    }
+
+    @SneakyThrows
+    private Collection<File> getFileReportSaved() {
+        return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/reports")[0].getFile(), new String[]{"csv"}, false);
+    }
+
+    private FileReport getStubFileReport(LocalDateTime dateTime) {
+        FileReport fileReport = new FileReport();
+        List<FileMetadata> files = new ArrayList<>();
+
+        FileMetadata fileMetadata = new FileMetadata();
+        fileMetadata.setName("file1");
+        fileMetadata.setSize(200L);
+        fileMetadata.setTransmissionDate(dateTime);
+        fileMetadata.setStatus("RECEIVED");
+        files.add(fileMetadata);
+
+        fileMetadata = new FileMetadata();
+        fileMetadata.setName("file2");
+        fileMetadata.setSize(300L);
+        fileMetadata.setTransmissionDate(dateTime.minusDays(4));
+        fileMetadata.setStatus("RECEIVED");
+        files.add(fileMetadata);
+
+        fileMetadata = new FileMetadata();
+        fileMetadata.setName("file3");
+        fileMetadata.setSize(400L);
+        fileMetadata.setTransmissionDate(dateTime.minusDays(10));
+        fileMetadata.setStatus("RECEIVED");
+        files.add(fileMetadata);
+
+        fileReport.setFilesRecentlyUploaded(files);
+
+        return fileReport;
+    }
+
+    private FileReport getStubEmptyReport() {
+        FileReport fileReport = new FileReport();
+        fileReport.setFilesRecentlyUploaded(Collections.emptyList());
+
+        return fileReport;
     }
 
     private String createPublicKey() throws IOException {
@@ -424,17 +433,6 @@ public class TransactionFilterBatchTest {
             false, false);
 
         panPgpFOS.close();
-    }
-
-    private Map<String, String> createAbiToFiscalCodeMap() {
-        Map<String, String> abiToFiscalCodeMap = new HashMap<>();
-        abiToFiscalCodeMap.put("4444", "fiscalCode");
-        return abiToFiscalCodeMap;
-    }
-
-    @SneakyThrows
-    private Collection<File> getSenderAdeAckFilesSavedByTasklet() {
-        return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/sender-ade-ack")[0].getFile(), new String[]{"csv"}, false);
     }
 
     @SneakyThrows
@@ -491,18 +489,6 @@ public class TransactionFilterBatchTest {
         return expectedOutputFileTrnContent;
     }
 
-    private Set<String> getExpectedAdeOutputFileContentWithAbiConverted() {
-        String transmissionDate = getDateFormattedAsString();
-
-        Set<String> expectedOutputFileAdeContent = new HashSet<>();
-        expectedOutputFileAdeContent.add("#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046");
-        expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;2;6666;978;fiscalCode;0000;1;fis123;12345678901;00");
-        expectedOutputFileAdeContent.add("99999;01;" + transmissionDate + ";03/20/2020;1;2222;978;3333;0000;1;fis123;12345678901;00");
-        expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;1;1111;978;22222;0000;1;fis123;12345678901;00");
-
-        return expectedOutputFileAdeContent;
-    }
-
     private Set<String> getExpectedAdeOutputFileContent() {
         String transmissionDate = getDateFormattedAsString();
 
@@ -517,23 +503,5 @@ public class TransactionFilterBatchTest {
     private String getDateFormattedAsString() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return OffsetDateTime.now().format(fmt);
-    }
-
-    @SneakyThrows
-    List<File> createSenderAdeAckFiles() {
-        List<File> files = new ArrayList<>();
-        tempFolder.newFolder("temporarySenderAdeAck");
-
-        File firstFile = tempFolder.newFile("temporarySenderAdeAck/CSTAR.STPAY.ADEACK.20220801.211940.001.csv");
-        byte[] firstFileContent = "12345;fiscalcode".getBytes(StandardCharsets.UTF_8);
-        Files.write(firstFile.toPath(), firstFileContent);
-        files.add(firstFile);
-
-        File secondFile = tempFolder.newFile("temporarySenderAdeAck/senderAdeAck2.csv");
-        byte[] secondFileContent = "7890123;stringdefault".getBytes(StandardCharsets.UTF_8);
-        Files.write(secondFile.toPath(), secondFileContent);
-        files.add(secondFile);
-
-        return files;
     }
 }

@@ -2,17 +2,23 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import it.gov.pagopa.rtd.transaction_filter.batch.model.DeleteOutputFilesEnum;
 import java.io.File;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.assertj.core.api.Condition;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepContribution;
@@ -23,7 +29,7 @@ import org.springframework.batch.test.MetaDataInstanceFactory;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 
-public class FileManagementTaskletTest {
+class FileManagementTaskletTest {
 
     File successFile;
     File errorFile;
@@ -31,601 +37,461 @@ public class FileManagementTaskletTest {
     File errorHpanFile;
     File outputFileCsv;
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder(
-            new File(getClass().getResource("/test-encrypt").getFile()));
+    @TempDir
+    Path tempDir;
 
+    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+
+    private final String OUTPUT_PATH = "test/output";
+    private final String PENDING_PATH = "test/output/pending";
+    private final String SUCCESS_PATH = "test/success";
+    private final String ERROR_PATH = "test/error";
+    private final String HPAN_PATH = "test/hpan";
+    private final String TRANSACTIONS_PATH = "test/trxs";
+    private final String LOGS_PATH = "test/logs";
+
+    @SneakyThrows
     @Test
-    public void testFileManagement_NoDeleteLocalFiles() {
+    void testFileManagement_NoDeleteLocalFiles() {
 
-        try {
+        createDefaultDirectories();
 
-            tempFolder.newFolder("test1");
-            tempFolder.newFolder("test1","success");
-            tempFolder.newFolder("test1","error");
-            tempFolder.newFolder("test1","output");
-            tempFolder.newFolder("test1","hpan");
-            tempFolder.newFolder("test1","trxs");
+        successFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/success-trx.csv")).toFile();
+        errorFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/error-trx.csv")).toFile();
+        hpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/hpan.pgp")).toFile();
+        errorHpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/error-hpan.pgp")).toFile();
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.pgp"));
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/success-trx-output-file.pgp"));
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.csv"));
+        outputFileCsv = Files.createFile(tempDir.resolve(OUTPUT_PATH + "/success-trx-output-file.csv")).toFile();
 
-            successFile = tempFolder.newFile("test1/trxs/success-trx.pgp");
-            errorFile =  tempFolder.newFile("test1/trxs/error-trx.pgp");
-            hpanFile =  tempFolder.newFile("test1/hpan/hpan.pgp");
-            errorHpanFile = tempFolder.newFile("test1/hpan/error-hpan.pgp");
-            tempFolder.newFile("test1/output/error-trx-output-file.pgp");
-            tempFolder.newFile("test1/output/success-trx-output-file.pgp");
-            tempFolder.newFile("test1/output/error-trx-output-file.csv");
-            outputFileCsv = tempFolder.newFile("test1/output/success-trx-output-file.csv");
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.KEEP.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
 
-            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).isEmpty();
 
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setUploadPendingPath("classpath:/test-encrypt/**/test1/error");
-            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
-            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
-            archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
-                    "classpath:/test-encrypt/**/test1/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
-            archivalTasklet.setDeleteProcessedFiles(false);
-            archivalTasklet.setDeleteOutputFiles("NEVER");
-            archivalTasklet.setManageHpanOnSuccess("DELETE");
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
 
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/error")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        StepExecution stepExecution1 = createStepExecution("INPUT_OK",BatchStatus.COMPLETED, "file:" + successFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
 
-            List<StepExecution> stepExecutions = new ArrayList<>();
+        StepExecution stepExecution2 = createStepExecution("INPUT_FAILED", BatchStatus.FAILED, "file:" + errorFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
 
-            StepExecution stepExecution1 = MetaDataInstanceFactory.createStepExecution("A",1L);
-            stepExecution1.setStatus(BatchStatus.COMPLETED);
-            stepExecution1.getExecutionContext().put("fileName", successFile.getAbsolutePath());
-            stepExecutions.add(stepExecution1);
+        StepExecution stepExecution3 = createStepExecution("HPAN_OK", BatchStatus.COMPLETED, "file:" + hpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution3);
 
-            StepExecution stepExecution2 = MetaDataInstanceFactory.createStepExecution("B", 1L);
-            stepExecution2.setStatus(BatchStatus.FAILED);
-            stepExecution2.getExecutionContext().put("fileName", errorFile.getAbsolutePath());
-            stepExecutions.add(stepExecution2);
+        StepExecution stepExecution4 = createStepExecution("HPAN_FAILED", BatchStatus.FAILED, "file:" + errorHpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution4);
 
-            StepExecution stepExecution3 = MetaDataInstanceFactory.createStepExecution("C", 1L);
-            stepExecution3.setStatus(BatchStatus.COMPLETED);
-            stepExecution3.getExecutionContext().put("fileName", hpanFile.getAbsolutePath());
-            stepExecutions.add(stepExecution3);
+        StepExecution stepExecution6 = createStepExecution("OUTPUT_CSV_OK", BatchStatus.COMPLETED, "file:" + outputFileCsv.getAbsolutePath());
+        stepExecutions.add(stepExecution6);
 
-            StepExecution stepExecution4 = MetaDataInstanceFactory.createStepExecution("D", 1L);
-            stepExecution4.setStatus(BatchStatus.FAILED);
-            stepExecution4.getExecutionContext().put("fileName", errorHpanFile.getAbsolutePath());
-            stepExecutions.add(stepExecution4);
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
 
-            StepContext stepContext = new StepContext(execution);
-            stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
-            ChunkContext chunkContext = new ChunkContext(stepContext);
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-            archivalTasklet.execute(new StepContribution(execution),chunkContext);
+        assertThat(getSuccessFiles()).hasSize(1)
+            .extracting(File::getName).has(getNamePrefixCondition());
+        assertThat(getErrorFiles()).hasSize(2)
+            .extracting(File::getName).has(getNamePrefixCondition());
 
-            Assert.assertEquals(1,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/error")[0].getFile(),
-                            new String[]{"pgp"},false).size());
+        successFile.createNewFile();
 
-            successFile.createNewFile();
+        stepExecutions = new ArrayList<>();
 
-            stepExecutions = new ArrayList<>();
+        StepExecution stepExecution5 = createStepExecution("INPUT_OK", BatchStatus.COMPLETED, "file:" + successFile.getAbsolutePath());
+        stepExecutions.add(stepExecution5);
 
-            StepExecution stepExecution5 = MetaDataInstanceFactory.createStepExecution("E", 1L);
-            stepExecution5.setStatus(BatchStatus.COMPLETED);
-            stepExecution5.getExecutionContext().put("fileName", successFile.getAbsolutePath());
-            stepExecutions.add(stepExecution5);
+        execution = MetaDataInstanceFactory.createStepExecution();
+        stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        chunkContext = new ChunkContext(stepContext);
 
-            StepExecution stepExecution6 = MetaDataInstanceFactory.createStepExecution("F", 1L);
-            stepExecution6.setStatus(BatchStatus.COMPLETED);
-            stepExecution6.getExecutionContext().put("fileName",outputFileCsv.getAbsolutePath());
-            stepExecutions.add(stepExecution6);
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-            execution = MetaDataInstanceFactory.createStepExecution();
-            stepContext = new StepContext(execution);
-            stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
-            chunkContext = new ChunkContext(stepContext);
-
-            archivalTasklet.execute(new StepContribution(execution),chunkContext);
-
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/output")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/output")[0].getFile(),
-                            new String[]{"csv"},false).size());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail();
-        }
+        assertThat(getSuccessFiles()).hasSize(2);
+        assertThat(getCsvOutputFiles()).hasSize(2);
+        assertThat(getPgpOutputFiles()).hasSize(2);
     }
 
+    @SneakyThrows
     @Test
-    public void testFileManagement_NoDeleteLocalFiles_WithSkips() {
+    void testFileManagement_NoDeleteLocalFiles_WithSkips() {
 
-        try {
+        createDefaultDirectories();
 
-            tempFolder.newFolder("test1");
-            tempFolder.newFolder("test1","success");
-            tempFolder.newFolder("test1","error");
-            tempFolder.newFolder("test1","output");
-            tempFolder.newFolder("test1","hpan");
-            tempFolder.newFolder("test1","trxs");
+        successFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/success-trx.csv")).toFile();
+        errorFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/error-trx.csv")).toFile();
+        hpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/hpan.pgp")).toFile();
+        errorHpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/error-hpan.pgp")).toFile();
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.pgp"));
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/success-trx-output-file.pgp"));
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.csv"));
 
-            successFile = tempFolder.newFile("test1/trxs/success-trx.pgp");
-            errorFile =  tempFolder.newFile("test1/trxs/error-trx.pgp");
-            hpanFile =  tempFolder.newFile("test1/hpan/hpan.pgp");
-            errorHpanFile = tempFolder.newFile("test1/hpan/error-hpan.pgp");
-            tempFolder.newFile("test1/output/error-trx-output-file.pgp");
-            tempFolder.newFile("test1/output/success-trx-output-file.pgp");
-            tempFolder.newFile("test1/output/error-trx-output-file.csv");
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.KEEP.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
 
-            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).isEmpty();
 
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setUploadPendingPath("classpath:/test-encrypt/**/test1/error");
-            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test1/success");
-            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test1/output");
-            archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
-                    "classpath:/test-encrypt/**/test1/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
-            archivalTasklet.setDeleteProcessedFiles(false);
-            archivalTasklet.setDeleteOutputFiles("NEVER");
-            archivalTasklet.setManageHpanOnSuccess("DELETE");
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
 
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/error")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        StepExecution stepExecution1 = createStepExecution("INPUT_OK",BatchStatus.COMPLETED, "file:" + successFile.getAbsolutePath());
+        stepExecution1.setExitStatus(new ExitStatus("COMPLETED WITH SKIPS"));
+        stepExecutions.add(stepExecution1);
 
-            List<StepExecution> stepExecutions = new ArrayList<>();
+        StepExecution stepExecution2 = createStepExecution("INPUT_FAILED", BatchStatus.FAILED, "file:" + errorFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
 
-            StepExecution stepExecution1 = MetaDataInstanceFactory.createStepExecution("A",1L);
-            stepExecution1.setStatus(BatchStatus.COMPLETED);
-            stepExecution1.setExitStatus(new ExitStatus("COMPLETED WITH SKIPS"));
-            stepExecution1.getExecutionContext().put("fileName", successFile.getAbsolutePath());
-            stepExecutions.add(stepExecution1);
+        StepExecution stepExecution3 = createStepExecution("HPAN_OK", BatchStatus.COMPLETED, "file:" + hpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution3);
 
-            StepExecution stepExecution2 = MetaDataInstanceFactory.createStepExecution("B", 1L);
-            stepExecution2.setStatus(BatchStatus.FAILED);
-            stepExecution2.getExecutionContext().put("fileName", errorFile.getAbsolutePath());
-            stepExecutions.add(stepExecution2);
+        StepExecution stepExecution4 = createStepExecution("HPAN_FAILED", BatchStatus.FAILED, "file:" + errorHpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution4);
 
-            StepExecution stepExecution3 = MetaDataInstanceFactory.createStepExecution("C", 1L);
-            stepExecution3.setStatus(BatchStatus.COMPLETED);
-            stepExecution3.getExecutionContext().put("fileName", hpanFile.getAbsolutePath());
-            stepExecutions.add(stepExecution3);
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
 
-            StepExecution stepExecution4 = MetaDataInstanceFactory.createStepExecution("D", 1L);
-            stepExecution4.setStatus(BatchStatus.FAILED);
-            stepExecution4.getExecutionContext().put("fileName", errorHpanFile.getAbsolutePath());
-            stepExecutions.add(stepExecution4);
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-            StepContext stepContext = new StepContext(execution);
-            stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
-            ChunkContext chunkContext = new ChunkContext(stepContext);
+        assertThat(getSuccessFiles()).hasSize(1);
+        assertThat(getErrorFiles()).hasSize(2);
 
-            archivalTasklet.execute(new StepContribution(execution),chunkContext);
+        successFile.createNewFile();
 
-            Assert.assertEquals(1,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/error")[0].getFile(),
-                            new String[]{"pgp"},false).size());
+        stepExecutions = new ArrayList<>();
 
-            successFile.createNewFile();
+        StepExecution stepExecution5 = createStepExecution("INPUT_OK", BatchStatus.COMPLETED, "file:" + successFile.getAbsolutePath());
+        stepExecutions.add(stepExecution5);
 
-            stepExecutions = new ArrayList<>();
+        execution = MetaDataInstanceFactory.createStepExecution();
+        stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        chunkContext = new ChunkContext(stepContext);
 
-            StepExecution stepExecution5 = MetaDataInstanceFactory.createStepExecution("E", 1L);
-            stepExecution5.setStatus(BatchStatus.COMPLETED);
-            stepExecution5.getExecutionContext().put("fileName",successFile.getAbsolutePath());
-            stepExecutions.add(stepExecution5);
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-            execution = MetaDataInstanceFactory.createStepExecution();
-            stepContext = new StepContext(execution);
-            stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
-            chunkContext = new ChunkContext(stepContext);
-
-            archivalTasklet.execute(new StepContribution(execution),chunkContext);
-
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/output")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-
-            Assert.assertEquals(1,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test1/output")[0].getFile(),
-                            new String[]{"csv"},false).size());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail();
-        }
+        assertThat(getSuccessFiles()).hasSize(2);
+        assertThat(getCsvOutputFiles()).hasSize(1);
+        assertThat(getPgpOutputFiles()).hasSize(2);
     }
 
+    @SneakyThrows
     @Test
-    public void testFileManagement_DeleteLocalFiles() {
+    void testFileManagement_DeleteLocalFiles() {
 
-        try {
+        createDefaultDirectories();
 
-            tempFolder.newFolder("test2");
-            tempFolder.newFolder("test2","success");
-            tempFolder.newFolder("test2","error");
-            tempFolder.newFolder("test2","output");
-            tempFolder.newFolder("test2","hpan");
-            tempFolder.newFolder("test2","trxs");
+        successFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/success-trx.csv")).toFile();
+        errorFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/error-trx.csv")).toFile();
+        hpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/hpan.pgp")).toFile();
+        errorHpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/error-hpan.pgp")).toFile();
+        File pgpFileFailed = Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.pgp")).toFile();
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/success-trx-output-file.pgp"));
+        File csvOutputFile = Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.csv")).toFile();
 
-            successFile = tempFolder.newFile("test2/trxs/success-trx.pgp");
-            errorFile =  tempFolder.newFile("test2/trxs/error-trx.pgp");
-            hpanFile =  tempFolder.newFile("test2/hpan/hpan.pgp");
-            errorHpanFile = tempFolder.newFile("test2/hpan/error-hpan.pgp");
-            tempFolder.newFile("test2/output/error-trx-output-file.pgp");
-            tempFolder.newFile("test2/output/success-trx-output-file.pgp");
-            tempFolder.newFile("test2/output/error-trx-output-file.csv");
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(true);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ALWAYS.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
 
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setUploadPendingPath("classpath:/test-encrypt/**/test2/error");
-            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test2/success");
-            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test2/output");
-            archivalTasklet.setHpanDirectory("classpath:/test-encrypt/**/test2/hpan");
-            archivalTasklet.setDeleteProcessedFiles(true);
-            archivalTasklet.setDeleteOutputFiles("ALWAYS");
-            archivalTasklet.setManageHpanOnSuccess("DELETE");
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).isEmpty();
 
-            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test2/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test2/error")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
 
-            List<StepExecution> stepExecutions = new ArrayList<>();
+        StepExecution stepExecution1 = createStepExecution("INPUT_OK",BatchStatus.COMPLETED, "file:" + successFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
 
-            StepExecution stepExecution1 = MetaDataInstanceFactory.createStepExecution("A",1L);
-            stepExecution1.setStatus(BatchStatus.COMPLETED);
-            stepExecution1.getExecutionContext().put("fileName", successFile.getAbsolutePath());
-            stepExecutions.add(stepExecution1);
+        StepExecution stepExecution2 = createStepExecution("INPUT_FAILED", BatchStatus.FAILED, "file:" + errorFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
 
-            StepExecution stepExecution2 = MetaDataInstanceFactory.createStepExecution("B", 1L);
-            stepExecution2.setStatus(BatchStatus.FAILED);
-            stepExecution2.getExecutionContext().put("fileName", errorFile.getAbsolutePath());
-            stepExecutions.add(stepExecution2);
+        StepExecution stepExecution3 = createStepExecution("HPAN_OK", BatchStatus.COMPLETED, "file:" + hpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution3);
 
-            StepExecution stepExecution3 = MetaDataInstanceFactory.createStepExecution("C", 1L);
-            stepExecution3.setStatus(BatchStatus.COMPLETED);
-            stepExecution3.getExecutionContext().put("fileName", hpanFile.getAbsolutePath());
-            stepExecutions.add(stepExecution3);
+        StepExecution stepExecution4 = createStepExecution("HPAN_FAILED", BatchStatus.FAILED, "file:" + errorHpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution4);
 
-            StepExecution stepExecution4 = MetaDataInstanceFactory.createStepExecution("D", 1L);
-            stepExecution4.setStatus(BatchStatus.FAILED);
-            stepExecution4.getExecutionContext().put("fileName", errorHpanFile.getAbsolutePath());
-            stepExecutions.add(stepExecution4);
+        StepExecution stepExecution6 = createStepExecution("PGP_SEND_FAILED", BatchStatus.FAILED, "file:" + pgpFileFailed.getAbsolutePath());
+        stepExecutions.add(stepExecution6);
 
-            StepContext stepContext = new StepContext(execution);
-            stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
-            ChunkContext chunkContext = new ChunkContext(stepContext);
+        StepExecution stepExecution7 = createStepExecution("ENCRYPT_FILE_CSV", BatchStatus.FAILED, "file:" + csvOutputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution7);
 
-            archivalTasklet.execute(new StepContribution(execution),chunkContext);
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
 
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test2/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test2/error")[0].getFile(),
-                            new String[]{"pgp"},false).size());
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-            successFile.createNewFile();
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).isEmpty();
 
-            stepExecutions = new ArrayList<>();
+        successFile.createNewFile();
 
-            StepExecution stepExecution5 = MetaDataInstanceFactory.createStepExecution("E", 1L);
-            stepExecution5.setStatus(BatchStatus.COMPLETED);
-            stepExecution5.getExecutionContext().put("fileName",successFile.getAbsolutePath());
-            stepExecutions.add(stepExecution5);
+        stepExecutions = new ArrayList<>();
 
-            execution = MetaDataInstanceFactory.createStepExecution();
-            stepContext = new StepContext(execution);
-            stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
-            chunkContext = new ChunkContext(stepContext);
+        StepExecution stepExecution5 = createStepExecution("INPUT_OK", BatchStatus.COMPLETED, "file:" + successFile.getAbsolutePath());
+        stepExecutions.add(stepExecution5);
 
-            archivalTasklet.execute(new StepContribution(execution),chunkContext);
+        execution = MetaDataInstanceFactory.createStepExecution();
+        stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        chunkContext = new ChunkContext(stepContext);
 
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test2/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test2/output")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail();
-        }
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getPgpOutputFiles()).isEmpty();
     }
 
+    @SneakyThrows
     @Test
-    public void testFileManagement_DeleteOutputFilesOnErrors() {
+    void testFileManagement_DeleteOutputFilesOnErrors() {
 
-        try {
+        createDefaultDirectories();
 
-            tempFolder.newFolder("test3");
-            tempFolder.newFolder("test3","success");
-            tempFolder.newFolder("test3","error");
-            tempFolder.newFolder("test3","output");
-            tempFolder.newFolder("test3","hpan");
-            tempFolder.newFolder("test3","trxs");
+        successFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/success-trx.csv")).toFile();
+        errorFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/CSTAR.12345.TRNLOG.20221010.123456.001.csv")).toFile();
+        File pgpFileFailed = Files.createFile(tempDir.resolve(OUTPUT_PATH + "/ADE.12345.20221010.123456.001.01.csv.pgp")).toFile();
+        File csvOutputFile = Files.createFile(tempDir.resolve(OUTPUT_PATH + "/ADE.12345.20221010.123456.001.01.csv")).toFile();
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/success-trx-output-file.pgp"));
+        // test file csv deletion without filename been explicitly handled by any step, only valid for RTD files right now
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/CSTAR.12345.TRNLOG.20221010.123456.001.csv"));
 
-            successFile = tempFolder.newFile("test3/trxs/success-trx.pgp");
-            errorFile =  tempFolder.newFile("test3/trxs/error-trx.pgp");
-            hpanFile =  tempFolder.newFile("test3/hpan/hpan.pgp");
-            errorHpanFile = tempFolder.newFile("test3/hpan/error-hpan.pgp");
-            tempFolder.newFile("test3/output/error-trx-output-file.pgp");
-            tempFolder.newFile("test3/output/success-trx-output-file.pgp");
-            tempFolder.newFile("test3/output/error-trx-output-file.csv");
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ERROR.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
 
-            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setUploadPendingPath("classpath:/test-encrypt/**/test3/error");
-            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test3/success");
-            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test3/output");
-            archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
-                    "classpath:/test-encrypt/**/test3/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
-            archivalTasklet.setDeleteProcessedFiles(false);
-            archivalTasklet.setDeleteOutputFiles("ERROR");
-            archivalTasklet.setManageHpanOnSuccess("DELETE");
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).isEmpty();
 
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test3/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test3/error")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
 
-            List<StepExecution> stepExecutions = new ArrayList<>();
+        StepExecution stepExecution1 = createStepExecution("INPUT_OK",BatchStatus.COMPLETED, "file:" + successFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
 
-            StepExecution stepExecution1 = MetaDataInstanceFactory.createStepExecution("A",1L);
-            stepExecution1.setStatus(BatchStatus.COMPLETED);
-            stepExecution1.getExecutionContext().put("fileName", successFile.getAbsolutePath());
-            stepExecutions.add(stepExecution1);
+        StepExecution stepExecution2 = createStepExecution("INPUT_FAILED", BatchStatus.FAILED, "file:" + errorFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
 
-            StepExecution stepExecution2 = MetaDataInstanceFactory.createStepExecution("B", 1L);
-            stepExecution2.setStatus(BatchStatus.FAILED);
-            stepExecution2.getExecutionContext().put("fileName", errorFile.getAbsolutePath());
-            stepExecutions.add(stepExecution2);
+        StepExecution stepExecution3 = createStepExecution("PGP_SEND_FAILED", BatchStatus.FAILED, "file:" + pgpFileFailed.getAbsolutePath());
+        stepExecutions.add(stepExecution3);
 
-            StepExecution stepExecution3 = MetaDataInstanceFactory.createStepExecution("C", 1L);
-            stepExecution3.setStatus(BatchStatus.COMPLETED);
-            stepExecution3.getExecutionContext().put("fileName", hpanFile.getAbsolutePath());
-            stepExecutions.add(stepExecution3);
+        StepExecution stepExecution4 = createStepExecution("ENCRYPT_FILE_CSV", BatchStatus.FAILED, "file:" + csvOutputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution4);
 
-            StepExecution stepExecution4 = MetaDataInstanceFactory.createStepExecution("D", 1L);
-            stepExecution4.setStatus(BatchStatus.FAILED);
-            stepExecution4.getExecutionContext().put("fileName", errorHpanFile.getAbsolutePath());
-            stepExecutions.add(stepExecution4);
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
 
-            StepContext stepContext = new StepContext(execution);
-            stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
-            ChunkContext chunkContext = new ChunkContext(stepContext);
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-            archivalTasklet.execute(new StepContribution(execution),chunkContext);
+        assertThat(getSuccessFiles()).hasSize(1);
+        assertThat(getErrorFiles()).hasSize(1);
+        assertThat(getPgpPendingFiles()).hasSize(1);
+        assertThat(getCsvOutputFiles()).isEmpty();
+        assertThat(getPgpOutputFiles()).hasSize(1);
 
-            Assert.assertEquals(1,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test3/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test3/error")[0].getFile(),
-                            new String[]{"pgp"},false).size());
+        successFile.createNewFile();
 
-            successFile.createNewFile();
+        stepExecutions = new ArrayList<>();
 
-            stepExecutions = new ArrayList<>();
+        StepExecution stepExecution5 = createStepExecution("INPUT_OK", BatchStatus.COMPLETED, "file:" + successFile.getAbsolutePath());
+        stepExecutions.add(stepExecution5);
 
-            StepExecution stepExecution5 = MetaDataInstanceFactory.createStepExecution("E", 1L);
-            stepExecution5.setStatus(BatchStatus.COMPLETED);
-            stepExecution5.getExecutionContext().put("fileName",successFile.getAbsolutePath());
-            stepExecutions.add(stepExecution5);
+        execution = MetaDataInstanceFactory.createStepExecution();
+        stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        chunkContext = new ChunkContext(stepContext);
 
-            execution = MetaDataInstanceFactory.createStepExecution();
-            stepContext = new StepContext(execution);
-            stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
-            chunkContext = new ChunkContext(stepContext);
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-            archivalTasklet.execute(new StepContribution(execution),chunkContext);
-
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test3/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-
-            Assert.assertEquals(1,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test3/output")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail();
-        }
+        assertThat(getSuccessFiles()).hasSize(2);
+        assertThat(getPgpOutputFiles()).hasSize(1);
     }
 
+    @SneakyThrows
     @Test
-    public void testFileManagement_KeepHpanInLocation() {
+    void testFileManagement_KeepHpanInLocation() {
 
-        try {
+        createDefaultDirectories();
 
-            tempFolder.newFolder("test4");
-            tempFolder.newFolder("test4","success");
-            tempFolder.newFolder("test4","error");
-            tempFolder.newFolder("test4","output");
-            tempFolder.newFolder("test4","hpan");
-            tempFolder.newFolder("test4","trxs");
+        successFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/success-trx.csv")).toFile();
+        errorFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/error-trx.csv")).toFile();
+        hpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/hpan.pgp")).toFile();
+        errorHpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/error-hpan.pgp")).toFile();
+        File pgpFileFailed = Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.pgp")).toFile();
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/success-trx-output-file.pgp"));
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + "/error-trx-output-file.csv"));
 
-            successFile = tempFolder.newFile("test4/trxs/success-trx.pgp");
-            errorFile =  tempFolder.newFile("test4/trxs/error-trx.pgp");
-            hpanFile =  tempFolder.newFile("test4/hpan/hpan.pgp");
-            errorHpanFile = tempFolder.newFile("test4/hpan/error-hpan.pgp");
-            tempFolder.newFile("test4/output/error-trx-output-file.pgp");
-            tempFolder.newFile("test4/output/success-trx-output-file.pgp");
-            tempFolder.newFile("test4/output/error-trx-output-file.csv");
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ERROR.name());
+        archivalTasklet.setManageHpanOnSuccess("KEEP");
 
-            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-            FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-            archivalTasklet.setUploadPendingPath("classpath:/test-encrypt/**/test4/error");
-            archivalTasklet.setSuccessPath("classpath:/test-encrypt/**/test4/success");
-            archivalTasklet.setOutputDirectory("classpath:/test-encrypt/**/test4/output");
-            archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
-                    "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
-            archivalTasklet.setDeleteProcessedFiles(false);
-            archivalTasklet.setDeleteOutputFiles("ERROR");
-            archivalTasklet.setManageHpanOnSuccess("KEEP");
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getHpanFiles()).hasSize(2);
+        assertThat(getErrorFiles()).isEmpty();
 
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test4/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            Assert.assertEquals(0,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test4/error")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
 
-            List<StepExecution> stepExecutions = new ArrayList<>();
+        StepExecution stepExecution1 = createStepExecution("INPUT_FILE_SUCCESS", BatchStatus.COMPLETED, "file:" + successFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
 
-            StepExecution stepExecution1 = MetaDataInstanceFactory.createStepExecution("A",1L);
-            stepExecution1.setStatus(BatchStatus.COMPLETED);
-            stepExecution1.getExecutionContext().put("fileName", successFile.getAbsolutePath());
-            stepExecutions.add(stepExecution1);
+        StepExecution stepExecution2 = createStepExecution("INPUT_FILE_ERROR", BatchStatus.FAILED, "file:" + errorFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
 
-            StepExecution stepExecution2 = MetaDataInstanceFactory.createStepExecution("B", 1L);
-            stepExecution2.setStatus(BatchStatus.FAILED);
-            stepExecution2.getExecutionContext().put("fileName", errorFile.getAbsolutePath());
-            stepExecutions.add(stepExecution2);
+        StepExecution stepExecution3 = createStepExecution("HPAN_OK", BatchStatus.COMPLETED, "file:" + hpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution3);
 
-            StepExecution stepExecution3 = MetaDataInstanceFactory.createStepExecution("C", 1L);
-            stepExecution3.setStatus(BatchStatus.COMPLETED);
-            stepExecution3.getExecutionContext().put("fileName", hpanFile.getAbsolutePath());
-            stepExecutions.add(stepExecution3);
+        StepExecution stepExecution4 = createStepExecution("HPAN_FAILED", BatchStatus.FAILED, "file:" + errorHpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution4);
 
-            StepExecution stepExecution4 = MetaDataInstanceFactory.createStepExecution("D", 1L);
-            stepExecution4.setStatus(BatchStatus.FAILED);
-            stepExecution4.getExecutionContext().put("fileName", errorHpanFile.getAbsolutePath());
-            stepExecutions.add(stepExecution4);
+        StepExecution stepExecution6 = createStepExecution("PGP_SEND_FAILED", BatchStatus.FAILED, "file:" + pgpFileFailed.getAbsolutePath());
+        stepExecutions.add(stepExecution6);
 
-            StepContext stepContext = new StepContext(execution);
-            stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
-            ChunkContext chunkContext = new ChunkContext(stepContext);
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
 
-            archivalTasklet.execute(new StepContribution(execution),chunkContext);
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-            Assert.assertEquals(1,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test4/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test4/error")[0].getFile(),
-                            new String[]{"pgp"},false).size());
+        assertThat(getSuccessFiles()).hasSize(1);
+        assertThat(getHpanFiles()).hasSize(1);
+        assertThat(getErrorFiles()).hasSize(2);
 
-            successFile.createNewFile();
+        successFile.createNewFile();
 
-            stepExecutions = new ArrayList<>();
+        stepExecutions = new ArrayList<>();
 
-            StepExecution stepExecution5 = MetaDataInstanceFactory.createStepExecution("E", 1L);
-            stepExecution5.setStatus(BatchStatus.COMPLETED);
-            stepExecution5.getExecutionContext().put("fileName",successFile.getAbsolutePath());
-            stepExecutions.add(stepExecution5);
+        StepExecution stepExecution5 = createStepExecution("E", BatchStatus.COMPLETED, successFile.getAbsolutePath());
+        stepExecutions.add(stepExecution5);
 
-            execution = MetaDataInstanceFactory.createStepExecution();
-            stepContext = new StepContext(execution);
-            stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
-            chunkContext = new ChunkContext(stepContext);
+        execution = MetaDataInstanceFactory.createStepExecution();
+        stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        chunkContext = new ChunkContext(stepContext);
 
-            archivalTasklet.execute(new StepContribution(execution),chunkContext);
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-            Assert.assertEquals(1,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test4/hpan")[0].getFile(),
-                            new String[]{"pgp"},false).size());
+        assertThat(getHpanFiles()).hasSize(1);
+        assertThat(getSuccessFiles()).hasSize(2);
+        assertThat(getPgpOutputFiles()).hasSize(1);
+    }
 
-            Assert.assertEquals(2,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test4/success")[0].getFile(),
-                            new String[]{"pgp"},false).size());
+    @SneakyThrows
+    @Test
+    void testFileManagement_ArchiveHpan() {
 
-            Assert.assertEquals(1,
-                    FileUtils.listFiles(
-                            resolver.getResources("classpath:/test-encrypt/**/test4/output")[0].getFile(),
-                            new String[]{"pgp"},false).size());
+        createDefaultDirectories();
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail();
+        hpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/hpan.pgp")).toFile();
+        errorHpanFile = Files.createFile(tempDir.resolve(HPAN_PATH + "/error-hpan.pgp")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ERROR.name());
+        archivalTasklet.setManageHpanOnSuccess("ARCHIVE");
+        archivalTasklet.afterPropertiesSet();
+
+        assertThat(getHpanFiles()).hasSize(2);
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("HPAN_OK", BatchStatus.COMPLETED, "file:" + hpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepExecution stepExecution2 = createStepExecution("HPAN_FAILED", BatchStatus.FAILED, "file:" + errorHpanFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        assertThat(getSuccessFiles()).hasSize(1)
+            .extracting(File::getName).has(getNamePrefixCondition());
+        assertThat(getHpanFiles()).isEmpty();
+        assertThat(getErrorFiles()).hasSize(1)
+            .extracting(File::getName).has(getNamePrefixCondition());;
+    }
+
+    @SneakyThrows
+    @EnumSource(DeleteOutputFilesEnum.class)
+    @ParameterizedTest
+    void givenDeleteOutputFilesPolicyWhenRunFileManagementThenMovePgpOutputFilesToPendingFolder(DeleteOutputFilesEnum deleteOutputFilesFlag) {
+
+        createDefaultDirectories();
+
+        File outputFilePgp = Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "trx-output-file.pgp")).toFile();
+        File outputFileCsv = Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "trx-output-file.csv")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(deleteOutputFilesFlag.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
+
+        // pre-condition on initial setup
+        assertThat(getPgpOutputFiles()).hasSize(1);
+        assertThat(getCsvOutputFiles()).hasSize(1);
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("SEND_PGP_STEP", BatchStatus.FAILED, "file:" + outputFilePgp.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepExecution stepExecution2 = createStepExecution("ENCRYPT_AGGREGATE_STEP", BatchStatus.COMPLETED, "file:" + outputFileCsv.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the file pgp has been moved from output to output/pending
+        assertThat(getPgpPendingFiles()).hasSize(1)
+            .extracting(File::getName).containsExactly(outputFilePgp.getName());
+        switch (deleteOutputFilesFlag) {
+            case KEEP:
+                assertThat(getCsvOutputFiles()).hasSize(1)
+                    .extracting(File::getName).containsExactly(outputFileCsv.getName()); break;
+            case ERROR:
+            case ALWAYS:
+                assertThat(getCsvOutputFiles()).isEmpty();
         }
     }
 
     @SneakyThrows
     @Test
-    public void whenLogFilesAreEmptyThenDeleteThem() {
-        tempFolder.newFolder("test");
-        tempFolder.newFolder("test","hpan");
-        tempFolder.newFolder("test","logs");
+    void whenLogFilesAreEmptyThenDeleteThem() {
+        createDefaultDirectories();
 
-        hpanFile =  tempFolder.newFile("test/hpan/hpan.pgp");
+        hpanFile =  Files.createFile(tempDir.resolve(HPAN_PATH + File.separator + "hpan.pgp")).toFile();
 
-        tempFolder.newFile("test/logs/empty-log-file.csv");
-        File logFileNotEmpty = tempFolder.newFile("test/logs/not-empty-log-file.csv");
-        FileUtils.write(logFileNotEmpty, "this;is;a;not;empty;log");
+        Files.createFile(tempDir.resolve(LOGS_PATH + File.separator + "empty-log-file.csv"));
+        File logFileNotEmpty = Files.createFile(tempDir.resolve(LOGS_PATH + File.separator + "not-empty-log-file.csv")).toFile();
+        FileUtils.write(logFileNotEmpty, "this;is;a;not;empty;log", Charset.defaultCharset());
 
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-        archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
-            "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
-        archivalTasklet.setLogsDirectory("classpath:/test-encrypt/**/test/logs");
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
 
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
@@ -633,30 +499,24 @@ public class FileManagementTaskletTest {
 
         archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-        Collection<File> logFiles = FileUtils.listFiles(
-            resolver.getResources("classpath:/test-encrypt/**/test/logs")[0].getFile(),
-            new String[]{"csv"},false);
+        Collection<File> logFiles = getLogFiles();
 
         assertThat(logFiles).isNotEmpty().hasSize(1).contains(logFileNotEmpty);
     }
 
     @SneakyThrows
     @Test
-    public void whenLogDirectoryIsNotSetThenTaskletDoNotDeleteEmptyLogs() {
-        tempFolder.newFolder("test");
-        tempFolder.newFolder("test","hpan");
-        tempFolder.newFolder("test","logs");
+    void whenLogDirectoryIsNotSetThenTaskletDoNotDeleteEmptyLogs() {
+        createDefaultDirectories();
 
-        hpanFile =  tempFolder.newFile("test/hpan/hpan.pgp");
+        hpanFile =  Files.createFile(tempDir.resolve(HPAN_PATH + File.separator + "hpan.pgp")).toFile();
 
-        tempFolder.newFile("test/logs/empty-log-file.csv");
-        File logFileNotEmpty = tempFolder.newFile("test/logs/not-empty-log-file.csv");
-        FileUtils.write(logFileNotEmpty, "this;is;a;not;empty;log");
+        Files.createFile(tempDir.resolve(LOGS_PATH + File.separator + "empty-log-file.csv"));
+        File logFileNotEmpty = Files.createFile(tempDir.resolve(LOGS_PATH + File.separator + "not-empty-log-file.csv")).toFile();
+        FileUtils.write(logFileNotEmpty, "this;is;a;not;empty;log", Charset.defaultCharset());
 
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        FileManagementTasklet archivalTasklet = new FileManagementTasklet();
-        archivalTasklet.setHpanDirectory("file:/"+resolver.getResources(
-            "classpath:/test-encrypt/**/hpan")[0].getFile().getAbsolutePath()+"/*.pgp");
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setLogsDirectory(null);
 
         StepExecution execution = MetaDataInstanceFactory.createStepExecution();
         StepContext stepContext = new StepContext(execution);
@@ -664,16 +524,243 @@ public class FileManagementTaskletTest {
 
         archivalTasklet.execute(new StepContribution(execution),chunkContext);
 
-        Collection<File> logFiles = FileUtils.listFiles(
-            resolver.getResources("classpath:/test-encrypt/**/test/logs")[0].getFile(),
-            new String[]{"csv"},false);
+        Collection<File> logFiles = getLogFiles();
 
         assertThat(logFiles).isNotEmpty().hasSize(2);
     }
 
-    @After
-    public void tearDown() {
-        tempFolder.delete();
+    @SneakyThrows
+    @Test
+    void whenThereAreMoreStepsWithSameFilenameThenEvaluateWorstStatus() {
+
+        createDefaultDirectories();
+
+        File inputFile = Files.createFile(tempDir.resolve(TRANSACTIONS_PATH + "/success-trx.csv")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.KEEP.name());
+        archivalTasklet.setManageHpanOnSuccess("KEEP");
+
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).isEmpty();
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("INPUT_FILE_SUCCESS_EG_CHECKSUM", BatchStatus.COMPLETED, "file:" + inputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepExecution stepExecution2 = createStepExecution("INPUT_FILE_ERROR_EG_TRANSACTION_PROCESS", BatchStatus.FAILED, "file:" + inputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the FAILED status is evaluated and the file is moved into "error" folder
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).hasSize(1);
+
+        // invert the orders of the steps and retest
+        stepExecutions = new ArrayList<>();
+        stepExecution1 = createStepExecution("INPUT_FILE_ERROR_EG_TRANSACTION_PROCESS", BatchStatus.FAILED, "file:" + inputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        stepExecution2 = createStepExecution("INPUT_FILE_SUCCESS_EG_CHECKSUM", BatchStatus.COMPLETED, "file:" + inputFile.getAbsolutePath());
+        stepExecutions.add(stepExecution2);
+
+        stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the assertion must be step order-independent
+        assertThat(getSuccessFiles()).isEmpty();
+        assertThat(getErrorFiles()).hasSize(1);
     }
 
+    @SneakyThrows
+    @EnumSource(DeleteOutputFilesEnum.class)
+    @ParameterizedTest
+    void givenPendingFilesWhenSendPendingStepFailThenFilesAreNotMoved(DeleteOutputFilesEnum deleteOutputFilesFlag) {
+
+        createDefaultDirectories();
+
+        File pendingFile = Files.createFile(tempDir.resolve(PENDING_PATH + File.separator + "file-to-send-again.pgp")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(deleteOutputFilesFlag.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("SEND_PENDING_STEP", BatchStatus.FAILED, "file:" + pendingFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the file pgp has been moved from output to output/pending
+        assertThat(getPgpPendingFiles()).hasSize(1);
+    }
+
+    @SneakyThrows
+    @EnumSource(DeleteOutputFilesEnum.class)
+    @ParameterizedTest
+    void givenPendingFilesWhenSendPendingStepSuccessThenFilesAreDeleted(DeleteOutputFilesEnum deleteOutputFilesFlag) {
+
+        createDefaultDirectories();
+
+        File pendingFile = Files.createFile(tempDir.resolve(PENDING_PATH + File.separator + "file-to-send-again.pgp")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(deleteOutputFilesFlag.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("SEND_PENDING_STEP", BatchStatus.COMPLETED, "file:" + pendingFile.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the file pgp has been moved from output to output/pending
+        assertThat(getPgpPendingFiles()).isEmpty();
+    }
+
+    @SneakyThrows
+    @Test
+    void givenOutputFilesFromPreviousRunsWhenDeleteOutputFilesIsAlwaysThenDoRemoveOldFilesToo() {
+        createDefaultDirectories();
+
+        Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "old-file.pgp"));
+        File outputFileToSend = Files.createFile(tempDir.resolve(OUTPUT_PATH + File.separator + "file-to-send.pgp")).toFile();
+
+        FileManagementTasklet archivalTasklet = createTaskletWithDefaultDirectories();
+        archivalTasklet.setDeleteProcessedFiles(false);
+        archivalTasklet.setDeleteOutputFiles(DeleteOutputFilesEnum.ALWAYS.name());
+        archivalTasklet.setManageHpanOnSuccess("DELETE");
+
+        assertThat(getPgpOutputFiles()).hasSize(2);
+
+        StepExecution execution = MetaDataInstanceFactory.createStepExecution();
+        List<StepExecution> stepExecutions = new ArrayList<>();
+
+        StepExecution stepExecution1 = createStepExecution("SEND_OUTPUT_FILE", BatchStatus.COMPLETED, "file:" + outputFileToSend.getAbsolutePath());
+        stepExecutions.add(stepExecution1);
+
+        StepContext stepContext = new StepContext(execution);
+        stepContext.getStepExecution().getJobExecution().addStepExecutions(stepExecutions);
+        ChunkContext chunkContext = new ChunkContext(stepContext);
+
+        archivalTasklet.execute(new StepContribution(execution),chunkContext);
+
+        // the file pgp has been moved from output to output/pending
+        assertThat(getPgpOutputFiles()).isEmpty();
+    }
+
+    private FileManagementTasklet createTaskletWithDefaultDirectories() {
+        FileManagementTasklet archivalTasklet = new FileManagementTasklet();
+        archivalTasklet.setUploadPendingPath("file:" + tempDir + File.separator + PENDING_PATH);
+        archivalTasklet.setSuccessPath("file:" + tempDir + File.separator + SUCCESS_PATH);
+        archivalTasklet.setOutputDirectory("file:" + tempDir + File.separator + OUTPUT_PATH);
+        archivalTasklet.setHpanDirectory("file:" + tempDir + File.separator + HPAN_PATH + "/*.pgp");
+        archivalTasklet.setLogsDirectory("file:" + tempDir + File.separator + LOGS_PATH);
+        archivalTasklet.setErrorPath("file:" + tempDir + File.separator + ERROR_PATH);
+
+        return archivalTasklet;
+    }
+
+    @SneakyThrows
+    private void createDefaultDirectories() {
+//        Files.createDirectory(tempDir.resolve("test"));
+        Files.createDirectories(tempDir.resolve(PENDING_PATH));
+        Files.createDirectory(tempDir.resolve(SUCCESS_PATH));
+        Files.createDirectory(tempDir.resolve(ERROR_PATH));
+        Files.createDirectory(tempDir.resolve(HPAN_PATH));
+        Files.createDirectory(tempDir.resolve(TRANSACTIONS_PATH));
+        Files.createDirectory(tempDir.resolve(LOGS_PATH));
+    }
+
+    private StepExecution createStepExecution(String stepName, BatchStatus status, String filename) {
+        StepExecution stepExecution = MetaDataInstanceFactory.createStepExecution(stepName, 1L);
+        stepExecution.setStatus(status);
+        stepExecution.getExecutionContext().put("fileName", filename);
+        return stepExecution;
+    }
+
+    @SneakyThrows
+    private Collection<File> getHpanFiles() {
+        return FileUtils.listFiles(
+            resolver.getResources("file:" + tempDir + File.separator + HPAN_PATH)[0].getFile(),
+            null,false);
+    }
+
+    @SneakyThrows
+    private Collection<File> getSuccessFiles() {
+        return FileUtils.listFiles(
+            resolver.getResources("file:" + tempDir + File.separator + SUCCESS_PATH)[0].getFile(),
+            null,false);
+    }
+
+    @SneakyThrows
+    private Collection<File> getErrorFiles() {
+        return FileUtils.listFiles(
+            resolver.getResources("file:" + tempDir + File.separator + ERROR_PATH)[0].getFile(),
+            null,false);
+    }
+
+    @SneakyThrows
+    private Collection<File> getLogFiles() {
+        return FileUtils.listFiles(
+            resolver.getResources("file:" + tempDir + File.separator + LOGS_PATH)[0].getFile(),
+            new String[]{"csv"},false);
+    }
+
+    @SneakyThrows
+    private Collection<File> getPgpOutputFiles() {
+        return FileUtils.listFiles(
+            resolver.getResources("file:" + tempDir + File.separator + OUTPUT_PATH)[0].getFile(),
+            new String[]{"pgp"},false);
+    }
+
+    @SneakyThrows
+    private Collection<File> getCsvOutputFiles() {
+        return FileUtils.listFiles(
+            resolver.getResources("file:" + tempDir + File.separator + OUTPUT_PATH)[0].getFile(),
+            new String[]{"csv"},false);
+    }
+
+    private Collection<File> getPgpPendingFiles() {
+        return FileUtils.listFiles(
+            new File(tempDir + File.separator + PENDING_PATH),
+            new String[]{"pgp"},false);
+    }
+
+    private Condition<? super List<? extends String>> getNamePrefixCondition() {
+        String prefixArchivedFileRegex = "[a-zA-Z\\d]{20}_[0-9]{17}_.*";
+        return new Condition<>(list -> list.stream().allMatch(name -> Pattern.matches(prefixArchivedFileRegex, name)),
+            "random name prefix");
+    }
+
+    @SneakyThrows
+    @AfterEach
+    void tearDown() {
+        FileUtils.forceDelete(tempDir.toFile());
+    }
 }
