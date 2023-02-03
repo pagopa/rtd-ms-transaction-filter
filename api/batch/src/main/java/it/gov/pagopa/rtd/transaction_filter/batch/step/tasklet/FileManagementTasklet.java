@@ -199,7 +199,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     }
 
     private boolean isFileInsideOutputDirectory(String absolutePath) {
-        String pathWithoutFile = absolutePath.substring(0, absolutePath.lastIndexOf("/"));
+        String pathWithoutFile = absolutePath.substring(0, absolutePath.lastIndexOf(File.separator));
         return pathWithoutFile.equals(getAbsolutePathFromFile(outputDirectory));
     }
 
@@ -213,7 +213,7 @@ public class FileManagementTasklet implements Tasklet, InitializingBean {
     }
 
     private boolean isFileInsidePendingDirectory(String absolutePath) {
-        String pathWithoutFile = absolutePath.substring(0, absolutePath.lastIndexOf("/"));
+        String pathWithoutFile = absolutePath.substring(0, absolutePath.lastIndexOf(File.separator));
         return pathWithoutFile.equals(getAbsolutePathFromFile(uploadPendingPath));
     }
 
