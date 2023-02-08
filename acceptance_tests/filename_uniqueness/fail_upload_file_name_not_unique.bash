@@ -10,7 +10,7 @@ ENV=$1
 
 N_AGGREGATES=10
 
-RETRY_MAX_ATTEMPTS=3
+RETRY_MAX_ATTEMPTS=1
 
 sh ../common/setup.sh
 
@@ -39,7 +39,7 @@ check_one_file_sent() {
 }
 check_one_file_not_uploaded_due_to_conflict() {
   # check if the second file is not uploaded because has the same name of the first
-  N_UPLOADS=$(grep -c "(status was: 409)" <workdir/logs/application.log)
+  N_UPLOADS=$(grep -c "(status was 409:" <workdir/logs/application.log)
   if [ "$N_UPLOADS" -ne "$RETRY_MAX_ATTEMPTS" ]; then
     echo -e "Test not passed, 409 for the second file not returned: \033[1m\033[31m[FAILED]\033[0m"
     exit 2
