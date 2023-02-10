@@ -10,27 +10,22 @@ ENV=$1
 
 sh ../common/setup.sh
 
-N_AGGREGATES=500
+N_TRANSACTIONS=500
 
 ### file generation
 cd cstar-cli || exit
 echo "Generating input file..."
-poetry run cst sender aggregates --sender 12345 --action trx_and_aggr --aggr-qty $N_AGGREGATES --avg-trx 3
+poetry run cst rtd transactionfilter --action synthetic_hashpans --pans-prefix "pan" --hashpans-qty 200 --salt FAKE_SALT > 200_hpans.csv
+poetry run cst rtd transactionfilter --action synthetic_transactions --sender 12345 --pans-prefix "pan" --pans-qty 200 --trx-qty $N_TRANSACTIONS --ratio 1 --pos-number 100
 cd ..
 FILENAME=$(basename cstar-cli/generated/*.csv)
 cp cstar-cli/generated/"$FILENAME" ./workdir/input/"$FILENAME"
+cp cstar-cli/200_hpans.csv ./workdir/hpans/
 
 ### batch service configuration
 # shellcheck source=../common/setenv_env.sh
 source ../common/setenv_"$ENV".sh
 source setenv.sh
-
-# check env script
-# if [ $ACQ_BATCH_INPUT_CHUNK_SIZE -gt $ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD ]
-# then
-# 	echo "Please set the chunk size and ade threshold appropriately"
-# 	exit 2,
-# fi
 
 echo "Executing batch service..."
 ### batch service run
@@ -38,25 +33,19 @@ java -jar ../common/rtd-ms-transaction-filter.jar
 
 #### ASSERTIONS
 # 1. check local output files generated
-# set threshold if not present
-if [ -z "$ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD" ]
-then
-      ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD=1000000
-fi
-
 # find chunks number
-if [ $N_AGGREGATES -lt $ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD ]
+if [ $N_TRANSACTIONS -lt "$ACQ_BATCH_WRITER_RTD_SPLIT_THRESHOLD" ]
 then
 	N_CHUNKS=1
 else
-	N_CHUNKS=$(( ( N_AGGREGATES / ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD ) + ( N_AGGREGATES % ACQ_BATCH_WRITER_ADE_SPLIT_THRESHOLD > 0 ) ))
+	N_CHUNKS=$(( ( N_TRANSACTIONS / ACQ_BATCH_WRITER_RTD_SPLIT_THRESHOLD ) + ( N_TRANSACTIONS % ACQ_BATCH_WRITER_RTD_SPLIT_THRESHOLD > 0 ) ))
 fi
 
 # check output files generated
 for (( i=1; i<=N_CHUNKS; i++ ))
 do
 	# there is a limitation to 9 chunks!!!!
-	FILENAME_CHUNKED="ADE.$(echo "$FILENAME" | cut -d'.' -f2-6).0$i.csv"
+	FILENAME_CHUNKED="CSTAR.$(echo "$FILENAME" | cut -d'.' -f2-6).0$i.csv"
 	if test -f "$ACQ_BATCH_OUTPUT_PATH/$FILENAME_CHUNKED"; then
     	echo "$FILENAME_CHUNKED exists: [SUCCESS]"
 	else
@@ -76,13 +65,13 @@ else
 fi
 
 # cli atm do not support chunk generation, it can be arranged like this:
-LOCAL_OUTPUT_DIFF=$(diff <(cat cstar-cli/generated/ADE.*expected | sort) <(cat workdir/output/ADE.*.csv | sort | tail -n +$N_CHUNKS))
+N_ROWS_OUTPUT=$(cat workdir/output/CSTAR.*.csv | wc -l)
 
-if [ -z "$LOCAL_OUTPUT_DIFF" ]
+if [ "$N_ROWS_OUTPUT" -eq $(( N_TRANSACTIONS + N_CHUNKS )) ]
 then
-  	echo "Diff local output with expected: [SUCCESS]"
+  echo "Number of rows expected: [SUCCESS]"
 else
-	echo "Diff local output with expected: [FAILED]"
+	echo "Wrong number of rows: [FAILED]"
 	exit 2
 fi
 

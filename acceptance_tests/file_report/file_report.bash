@@ -95,4 +95,7 @@ do
 
 done
 
+rm -rf cstar-cli
+rm -rf workdir
+
 exit 0

@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step;
 
+import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.ADE_OUTPUT_FILE_PREFIX;
 import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.filterResourcesByFilename;
 import static it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep.filterValidFilenames;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,8 +97,8 @@ class TransactionFilterStepTest {
     void whenAggregatesAreSplittedThenNamingConventionIsAsExpected(String filePath) {
         TransactionFilterStep transactionFilterStep = new TransactionFilterStep(null, null);
 
-        String firstChunkName = transactionFilterStep.getAdeOutputFileNameChunked(filePath, 0);
-        String secondChunkName = transactionFilterStep.getAdeOutputFileNameChunked(filePath, 1);
+        String firstChunkName = transactionFilterStep.getOutputFileNameChunkedWithPrefix(filePath, 0, ADE_OUTPUT_FILE_PREFIX);
+        String secondChunkName = transactionFilterStep.getOutputFileNameChunkedWithPrefix(filePath, 1, ADE_OUTPUT_FILE_PREFIX);
 
         assertThat(firstChunkName).isEqualTo("ADE.11111.20220925.101112.001.00.csv");
         assertThat(secondChunkName).isEqualTo("ADE.11111.20220925.101112.001.01.csv");
@@ -116,7 +117,8 @@ class TransactionFilterStepTest {
         StoreService storeService = new StoreServiceImpl(null);
         storeService.storeKey("pagopa", "prova");
 
-        ItemWriter<AdeTransactionsAggregate> itemWriter = transactionFilterStep.createAdeItemWriter(storeService);
+        ItemWriter<AdeTransactionsAggregate> itemWriter = transactionFilterStep.createItemWriter(storeService,
+            transactionFilterStep.adeTransactionsAggregateLineAggregator());
 
         assertThat(itemWriter).isNotNull();
     }
