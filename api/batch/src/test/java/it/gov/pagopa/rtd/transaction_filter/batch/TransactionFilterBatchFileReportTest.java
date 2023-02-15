@@ -289,13 +289,13 @@ public class TransactionFilterBatchFileReportTest {
         List<String> trxFilteredContent = Files.readAllLines(trxFilteredFile.toPath().toAbsolutePath());
         Assert.assertEquals(3, trxFilteredContent.size());
         Assert.assertTrue(trxFilteredContent.contains("99999;00;01;pan4;03/20/2020 13:23:00;4444444444;8888;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;par4"));
-        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;1234567890123456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
         Assert.assertTrue(trxFilteredContent.contains("99999;00;01;123456******3456;03/20/2020 15:23:00;666666666;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
 
         File adeFilteredFile = adeFilteredFiles.iterator().next();
         List<String> adeFilteredContent = Files.readAllLines(adeFilteredFile.toPath().toAbsolutePath());
         Assert.assertEquals(1, adeFilteredContent.size());
-        Assert.assertTrue(adeFilteredContent.contains("99999;00;01;1234567890123456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(adeFilteredContent.contains("99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
 
         Collection<File> fileReportSaved = getFileReportSaved();
         assertThat(fileReportSaved).isNotNull().hasSize(1);
