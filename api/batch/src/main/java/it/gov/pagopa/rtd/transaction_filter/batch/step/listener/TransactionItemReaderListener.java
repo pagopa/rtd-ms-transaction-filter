@@ -1,13 +1,16 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.ItemReadListener;
 import org.springframework.batch.item.file.FlatFileParseException;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.lang.NonNull;
 
 
 /**
@@ -17,6 +20,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 @Slf4j
 @Data
+@RequiredArgsConstructor
 public class TransactionItemReaderListener implements ItemReadListener<InboundTransaction> {
 
     private String errorTransactionsLogsPath;
@@ -28,13 +32,14 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     private TransactionWriterService transactionWriterService;
     private String prefix;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+    private final TransactionMaskPolicy maskPolicy;
 
     @Override
     public void beforeRead() {
         // do nothing
     }
 
-    public void afterRead(InboundTransaction item) {
+    public void afterRead(@NonNull InboundTransaction item) {
 
         if (Boolean.TRUE.equals(enableAfterReadLogging)) {
             if (loggingFrequency > 1 && item.getLineNumber() % loggingFrequency == 0) {
@@ -48,7 +53,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
     }
 
     @SneakyThrows
-    public void onReadError(Exception throwable) {
+    public void onReadError(@NonNull Exception throwable) {
 
         if (Boolean.TRUE.equals(enableOnErrorLogging)) {
         log.error("Error while reading a transaction record - {} - {}", throwable.getMessage(),
@@ -61,7 +66,7 @@ public class TransactionItemReaderListener implements ItemReadListener<InboundTr
                     .replace("]","").replace("\\\\", "/");
             String[] fileArr = filename.split("/");
             try {
-                String lineContent = flatFileParseException.getInput();
+                String lineContent = maskPolicy.apply(flatFileParseException.getInput());
                 transactionWriterService.write(resolver.getResource(errorTransactionsLogsPath)
                         .getFile().getAbsolutePath()
                         .concat("/".concat(executionDate))

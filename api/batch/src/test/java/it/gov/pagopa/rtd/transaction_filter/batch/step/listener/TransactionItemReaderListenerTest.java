@@ -3,6 +3,8 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 import static org.mockito.ArgumentMatchers.any;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicyImpl;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.SneakyThrows;
 import org.junit.*;
@@ -19,6 +21,8 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 
 public class TransactionItemReaderListenerTest {
+
+    private final TransactionMaskPolicy maskPolicy = new TransactionMaskPolicyImpl();
 
     public TransactionItemReaderListenerTest(){
         MockitoAnnotations.initMocks(this);
@@ -54,7 +58,7 @@ public class TransactionItemReaderListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
+        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener(maskPolicy);
         transactionItemReaderListener.setExecutionDate(executionDate);
         transactionItemReaderListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemReaderListener.setEnableOnErrorLogging(true);
@@ -78,7 +82,7 @@ public class TransactionItemReaderListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
+        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener(maskPolicy);
         transactionItemReaderListener.setExecutionDate(executionDate);
         transactionItemReaderListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemReaderListener.setEnableOnErrorLogging(true);
@@ -101,7 +105,7 @@ public class TransactionItemReaderListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
+        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener(maskPolicy);
         transactionItemReaderListener.setExecutionDate(executionDate);
         transactionItemReaderListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemReaderListener.setEnableOnErrorLogging(false);
