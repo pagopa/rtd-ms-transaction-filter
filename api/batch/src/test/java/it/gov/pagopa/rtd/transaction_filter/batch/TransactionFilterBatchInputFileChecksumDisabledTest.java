@@ -201,7 +201,7 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
 
         // Check that the HPAN store has been accessed as expected
         BDDMockito.verify(storeServiceSpy, Mockito.times(3)).store(Mockito.any());
-        BDDMockito.verify(storeServiceSpy, Mockito.times(4)).hasHpan(Mockito.any());
+        BDDMockito.verify(storeServiceSpy, Mockito.times(5)).hasHpan(Mockito.any());
         BDDMockito.verify(storeServiceSpy, Mockito.times(2)).getKey(Mockito.any());
 
         // Check that output folder contains expected files, and only those
@@ -226,7 +226,7 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
 
         // Check that output files contain expected lines
         Set<String> expectedOutputFileTrnContent = new HashSet<>();
-        expectedOutputFileTrnContent.add("99999;00;00;28aa47c8c6cd1a6b0a86ebe18471295796c88269868825b4cd41f94f0a07e88e;03/20/2020 10:50:33;1111111111;5555;;1111;978;22222;0000;1;000002;5422;fis123;12345678901;00;");
+        expectedOutputFileTrnContent.add("99999;00;00;a261f9479522020529213c5336dec371de5b3dacca0a8165c50ac33032c631ac;03/20/2020 10:50:33;1111111111;5555;;1111;978;22222;0000;1;000002;5422;fis123;12345678901;00;");
         expectedOutputFileTrnContent.add("99999;00;01;e2df0a82ac0aa12921c398e1eba9119772db868650ebef22b8919fa0fb7642ed;03/20/2020 11:23:00;333333333;7777;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
         expectedOutputFileTrnContent.add("99999;01;00;805f89015f85948f7d7bdd57a0a81e4cd95fc81bdd1195a69c4ab139f0ebed7b;03/20/2020 11:04:53;2222222222;6666;;2222;978;3333;0000;1;000002;5422;fis123;12345678901;00;par2");
 
@@ -234,7 +234,7 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
         String transmissionDate = OffsetDateTime.now().format(fmt);
 
         Set<String> expectedOutputFileAdeContent = new HashSet<>();
-        expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;2;6666;978;4444;0000;1;fis123;12345678901;00");
+        expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;3;9999;978;4444;0000;1;fis123;12345678901;00");
         expectedOutputFileAdeContent.add("99999;01;" + transmissionDate + ";03/20/2020;1;2222;978;3333;0000;1;fis123;12345678901;00");
         expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;1;1111;978;22222;0000;1;fis123;12345678901;00");
 
@@ -287,14 +287,15 @@ public class TransactionFilterBatchInputFileChecksumDisabledTest {
         // Check that logs files contains expected lines
         File trxFilteredFile = trxFilteredFiles.iterator().next();
         List<String> trxFilteredContent = Files.readAllLines(trxFilteredFile.toPath().toAbsolutePath());
-        Assert.assertEquals(2, trxFilteredContent.size());
+        Assert.assertEquals(3, trxFilteredContent.size());
         Assert.assertTrue(trxFilteredContent.contains("99999;00;01;pan4;03/20/2020 13:23:00;4444444444;8888;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;par4"));
-        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;pan5;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;123456******3456;03/20/2020 15:23:00;666666666;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
 
         File adeFilteredFile = adeFilteredFiles.iterator().next();
         List<String> adeFilteredContent = Files.readAllLines(adeFilteredFile.toPath().toAbsolutePath());
         Assert.assertEquals(1, adeFilteredContent.size());
-        Assert.assertTrue(adeFilteredContent.contains("99999;00;01;pan5;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(adeFilteredContent.contains("99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
     }
 
     @SneakyThrows

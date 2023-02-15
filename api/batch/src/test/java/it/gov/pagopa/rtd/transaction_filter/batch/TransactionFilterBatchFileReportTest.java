@@ -212,7 +212,7 @@ public class TransactionFilterBatchFileReportTest {
 
         // Check that the HPAN store has been accessed as expected
         BDDMockito.verify(storeServiceSpy, times(3)).store(any());
-        BDDMockito.verify(storeServiceSpy, times(4)).hasHpan(any());
+        BDDMockito.verify(storeServiceSpy, times(5)).hasHpan(any());
         BDDMockito.verify(storeServiceSpy, times(2)).getKey(any());
 
         // Check that output folder contains expected files, and only those
@@ -235,10 +235,10 @@ public class TransactionFilterBatchFileReportTest {
         Set<String> expectedOutputFileAdeContent = getExpectedAdeOutputFileContent();
 
         Assert.assertEquals(expectedOutputFileTrnContent, new HashSet<>(outputFileTrnContent));
-        Assert.assertEquals("#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046",
+        Assert.assertEquals("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d",
             outputFileTrnContent.get(0));
         Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
-        Assert.assertEquals("#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046",
+        Assert.assertEquals("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d",
             outputFileAdeContent.get(0));
 
         // Check that encrypted output files have the same content of unencrypted ones
@@ -287,14 +287,15 @@ public class TransactionFilterBatchFileReportTest {
         // Check that logs files contains expected lines
         File trxFilteredFile = trxFilteredFiles.iterator().next();
         List<String> trxFilteredContent = Files.readAllLines(trxFilteredFile.toPath().toAbsolutePath());
-        Assert.assertEquals(2, trxFilteredContent.size());
+        Assert.assertEquals(3, trxFilteredContent.size());
         Assert.assertTrue(trxFilteredContent.contains("99999;00;01;pan4;03/20/2020 13:23:00;4444444444;8888;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;par4"));
-        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;pan5;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;123456******3456;03/20/2020 15:23:00;666666666;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
 
         File adeFilteredFile = adeFilteredFiles.iterator().next();
         List<String> adeFilteredContent = Files.readAllLines(adeFilteredFile.toPath().toAbsolutePath());
         Assert.assertEquals(1, adeFilteredContent.size());
-        Assert.assertTrue(adeFilteredContent.contains("99999;00;01;pan5;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        Assert.assertTrue(adeFilteredContent.contains("99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
 
         Collection<File> fileReportSaved = getFileReportSaved();
         assertThat(fileReportSaved).isNotNull().hasSize(1);
@@ -482,8 +483,8 @@ public class TransactionFilterBatchFileReportTest {
 
     private Set<String> getExpectedTrnOutputFileContent() {
         Set<String> expectedOutputFileTrnContent = new HashSet<>();
-        expectedOutputFileTrnContent.add("#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046");
-        expectedOutputFileTrnContent.add("99999;00;00;28aa47c8c6cd1a6b0a86ebe18471295796c88269868825b4cd41f94f0a07e88e;03/20/2020 10:50:33;1111111111;5555;;1111;978;22222;0000;1;000002;5422;fis123;12345678901;00;");
+        expectedOutputFileTrnContent.add("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
+        expectedOutputFileTrnContent.add("99999;00;00;a261f9479522020529213c5336dec371de5b3dacca0a8165c50ac33032c631ac;03/20/2020 10:50:33;1111111111;5555;;1111;978;22222;0000;1;000002;5422;fis123;12345678901;00;");
         expectedOutputFileTrnContent.add("99999;00;01;e2df0a82ac0aa12921c398e1eba9119772db868650ebef22b8919fa0fb7642ed;03/20/2020 11:23:00;333333333;7777;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
         expectedOutputFileTrnContent.add("99999;01;00;805f89015f85948f7d7bdd57a0a81e4cd95fc81bdd1195a69c4ab139f0ebed7b;03/20/2020 11:04:53;2222222222;6666;;2222;978;3333;0000;1;000002;5422;fis123;12345678901;00;par2");
         return expectedOutputFileTrnContent;
@@ -493,8 +494,8 @@ public class TransactionFilterBatchFileReportTest {
         String transmissionDate = getDateFormattedAsString();
 
         Set<String> expectedOutputFileAdeContent = new HashSet<>();
-        expectedOutputFileAdeContent.add("#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046");
-        expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;2;6666;978;4444;0000;1;fis123;12345678901;00");
+        expectedOutputFileAdeContent.add("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
+        expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;3;9999;978;4444;0000;1;fis123;12345678901;00");
         expectedOutputFileAdeContent.add("99999;01;" + transmissionDate + ";03/20/2020;1;2222;978;3333;0000;1;fis123;12345678901;00");
         expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;1;1111;978;22222;0000;1;fis123;12345678901;00");
 
