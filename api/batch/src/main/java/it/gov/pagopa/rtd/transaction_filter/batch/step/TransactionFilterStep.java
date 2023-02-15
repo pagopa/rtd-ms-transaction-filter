@@ -782,7 +782,7 @@ public class TransactionFilterStep {
     @Bean
     public TransactionItemProcessListener transactionItemProcessListener(
             TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener(maskPolicy);
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
         transactionItemProcessListener.setEnableAfterProcessLogging(enableAfterProcessLogging);
@@ -798,7 +798,7 @@ public class TransactionFilterStep {
     @Bean
     public TransactionItemProcessListener transactionAdeItemProcessListener(
         TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener(maskPolicy);
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
         transactionItemProcessListener.setEnableAfterProcessLogging(enableAfterProcessLogging);
