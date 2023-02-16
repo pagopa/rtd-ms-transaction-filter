@@ -40,7 +40,6 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     }
 
     public void afterProcess(@NonNull InboundTransaction item, @Nullable InboundTransaction result) {
-        maskPolicy.apply(item);
 
         if (Boolean.TRUE.equals(enableAfterProcessLogging)) {
             if (result == null) {
@@ -51,6 +50,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
         }
 
         if (Boolean.TRUE.equals(enableAfterProcessFileLogging) && result == null) {
+            maskPolicy.apply(item);
             logItemIntoFilteredRecordsFile(item);
         }
 
