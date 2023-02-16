@@ -13,8 +13,6 @@ import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
-import it.gov.pagopa.rtd.transaction_filter.connector.model.FileMetadata;
-import it.gov.pagopa.rtd.transaction_filter.connector.model.FileReport;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.io.File;
 import java.io.FileFilter;
@@ -23,13 +21,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,7 +40,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -215,7 +210,7 @@ public class TransactionFilterBatchTest {
                 .addDate("startDateTime", new Date())
                 .toJobParameters());
 
-        Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+        assertThat(jobExecution.getExitStatus()).isEqualTo(ExitStatus.COMPLETED);
 
         // Check that the HPAN store has been accessed as expected
         BDDMockito.verify(storeServiceSpy, times(3)).store(any());
@@ -224,11 +219,11 @@ public class TransactionFilterBatchTest {
 
         // Check that output folder contains expected files, and only those
         Collection<File> outputPgpFiles = getOutputPgpFiles();
-        Assert.assertEquals(2, outputPgpFiles.size());
+        assertThat(outputPgpFiles).hasSize(2);
 
         Set<String> outputPgpFilenames = outputPgpFiles.stream().map(File::getName).collect(Collectors.toSet());
         Set<String> expectedPgpFilenames = getExpectedPgpFilenames();
-        Assert.assertEquals(expectedPgpFilenames, outputPgpFilenames);
+        assertThat(expectedPgpFilenames).containsAll(outputPgpFilenames);
 
         Set<String> outputCsvFilenames = getOutputCsvFiles().stream().map(File::getName).collect(Collectors.toSet());
         Set<String> expectedCsvFilenames = getExpectedCsvFileNames();
@@ -241,12 +236,10 @@ public class TransactionFilterBatchTest {
         Set<String> expectedOutputFileTrnContent = getExpectedTrnOutputFileContent();
         Set<String> expectedOutputFileAdeContent = getExpectedAdeOutputFileContent();
 
-        Assert.assertEquals(expectedOutputFileTrnContent, new HashSet<>(outputFileTrnContent));
-        Assert.assertEquals("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d",
-            outputFileTrnContent.get(0));
-        Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
-        Assert.assertEquals("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d",
-            outputFileAdeContent.get(0));
+        assertThat(expectedOutputFileTrnContent).containsAll(outputFileTrnContent);
+        assertThat(outputFileTrnContent.get(0)).isEqualTo("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
+        assertThat(expectedOutputFileAdeContent).containsAll(outputFileAdeContent);
+        assertThat(outputFileAdeContent.get(0)).isEqualTo("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
 
         // Check that encrypted output files have the same content of unencrypted ones
         File trxEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("CSTAR.99999.TRNLOG.20220204.094652.001.01.csv.pgp")).collect(Collectors.toList()).iterator().next();
@@ -263,7 +256,7 @@ public class TransactionFilterBatchTest {
             FileUtils.writeByteArrayToFile(trxEncFileDecryptedFile, trxEncFileDecryptedFileData);
 
             List<String> trxEncFileDecryptedFileContent = Files.readAllLines(trxEncFileDecryptedFile.toPath().toAbsolutePath());
-            Assert.assertEquals(expectedOutputFileTrnContent, new HashSet<>(trxEncFileDecryptedFileContent));
+            assertThat(expectedOutputFileTrnContent).containsAll(trxEncFileDecryptedFileContent);
         } finally {
             trxEncFileIS.close();
             secretFilePathIS.close();
@@ -272,37 +265,37 @@ public class TransactionFilterBatchTest {
         // Check that logs folder contains expected files
         Collection<File> outputLogsFiles = FileUtils.listFiles(
                 resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), new String[]{"csv"}, false);
-        Assert.assertEquals(2, outputLogsFiles.size());
+        assertThat(outputLogsFiles).hasSize(2);
 
         FileFilter fileFilter = new WildcardFileFilter("*_Rtd__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
-        Assert.assertEquals(1, trxFilteredFiles.size());
+        assertThat(trxFilteredFiles).hasSize(1);
 
         fileFilter = new WildcardFileFilter("*_Ade__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> adeFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
-        Assert.assertEquals(1, adeFilteredFiles.size());
+        assertThat(adeFilteredFiles).hasSize(1);
 
         // empty log files get deleted
         fileFilter = new WildcardFileFilter("*_Rtd__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
-        Assert.assertEquals(0, trxErrorFiles.size());
+        assertThat(trxErrorFiles).isEmpty();
 
         fileFilter = new WildcardFileFilter("*_Ade__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> adeErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
-        Assert.assertEquals(0, adeErrorFiles.size());
+        assertThat(adeErrorFiles).isEmpty();
 
         // Check that logs files contains expected lines
         File trxFilteredFile = trxFilteredFiles.iterator().next();
         List<String> trxFilteredContent = Files.readAllLines(trxFilteredFile.toPath().toAbsolutePath());
-        Assert.assertEquals(3, trxFilteredContent.size());
-        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;pan4;03/20/2020 13:23:00;4444444444;8888;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;par4"));
-        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
-        Assert.assertTrue(trxFilteredContent.contains("99999;00;01;123456******3456;03/20/2020 15:23:00;666666666;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        assertThat(trxFilteredContent).hasSize(3)
+                .contains("99999;00;01;pan4;03/20/2020 13:23:00;4444444444;8888;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;par4",
+                    "99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;",
+                    "99999;00;01;123456******3456;03/20/2020 15:23:00;666666666;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
 
         File adeFilteredFile = adeFilteredFiles.iterator().next();
         List<String> adeFilteredContent = Files.readAllLines(adeFilteredFile.toPath().toAbsolutePath());
-        Assert.assertEquals(1, adeFilteredContent.size());
-        Assert.assertTrue(adeFilteredContent.contains("99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;"));
+        assertThat(adeFilteredContent).hasSize(1)
+                .contains("99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
     }
 
     @SneakyThrows
@@ -319,12 +312,12 @@ public class TransactionFilterBatchTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
             .addDate("startDateTime", new Date())
             .toJobParameters());
-        Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+        assertThat(jobExecution.getExitStatus()).isEqualTo(ExitStatus.COMPLETED);
 
         List<String> outputFileAdeContent = Files.readAllLines(outputFileAde.toPath().toAbsolutePath());
         Set<String> expectedOutputFileAdeContent = getExpectedAdeOutputFileContentWithAbiConverted();
 
-        Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
+        assertThat(expectedOutputFileAdeContent).containsAll(outputFileAdeContent);
     }
 
     @SneakyThrows
@@ -341,7 +334,7 @@ public class TransactionFilterBatchTest {
         JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
             .addDate("startDateTime", new Date())
             .toJobParameters());
-        Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+        assertThat(jobExecution.getExitStatus()).isEqualTo(ExitStatus.COMPLETED);
 
         Collection<File> filesSaved = getSenderAdeAckFilesSavedByTasklet();
         assertThat(filesSaved).isNotNull().isNotEmpty();

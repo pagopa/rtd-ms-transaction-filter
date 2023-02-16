@@ -28,7 +28,6 @@ import lombok.SneakyThrows;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -181,7 +180,7 @@ public class TransactionFilterBatchSplittingTest {
         .addDate("startDateTime", new Date())
         .toJobParameters());
 
-    Assert.assertEquals(ExitStatus.COMPLETED, jobExecution.getExitStatus());
+    assertThat(jobExecution.getExitStatus()).isEqualTo(ExitStatus.COMPLETED);
 
     // Check that the HPAN store has been accessed as expected
     BDDMockito.verify(storeServiceSpy, times(3)).store(any());
@@ -190,12 +189,12 @@ public class TransactionFilterBatchSplittingTest {
 
     // Check that output folder contains expected files, and only those
     Collection<File> outputPgpFiles = getOutputPgpFiles();
-    Assert.assertEquals(4, outputPgpFiles.size());
+    assertThat(outputPgpFiles).hasSize(4);
 
     Set<String> outputPgpFilenames = outputPgpFiles.stream().map(File::getName)
         .collect(Collectors.toSet());
     Set<String> expectedPgpFilenames = getExpectedPgpFilenames();
-    Assert.assertEquals(expectedPgpFilenames, outputPgpFilenames);
+    assertThat(expectedPgpFilenames).containsAll(outputPgpFilenames);
 
     Set<String> outputCsvFilenames = getOutputCsvFiles().stream().map(File::getName)
         .collect(Collectors.toSet());
@@ -232,10 +231,8 @@ public class TransactionFilterBatchSplittingTest {
     assertThat(outputFileTrnContent).containsAll(expectedOutputFileTrnContent);
     assertThat(outputFileTrnContent.get(0))
         .isEqualTo("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
-    Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
-    Assert.assertEquals(
-        "#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d",
-        outputFileAdeContent.get(0));
+    assertThat(expectedOutputFileAdeContent).containsAll(outputFileAdeContent);
+    assertThat(outputFileAdeContent.get(0)).isEqualTo("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
 
     // Check that encrypted output files have the same content of unencrypted ones
     Collection<File> adeEncryptedFiles = outputPgpFiles.stream()
@@ -268,7 +265,7 @@ public class TransactionFilterBatchSplittingTest {
       }
     }
 
-    Assert.assertEquals(expectedOutputFileAdeContent, encryptedFilesContent);
+    assertThat(expectedOutputFileAdeContent).containsAll(encryptedFilesContent);
   }
 
   @SneakyThrows
