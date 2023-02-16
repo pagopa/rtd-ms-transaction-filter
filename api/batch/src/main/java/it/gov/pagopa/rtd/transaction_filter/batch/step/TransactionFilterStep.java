@@ -19,6 +19,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PGPEncrypterTaskl
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionChecksumTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.ChecksumHeaderWriter;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
 import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient.SasScope;
@@ -170,6 +171,7 @@ public class TransactionFilterStep {
     private ExecutorService writerExecutor;
 
     private PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+    private final TransactionMaskPolicy maskPolicy;
 
     /**
      * @return instance of the LineTokenizer to be used in the itemReader configured for the job
@@ -782,7 +784,7 @@ public class TransactionFilterStep {
     @Bean
     public TransactionItemProcessListener transactionItemProcessListener(
             TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener(maskPolicy);
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
         transactionItemProcessListener.setEnableAfterProcessLogging(enableAfterProcessLogging);
@@ -798,7 +800,7 @@ public class TransactionFilterStep {
     @Bean
     public TransactionItemProcessListener transactionAdeItemProcessListener(
         TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener(maskPolicy);
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setErrorTransactionsLogsPath(transactionLogsPath);
         transactionItemProcessListener.setEnableAfterProcessLogging(enableAfterProcessLogging);

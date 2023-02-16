@@ -185,7 +185,7 @@ public class TransactionFilterBatchSplittingTest {
 
     // Check that the HPAN store has been accessed as expected
     BDDMockito.verify(storeServiceSpy, times(3)).store(any());
-    BDDMockito.verify(storeServiceSpy, times(4)).hasHpan(any());
+    BDDMockito.verify(storeServiceSpy, times(5)).hasHpan(any());
     BDDMockito.verify(storeServiceSpy, times(4)).getKey(any());
 
     // Check that output folder contains expected files, and only those
@@ -231,10 +231,10 @@ public class TransactionFilterBatchSplittingTest {
 
     assertThat(outputFileTrnContent).containsAll(expectedOutputFileTrnContent);
     assertThat(outputFileTrnContent.get(0))
-        .isEqualTo("#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046");
+        .isEqualTo("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
     Assert.assertEquals(expectedOutputFileAdeContent, new HashSet<>(outputFileAdeContent));
     Assert.assertEquals(
-        "#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046",
+        "#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d",
         outputFileAdeContent.get(0));
 
     // Check that encrypted output files have the same content of unencrypted ones
@@ -372,9 +372,9 @@ public class TransactionFilterBatchSplittingTest {
   private Set<String> getExpectedTrnOutputFileContent() {
     Set<String> expectedOutputFileTrnContent = new HashSet<>();
     expectedOutputFileTrnContent.add(
-        "#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046");
+        "#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
     expectedOutputFileTrnContent.add(
-        "99999;00;00;28aa47c8c6cd1a6b0a86ebe18471295796c88269868825b4cd41f94f0a07e88e;03/20/2020 10:50:33;1111111111;5555;;1111;978;22222;0000;1;000002;5422;fis123;12345678901;00;");
+        "99999;00;00;a261f9479522020529213c5336dec371de5b3dacca0a8165c50ac33032c631ac;03/20/2020 10:50:33;1111111111;5555;;1111;978;22222;0000;1;000002;5422;fis123;12345678901;00;");
     expectedOutputFileTrnContent.add(
         "99999;00;01;e2df0a82ac0aa12921c398e1eba9119772db868650ebef22b8919fa0fb7642ed;03/20/2020 11:23:00;333333333;7777;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
     expectedOutputFileTrnContent.add(
@@ -387,9 +387,9 @@ public class TransactionFilterBatchSplittingTest {
 
     Set<String> expectedOutputFileAdeContent = new HashSet<>();
     expectedOutputFileAdeContent.add(
-        "#sha256sum:8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046");
+        "#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
     expectedOutputFileAdeContent.add("99999;00;" + transmissionDate
-        + ";03/20/2020;2;6666;978;4444;0000;1;fis123;12345678901;00");
+        + ";03/20/2020;3;9999;978;4444;0000;1;fis123;12345678901;00");
     expectedOutputFileAdeContent.add("99999;01;" + transmissionDate
         + ";03/20/2020;1;2222;978;3333;0000;1;fis123;12345678901;00");
     expectedOutputFileAdeContent.add("99999;00;" + transmissionDate
