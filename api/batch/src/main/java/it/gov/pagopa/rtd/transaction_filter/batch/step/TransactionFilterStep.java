@@ -769,7 +769,7 @@ public class TransactionFilterStep {
     @Bean
     public TransactionItemWriterListener transactionItemWriteListener(
             TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemWriterListener transactionItemWriteListener = new TransactionItemWriterListener();
+        TransactionItemWriterListener transactionItemWriteListener = new TransactionItemWriterListener(maskPolicy);
         transactionItemWriteListener.setExecutionDate(executionDate);
         transactionItemWriteListener.setTransactionWriterService(transactionWriterService);
         transactionItemWriteListener.setErrorTransactionsLogsPath(transactionLogsPath);

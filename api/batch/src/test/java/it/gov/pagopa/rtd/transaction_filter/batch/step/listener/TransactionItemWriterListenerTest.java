@@ -1,6 +1,8 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicyImpl;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.SneakyThrows;
 import org.junit.*;
@@ -17,6 +19,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 
 public class TransactionItemWriterListenerTest {
+
+    private final TransactionMaskPolicy maskPolicy = new TransactionMaskPolicyImpl();
 
     public TransactionItemWriterListenerTest(){
         MockitoAnnotations.initMocks(this);
@@ -51,7 +55,7 @@ public class TransactionItemWriterListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemWriterListener transactionItemWriterListener = new TransactionItemWriterListener();
+        TransactionItemWriterListener transactionItemWriterListener = new TransactionItemWriterListener(maskPolicy);
         transactionItemWriterListener.setExecutionDate(executionDate);
         transactionItemWriterListener.setEnableOnErrorLogging(true);
         transactionItemWriterListener.setEnableAfterWriteLogging(true);
@@ -61,7 +65,7 @@ public class TransactionItemWriterListenerTest {
         transactionItemWriterListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemWriterListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemWriterListener.onWriteError(new Exception(), Collections.singletonList(InboundTransaction
-                .builder().filename("test").lineNumber(1).build()));
+                .builder().filename("test").lineNumber(1).pan("1234567890123456").build()));
         transactionItemWriterListener.afterWrite(Collections.singletonList(InboundTransaction.builder().filename("test").lineNumber(1).build()));
 
         BDDMockito.verify(transactionWriterService).write(Mockito.any(),Mockito.any());
@@ -75,7 +79,7 @@ public class TransactionItemWriterListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemWriterListener transactionItemWriterListener = new TransactionItemWriterListener();
+        TransactionItemWriterListener transactionItemWriterListener = new TransactionItemWriterListener(maskPolicy);
         transactionItemWriterListener.setExecutionDate(executionDate);
         transactionItemWriterListener.setEnableOnErrorLogging(true);
         transactionItemWriterListener.setEnableAfterWriteLogging(true);
@@ -85,7 +89,7 @@ public class TransactionItemWriterListenerTest {
         transactionItemWriterListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemWriterListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemWriterListener.onWriteError(new Exception(), Collections.singletonList(InboundTransaction
-                .builder().filename("test").lineNumber(1).build()));
+                .builder().filename("test").lineNumber(1).pan("1234567890123456").build()));
         transactionItemWriterListener.afterWrite(Collections.singletonList(InboundTransaction.builder().filename("test").lineNumber(1).build()));
 
         BDDMockito.verify(transactionWriterService, Mockito.times(0)).write(Mockito.any(),Mockito.any());
