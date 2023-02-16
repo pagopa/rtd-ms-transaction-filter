@@ -739,7 +739,7 @@ public class TransactionFilterStep {
     @Bean
     public TransactionItemReaderListener transactionItemReaderListener(
             TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
+        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener(maskPolicy);
         transactionItemReaderListener.setExecutionDate(executionDate);
         transactionItemReaderListener.setTransactionWriterService(transactionWriterService);
         transactionItemReaderListener.setErrorTransactionsLogsPath(transactionLogsPath);
@@ -754,7 +754,7 @@ public class TransactionFilterStep {
     @Bean
     public TransactionItemReaderListener transactionAdeItemReaderListener(
         TransactionWriterService transactionWriterService, String executionDate) {
-        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener();
+        TransactionItemReaderListener transactionItemReaderListener = new TransactionItemReaderListener(maskPolicy);
         transactionItemReaderListener.setExecutionDate(executionDate);
         transactionItemReaderListener.setTransactionWriterService(transactionWriterService);
         transactionItemReaderListener.setErrorTransactionsLogsPath(transactionLogsPath);
