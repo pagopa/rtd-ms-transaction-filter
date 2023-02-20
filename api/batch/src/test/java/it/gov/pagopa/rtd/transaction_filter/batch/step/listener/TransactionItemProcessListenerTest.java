@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import it.gov.pagopa.rtd.transaction_filter.batch.config.LoggerRule;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicyImpl;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.validator.ValidatorConfig;
 import java.io.File;
@@ -14,7 +16,10 @@ import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
@@ -24,6 +29,8 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 @Slf4j
 public class TransactionItemProcessListenerTest {
+
+    private final TransactionMaskPolicy maskPolicy = new TransactionMaskPolicyImpl();
 
     public TransactionItemProcessListenerTest(){
         MockitoAnnotations.initMocks(this);
@@ -63,7 +70,7 @@ public class TransactionItemProcessListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener(maskPolicy);
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemProcessListener.setEnableOnErrorLogging(true);
@@ -75,7 +82,7 @@ public class TransactionItemProcessListenerTest {
         transactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
         transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.afterProcess(
-                InboundTransaction.builder().filename("test").lineNumber(1).build(),
+                InboundTransaction.builder().filename("test").lineNumber(1).pan("1234567890123456").build(),
                 null);
 
         BDDMockito.verify(transactionWriterService).write(Mockito.any(),Mockito.any());
@@ -93,7 +100,7 @@ public class TransactionItemProcessListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener(maskPolicy);
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
@@ -103,7 +110,7 @@ public class TransactionItemProcessListenerTest {
         transactionItemProcessListener.setLoggingFrequency(1L);
         transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.onProcessError(
-                InboundTransaction.builder().filename("test").lineNumber(1).build(),
+                InboundTransaction.builder().filename("test").lineNumber(1).pan("1234567890123456").build(),
                 new Exception());
 
         BDDMockito.verify(transactionWriterService).write(Mockito.any(),Mockito.any());
@@ -120,7 +127,7 @@ public class TransactionItemProcessListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener(maskPolicy);
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
@@ -130,7 +137,7 @@ public class TransactionItemProcessListenerTest {
         transactionItemProcessListener.setLoggingFrequency(1L);
         transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.onProcessError(
-                InboundTransaction.builder().filename("test").lineNumber(1).build(),
+                InboundTransaction.builder().filename("test").lineNumber(1).pan("1234567890123456").build(),
                 new Exception());
 
         BDDMockito.verify(transactionWriterService, Mockito.times(0)).write(Mockito.any(),Mockito.any());
@@ -145,7 +152,7 @@ public class TransactionItemProcessListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener(maskPolicy);
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
@@ -155,7 +162,7 @@ public class TransactionItemProcessListenerTest {
         transactionItemProcessListener.setLoggingFrequency(1L);
         transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.onProcessError(
-            InboundTransaction.builder().filename("test").lineNumber(1).build(),
+            InboundTransaction.builder().filename("test").lineNumber(1).pan("1234567890123456").build(),
             getValidationException());
 
         BDDMockito.verify(transactionWriterService, Mockito.times(0)).write(Mockito.any(),Mockito.any());
@@ -171,7 +178,7 @@ public class TransactionItemProcessListenerTest {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
 
-        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener();
+        TransactionItemProcessListener transactionItemProcessListener = new TransactionItemProcessListener(maskPolicy);
         transactionItemProcessListener.setExecutionDate(executionDate);
         transactionItemProcessListener.setResolver(new PathMatchingResourcePatternResolver());
         transactionItemProcessListener.setErrorTransactionsLogsPath("file:/"+folder.getAbsolutePath());
@@ -181,7 +188,7 @@ public class TransactionItemProcessListenerTest {
         transactionItemProcessListener.setLoggingFrequency(1L);
         transactionItemProcessListener.setTransactionWriterService(transactionWriterService);
         transactionItemProcessListener.onProcessError(
-            InboundTransaction.builder().filename("test").lineNumber(1).build(),
+            InboundTransaction.builder().filename("test").lineNumber(1).pan("1234567890123456").build(),
             getValidationException());
 
         BDDMockito.verify(transactionWriterService, Mockito.times(0)).write(Mockito.any(),Mockito.any());

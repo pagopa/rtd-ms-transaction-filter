@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
+import feign.FeignException;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
@@ -41,7 +42,7 @@ public class TransactionSenderRestTasklet implements Tasklet, InitializingBean {
                     sasResponse = hpanConnectorService.getSasToken(scope);
                     hpanConnectorService.uploadFile(resource.getFile(), sasResponse.getSas(), sasResponse.getAuthorizedContainer());
                     uploadSucceeded = true;
-                } catch (IOException e) {
+                } catch (IOException | FeignException e) {
                     remainingAttempts -= 1;
                     if (remainingAttempts < 1) {
                         throw e;
