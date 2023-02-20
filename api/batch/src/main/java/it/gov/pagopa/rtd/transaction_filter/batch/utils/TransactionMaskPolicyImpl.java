@@ -7,6 +7,8 @@ import org.springframework.lang.NonNull;
 @Slf4j
 public class TransactionMaskPolicyImpl implements TransactionMaskPolicy {
 
+  private static final int PAN_INDEX = 3;
+
   @Override
   public void apply(InboundTransaction inboundTransaction) {
 
@@ -19,12 +21,12 @@ public class TransactionMaskPolicyImpl implements TransactionMaskPolicy {
 
     // preliminary check to see if Pan field is found
     String[] transactionSplitted = transactionContentAsCsv.split(";", -1);
-    if (transactionSplitted.length < 3) {
+    if (transactionSplitted.length < PAN_INDEX) {
       log.debug("It's not possible to apply mask to this string: cannot find the pan field!");
       return transactionContentAsCsv;
     }
 
-    transactionSplitted[3] = maskPan(transactionSplitted[3]);
+    transactionSplitted[PAN_INDEX] = maskPan(transactionSplitted[PAN_INDEX]);
 
     return String.join(";", transactionSplitted);
   }
