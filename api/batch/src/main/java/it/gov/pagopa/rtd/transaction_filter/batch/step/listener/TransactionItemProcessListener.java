@@ -1,15 +1,17 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
+import java.util.Optional;
 import javax.validation.ConstraintViolationException;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.ItemProcessListener;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
-
-import java.util.Optional;
 
 /**
  * Implementation of {@link ItemProcessListener}, to be used to log and/or store records
@@ -17,6 +19,7 @@ import java.util.Optional;
  */
 @Slf4j
 @Data
+@RequiredArgsConstructor
 public class TransactionItemProcessListener implements ItemProcessListener<InboundTransaction, InboundTransaction> {
 
     private String errorTransactionsLogsPath;
@@ -29,13 +32,14 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     private String prefix;
     private TransactionWriterService transactionWriterService;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+    private final TransactionMaskPolicy maskPolicy;
 
     @Override
-    public void beforeProcess(InboundTransaction inboundTransaction) {
+    public void beforeProcess(@NonNull InboundTransaction inboundTransaction) {
         // do nothing
     }
 
-    public void afterProcess(InboundTransaction item, @Nullable InboundTransaction result) {
+    public void afterProcess(@NonNull InboundTransaction item, @Nullable InboundTransaction result) {
 
         if (Boolean.TRUE.equals(enableAfterProcessLogging)) {
             if (result == null) {
@@ -46,6 +50,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
         }
 
         if (Boolean.TRUE.equals(enableAfterProcessFileLogging) && result == null) {
+            maskPolicy.apply(item);
             logItemIntoFilteredRecordsFile(item);
         }
 
@@ -88,6 +93,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     }
 
     public void onProcessError(InboundTransaction item, Exception throwable) {
+        maskPolicy.apply(item);
 
         if (Boolean.TRUE.equals(transactionWriterService.hasErrorHpan(item.getFilename()
                 .concat(String.valueOf(item.getLineNumber()))))) {

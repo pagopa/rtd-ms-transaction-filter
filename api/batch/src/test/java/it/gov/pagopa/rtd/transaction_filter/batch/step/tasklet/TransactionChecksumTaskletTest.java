@@ -29,7 +29,7 @@ public class TransactionChecksumTaskletTest {
 
     private final static String inputTrxFile = "CSTAR.99999.TRNLOG.20220204.094652.001.csv";
     private final static String trxResourcePath = "/test-encrypt/transactions/";
-    private final static String expectedHash = "8bca0fdabf06e1c30b716224c67a5753ac5d999cf6a375ac7adba16f725f2046";
+    private final static String expectedHash = "0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d";
 
     private Resource inputFileResource;
     private ChunkContext chunkContext;

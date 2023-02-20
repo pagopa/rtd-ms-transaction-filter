@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.listener;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
     private TransactionWriterService transactionWriterService;
     private String prefix;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+    private final TransactionMaskPolicy maskPolicy;
 
     @Override
     public void beforeWrite(List<? extends InboundTransaction> list) {
@@ -58,6 +60,7 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
             }
 
             if (Boolean.TRUE.equals(enableOnErrorFileLogging)) {
+                maskPolicy.apply(inboundTransaction);
                 try {
                     String filename = inboundTransaction.getFilename().replace("\\", "/");
                     String[] fileArr = filename.split("/");
