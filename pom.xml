@@ -77,6 +77,12 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+<!--            fix cve related to version 1.4-->
+            <dependency>
+                <groupId>commons-fileupload</groupId>
+                <artifactId>commons-fileupload</artifactId>
+                <version>1.5</version>
+            </dependency>
             <dependency>
                 <groupId>it.gov.pagopa.rtd.ms.transaction_filter.integration</groupId>
                 <artifactId>rtd-ms-transaction-filter-integration-jpa</artifactId>
