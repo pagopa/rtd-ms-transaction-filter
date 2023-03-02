@@ -222,6 +222,8 @@ public class TransactionFilterStep {
         return flatFileItemReader;
     }
 
+    @Bean
+    @StepScope
     public ItemReader<AggregationKey> mapItemReader(StoreService storeService) {
         return new CustomIteratorItemReader<>(storeService.getAggregateKeySet());
     }
@@ -483,7 +485,8 @@ public class TransactionFilterStep {
      * @return a itemReader
      */
     @Bean
-    public ItemReader<FileMetadata> fileReportReader(FileReportRestClient restClient) {
+    @StepScope
+    public FileReportItemReader fileReportReader(FileReportRestClient restClient) {
         return new FileReportItemReader(restClient);
     }
 
@@ -494,7 +497,8 @@ public class TransactionFilterStep {
      */
     @SneakyThrows
     @Bean
-    public ItemWriter<FileMetadata> fileReportWriter() {
+    @StepScope
+    public FlatFileItemWriter<FileMetadata> fileReportWriter() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern(DATE_FORMAT_FOR_FILENAME);
         String currentDate = OffsetDateTime.now().format(fmt);
 
