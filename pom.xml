@@ -19,7 +19,7 @@
         <spring-boot.version>2.7.9</spring-boot.version>
         <postgresql.version>42.5.1</postgresql.version>
         <springframework-cloud.version>3.1.4</springframework-cloud.version>
-        <snakeyaml.version>2.0</snakeyaml.version>
+        <snakeyaml.version>1.33</snakeyaml.version>
         <common-io.version>2.11.0</common-io.version>
         <bouncycastle.version>1.72.2</bouncycastle.version>
         <jackson-core.version>2.14.0</jackson-core.version>
