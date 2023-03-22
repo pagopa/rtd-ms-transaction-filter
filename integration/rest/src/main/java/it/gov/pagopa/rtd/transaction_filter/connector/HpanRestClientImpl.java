@@ -127,7 +127,7 @@ class HpanRestClientImpl implements HpanRestClient {
   @Override
   public File getList() {
 
-    tempFile = File.createTempFile("hpanDownloadFile", "");
+    tempFile = Files.createTempFile("hpanDownloadFile", "").toFile();
     File localTempFile = tempFile;
     ResponseEntity<Resource> responseEntity = hpanRestConnector.getList(apiKey);
 
