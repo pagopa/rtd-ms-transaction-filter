@@ -1,12 +1,29 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
+import it.gov.pagopa.rtd.transaction_filter.utils.HpanUnzipper;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.InvalidParameterException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.net.ssl.SSLContext;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -25,25 +42,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StreamUtils;
-import javax.net.ssl.SSLContext;
-
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.InvalidParameterException;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /**
  * Implementation for {@link HpanRestClient}
@@ -194,40 +192,18 @@ class HpanRestClientImpl implements HpanRestClient {
   @SneakyThrows
   private File extractZipFile(File tempFile) {
 
-    File localTempFile = null;
+    tempDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
 
-    try (ZipFile zipFile = new ZipFile(tempFile)) {
-
-      tempDirWithPrefix = Files.createTempDirectory("hpanTempFolder");
-      Enumeration<? extends ZipEntry> enumeration = zipFile.entries();
-
-      while (enumeration.hasMoreElements()) {
-
-        ZipEntry zipEntry = enumeration.nextElement();
-        File newFile = new File(
-            tempDirWithPrefix.toFile().getAbsolutePath() +
-                File.separator + zipEntry.getName());
-
-        if (!isFilenameValidInZipFile(zipEntry.getName())) {
-          throw new IOException("Illegal filename in archive: " + zipEntry.getName());
-        }
-
-        try (InputStream zipEntryIS = zipFile.getInputStream(zipEntry);
-            FileOutputStream tempFileFOS = new FileOutputStream(newFile)) {
-
-          new File(newFile.getParent()).mkdirs();
-
-          IOUtils.copy(zipEntryIS, tempFileFOS);
-
-          if (zipEntry.getName().matches(listFilePattern)) {
-            localTempFile = newFile;
-          }
-        }
-      }
-    }
-    return localTempFile;
+    return HpanUnzipper.builder()
+        .fileToUnzip(tempFile)
+        .zipThresholdEntries(1000)
+        .thresholdSizeUncompressed(20_000_000L * 64)
+        .outputDirectory(tempDirWithPrefix)
+        .isFilenameValidPredicate(this::isFilenameValidInZipFile)
+        .listFilePattern(listFilePattern)
+        .build()
+        .extractZipFile();
   }
-
 
   @Override
   public String getSalt() {
@@ -302,7 +278,8 @@ class HpanRestClientImpl implements HpanRestClient {
 
   private void handleErrorStatus(int statusCode, String filename) throws IOException {
     if (statusCode == HttpStatus.SC_CONFLICT) {
-      log.error("Upload failed for file {} (status was {}: File with same name has already been uploaded)",
+      log.error(
+          "Upload failed for file {} (status was {}: File with same name has already been uploaded)",
           filename, HttpStatus.SC_CONFLICT);
     } else {
       throw new IOException("Upload failed for file " + filename + " (status was: "
