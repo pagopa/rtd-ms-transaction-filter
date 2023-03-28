@@ -1,6 +1,5 @@
 package it.gov.pagopa.rtd.transaction_filter.utils;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +51,7 @@ public class HpanUnzipper {
 
         String destinationCanonicalPath = outputEntry.getCanonicalPath();
         if (!destinationCanonicalPath.startsWith(outputDirectory.toFile().getCanonicalPath())) {
+          // the destination path is not the one expected, potential zip slip exploit
           throw new ZipException(
               "Potential zip slip vulnerability in zip entry: " + zipEntry.getName());
         }
@@ -61,18 +61,20 @@ public class HpanUnzipper {
         }
 
         totalEntryArchive++;
-        int totalSizeEntry = 0;
+        long totalSizeEntry = 0;
 
         if (totalEntryArchive > zipThresholdEntries) {
           // too many entries in this archive, can lead to inodes exhaustion of the system
           throw new IOException("Too many entries in the archive.");
         }
 
-        try (InputStream zipEntryInputStream = new BufferedInputStream(
-            zipFile.getInputStream(zipEntry));
+        try (InputStream zipEntryInputStream = zipFile.getInputStream(zipEntry);
             OutputStream outputStream = new BufferedOutputStream(
                 Files.newOutputStream(outputEntry.toPath()))) {
-          int byteCopied = IOUtils.copy(zipEntryInputStream, outputStream);
+
+          new File(outputEntry.getParent()).mkdirs();
+
+          long byteCopied = IOUtils.copyLarge(zipEntryInputStream, outputStream);
           totalSizeEntry += byteCopied;
           totalSizeArchive += byteCopied;
         }
@@ -80,7 +82,8 @@ public class HpanUnzipper {
         double compressionRatio = (double) totalSizeEntry / zipEntry.getCompressedSize();
         if (compressionRatio > thresholdRatio) {
           // ratio between compressed and uncompressed data is highly suspicious, looks like a Zip Bomb Attack
-          throw new IOException("Compression ratio is highly suspicious, check the hpan zip archive.");
+          throw new IOException(
+              "Compression ratio is highly suspicious, check the hpan zip archive.");
         }
 
         if (totalSizeArchive > thresholdSizeUncompressed) {
