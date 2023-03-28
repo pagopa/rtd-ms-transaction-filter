@@ -198,6 +198,7 @@ class HpanRestClientImpl implements HpanRestClient {
         .fileToUnzip(tempFile)
         .zipThresholdEntries(1000)
         .thresholdSizeUncompressed(20_000_000L * 64)
+        .thresholdRatio(10)
         .outputDirectory(tempDirWithPrefix)
         .isFilenameValidPredicate(this::isFilenameValidInZipFile)
         .listFilePattern(listFilePattern)

@@ -28,14 +28,9 @@ class HpanUnzipperTest {
 
     File zippedFile = createTempZipFile(1, 10);
 
-    HpanUnzipper hpanUnzipper = HpanUnzipper.builder()
-        .fileToUnzip(zippedFile)
-        .zipThresholdEntries(1000)
-        .thresholdSizeUncompressed(5)
-        .outputDirectory(tempDir)
-        .isFilenameValidPredicate(file -> true)
-        .listFilePattern("\\.csv")
-        .build();
+    HpanUnzipper hpanUnzipper = createDefaultUnzipper(zippedFile);
+    hpanUnzipper.setZipThresholdEntries(1000);
+    hpanUnzipper.setThresholdSizeUncompressed(5);
 
     assertThatThrownBy(hpanUnzipper::extractZipFile).isInstanceOf(
         IOException.class);
@@ -46,14 +41,8 @@ class HpanUnzipperTest {
 
     File zippedFile = createTempZipFile(10, 1);
 
-    HpanUnzipper hpanUnzipper = HpanUnzipper.builder()
-        .fileToUnzip(zippedFile)
-        .zipThresholdEntries(5)
-        .thresholdSizeUncompressed(500000)
-        .outputDirectory(tempDir)
-        .isFilenameValidPredicate(file -> true)
-        .listFilePattern("\\.csv")
-        .build();
+    HpanUnzipper hpanUnzipper = createDefaultUnzipper(zippedFile);
+    hpanUnzipper.setZipThresholdEntries(5);
 
     assertThatThrownBy(hpanUnzipper::extractZipFile).isInstanceOf(
         IOException.class);
@@ -64,14 +53,8 @@ class HpanUnzipperTest {
 
     File zippedFile = createTempZipFile(1, 10);
 
-    HpanUnzipper hpanUnzipper = HpanUnzipper.builder()
-        .fileToUnzip(zippedFile)
-        .zipThresholdEntries(50)
-        .thresholdSizeUncompressed(500000)
-        .outputDirectory(tempDir)
-        .isFilenameValidPredicate(file -> true)
-        .listFilePattern("\\.csv")
-        .build();
+    HpanUnzipper hpanUnzipper = createDefaultUnzipper(zippedFile);
+    hpanUnzipper.setListFilePattern("\\.txt");
 
     assertThat(hpanUnzipper.extractZipFile()).isNull();
   }
@@ -81,14 +64,7 @@ class HpanUnzipperTest {
 
     File zippedFile = createTempZipFile(1, 10);
 
-    HpanUnzipper hpanUnzipper = HpanUnzipper.builder()
-        .fileToUnzip(zippedFile)
-        .zipThresholdEntries(50)
-        .thresholdSizeUncompressed(500000)
-        .outputDirectory(tempDir)
-        .isFilenameValidPredicate(file -> file.matches(".*\\.txt"))
-        .listFilePattern(".*\\.txt")
-        .build();
+    HpanUnzipper hpanUnzipper = createDefaultUnzipper(zippedFile);
 
     assertThat(hpanUnzipper.extractZipFile()).isNotNull();
   }
@@ -98,14 +74,8 @@ class HpanUnzipperTest {
 
     File zippedFile = createTempZipFile(1, 10);
 
-    HpanUnzipper hpanUnzipper = HpanUnzipper.builder()
-        .fileToUnzip(zippedFile)
-        .zipThresholdEntries(50)
-        .thresholdSizeUncompressed(500000)
-        .outputDirectory(tempDir)
-        .isFilenameValidPredicate(file -> file.matches(".*\\.csv"))
-        .listFilePattern(".*\\.txt")
-        .build();
+    HpanUnzipper hpanUnzipper = createDefaultUnzipper(zippedFile);
+    hpanUnzipper.setIsFilenameValidPredicate(file -> file.matches(".*\\.txt"));
 
     assertThatThrownBy(hpanUnzipper::extractZipFile).isInstanceOf(
         IOException.class);
@@ -116,17 +86,34 @@ class HpanUnzipperTest {
 
     File zippedFile = createTempZipFile(1, 10, true);
 
-    HpanUnzipper hpanUnzipper = HpanUnzipper.builder()
+    HpanUnzipper hpanUnzipper = createDefaultUnzipper(zippedFile);
+
+    assertThatThrownBy(hpanUnzipper::extractZipFile).isInstanceOf(
+        ZipException.class);
+  }
+
+  @Test
+  void givenLowCompressionRatioWhenExtractZipFileThenThrowException() {
+
+    File zippedFile = createTempZipFile(1, 10);
+
+    HpanUnzipper hpanUnzipper = createDefaultUnzipper(zippedFile);
+    hpanUnzipper.setThresholdRatio(0.5);
+
+    assertThatThrownBy(hpanUnzipper::extractZipFile).isInstanceOf(
+        IOException.class);
+  }
+
+  private HpanUnzipper createDefaultUnzipper(File zippedFile) {
+    return HpanUnzipper.builder()
         .fileToUnzip(zippedFile)
         .zipThresholdEntries(50)
         .thresholdSizeUncompressed(500000)
         .outputDirectory(tempDir)
         .isFilenameValidPredicate(file -> file.matches(".*\\.csv"))
-        .listFilePattern(".*\\.txt")
+        .listFilePattern(".*\\.csv")
+        .thresholdRatio(10)
         .build();
-
-    assertThatThrownBy(hpanUnzipper::extractZipFile).isInstanceOf(
-        ZipException.class);
   }
 
   private File createTempZipFile(int files, int rowsPerFile) {
@@ -140,7 +127,7 @@ class HpanUnzipperTest {
     try (ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(zippedFile.toPath()))) {
 
       for (int i = 0; i < files; i++) {
-        String zipEntryName = zipSplitAttack? "../../file" + i + ".txt" : "file" + i + ".txt";
+        String zipEntryName = zipSplitAttack ? "../../file" + i + ".csv" : "file" + i + ".csv";
         ZipEntry e = new ZipEntry(zipEntryName);
         out.putNextEntry(e);
 

@@ -14,10 +14,12 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import lombok.Builder;
+import lombok.Data;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 
 @Builder
+@Data
 public class HpanUnzipper {
 
   private int zipThresholdEntries;
@@ -26,6 +28,7 @@ public class HpanUnzipper {
   private Path outputDirectory;
   private Predicate<String> isFilenameValidPredicate;
   private String listFilePattern;
+  private double thresholdRatio;
 
 
   @SneakyThrows
@@ -58,6 +61,7 @@ public class HpanUnzipper {
         }
 
         totalEntryArchive++;
+        int totalSizeEntry = 0;
 
         if (totalEntryArchive > zipThresholdEntries) {
           // too many entries in this archive, can lead to inodes exhaustion of the system
@@ -68,8 +72,15 @@ public class HpanUnzipper {
             zipFile.getInputStream(zipEntry));
             OutputStream outputStream = new BufferedOutputStream(
                 Files.newOutputStream(outputEntry.toPath()))) {
+          int byteCopied = IOUtils.copy(zipEntryInputStream, outputStream);
+          totalSizeEntry += byteCopied;
+          totalSizeArchive += byteCopied;
+        }
 
-          totalSizeArchive += IOUtils.copy(zipEntryInputStream, outputStream);
+        double compressionRatio = (double) totalSizeEntry / zipEntry.getCompressedSize();
+        if (compressionRatio > thresholdRatio) {
+          // ratio between compressed and uncompressed data is highly suspicious, looks like a Zip Bomb Attack
+          throw new IOException("Compression ratio is highly suspicious, check the hpan zip archive.");
         }
 
         if (totalSizeArchive > thresholdSizeUncompressed) {
