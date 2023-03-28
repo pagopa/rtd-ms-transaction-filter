@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -33,6 +34,7 @@ class HpanUnzipperTest {
         .thresholdSizeUncompressed(5)
         .outputDirectory(tempDir)
         .isFilenameValidPredicate(file -> true)
+        .listFilePattern("\\.csv")
         .build();
 
     assertThatThrownBy(hpanUnzipper::extractZipFile).isInstanceOf(
@@ -92,7 +94,7 @@ class HpanUnzipperTest {
   }
 
   @Test
-  void givenBadPredicateWhenExtractZipFileThenReturnsFile() {
+  void givenBadPredicateWhenExtractZipFileThenThrowException() {
 
     File zippedFile = createTempZipFile(1, 10);
 
@@ -109,14 +111,37 @@ class HpanUnzipperTest {
         IOException.class);
   }
 
-  @SneakyThrows
+  @Test
+  void givenZipSlipAttackWhenExtractZipFileThenThrowException() {
+
+    File zippedFile = createTempZipFile(1, 10, true);
+
+    HpanUnzipper hpanUnzipper = HpanUnzipper.builder()
+        .fileToUnzip(zippedFile)
+        .zipThresholdEntries(50)
+        .thresholdSizeUncompressed(500000)
+        .outputDirectory(tempDir)
+        .isFilenameValidPredicate(file -> file.matches(".*\\.csv"))
+        .listFilePattern(".*\\.txt")
+        .build();
+
+    assertThatThrownBy(hpanUnzipper::extractZipFile).isInstanceOf(
+        ZipException.class);
+  }
+
   private File createTempZipFile(int files, int rowsPerFile) {
+    return createTempZipFile(files, rowsPerFile, false);
+  }
+
+  @SneakyThrows
+  private File createTempZipFile(int files, int rowsPerFile, boolean zipSplitAttack) {
 
     File zippedFile = tempDir.resolve("file.zip").toFile();
     try (ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(zippedFile.toPath()))) {
 
       for (int i = 0; i < files; i++) {
-        ZipEntry e = new ZipEntry("file" + i + ".txt");
+        String zipEntryName = zipSplitAttack? "../../file" + i + ".txt" : "file" + i + ".txt";
+        ZipEntry e = new ZipEntry(zipEntryName);
         out.putNextEntry(e);
 
         for (int j = 0; j < rowsPerFile; j++) {

@@ -11,9 +11,11 @@ import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.function.Predicate;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 import lombok.Builder;
 import lombok.SneakyThrows;
+import org.apache.commons.io.IOUtils;
 
 @Builder
 public class HpanUnzipper {
@@ -41,39 +43,42 @@ public class HpanUnzipper {
       while (enumeration.hasMoreElements()) {
 
         ZipEntry zipEntry = enumeration.nextElement();
-        File newFile = new File(
+        File outputEntry = new File(
             outputDirectory.toFile().getAbsolutePath() +
                 File.separator + zipEntry.getName());
-        try (InputStream in = new BufferedInputStream(zipFile.getInputStream(zipEntry));
-            OutputStream out = new BufferedOutputStream(
-                Files.newOutputStream(newFile.toPath()))) {
 
-          if (isFilenameValidPredicate.negate().test(zipEntry.getName())) {
-            throw new IOException("Illegal filename in archive: " + zipEntry.getName());
-          }
+        String destinationCanonicalPath = outputEntry.getCanonicalPath();
+        if (!destinationCanonicalPath.startsWith(outputDirectory.toFile().getCanonicalPath())) {
+          throw new ZipException(
+              "Potential zip slip vulnerability in zip entry: " + zipEntry.getName());
+        }
 
-          totalEntryArchive++;
+        if (isFilenameValidPredicate.negate().test(zipEntry.getName())) {
+          throw new IOException("Illegal filename in archive: " + zipEntry.getName());
+        }
 
-          if (totalEntryArchive > zipThresholdEntries) {
-            // too many entries in this archive, can lead to inodes exhaustion of the system
-            throw new IOException("Too many entries in the archive.");
-          }
+        totalEntryArchive++;
 
-          int nBytes;
-          byte[] buffer = new byte[2048];
-          while ((nBytes = in.read(buffer)) > 0) {
-            out.write(buffer, 0, nBytes);
-            totalSizeArchive += nBytes;
-          }
+        if (totalEntryArchive > zipThresholdEntries) {
+          // too many entries in this archive, can lead to inodes exhaustion of the system
+          throw new IOException("Too many entries in the archive.");
+        }
 
-          if (totalSizeArchive > thresholdSizeUncompressed) {
-            // the uncompressed data size is too much for the application resource capacity
-            throw new IOException("The uncompressed data size is over the maximum size allowed.");
-          }
+        try (InputStream zipEntryInputStream = new BufferedInputStream(
+            zipFile.getInputStream(zipEntry));
+            OutputStream outputStream = new BufferedOutputStream(
+                Files.newOutputStream(outputEntry.toPath()))) {
 
-          if (zipEntry.getName().matches(listFilePattern)) {
-            localTempFile = newFile;
-          }
+          totalSizeArchive += IOUtils.copy(zipEntryInputStream, outputStream);
+        }
+
+        if (totalSizeArchive > thresholdSizeUncompressed) {
+          // the uncompressed data size is too much for the application resource capacity
+          throw new IOException("The uncompressed data size is over the maximum size allowed.");
+        }
+
+        if (zipEntry.getName().matches(listFilePattern)) {
+          localTempFile = outputEntry;
         }
       }
     }
