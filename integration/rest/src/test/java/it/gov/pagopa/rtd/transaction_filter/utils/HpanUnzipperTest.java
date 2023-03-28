@@ -22,7 +22,6 @@ class HpanUnzipperTest {
   @TempDir
   Path tempDir;
 
-
   @Test
   void givenThresholdSizeWhenExtractZipFileThenThrowException() {
 
