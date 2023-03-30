@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.utils;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +16,6 @@ import java.util.zip.ZipFile;
 import lombok.Builder;
 import lombok.Data;
 import lombok.SneakyThrows;
-import org.apache.commons.io.IOUtils;
 
 @Builder
 @Data
@@ -28,7 +28,6 @@ public class HpanUnzipper {
   private Predicate<String> isFilenameValidPredicate;
   private String listFilePattern;
   private double thresholdRatio;
-
 
   @SneakyThrows
   public File extractZipFile() {
@@ -46,8 +45,7 @@ public class HpanUnzipper {
 
         ZipEntry zipEntry = enumeration.nextElement();
         File outputEntry = new File(
-            outputDirectory.toFile().getAbsolutePath() +
-                File.separator + zipEntry.getName());
+            outputDirectory.toFile().getAbsolutePath() + File.separator + zipEntry.getName());
 
         String destinationCanonicalPath = outputEntry.getCanonicalPath();
         if (!destinationCanonicalPath.startsWith(outputDirectory.toFile().getCanonicalPath())) {
@@ -68,22 +66,28 @@ public class HpanUnzipper {
           throw new IOException("Too many entries in the archive.");
         }
 
-        try (InputStream zipEntryInputStream = zipFile.getInputStream(zipEntry);
+        try (InputStream zipEntryInputStream = new BufferedInputStream(
+            zipFile.getInputStream(zipEntry));
             OutputStream outputStream = new BufferedOutputStream(
                 Files.newOutputStream(outputEntry.toPath()))) {
 
           new File(outputEntry.getParent()).mkdirs();
 
-          long byteCopied = IOUtils.copyLarge(zipEntryInputStream, outputStream);
-          totalSizeEntry += byteCopied;
-          totalSizeArchive += byteCopied;
-        }
+          int nBytes;
+          byte[] buffer = new byte[2048];
 
-        double compressionRatio = (double) totalSizeEntry / zipEntry.getCompressedSize();
-        if (compressionRatio > thresholdRatio) {
-          // ratio between compressed and uncompressed data is highly suspicious, looks like a Zip Bomb Attack
-          throw new IOException(
-              "Compression ratio is highly suspicious, check the hpan zip archive.");
+          while ((nBytes = zipEntryInputStream.read(buffer)) > 0) {
+            outputStream.write(buffer, 0, nBytes);
+            totalSizeEntry += nBytes;
+            totalSizeArchive += nBytes;
+
+            double compressionRatio = (double) totalSizeEntry / zipEntry.getCompressedSize();
+            if (compressionRatio > thresholdRatio) {
+              // ratio between compressed and uncompressed data is highly suspicious, looks like a Zip Bomb Attack
+              throw new IOException(
+                  "Compression ratio is highly suspicious, check the hpan zip archive.");
+            }
+          }
         }
 
         if (totalSizeArchive > thresholdSizeUncompressed) {
