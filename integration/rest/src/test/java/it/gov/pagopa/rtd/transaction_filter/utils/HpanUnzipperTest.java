@@ -9,11 +9,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -21,6 +25,13 @@ class HpanUnzipperTest {
 
   @TempDir
   Path tempDir;
+
+  Set<String> dataInFile;
+
+  @BeforeEach
+  void setUp() {
+    dataInFile = new HashSet<>();
+  }
 
   @Test
   void givenThresholdSizeWhenExtractZipFileThenThrowException() {
@@ -59,13 +70,18 @@ class HpanUnzipperTest {
   }
 
   @Test
+  @SneakyThrows
   void givenHappyCaseWhenExtractZipFileThenReturnsFile() {
 
     File zippedFile = createTempZipFile(1, 10);
 
     HpanUnzipper hpanUnzipper = createDefaultUnzipper(zippedFile);
 
-    assertThat(hpanUnzipper.extractZipFile()).isNotNull();
+    File extractedFile = hpanUnzipper.extractZipFile();
+
+    assertThat(extractedFile).isNotNull();
+    Collection<String> readLines = Files.readAllLines(extractedFile.toPath());
+    assertThat(readLines).containsAll(dataInFile);
   }
 
   @Test
@@ -133,8 +149,9 @@ class HpanUnzipperTest {
         for (int j = 0; j < rowsPerFile; j++) {
           String stringHashed = DigestUtils.sha256Hex(
               String.valueOf(SecureRandom.getInstanceStrong().nextInt()));
-          byte[] data = stringHashed.getBytes();
+          byte[] data = (stringHashed + "\n").getBytes();
           out.write(data, 0, data.length);
+          dataInFile.add(stringHashed);
         }
         out.closeEntry();
       }

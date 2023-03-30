@@ -3,7 +3,6 @@ package it.gov.pagopa.rtd.transaction_filter.utils;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -55,16 +54,13 @@ public class HpanUnzipper {
         }
 
         if (isFilenameValidPredicate.negate().test(zipEntry.getName())) {
-          throw new IOException("Illegal filename in archive: " + zipEntry.getName());
+          throw new ZipException("Illegal filename in archive: " + zipEntry.getName());
         }
 
         totalEntryArchive++;
-        long totalSizeEntry = 0;
+        validateNumberOfEntries(totalEntryArchive);
 
-        if (totalEntryArchive > zipThresholdEntries) {
-          // too many entries in this archive, can lead to inodes exhaustion of the system
-          throw new IOException("Too many entries in the archive.");
-        }
+        long totalSizeEntry = 0;
 
         try (InputStream zipEntryInputStream = new BufferedInputStream(
             zipFile.getInputStream(zipEntry));
@@ -82,17 +78,10 @@ public class HpanUnzipper {
             totalSizeArchive += nBytes;
 
             double compressionRatio = (double) totalSizeEntry / zipEntry.getCompressedSize();
-            if (compressionRatio > thresholdRatio) {
-              // ratio between compressed and uncompressed data is highly suspicious, looks like a Zip Bomb Attack
-              throw new IOException(
-                  "Compression ratio is highly suspicious, check the hpan zip archive.");
-            }
-          }
-        }
+            validateCompressionRatio(compressionRatio);
 
-        if (totalSizeArchive > thresholdSizeUncompressed) {
-          // the uncompressed data size is too much for the application resource capacity
-          throw new IOException("The uncompressed data size is over the maximum size allowed.");
+            validateArchiveSize(totalSizeArchive);
+          }
         }
 
         if (zipEntry.getName().matches(listFilePattern)) {
@@ -101,5 +90,27 @@ public class HpanUnzipper {
       }
     }
     return localTempFile;
+  }
+
+  private void validateNumberOfEntries(int totalEntryArchive) throws ZipException {
+    if (totalEntryArchive > zipThresholdEntries) {
+      // too many entries in this archive, can lead to inodes exhaustion of the system
+      throw new ZipException("Too many entries in the archive.");
+    }
+  }
+
+  private void validateCompressionRatio(double compressionRatio) throws ZipException {
+    if (compressionRatio > thresholdRatio) {
+      // ratio between compressed and uncompressed data is highly suspicious, looks like a Zip Bomb Attack
+      throw new ZipException(
+          "Compression ratio is highly suspicious, check the hpan zip archive.");
+    }
+  }
+
+  private void validateArchiveSize(long totalSizeArchive) throws ZipException {
+    if (totalSizeArchive > thresholdSizeUncompressed) {
+      // the uncompressed data size is too much for the application resource capacity
+      throw new ZipException("The uncompressed data size is over the maximum size allowed.");
+    }
   }
 }
