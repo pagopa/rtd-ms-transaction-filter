@@ -154,6 +154,17 @@ public class SenderAdeAckRestClientTest {
 
   @SneakyThrows
   @Test
+  public void whenAdeAckListReturns404ThenReturnsEmptyList() {
+    wireMockRule.stubFor(get("/rtd/file-register/sender-ade-ack")
+        .willReturn(aResponse().withStatus(404)));
+
+    List<File> files = restClient.getSenderAdeAckFiles();
+
+    assertThat(files).isEmpty();
+  }
+
+  @SneakyThrows
+  @Test
   public void whenPutAckReceivedReturns404ThenReturnsNoFilesAndDeleteTempOnes() {
     wireMockRule.stubFor(put(urlPathMatching("/rtd/file-register/ack-received/.*"))
         .willReturn(aResponse().withStatus(404)));

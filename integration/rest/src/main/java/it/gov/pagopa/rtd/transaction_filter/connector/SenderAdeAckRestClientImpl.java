@@ -46,7 +46,7 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
   }
 
   private SenderAdeAckList retrieveAdeAckList() {
-    SenderAdeAckList senderAdeAckList = null;
+    SenderAdeAckList senderAdeAckList;
     try {
       ResponseEntity<SenderAdeAckList> adeAckResponse = hpanRestConnector.getSenderAdeAckList(
           apiKey);
@@ -55,6 +55,8 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
       senderAdeAckList = adeAckResponse.getBody();
     } catch (FeignException | ResponseStatusException ex) {
       log.warn("Failed to download ade ack list! It will be downloaded on the next run.");
+      // returns an empty list
+      return new SenderAdeAckList();
     }
 
     return Objects.requireNonNull(senderAdeAckList);
