@@ -47,6 +47,7 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.BDDMockito;
 import org.mockito.Mockito;
+import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
@@ -346,6 +347,29 @@ public class TransactionFilterBatchTest {
             .filter(file -> "senderAdeAck2.csv".equals(file.getName()))
             .findAny().orElse(null))
             .hasContent("7890123;stringdefault");
+    }
+
+    @SneakyThrows
+    @Test
+    public void whenSenderAdeAckTaskletFailsThenExecuteFileManagementStep() {
+        String publicKey = createPublicKey();
+        createPanPGP();
+        createTrnOutputFile();
+        createAdeOutputFile();
+        BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
+        BDDMockito.when(senderAdeAckRestClient.getSenderAdeAckFiles()).thenThrow(RuntimeException.class);
+
+        JobExecution jobExecution = jobLauncherTestUtils.launchJob(new JobParametersBuilder()
+            .addDate("startDateTime", new Date())
+            .toJobParameters());
+        assertThat(jobExecution.getExitStatus()).isEqualTo(ExitStatus.FAILED);
+        assertThat(jobExecution.getStatus()).isEqualTo(BatchStatus.COMPLETED);
+
+        Collection<String> stepNamesExecuted = jobExecution.getStepExecutions().stream()
+            .map(StepExecution::getStepName)
+            .collect(Collectors.toSet());
+
+        assertThat(stepNamesExecuted).contains("transaction-filter-file-management-step");
     }
 
     @SneakyThrows
