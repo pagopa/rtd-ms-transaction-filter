@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.validation.ValidationException;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +54,7 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
       senderAdeAckValidator.validate(adeAckResponse);
 
       senderAdeAckList = adeAckResponse.getBody();
-    } catch (FeignException | ResponseStatusException ex) {
+    } catch (FeignException | ResponseStatusException | ValidationException ex) {
       log.warn("Failed to download ade ack list! It will be downloaded on the next run.");
       // returns an empty list
       return new SenderAdeAckList();
