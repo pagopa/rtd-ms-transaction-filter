@@ -12,6 +12,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import javax.validation.ValidationException;
 import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,13 +41,26 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
 
   @Override
   public List<File> getSenderAdeAckFiles() throws IOException {
-    ResponseEntity<SenderAdeAckList> senderAdeAckResponse = hpanRestConnector.getSenderAdeAckList(
-        apiKey);
+    SenderAdeAckList adeAckList = retrieveAdeAckList();
 
-    senderAdeAckValidator.validate(senderAdeAckResponse);
+    return downloadFiles(adeAckList.getFileNameList());
+  }
 
-    SenderAdeAckList senderAdeAckDto = Objects.requireNonNull(senderAdeAckResponse.getBody());
-    return downloadFiles(senderAdeAckDto.getFileNameList());
+  private SenderAdeAckList retrieveAdeAckList() {
+    SenderAdeAckList senderAdeAckList;
+    try {
+      ResponseEntity<SenderAdeAckList> adeAckResponse = hpanRestConnector.getSenderAdeAckList(
+          apiKey);
+      senderAdeAckValidator.validate(adeAckResponse);
+
+      senderAdeAckList = adeAckResponse.getBody();
+    } catch (FeignException | ResponseStatusException | ValidationException ex) {
+      log.warn("Failed to download ade ack list! It will be downloaded on the next run.");
+      // returns an empty list
+      return new SenderAdeAckList();
+    }
+
+    return Objects.requireNonNull(senderAdeAckList);
   }
 
   private List<File> downloadFiles(List<String> fileNameList) throws IOException {
@@ -55,20 +70,14 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
     Path temporaryDirectory = Files.createTempDirectory(tempDir.toPath(), "senderAdeAck");
 
     for (String fileName : fileNameList) {
-      ResponseEntity<Resource> resourceResponseEntity = hpanRestConnector.getSenderAdeAckFile(
-          apiKey, fileName);
-
-      resourceValidator.validateStatus(resourceResponseEntity.getStatusCode());
-
-      Resource resource = resourceResponseEntity.getBody();
-      if (resource == null) {
-        log.warn("received empty file");
+      Optional<Resource> resource = downloadAdeAck(fileName);
+      if (!resource.isPresent()) {
         // skip to next file
         continue;
       }
 
       File tempFile = createTempFile(fileName, temporaryDirectory);
-      copyFromResourceToFile(resource, tempFile);
+      copyFromResourceToFile(resource.get(), tempFile);
 
       boolean isDownloadConfirmed = sendAckReceivedConfirmation(fileName);
       if (isDownloadConfirmed) {
@@ -87,6 +96,21 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
     return filesDownloaded;
   }
 
+  private Optional<Resource> downloadAdeAck(String fileName) {
+    Resource adeAckResource = null;
+    try {
+      ResponseEntity<Resource> resourceResponseEntity = hpanRestConnector.getSenderAdeAckFile(
+          apiKey, fileName);
+      resourceValidator.validateStatus(resourceResponseEntity.getStatusCode());
+
+      adeAckResource = resourceResponseEntity.getBody();
+    } catch (FeignException | ResponseStatusException ex) {
+      log.warn("Failed to download the ack: {}! It will be downloaded on the next run.", fileName);
+    }
+
+    return Optional.ofNullable(adeAckResource);
+  }
+
   private File createTempFile(@NotNull String filename, @NotNull Path directory)
       throws IOException {
     return Files.createFile(Paths.get(directory.toString()
@@ -96,8 +120,7 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
 
   private void copyFromResourceToFile(@NotNull Resource resource, @NotNull File file)
       throws IOException {
-    try (
-        FileOutputStream tempFileFOS = new FileOutputStream(file);
+    try (FileOutputStream tempFileFOS = new FileOutputStream(file);
         InputStream inputStream = resource.getInputStream()) {
       StreamUtils.copy(inputStream, tempFileFOS);
     }
@@ -108,7 +131,7 @@ public class SenderAdeAckRestClientImpl implements SenderAdeAckRestClient {
       ResponseEntity<Void> responseEntity = hpanRestConnector.putAckReceived(apiKey, fileName, "");
       resourceValidator.validateStatus(responseEntity.getStatusCode());
     } catch (FeignException | ResponseStatusException ex) {
-      log.error("Cannot confirm {} file download! It will be downloaded on the next run.", fileName);
+      log.warn("Cannot confirm {} file download! It will be downloaded on the next run.", fileName);
       return false;
     }
     return true;

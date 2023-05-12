@@ -75,4 +75,7 @@ else
 	exit 2
 fi
 
+rm -rf cstar-cli
+rm -rf workdir
+
 exit 0

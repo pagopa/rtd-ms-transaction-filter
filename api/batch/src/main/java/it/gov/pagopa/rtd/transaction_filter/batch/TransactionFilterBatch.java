@@ -333,7 +333,7 @@ public class TransactionFilterBatch {
                 .on(FAILED).to(fileManagementTask())
                 .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService, this.storeService))
                 .on("*").to(senderAdeAckFilesRecoveryTask())
-                .next(pendingStepDecider(sendPendingFilesStepEnabled))
+                .on("*").to(pendingStepDecider(sendPendingFilesStepEnabled))
                 .on(TRUE).to(transactionFilterStep.transactionSenderPendingMasterStep(this.hpanConnectorService))
                 .from(pendingStepDecider(sendPendingFilesStepEnabled))
                 .on(FALSE).to(fileManagementTask())
