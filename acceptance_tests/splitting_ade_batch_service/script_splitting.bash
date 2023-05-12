@@ -76,7 +76,7 @@ else
 fi
 
 # cli atm do not support chunk generation, it can be arranged like this:
-LOCAL_OUTPUT_DIFF=$(diff <(cat cstar-cli/generated/ADE.*expected | sort) <(cat workdir/output/ADE.*.csv | sort | tail -n +$N_CHUNKS))
+LOCAL_OUTPUT_DIFF=$(diff <(cat cstar-cli/generated/ADE.*expected | sort) <(cat workdir/output/ADE.*.csv | sort | tail -n +$((N_CHUNKS+1))))
 
 if [ -z "$LOCAL_OUTPUT_DIFF" ]
 then
