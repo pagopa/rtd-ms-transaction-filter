@@ -28,6 +28,7 @@ import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
+import jakarta.validation.ConstraintViolationException;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -41,17 +42,18 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import jakarta.validation.ConstraintViolationException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobScope;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.Partitioner;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.skip.SkipLimitExceededException;
+import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemWriter;
@@ -74,6 +76,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor", "readerTaskExecutor"})
@@ -167,7 +170,6 @@ public class TransactionFilterStep {
     private static final String DATE_FORMAT_FOR_FILENAME = "yyyyMMddHHmmssSSS";
 
     private final BatchConfig batchConfig;
-    private final StepBuilderFactory stepBuilderFactory;
     private ExecutorService writerExecutor;
 
     private PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -299,18 +301,24 @@ public class TransactionFilterStep {
      * partitioned for scalability on multiple files
      */
     @Bean
-    public Step encryptTransactionChunksMasterStep(StoreService storeService) {
-        return stepBuilderFactory.get("encrypt-transaction-chunks-master-step")
+    public Step encryptTransactionChunksMasterStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
+        return new StepBuilder("encrypt-transaction-chunks-master-step", jobRepository)
             .partitioner(encryptTransactionChunksWorkerStep(storeService))
             .partitioner(PARTITIONER_WORKER_STEP_NAME, outputRtdFilesPartitioner(storeService))
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
     @Bean
-    public Step encryptTransactionChunksWorkerStep(StoreService storeService) {
-        return stepBuilderFactory
-            .get("encrypt-transaction-chunks-worker-step")
-            .tasklet(getPGPEncrypterTasklet(null, storeService)).build();
+    public Step encryptTransactionChunksWorkerStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
+        return new StepBuilder("encrypt-transaction-chunks-worker-step", jobRepository)
+            .tasklet(getPGPEncrypterTasklet(null, storeService), transactionManager)
+            .build();
     }
 
     /**
@@ -395,8 +403,11 @@ public class TransactionFilterStep {
      * partitioned for scalability on multiple files
      */
     @Bean
-    public Step encryptAggregateChunksMasterStep(StoreService storeService) {
-        return stepBuilderFactory.get("encrypt-aggregate-chunks-master-step")
+    public Step encryptAggregateChunksMasterStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
+        return new StepBuilder("encrypt-aggregate-chunks-master-step", jobRepository)
             .partitioner(encryptAggregateChunksWorkerStep(storeService))
             .partitioner(PARTITIONER_WORKER_STEP_NAME, outputAdeFilesPartitioner(storeService))
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
@@ -439,10 +450,13 @@ public class TransactionFilterStep {
      * @return worker Step
      */
     @Bean
-    public Step encryptAggregateChunksWorkerStep(StoreService storeService) {
-        return stepBuilderFactory
-            .get("encrypt-aggregate-chunks-worker-step")
-            .tasklet(getPGPEncrypterTasklet(null, storeService)).build();
+    public Step encryptAggregateChunksWorkerStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
+        return new StepBuilder("encrypt-aggregate-chunks-worker-step", jobRepository)
+            .tasklet(getPGPEncrypterTasklet(null, storeService), transactionManager)
+            .build();
     }
 
     /**
@@ -470,9 +484,12 @@ public class TransactionFilterStep {
      * @return a step
      */
     @Bean
-    public Step fileReportRecoveryStep(FileReportRestClient restClient) {
-        return stepBuilderFactory.get("file-report-recovery-step")
-            .<FileMetadata, FileMetadata>chunk(chunkSize)
+    public Step fileReportRecoveryStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        FileReportRestClient restClient
+    ) {
+        return new StepBuilder("file-report-recovery-step", jobRepository)
+            .<FileMetadata, FileMetadata>chunk(chunkSize, transactionManager)
             .reader(fileReportReader(restClient))
             .writer(fileReportWriter())
             .faultTolerant()
@@ -535,9 +552,14 @@ public class TransactionFilterStep {
      * writing of the computed aggregations in a next dedicated step.
      */
     public class NoOpItemWriter implements ItemWriter<InboundTransaction> {
+//        @Override
+//        public void write(List<? extends InboundTransaction> list) throws Exception {
+//            // no-op
+//        }
+
         @Override
-        public void write(List<? extends InboundTransaction> list) throws Exception {
-            // no-op
+        public void write(Chunk<? extends InboundTransaction> chunk) throws Exception {
+
         }
     }
 
@@ -602,8 +624,12 @@ public class TransactionFilterStep {
      * @throws IOException
      */
     @Bean
-    public Step transactionFilterMasterStep(StoreService storeService, TransactionWriterService transactionWriterService) throws IOException {
-        return stepBuilderFactory.get("transaction-filter-master-step")
+    public Step transactionFilterMasterStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService,
+        TransactionWriterService transactionWriterService
+    ) throws IOException {
+        return new StepBuilder("transaction-filter-master-step", jobRepository)
                 .partitioner(transactionFilterWorkerStep(storeService, transactionWriterService))
                 .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner(storeService))
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
@@ -614,11 +640,15 @@ public class TransactionFilterStep {
      * using chunk processing for scalability
      */
     @Bean
-    public Step transactionFilterWorkerStep(StoreService storeService, TransactionWriterService transactionWriterService) {
+    public Step transactionFilterWorkerStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService,
+        TransactionWriterService transactionWriterService
+    ) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern(DATE_FORMAT_FOR_FILENAME);
         String executionDate = OffsetDateTime.now().format(fmt);
-        return stepBuilderFactory.get("transaction-filter-worker-step")
-                .<InboundTransaction, InboundTransaction>chunk(chunkSize)
+        return new StepBuilder("transaction-filter-worker-step", jobRepository)
+                .<InboundTransaction, InboundTransaction>chunk(chunkSize, transactionManager)
                 .reader(transactionItemReader(null))
                 .processor(transactionItemProcessor(storeService))
                 .writer(transactionMultiResourceItemWriter(null, storeService))
@@ -647,8 +677,11 @@ public class TransactionFilterStep {
      * @throws IOException
      */
     @Bean
-    public Step transactionAggregationReaderMasterStep(StoreService storeService, TransactionWriterService transactionWriterService) throws IOException {
-        return stepBuilderFactory.get("transaction-aggregation-reader-master-step")
+    public Step transactionAggregationReaderMasterStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService,
+        TransactionWriterService transactionWriterService) throws IOException {
+        return new StepBuilder("transaction-aggregation-reader-master-step", jobRepository)
             .partitioner(transactionAggregationReaderWorkerStep(storeService, transactionWriterService))
             .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner(storeService))
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
@@ -662,11 +695,15 @@ public class TransactionFilterStep {
      * @return the aggregation reader batch worker step
      */
     @Bean
-    public Step transactionAggregationReaderWorkerStep(StoreService storeService, TransactionWriterService transactionWriterService) {
+    public Step transactionAggregationReaderWorkerStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService,
+        TransactionWriterService transactionWriterService
+    ) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern(DATE_FORMAT_FOR_FILENAME);
         String executionDate = OffsetDateTime.now().format(fmt);
-        return stepBuilderFactory.get("transaction-aggregation-reader-worker-step")
-            .<InboundTransaction, InboundTransaction>chunk(chunkSize)
+        return new StepBuilder("transaction-aggregation-reader-worker-step", jobRepository)
+            .<InboundTransaction, InboundTransaction>chunk(chunkSize, transactionManager)
             .reader(transactionItemReader(null))
             .processor(transactionAggregationProcessor(storeService))
             .writer(new NoOpItemWriter())
@@ -694,8 +731,11 @@ public class TransactionFilterStep {
      * @throws IOException
      */
     @Bean
-    public Step transactionAggregationWriterMasterStep(StoreService storeService) throws IOException {
-        return stepBuilderFactory.get("transaction-aggregation-writer-master-step")
+    public Step transactionAggregationWriterMasterStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) throws IOException {
+        return new StepBuilder("transaction-aggregation-writer-master-step", jobRepository)
             .partitioner(transactionAggregationWriterWorkerStep(storeService))
             .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner(storeService))
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
@@ -708,9 +748,12 @@ public class TransactionFilterStep {
      * @return the aggregation writer batch worker step
      */
     @Bean
-    public Step transactionAggregationWriterWorkerStep(StoreService storeService) {
-        return stepBuilderFactory.get("transaction-aggregation-writer-worker-step")
-            .<AggregationKey, AdeTransactionsAggregate>chunk(chunkSize)
+    public Step transactionAggregationWriterWorkerStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
+        return new StepBuilder("transaction-aggregation-writer-worker-step", jobRepository)
+            .<AggregationKey, AdeTransactionsAggregate>chunk(chunkSize, transactionManager)
             .reader(mapItemReader(storeService))
             .processor(transactionAggregationWriterProcessor(storeService))
             .writer(transactionAggregateMultiResourceWriter(null, storeService))
@@ -856,14 +899,16 @@ public class TransactionFilterStep {
     /**
      * Master step for the upload of AdE transaction files.
      *
-     * @param hpanConnectorService
      * @return the AdE batch master step
      * @throws IOException
      */
     @Bean
-    public Step transactionSenderAdeMasterStep(HpanConnectorService hpanConnectorService,
-        StoreService storeService) throws IOException {
-        return stepBuilderFactory.get("transaction-sender-ade-master-step")
+    public Step transactionSenderAdeMasterStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        HpanConnectorService hpanConnectorService,
+        StoreService storeService
+    ) throws IOException {
+        return new StepBuilder("transaction-sender-ade-master-step", jobRepository)
             .partitioner(transactionSenderAdeWorkerStep(hpanConnectorService))
             .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderAdePartitioner(storeService))
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
@@ -872,21 +917,22 @@ public class TransactionFilterStep {
     /**
      * Worker step for the upload of AdE transaction files.
      *
-     * @param hpanConnectorService
      * @return the AdE batch worker step
      */
     @SneakyThrows
     @Bean
-    public Step transactionSenderAdeWorkerStep(HpanConnectorService hpanConnectorService) {
-        return stepBuilderFactory.get("transaction-sender-ade-worker-step").tasklet(
-            transactionSenderAdeTasklet(null, hpanConnectorService)).build();
+    public Step transactionSenderAdeWorkerStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        HpanConnectorService hpanConnectorService) {
+        return new StepBuilder("transaction-sender-ade-worker-step", jobRepository)
+            .tasklet(transactionSenderAdeTasklet(null, hpanConnectorService), transactionManager)
+            .build();
     }
 
     /**
      * Tasklet responsible for the upload of AdE transaction files via REST endpoints.
      *
      * @param file the file to upload remotely via REST
-     * @param hpanConnectorService
      * @return an instance configured for the upload of a specified file
      */
     @SneakyThrows
@@ -907,14 +953,16 @@ public class TransactionFilterStep {
     /**
      * Master step for the upload of RTD transaction files.
      *
-     * @param hpanConnectorService
      * @return the RTD batch master step
      * @throws IOException
      */
     @Bean
-    public Step transactionSenderRtdMasterStep(HpanConnectorService hpanConnectorService,
-        StoreService storeService) throws IOException {
-        return stepBuilderFactory.get("transaction-sender-rtd-master-step")
+    public Step transactionSenderRtdMasterStep(JobRepository jobRepository, 
+        PlatformTransactionManager transactionManager, 
+        HpanConnectorService hpanConnectorService,
+        StoreService storeService
+    ) throws IOException {
+        return new StepBuilder("transaction-sender-rtd-master-step", jobRepository)
                 .partitioner(transactionSenderRtdWorkerStep(hpanConnectorService))
                 .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderRtdPartitioner(storeService))
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
@@ -923,21 +971,23 @@ public class TransactionFilterStep {
     /**
      * Worker step for the upload of RTD transaction files.
      *
-     * @param hpanConnectorService
      * @return the RTD batch worker step
      */
     @SneakyThrows
     @Bean
-    public Step transactionSenderRtdWorkerStep(HpanConnectorService hpanConnectorService) {
-        return stepBuilderFactory.get("transaction-sender-rtd-worker-step").tasklet(
-                transactionSenderRtdTasklet(null, hpanConnectorService)).build();
+    public Step transactionSenderRtdWorkerStep(JobRepository jobRepository, 
+        PlatformTransactionManager transactionManager, 
+        HpanConnectorService hpanConnectorService
+    ) {
+        return new StepBuilder("transaction-sender-rtd-worker-step", jobRepository)
+            .tasklet(transactionSenderRtdTasklet(null, hpanConnectorService), transactionManager)
+            .build();
     }
 
     /**
      * Tasklet responsible for the upload of RTD transaction files via REST endpoints.
      *
      * @param file the file to upload remotely via REST
-     * @param hpanConnectorService
      * @return an instance configured for the upload of a specified file
      */
     @SneakyThrows
@@ -979,8 +1029,11 @@ public class TransactionFilterStep {
      * @throws IOException
      */
     @Bean
-    public Step transactionSenderPendingMasterStep(HpanConnectorService hpanConnectorService) throws IOException {
-        return stepBuilderFactory.get("transaction-sender-pending-master-step")
+    public Step transactionSenderPendingMasterStep(JobRepository jobRepository, 
+        PlatformTransactionManager transactionManager, 
+        HpanConnectorService hpanConnectorService
+    ) throws IOException {
+        return new StepBuilder("transaction-sender-pending-master-step", jobRepository)
             .partitioner(transactionSenderPendingWorkerStep(hpanConnectorService))
             .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionSenderPendingPartitioner())
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
@@ -994,9 +1047,13 @@ public class TransactionFilterStep {
      */
     @SneakyThrows
     @Bean
-    public Step transactionSenderPendingWorkerStep(HpanConnectorService hpanConnectorService) {
-        return stepBuilderFactory.get("transaction-sender-pending-worker-step").tasklet(
-            transactionSenderPendingTasklet(null, hpanConnectorService)).build();
+    public Step transactionSenderPendingWorkerStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        HpanConnectorService hpanConnectorService
+    ) {
+        return new StepBuilder("transaction-sender-pending-worker-step", jobRepository)
+            .tasklet(transactionSenderPendingTasklet(null, hpanConnectorService), transactionManager)
+            .build();
     }
 
     /**
@@ -1032,8 +1089,11 @@ public class TransactionFilterStep {
      * @throws IOException
      */
     @Bean
-    public Step transactionChecksumMasterStep(StoreService storeService) throws IOException {
-        return stepBuilderFactory.get("transaction-checksum-master-step")
+    public Step transactionChecksumMasterStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) throws IOException {
+        return new StepBuilder("transaction-checksum-master-step", jobRepository)
             .partitioner(transactionChecksumWorkerStep(storeService))
             .partitioner(PARTITIONER_WORKER_STEP_NAME, transactionFilterPartitioner(storeService))
             .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
@@ -1046,10 +1106,13 @@ public class TransactionFilterStep {
      * @return the hashing batch worker step
      */
     @Bean
-    public Step transactionChecksumWorkerStep(StoreService storeService)
-        throws MalformedURLException {
-        return stepBuilderFactory.get("transaction-checksum-worker-step").tasklet(
-            transactionChecksumTasklet(null, storeService)).build();
+    public Step transactionChecksumWorkerStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) throws MalformedURLException {
+        return new StepBuilder("transaction-checksum-worker-step", jobRepository)
+            .tasklet(transactionChecksumTasklet(null, storeService), transactionManager)
+            .build();
     }
 
     /**

@@ -35,12 +35,14 @@ import org.springframework.batch.core.configuration.annotation.EnableBatchProces
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.job.builder.FlowJobBuilder;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -274,10 +276,9 @@ public class TransactionFilterBatch {
      * for the pan/transaction processing
      */
     @SneakyThrows
-    public FlowJobBuilder transactionJobBuilder() {
+    public FlowJobBuilder transactionJobBuilder(JobRepository jobRepository) {
 
-        return jobBuilderFactory.get("transaction-filter-job")
-                .repository(getJobRepository())
+        return new JobBuilder("transaction-filter-job", jobRepository)
                 .listener(jobListener())
                 .start(pagopaPublicKeyRecoveryTask(this.storeService))
                 .on(FAILED).end()
@@ -368,7 +369,9 @@ public class TransactionFilterBatch {
     }
 
     @Bean
-    public Step hpanListRecoveryTask() {
+    public Step hpanListRecoveryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager
+    ) {
         HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
         hpanListRecoveryTasklet.setHpanListDirectory(hpanListDirectory);
         hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
@@ -376,83 +379,113 @@ public class TransactionFilterBatch {
         hpanListRecoveryTasklet.setHpanFilePattern(hpanListRecoveryFilePattern);
         hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(hpanListDailyRemovalEnabled);
         hpanListRecoveryTasklet.setRecoveryTaskletEnabled(hpanListRecoveryEnabled);
-        return stepBuilderFactory
-                .get("transaction-filter-salt-hpan-list-recovery-step")
-                .tasklet(hpanListRecoveryTasklet).build();
+        return new StepBuilder("transaction-filter-salt-hpan-list-recovery-step", jobRepository)
+                .tasklet(hpanListRecoveryTasklet, transactionManager)
+                .build();
     }
 
     @Bean
-    public Step saltRecoveryTask(StoreService storeService) {
+    public Step saltRecoveryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         SaltRecoveryTasklet saltRecoveryTasklet = new SaltRecoveryTasklet();
         saltRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
         saltRecoveryTasklet.setStoreService(storeService);
         saltRecoveryTasklet.setTaskletEnabled(saltRecoveryEnabled);
-        return stepBuilderFactory.get("transaction-filter-salt-recovery-step")
-                .tasklet(saltRecoveryTasklet).build();
+        return new StepBuilder("transaction-filter-salt-recovery-step", jobRepository)
+                .tasklet(saltRecoveryTasklet, transactionManager)
+                .build();
     }
 
     @Bean
-    public Step pagopaPublicKeyRecoveryTask(StoreService storeService) {
+    public Step pagopaPublicKeyRecoveryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         PagopaPublicKeyRecoveryTasklet pagopaPublicKeyRecoveryTasklet = new PagopaPublicKeyRecoveryTasklet();
         pagopaPublicKeyRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
         pagopaPublicKeyRecoveryTasklet.setStoreService(storeService);
         pagopaPublicKeyRecoveryTasklet.setTaskletEnabled(pagopaPublicKeyRecoveryEnabled);
-        return stepBuilderFactory.get("transaction-filter-public-key-recovery-step")
-                .tasklet(pagopaPublicKeyRecoveryTasklet).build();
+        return new StepBuilder("transaction-filter-public-key-recovery-step", jobRepository)
+            .tasklet(pagopaPublicKeyRecoveryTasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step purgeAggregatesFromMemoryTask(StoreService storeService) {
+    public Step purgeAggregatesFromMemoryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         PurgeAggregatesFromMemoryTasklet tasklet = new PurgeAggregatesFromMemoryTasklet();
         tasklet.setStoreService(storeService);
-        return stepBuilderFactory.get("transaction-filter-purge-aggregates-from-memory-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("transaction-filter-purge-aggregates-from-memory-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step selectTargetInputFileTask(StoreService storeService) {
+    public Step selectTargetInputFileTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         SelectTargetInputFileTasklet tasklet = new SelectTargetInputFileTasklet();
         tasklet.setStoreService(storeService);
         tasklet.setTransactionDirectoryPath(transactionFilterStep.getTransactionDirectoryPath());
-        return stepBuilderFactory.get("transaction-filter-select-target-input-file-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("transaction-filter-select-target-input-file-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step enforceSenderCodeUniquenessTask(StoreService storeService) {
+    public Step enforceSenderCodeUniquenessTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         EnforceSenderCodeUniquenessTasklet tasklet = new EnforceSenderCodeUniquenessTasklet();
         tasklet.setStoreService(storeService);
-        return stepBuilderFactory.get("transaction-filter-enforce-uniqueness-sender-code-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("transaction-filter-enforce-uniqueness-sender-code-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step preventReprocessingFilenameAlreadySeenTask(StoreService storeService, TransactionWriterService transactionWriterService) {
+    public Step preventReprocessingFilenameAlreadySeenTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService,
+        TransactionWriterService transactionWriterService
+    ) {
         PreventReprocessingFilenameAlreadySeenTasklet tasklet = new PreventReprocessingFilenameAlreadySeenTasklet();
         tasklet.setStoreService(storeService);
         tasklet.setTransactionWriterService(transactionWriterService);
-        return stepBuilderFactory.get("prevent-reprocessing-filename-already-seen-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("prevent-reprocessing-filename-already-seen-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step abiToFiscalCodeMapRecoveryTask(StoreService storeService) {
+    public Step abiToFiscalCodeMapRecoveryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         AbiToFiscalCodeMapRecoveryTasklet tasklet = new AbiToFiscalCodeMapRecoveryTasklet(abiToFiscalCodeRestClient, storeService);
         tasklet.setTaskletEnabled(abiToFiscalCodeTaskletEnabled);
-        return stepBuilderFactory
-            .get("transaction-filter-abi-to-fiscalcode-recovery-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("transaction-filter-abi-to-fiscalcode-recovery-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step senderAdeAckFilesRecoveryTask() {
+    public Step senderAdeAckFilesRecoveryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager
+    ) {
         SenderAdeAckFilesRecoveryTasklet tasklet = new SenderAdeAckFilesRecoveryTasklet(senderAdeAckRestClient);
         tasklet.setSenderAdeAckDirectory(senderAdeAckFilesDirectoryPath);
         tasklet.setTaskletEnabled(senderAdeAckFilesTaskletEnabled);
 
-        return stepBuilderFactory
-            .get("transaction-filter-sender-ade-ack-files-recovery-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("transaction-filter-sender-ade-ack-files-recovery-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     /**
@@ -461,7 +494,7 @@ public class TransactionFilterBatch {
      */
     @SneakyThrows
     @Bean
-    public Step fileManagementTask() {
+    public Step fileManagementTask(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         FileManagementTasklet fileManagementTasklet = new FileManagementTasklet();
         fileManagementTasklet.setTransactionWriterService(transactionWriterService);
         fileManagementTasklet.setSuccessPath(successArchivePath);
@@ -473,8 +506,9 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
         fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
         fileManagementTasklet.setLogsDirectory(logsDirectoryPath);
-        return stepBuilderFactory.get("transaction-filter-file-management-step")
-                .tasklet(fileManagementTasklet).build();
+        return new StepBuilder("transaction-filter-file-management-step", jobRepository)
+                .tasklet(fileManagementTasklet, transactionManager)
+                .build();
     }
 
 }
