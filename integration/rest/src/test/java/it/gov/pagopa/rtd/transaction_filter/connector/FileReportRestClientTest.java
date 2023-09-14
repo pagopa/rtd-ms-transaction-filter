@@ -19,7 +19,7 @@ import it.gov.pagopa.rtd.transaction_filter.validator.ValidatorConfig;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
 import org.junit.After;

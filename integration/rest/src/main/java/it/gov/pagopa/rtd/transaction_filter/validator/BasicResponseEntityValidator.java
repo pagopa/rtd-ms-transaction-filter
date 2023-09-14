@@ -1,16 +1,16 @@
 package it.gov.pagopa.rtd.transaction_filter.validator;
 
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ValidationException;
+import jakarta.validation.Validator;
+import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
 import java.util.Set;
-import javax.validation.ConstraintViolation;
-import javax.validation.ValidationException;
-import javax.validation.Validator;
-import javax.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,7 +34,7 @@ public class BasicResponseEntityValidator<T> implements ResponseEntityValidator<
   }
 
   @Override
-  public void validateStatus(HttpStatus statusCode) {
+  public void validateStatus(HttpStatusCode statusCode) {
     if (!statusCode.is2xxSuccessful()) {
       throw new ResponseStatusException(statusCode);
     }

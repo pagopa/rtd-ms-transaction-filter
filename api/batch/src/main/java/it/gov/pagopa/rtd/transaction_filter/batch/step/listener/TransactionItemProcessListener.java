@@ -4,7 +4,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
 import java.util.Optional;
-import javax.validation.ConstraintViolationException;
+import jakarta.validation.ConstraintViolationException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.validator;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
