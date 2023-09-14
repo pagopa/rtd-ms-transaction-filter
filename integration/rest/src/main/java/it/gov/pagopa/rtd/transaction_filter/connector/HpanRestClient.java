@@ -17,7 +17,7 @@ public interface HpanRestClient {
 
       String getPublicKey();
 
-      Void uploadFile(File fileToUpload, String sas, String authorizedContainer);
+      void uploadFile(File fileToUpload, String sas, String authorizedContainer);
 
       void cleanTempFile();
 
