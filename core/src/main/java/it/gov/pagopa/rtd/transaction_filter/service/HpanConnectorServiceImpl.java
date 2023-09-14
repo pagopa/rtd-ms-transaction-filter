@@ -39,8 +39,8 @@ public class HpanConnectorServiceImpl implements HpanConnectorService {
     }
 
     @Override
-    public Void uploadFile(File fileToUpload, String sas, String authorizedContainer) {
-        return hpanRestClient.uploadFile(fileToUpload, sas, authorizedContainer);
+    public void uploadFile(File fileToUpload, String sas, String authorizedContainer) {
+        hpanRestClient.uploadFile(fileToUpload, sas, authorizedContainer);
     }
 
     @Override

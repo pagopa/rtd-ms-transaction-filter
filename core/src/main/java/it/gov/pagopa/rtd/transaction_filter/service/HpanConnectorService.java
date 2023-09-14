@@ -38,11 +38,11 @@ public interface HpanConnectorService {
     /**
      * Method to be called to upload a transaction to a remote storage exposed via REST.
      *
-     * @param fileToUpload the file to upload
-     * @param sas the SAS token string
+     * @param fileToUpload        the file to upload
+     * @param sas                 the SAS token string
      * @param authorizedContainer the container authorized by the SAS token
      */
-    Void uploadFile(File fileToUpload, String sas, String authorizedContainer);
+    void uploadFile(File fileToUpload, String sas, String authorizedContainer);
 
     /**
      * Method to clean all temporary files.
