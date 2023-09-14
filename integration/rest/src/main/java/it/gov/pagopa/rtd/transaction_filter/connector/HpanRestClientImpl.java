@@ -16,7 +16,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.net.ssl.SSLContext;
@@ -25,27 +24,27 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.cookie.StandardCookieSpec;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
 import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.http.io.entity.FileEntity;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
 import org.apache.hc.core5.http.message.BasicHeader;
 import org.apache.hc.core5.http.ssl.TLS;
 import org.apache.hc.core5.pool.PoolConcurrencyPolicy;
 import org.apache.hc.core5.pool.PoolReusePolicy;
-import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.TimeValue;
 import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -252,20 +251,29 @@ class HpanRestClientImpl implements HpanRestClient {
 
     SSLContext sslContext = hpanRestConnectorConfig.getSSLContext();
 
-    HttpClientBuilder httpClientBuilder = HttpClients.custom()
-        .setSSLSocketFactory(new SSLConnectionSocketFactory(
-            sslContext,
-            new String[] { "TLSv1.2" },
-            null,
-            SSLConnectionSocketFactory.getDefaultHostnameVerifier()))
-        .setConnectionTimeToLive(1, TimeUnit.MINUTES) // todo fix ttl
-        .setDefaultSocketConfig(SocketConfig.custom() // todo fix socket timeout
-            .setSoTimeout(60000)
+    // todo connection manager to move into config class?
+    // todo tuning timeouts
+    PoolingHttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+        .setSSLSocketFactory(SSLConnectionSocketFactoryBuilder.create()
+            .setSslContext(sslContext)
+            .setTlsVersions(TLS.V_1_3)
             .build())
-        .setDefaultRequestConfig(RequestConfig.custom() // todo fix socket & connect timeout
-            .setConnectTimeout(60000)
-            .setSocketTimeout(60000)
-            .setCookieSpec(CookieSpecs.STANDARD_STRICT)
+        .setDefaultSocketConfig(SocketConfig.custom()
+            .setSoTimeout(Timeout.ofMinutes(1))
+            .build())
+        .setPoolConcurrencyPolicy(PoolConcurrencyPolicy.STRICT)
+        .setConnPoolPolicy(PoolReusePolicy.LIFO)
+        .setDefaultConnectionConfig(ConnectionConfig.custom()
+            .setSocketTimeout(Timeout.ofMinutes(1))
+            .setConnectTimeout(Timeout.ofMinutes(1))
+            .setTimeToLive(TimeValue.ofMinutes(10))
+            .build())
+        .build();
+
+    HttpClientBuilder httpClientBuilder = HttpClients.custom()
+        .setConnectionManager(connectionManager)
+        .setDefaultRequestConfig(RequestConfig.custom()
+            .setCookieSpec(StandardCookieSpec.STRICT)
             .build())
         .setDefaultHeaders(headers);
 
@@ -278,18 +286,17 @@ class HpanRestClientImpl implements HpanRestClient {
     String uri =
         baseUrl + "/" + storageName + "/" + authorizedContainer + "/" + fileToUpload.getName()
             + "?" + sas;
-    final HttpPut httpput = new HttpPut(uri);
+    final ClassicHttpRequest httpPut = ClassicRequestBuilder.put(uri)
+        .setEntity(new FileEntity(fileToUpload,
+            ContentType.APPLICATION_OCTET_STREAM))
+        .build();
 
-    FileEntity entity = new FileEntity(fileToUpload,
-        ContentType.create("application/octet-stream"));
-    httpput.setEntity(entity);
-
-    httpclient.execute(httpput, response -> {
-      if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
-        handleErrorStatus(response.getStatusLine().getStatusCode(), fileToUpload.getName());
+    httpclient.execute(httpPut, response -> {
+      if (response.getCode() != HttpStatus.SC_CREATED) {
+        handleErrorStatus(response.getCode(), fileToUpload.getName());
       } else {
         log.info("File {} uploaded with success (status was: {})", fileToUpload.getName(),
-            response.getStatusLine().getStatusCode());
+            response.getCode());
       }
       return null;
     });
