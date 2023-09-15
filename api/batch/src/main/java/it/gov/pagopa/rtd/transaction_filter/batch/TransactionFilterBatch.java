@@ -37,7 +37,7 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.launch.support.SimpleJobLauncher;
+import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -130,55 +130,54 @@ public class TransactionFilterBatch {
     private DataSource dataSource;
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-    public void clearStoreService() {
-        storeService.clearAll();
-    }
-
-    /**
-     *
-     * @return Method to start the execution of the transaction filter job
-     * @param startDate starting date for the batch job execution
-     */
-    @SneakyThrows
-    public JobExecution executeBatchJob(Date startDate) {
-        Resource[] transactionResources = resolver.getResources(transactionFilterStep.getTransactionDirectoryPath() + "/*.csv");
-        transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
-
-        String hpanPath = panReaderStep.getHpanDirectoryPath();
-        Resource[] hpanResources = resolver.getResources(hpanPath);
-
-        JobExecution execution = null;
-
-        /*
-          The jobLauncher run method is called only if, based on the configured properties, a matching transaction
-          resource is found, and either the remote pan list recovery is enabled, or a pan list file is available locally
-          on the configured path
-         */
-        if (transactionResources.length > 0 &&
-                (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
-
-            log.info("Found {} {}. Starting filtering process",
-                    transactionResources.length, (transactionResources.length > 1 ? "resources" : "resource")
-            );
-
-            execution = jobLauncher().run(job(),
-                    new JobParametersBuilder()
-                            .addDate("startDateTime", startDate)
-                            .toJobParameters());
-            clearStoreService();
-
-        } else {
-            if (transactionResources.length == 0) {
-                log.info("No transaction file has been found on configured path: {}", transactionFilterStep.getTransactionDirectoryPath());
-            }
-            if (!getHpanListRecoveryEnabled() && hpanResources.length==0) {
-                log.info("No hpan file has been found on configured path: {}", hpanPath);
-            }
-        }
-
-        return execution;
-
-    }
+//    public void clearStoreService() {
+//        storeService.clearAll();
+//    }
+//
+//    /**
+//     *
+//     * @return Method to start the execution of the transaction filter job
+//     * @param startDate starting date for the batch job execution
+//     */
+//    @SneakyThrows
+//    public JobExecution executeBatchJob(Date startDate) {
+//        Resource[] transactionResources = resolver.getResources(transactionFilterStep.getTransactionDirectoryPath() + "/*.csv");
+//        transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
+//
+//        String hpanPath = panReaderStep.getHpanDirectoryPath();
+//        Resource[] hpanResources = resolver.getResources(hpanPath);
+//
+//        JobExecution execution = null;
+//
+//        /*
+//          The jobLauncher run method is called only if, based on the configured properties, a matching transaction
+//          resource is found, and either the remote pan list recovery is enabled, or a pan list file is available locally
+//          on the configured path
+//         */
+//        if (transactionResources.length > 0 &&
+//                (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
+//
+//            log.info("Found {} {}. Starting filtering process",
+//                    transactionResources.length, (transactionResources.length > 1 ? "resources" : "resource")
+//            );
+//
+//            execution = jobLauncher().run(job(),
+//                    new JobParametersBuilder()
+//                            .addDate("startDateTime", startDate)
+//                            .toJobParameters());
+//            clearStoreService();
+//
+//        } else {
+//            if (transactionResources.length == 0) {
+//                log.info("No transaction file has been found on configured path: {}", transactionFilterStep.getTransactionDirectoryPath());
+//            }
+//            if (!getHpanListRecoveryEnabled() && hpanResources.length==0) {
+//                log.info("No hpan file has been found on configured path: {}", hpanPath);
+//            }
+//        }
+//
+//        return execution;
+//    }
 
     /**
      *
@@ -218,9 +217,9 @@ public class TransactionFilterBatch {
      */
     @Bean
     public JobLauncher jobLauncher() throws Exception {
-        SimpleJobLauncher simpleJobLauncher = new SimpleJobLauncher();
-        simpleJobLauncher.setJobRepository(getJobRepository());
-        return simpleJobLauncher;
+        TaskExecutorJobLauncher jobLauncher = new TaskExecutorJobLauncher();
+        jobLauncher.setJobRepository(getJobRepository());
+        return jobLauncher;
     }
 
     /**
@@ -229,8 +228,8 @@ public class TransactionFilterBatch {
      */
     @SneakyThrows
     @Bean
-    public Job job() {
-        return transactionJobBuilder().build();
+    public Job job(FlowJobBuilder jobBuilder) {
+        return jobBuilder.build();
     }
 
     /**
