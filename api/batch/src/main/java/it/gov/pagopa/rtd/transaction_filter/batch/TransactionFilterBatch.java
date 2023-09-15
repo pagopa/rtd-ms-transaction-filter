@@ -32,8 +32,6 @@ import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.job.builder.FlowJobBuilder;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
@@ -75,8 +73,6 @@ public class TransactionFilterBatch {
 
     private final TransactionFilterStep transactionFilterStep;
     private final PanReaderStep panReaderStep;
-    private final JobBuilderFactory jobBuilderFactory;
-    private final StepBuilderFactory stepBuilderFactory;
     private final HpanConnectorService hpanConnectorService;
     private final AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
     private final SenderAdeAckRestClient senderAdeAckRestClient;
@@ -276,70 +272,93 @@ public class TransactionFilterBatch {
      * for the pan/transaction processing
      */
     @SneakyThrows
-    public FlowJobBuilder transactionJobBuilder(JobRepository jobRepository) {
+    public FlowJobBuilder transactionJobBuilder(JobRepository jobRepository,
+        Step pagopaPublicKeyRecoveryTask,
+        JobExecutionDecider fileReportStepDecider,
+        Step fileReportRecoveryStep,
+        Step selectTargetInputFileTask,
+        Step preventReprocessingFilenameAlreadySeenTask,
+        Step transactionChecksumMasterStep,
+        Step abiToFiscalCodeMapRecoveryTask,
+        Step transactionAggregationReaderMasterStep,
+        Step enforceSenderCodeUniquenessTask,
+        Step transactionAggregationWriterMasterStep,
+        Step encryptAggregateChunksMasterStep,
+        Step purgeAggregatesFromMemoryTask,
+        Step transactionSenderAdeMasterStep,
+        Step hpanListRecoveryTask,
+        Step saltRecoveryTask,
+        Step hpanRecoveryMasterStep,
+        Step transactionFilterMasterStep,
+        Step encryptTransactionChunksMasterStep,
+        Step transactionSenderRtdMasterStep,
+        Step senderAdeAckFilesRecoveryTask,
+        JobExecutionDecider pendingStepDecider,
+        Step transactionSenderPendingMasterStep,
+        Step fileManagementTask) {
 
         return new JobBuilder("transaction-filter-job", jobRepository)
                 .listener(jobListener())
-                .start(pagopaPublicKeyRecoveryTask(this.storeService))
+                .start(pagopaPublicKeyRecoveryTask)
                 .on(FAILED).end()
-                .on("*").to(fileReportStepDecider(fileReportRecoveryEnabled))
-                .on(TRUE).to(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
-                .from(fileReportStepDecider(fileReportRecoveryEnabled))
-                .on(FALSE).to(selectTargetInputFileTask(this.storeService))
-                .from(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
-                .on("*").to(selectTargetInputFileTask(this.storeService))
+                .on("*").to(fileReportStepDecider)
+                .on(TRUE).to(fileReportRecoveryStep)
+                .from(fileReportStepDecider)
+                .on(FALSE).to(selectTargetInputFileTask)
+                .from(fileReportRecoveryStep)
+                .on("*").to(selectTargetInputFileTask)
                 .on(FAILED).end()
-                .on("*").to(preventReprocessingFilenameAlreadySeenTask(this.storeService, this.transactionWriterService))
+                .on("*").to(preventReprocessingFilenameAlreadySeenTask)
                 .on(FAILED).end()
-                .from(preventReprocessingFilenameAlreadySeenTask(this.storeService, this.transactionWriterService))
-                .on("*").to(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
+                .from(preventReprocessingFilenameAlreadySeenTask)
+                .on("*").to(transactionChecksumMasterStep)
                 .on(FAILED).end()
-                .from(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
-                .on("*").to(abiToFiscalCodeMapRecoveryTask(this.storeService))
+                .from(transactionChecksumMasterStep)
+                .on("*").to(abiToFiscalCodeMapRecoveryTask)
                 .on(FAILED).end()
-                .from(abiToFiscalCodeMapRecoveryTask(this.storeService))
-                .on("*").to(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
-                .on("*").to(enforceSenderCodeUniquenessTask(this.storeService))
+                .from(abiToFiscalCodeMapRecoveryTask)
+                .on("*").to(transactionAggregationReaderMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionAggregationReaderMasterStep)
+                .on("*").to(enforceSenderCodeUniquenessTask)
                 .on(FAILED).end()
-                .from(enforceSenderCodeUniquenessTask(this.storeService))
-                .on("*").to(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
-                .on("*").to(transactionFilterStep.encryptAggregateChunksMasterStep(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.encryptAggregateChunksMasterStep(this.storeService))
-                .on("*").to(purgeAggregatesFromMemoryTask(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(purgeAggregatesFromMemoryTask(this.storeService))
-                .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService, this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService, this.storeService))
-                .on("*").to(hpanListRecoveryTask())
-                .on(FAILED).to(fileManagementTask())
-                .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(saltRecoveryTask(this.storeService))
-                .on("*").to(panReaderStep.hpanRecoveryMasterStep(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(panReaderStep.hpanRecoveryMasterStep(this.storeService))
-                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.storeService, this.transactionWriterService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterMasterStep(this.storeService, this.transactionWriterService))
-                .on("*").to(transactionFilterStep.encryptTransactionChunksMasterStep(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.encryptTransactionChunksMasterStep(this.storeService))
-                .on("*").to(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService, this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService, this.storeService))
-                .on("*").to(senderAdeAckFilesRecoveryTask())
-                .on("*").to(pendingStepDecider(sendPendingFilesStepEnabled))
-                .on(TRUE).to(transactionFilterStep.transactionSenderPendingMasterStep(this.hpanConnectorService))
-                .from(pendingStepDecider(sendPendingFilesStepEnabled))
-                .on(FALSE).to(fileManagementTask())
-                .from(transactionFilterStep.transactionSenderPendingMasterStep(this.hpanConnectorService))
-                .on("*").to(fileManagementTask())
+                .from(enforceSenderCodeUniquenessTask)
+                .on("*").to(transactionAggregationWriterMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionAggregationWriterMasterStep)
+                .on("*").to(encryptAggregateChunksMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(encryptAggregateChunksMasterStep)
+                .on("*").to(purgeAggregatesFromMemoryTask)
+                .on(FAILED).to(fileManagementTask)
+                .from(purgeAggregatesFromMemoryTask)
+                .on("*").to(transactionSenderAdeMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionSenderAdeMasterStep)
+                .on("*").to(hpanListRecoveryTask)
+                .on(FAILED).to(fileManagementTask)
+                .from(hpanListRecoveryTask).on("*").to(saltRecoveryTask)
+                .on(FAILED).to(fileManagementTask)
+                .from(saltRecoveryTask)
+                .on("*").to(hpanRecoveryMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(hpanRecoveryMasterStep)
+                .on("*").to(transactionFilterMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionFilterMasterStep)
+                .on("*").to(encryptTransactionChunksMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(encryptTransactionChunksMasterStep)
+                .on("*").to(transactionSenderRtdMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionSenderRtdMasterStep)
+                .on("*").to(senderAdeAckFilesRecoveryTask)
+                .on("*").to(pendingStepDecider)
+                .on(TRUE).to(transactionSenderPendingMasterStep)
+                .from(pendingStepDecider)
+                .on(FALSE).to(fileManagementTask)
+                .from(transactionSenderPendingMasterStep)
+                .on("*").to(fileManagementTask)
                 .build();
     }
 
