@@ -20,7 +20,6 @@ import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
-import java.util.Date;
 import javax.sql.DataSource;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +27,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -47,8 +45,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -57,7 +53,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 /**
  * <p>
  * Batch responsible for the filtering and secure transmission of transaction files provided by the acquirers.
- * @see TransactionFilterBatch#transactionJobBuilder() for the actual flow definition.
+ * @see TransactionFilterBatch#transactionJobBuilder(JobRepository, Step, JobExecutionDecider, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, JobExecutionDecider, Step, Step) () for the actual flow definition.
  * </p>
  *
  */
@@ -128,56 +124,6 @@ public class TransactionFilterBatch {
     private static final String FALSE = Boolean.FALSE.toString();
     private static final String TRUE = Boolean.TRUE.toString();
     private DataSource dataSource;
-    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-
-//    public void clearStoreService() {
-//        storeService.clearAll();
-//    }
-//
-//    /**
-//     *
-//     * @return Method to start the execution of the transaction filter job
-//     * @param startDate starting date for the batch job execution
-//     */
-//    @SneakyThrows
-//    public JobExecution executeBatchJob(Date startDate) {
-//        Resource[] transactionResources = resolver.getResources(transactionFilterStep.getTransactionDirectoryPath() + "/*.csv");
-//        transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
-//
-//        String hpanPath = panReaderStep.getHpanDirectoryPath();
-//        Resource[] hpanResources = resolver.getResources(hpanPath);
-//
-//        JobExecution execution = null;
-//
-//        /*
-//          The jobLauncher run method is called only if, based on the configured properties, a matching transaction
-//          resource is found, and either the remote pan list recovery is enabled, or a pan list file is available locally
-//          on the configured path
-//         */
-//        if (transactionResources.length > 0 &&
-//                (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
-//
-//            log.info("Found {} {}. Starting filtering process",
-//                    transactionResources.length, (transactionResources.length > 1 ? "resources" : "resource")
-//            );
-//
-//            execution = jobLauncher().run(job(),
-//                    new JobParametersBuilder()
-//                            .addDate("startDateTime", startDate)
-//                            .toJobParameters());
-//            clearStoreService();
-//
-//        } else {
-//            if (transactionResources.length == 0) {
-//                log.info("No transaction file has been found on configured path: {}", transactionFilterStep.getTransactionDirectoryPath());
-//            }
-//            if (!getHpanListRecoveryEnabled() && hpanResources.length==0) {
-//                log.info("No hpan file has been found on configured path: {}", hpanPath);
-//            }
-//        }
-//
-//        return execution;
-//    }
 
     /**
      *
