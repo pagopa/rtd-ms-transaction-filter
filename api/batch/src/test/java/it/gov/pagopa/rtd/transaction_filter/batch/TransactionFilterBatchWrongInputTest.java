@@ -51,7 +51,8 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
         TestConfig.class,
         JacksonAutoConfiguration.class,
         TransactionFilterBatch.class,
-        FeignAutoConfiguration.class
+        FeignAutoConfiguration.class,
+        BatchExecutor.class
 })
 @TestPropertySource(
         properties = {
