@@ -130,7 +130,7 @@ public class TransactionFilterBatch {
      * @return configured instance of TransactionManager
      */
     @Bean
-    public PlatformTransactionManager getTransactionManager() {
+    public PlatformTransactionManager transactionManager() {
         DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
         dataSourceTransactionManager.setDataSource(dataSource);
         return dataSourceTransactionManager;
@@ -143,9 +143,9 @@ public class TransactionFilterBatch {
      *  exception description
      */
     @Bean
-    public JobRepository getJobRepository() throws Exception {
+    public JobRepository jobRepository(PlatformTransactionManager transactionManager) throws Exception {
             JobRepositoryFactoryBean jobRepositoryFactoryBean = new JobRepositoryFactoryBean();
-            jobRepositoryFactoryBean.setTransactionManager(getTransactionManager());
+            jobRepositoryFactoryBean.setTransactionManager(transactionManager);
             jobRepositoryFactoryBean.setTablePrefix(tablePrefix);
             jobRepositoryFactoryBean.setDataSource(dataSource);
             jobRepositoryFactoryBean.afterPropertiesSet();
@@ -158,13 +158,12 @@ public class TransactionFilterBatch {
     /**
      *
      * @return configured instance of JobLauncher
-     * @throws Exception
      *  exception description
      */
     @Bean
-    public JobLauncher jobLauncher() throws Exception {
+    public JobLauncher jobLauncher(JobRepository jobRepository) {
         TaskExecutorJobLauncher jobLauncher = new TaskExecutorJobLauncher();
-        jobLauncher.setJobRepository(getJobRepository());
+        jobLauncher.setJobRepository(jobRepository);
         return jobLauncher;
     }
 
@@ -216,6 +215,7 @@ public class TransactionFilterBatch {
      * @return Instance of {@link FlowJobBuilder}, with the configured steps executed
      * for the pan/transaction processing
      */
+    @Bean
     @SneakyThrows
     public FlowJobBuilder transactionJobBuilder(JobRepository jobRepository,
         Step pagopaPublicKeyRecoveryTask,
@@ -315,17 +315,16 @@ public class TransactionFilterBatch {
     /**
      * Returns a Decider utilized to alter the job flow based on a condition. Status returned is "TRUE"
      * if the boolean parameter is true, "FALSE" otherwise.
-     * @param enabled boolean value
      * @return a job execution decider
      */
     @Bean
-    public JobExecutionDecider fileReportStepDecider(Boolean enabled) {
-        return (JobExecution jobExecution, StepExecution stepExecution) -> decider(enabled);
+    public JobExecutionDecider fileReportStepDecider() {
+        return (JobExecution jobExecution, StepExecution stepExecution) -> decider(fileReportRecoveryEnabled);
     }
 
     @Bean
-    public JobExecutionDecider pendingStepDecider(Boolean enabled) {
-        return (JobExecution jobExecution, StepExecution stepExecution) -> decider(enabled);
+    public JobExecutionDecider pendingStepDecider() {
+        return (JobExecution jobExecution, StepExecution stepExecution) -> decider(sendPendingFilesStepEnabled);
     }
 
     FlowExecutionStatus decider(Boolean enabled) {
