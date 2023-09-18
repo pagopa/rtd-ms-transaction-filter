@@ -241,8 +241,8 @@ class HpanRestClientImpl implements HpanRestClient {
   }
 
   @Override
-  @SneakyThrows
-  public void uploadFile(File fileToUpload, String sas, String authorizedContainer) {
+  public void uploadFile(File fileToUpload, String sas, String authorizedContainer)
+      throws IOException {
 
     List<Header> headers = new ArrayList<>();
     headers.add(new BasicHeader("Ocp-Apim-Subscription-Key", apiKey));

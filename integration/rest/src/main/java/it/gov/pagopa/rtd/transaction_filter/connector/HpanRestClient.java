@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.connector;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
 * Interface for the REST Client used for recovering the PAN list and the salt
@@ -17,7 +18,7 @@ public interface HpanRestClient {
 
       String getPublicKey();
 
-      void uploadFile(File fileToUpload, String sas, String authorizedContainer);
+      void uploadFile(File fileToUpload, String sas, String authorizedContainer) throws IOException;
 
       void cleanTempFile();
 
