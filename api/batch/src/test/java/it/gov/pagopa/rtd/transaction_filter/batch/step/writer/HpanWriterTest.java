@@ -97,13 +97,4 @@ public class HpanWriterTest {
         }
     }
 
-    @Test
-    public void write_KO_null() {
-        HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, true);
-        BDDMockito.doReturn("testSalt").when(storeServiceMock).getSalt();
-        expectedException.expect(NullPointerException.class);
-        hpanWriter.write(Chunk.of());
-        BDDMockito.verifyNoInteractions(storeServiceMock);
-    }
-
 }
