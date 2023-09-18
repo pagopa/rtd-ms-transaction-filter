@@ -4,15 +4,18 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
+import org.springframework.batch.item.Chunk;
 
 public class HpanWriterTest {
 
@@ -44,7 +47,7 @@ public class HpanWriterTest {
             BDDMockito.doNothing().when(storeServiceMock).store("pan");
             BDDMockito.doReturn("testSalt").when(storeServiceMock).getSalt();
             HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, false);
-            hpanWriter.write(Collections.emptyList());
+            hpanWriter.write(Chunk.of());
             BDDMockito.verifyNoInteractions(storeServiceMock);
         } catch (Exception e) {
             e.printStackTrace();
@@ -57,7 +60,7 @@ public class HpanWriterTest {
         BDDMockito.doNothing().when(storeServiceMock).store("pan");
         BDDMockito.doReturn("").when(storeServiceMock).getSalt();
         HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, false);
-        hpanWriter.write(Collections.singletonList("pan"));
+        hpanWriter.write(Chunk.of("pan"));
         BDDMockito.verify(storeServiceMock).store("pan");
     }
 
@@ -66,7 +69,7 @@ public class HpanWriterTest {
         BDDMockito.doNothing().when(storeServiceMock).store("pan");
         BDDMockito.doReturn("testSalt").when(storeServiceMock).getSalt();
         HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, true);
-        hpanWriter.write(Collections.singletonList("pan"));
+        hpanWriter.write(Chunk.of("pan"));
         BDDMockito.verify(storeServiceMock).store(DigestUtils.sha256Hex("pan"+"testSalt"));
     }
 
@@ -75,7 +78,7 @@ public class HpanWriterTest {
         BDDMockito.doNothing().when(storeServiceMock).store("pan");
         BDDMockito.doReturn("").when(storeServiceMock).getSalt();
         HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, true);
-        hpanWriter.write(Collections.singletonList("pan"));
+        hpanWriter.write(Chunk.of("pan"));
         BDDMockito.verify(storeServiceMock).store(DigestUtils.sha256Hex("pan"));
     }
 
@@ -85,7 +88,7 @@ public class HpanWriterTest {
             BDDMockito.doNothing().when(storeServiceMock).store("pan");
             BDDMockito.doReturn("").when(storeServiceMock).getSalt();
             HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, true);
-            hpanWriter.write(Collections.nCopies(5,"pan"));
+            hpanWriter.write(Chunk.of("pan", "pan", "pan", "pan", "pan"));
             BDDMockito.verify(storeServiceMock, Mockito.times(5))
                     .store(DigestUtils.sha256Hex("pan"));
         } catch (Exception e) {
@@ -99,7 +102,7 @@ public class HpanWriterTest {
         HpanWriter hpanWriter = new HpanWriter(this.storeServiceMock, true);
         BDDMockito.doReturn("testSalt").when(storeServiceMock).getSalt();
         expectedException.expect(NullPointerException.class);
-        hpanWriter.write(null);
+        hpanWriter.write(Chunk.of());
         BDDMockito.verifyNoInteractions(storeServiceMock);
     }
 
