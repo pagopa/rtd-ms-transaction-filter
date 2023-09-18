@@ -37,6 +37,7 @@ import org.apache.hc.core5.http.ClassicHttpRequest;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.http.io.entity.FileEntity;
@@ -291,15 +292,14 @@ class HpanRestClientImpl implements HpanRestClient {
             ContentType.APPLICATION_OCTET_STREAM))
         .build();
 
-    httpclient.execute(httpPut, response -> {
-      if (response.getCode() != HttpStatus.SC_CREATED) {
-        handleErrorStatus(response.getCode(), fileToUpload.getName());
-      } else {
-        log.info("File {} uploaded with success (status was: {})", fileToUpload.getName(),
-            response.getCode());
-      }
-      return null;
-    });
+    int responseStatusCode = httpclient.execute(httpPut, HttpResponse::getCode);
+
+    if (responseStatusCode != HttpStatus.SC_CREATED) {
+      handleErrorStatus(responseStatusCode, fileToUpload.getName());
+    } else {
+      log.info("File {} uploaded with success (status was: {})", fileToUpload.getName(),
+          responseStatusCode);
+    }
 
     httpclient.close();
   }
