@@ -95,7 +95,7 @@ class TransactionFilterStepTest {
         "test/relative/path/CSTAR.11111.20220925.101112.001.csv"
     })
     void whenAggregatesAreSplittedThenNamingConventionIsAsExpected(String filePath) {
-        TransactionFilterStep transactionFilterStep = new TransactionFilterStep(null, null, null);
+        TransactionFilterStep transactionFilterStep = new TransactionFilterStep(null, null);
 
         String firstChunkName = transactionFilterStep.getOutputFileNameChunkedWithPrefix(filePath, 0, ADE_OUTPUT_FILE_PREFIX);
         String secondChunkName = transactionFilterStep.getOutputFileNameChunkedWithPrefix(filePath, 1, ADE_OUTPUT_FILE_PREFIX);
@@ -109,7 +109,7 @@ class TransactionFilterStepTest {
         "test/relative/path/CSTAR.11111.20220925.101112.001.csv"
     })
     void whenAggregatesAreSplittedThenGetItemWriterCorrect(String filePath) {
-        TransactionFilterStep transactionFilterStep = new TransactionFilterStep(null, null, null);
+        TransactionFilterStep transactionFilterStep = new TransactionFilterStep(null, null);
         transactionFilterStep.setAdeSplitThreshold(100);
         transactionFilterStep.setOutputDirectoryPath("classpath:/test-encrypt");
         transactionFilterStep.setInputFileChecksumEnabled(false);
