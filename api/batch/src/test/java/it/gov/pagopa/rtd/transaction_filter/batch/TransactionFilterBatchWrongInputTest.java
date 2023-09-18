@@ -99,13 +99,13 @@ import static org.springframework.transaction.annotation.Propagation.NOT_SUPPORT
 public class TransactionFilterBatchWrongInputTest {
 
     @Autowired
-    ApplicationContext context;
-
-    @Autowired
     private JobLauncherTestUtils jobLauncherTestUtils;
 
     @Autowired
     private JobRepositoryTestUtils jobRepositoryTestUtils;
+
+    @Autowired
+    private BatchExecutor batchExecutor;
 
     @SpyBean
     StoreService hpanStoreServiceSpy;
@@ -162,8 +162,7 @@ public class TransactionFilterBatchWrongInputTest {
 
         panPgpFOS.close();
 
-        TransactionFilterBatch transactionFilterBatch = context.getBean(TransactionFilterBatch.class);
-        JobExecution jobExecution = transactionFilterBatch.executeBatchJob(new Date());
+        JobExecution jobExecution = batchExecutor.execute(new Date());
         Assert.assertNull(jobExecution);
     }
 }
