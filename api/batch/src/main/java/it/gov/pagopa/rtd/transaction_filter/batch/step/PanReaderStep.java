@@ -100,16 +100,15 @@ public class PanReaderStep {
      *
      * @return master step to be used as the formal main step in the reading phase of the job,
      * partitioned for scalability on multiple file reading
-     * @throws Exception
      */
     @Bean
     public Step hpanRecoveryMasterStep(JobRepository jobRepository,
-        PlatformTransactionManager transactionManager,
-        StoreService storeService
-    ) throws IOException {
+        Step hpanRecoveryWorkerStep,
+        Partitioner hpanRecoveryPartitioner
+    ) {
         return new StepBuilder("hpan-recovery-master-step", jobRepository)
-                .partitioner(hpanRecoveryWorkerStep(storeService))
-                .partitioner("partition", hpanRecoveryPartitioner())
+                .partitioner(hpanRecoveryWorkerStep)
+                .partitioner("partition", hpanRecoveryPartitioner)
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
