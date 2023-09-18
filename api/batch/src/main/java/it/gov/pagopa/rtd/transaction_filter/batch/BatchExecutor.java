@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
+import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.util.Date;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -11,6 +12,7 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
@@ -22,6 +24,9 @@ public class BatchExecutor {
     private final JobLauncher jobLauncher;
     private final TransactionFilterStep transactionFilterStep;
     private final PanReaderStep panReaderStep;
+    private final StoreService storeService;
+    @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled}")
+    private Boolean hpanListRecoveryEnabled;
     private final PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
 
@@ -46,7 +51,7 @@ public class BatchExecutor {
           on the configured path
          */
         if (transactionResources.length > 0 &&
-                (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
+                (hpanListRecoveryEnabled || hpanResources.length>0)) {
 
             log.info("Found {} {}. Starting filtering process",
                     transactionResources.length, (transactionResources.length > 1 ? "resources" : "resource")
@@ -62,7 +67,7 @@ public class BatchExecutor {
             if (transactionResources.length == 0) {
                 log.info("No transaction file has been found on configured path: {}", transactionFilterStep.getTransactionDirectoryPath());
             }
-            if (!getHpanListRecoveryEnabled() && hpanResources.length==0) {
+            if (Boolean.FALSE.equals(hpanListRecoveryEnabled) && hpanResources.length==0) {
                 log.info("No hpan file has been found on configured path: {}", hpanPath);
             }
         }
