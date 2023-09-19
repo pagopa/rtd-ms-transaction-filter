@@ -5,6 +5,16 @@ import feign.RequestInterceptor;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestConnector;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.http.ssl.TLS;
+import org.apache.hc.core5.pool.PoolConcurrencyPolicy;
+import org.apache.hc.core5.pool.PoolReusePolicy;
+import org.apache.hc.core5.util.TimeValue;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
@@ -117,6 +127,27 @@ public class HpanRestConnectorConfig {
         } else {
             return new Client.Default(sslSocketFactory, null);
         }
+    }
+
+    @Bean
+    public PoolingHttpClientConnectionManager getConnectionManager() {
+        // todo tuning timeouts
+        return PoolingHttpClientConnectionManagerBuilder.create()
+            .setSSLSocketFactory(SSLConnectionSocketFactoryBuilder.create()
+                .setSslContext(getSSLContext())
+                .setTlsVersions(TLS.V_1_2)
+                .build())
+            .setDefaultSocketConfig(SocketConfig.custom()
+                .setSoTimeout(Timeout.ofMinutes(1))
+                .build())
+            .setPoolConcurrencyPolicy(PoolConcurrencyPolicy.STRICT)
+            .setConnPoolPolicy(PoolReusePolicy.LIFO)
+            .setDefaultConnectionConfig(ConnectionConfig.custom()
+                .setSocketTimeout(Timeout.ofMinutes(1))
+                .setConnectTimeout(Timeout.ofMinutes(1))
+                .setTimeToLive(TimeValue.ofMinutes(10))
+                .build())
+            .build();
     }
 
     @SneakyThrows

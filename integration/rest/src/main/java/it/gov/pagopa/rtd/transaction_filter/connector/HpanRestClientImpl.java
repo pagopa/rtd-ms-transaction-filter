@@ -123,6 +123,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
   private final HpanRestConnector hpanRestConnector;
   private final HpanRestConnectorConfig hpanRestConnectorConfig;
+  private final PoolingHttpClientConnectionManager connectionManager;
 
   private LocalDateTime validationDate;
 
@@ -249,27 +250,6 @@ class HpanRestClientImpl implements HpanRestClient {
     headers.add(new BasicHeader("User-Agent", hpanRestConnectorConfig.getUserAgent()));
     headers.add(new BasicHeader("x-ms-blob-type", headerXMsBlobType));
     headers.add(new BasicHeader("x-ms-version", headerXMsVersion));
-
-    SSLContext sslContext = hpanRestConnectorConfig.getSSLContext();
-
-    // todo connection manager to move into config class?
-    // todo tuning timeouts
-    PoolingHttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
-        .setSSLSocketFactory(SSLConnectionSocketFactoryBuilder.create()
-            .setSslContext(sslContext)
-            .setTlsVersions(TLS.V_1_3)
-            .build())
-        .setDefaultSocketConfig(SocketConfig.custom()
-            .setSoTimeout(Timeout.ofMinutes(1))
-            .build())
-        .setPoolConcurrencyPolicy(PoolConcurrencyPolicy.STRICT)
-        .setConnPoolPolicy(PoolReusePolicy.LIFO)
-        .setDefaultConnectionConfig(ConnectionConfig.custom()
-            .setSocketTimeout(Timeout.ofMinutes(1))
-            .setConnectTimeout(Timeout.ofMinutes(1))
-            .setTimeToLive(TimeValue.ofMinutes(10))
-            .build())
-        .build();
 
     HttpClientBuilder httpClientBuilder = HttpClients.custom()
         .setConnectionManager(connectionManager)
