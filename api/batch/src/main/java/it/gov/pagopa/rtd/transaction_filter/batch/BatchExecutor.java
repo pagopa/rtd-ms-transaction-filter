@@ -5,6 +5,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.util.Date;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 @Component
+@Data
 public class BatchExecutor {
 
     private final Job job;
@@ -29,7 +31,7 @@ public class BatchExecutor {
     private final StoreService storeService;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled}")
     private Boolean hpanListRecoveryEnabled;
-    private final PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+    private final PathMatchingResourcePatternResolver resolver;
 
 
     /**
