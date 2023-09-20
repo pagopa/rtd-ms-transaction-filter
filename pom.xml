@@ -24,7 +24,6 @@
         <commons-fileupload.version>1.5</commons-fileupload.version>
         <bouncycastle.version>1.76</bouncycastle.version>
         <jackson-core.version>2.15.2</jackson-core.version>
-        <hsqldb.version>2.7.2</hsqldb.version>
         <spring-security-rsa.version>1.1.1</spring-security-rsa.version>
         <maven-jar-plugin.version>3.1.2</maven-jar-plugin.version>
         <maven-deploy-plugin.version>3.0.0-M1</maven-deploy-plugin.version>
@@ -112,6 +111,10 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
