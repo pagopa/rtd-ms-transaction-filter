@@ -16,6 +16,14 @@ spring:
     description: "@project.description@"
     version: "@project.version@"
   enabled: true
+  cloud:
+    openfeign:
+      client:
+        config:
+          hpan-service:
+            connectTimeout: ${REST_CLIENT_CONNECT_TIMEOUT:${HPAN_REST_CLIENT_CONNECT_TIMEOUT:5000}}
+            readTimeout: ${REST_CLIENT_READ_TIMEOUT:${HPAN_REST_CLIENT_READ_TIMEOUT:5000}}
+            loggerLevel: ${REST_CLIENT_LOGGER_LEVEL:${REST_CLIENT_LOGGER_LEVEL:BASIC}}
 
 logging:
   level:
@@ -146,11 +154,3 @@ rest-client:
       url: /rtd/file-register/ack-received/{id}
   file-report:
     url: /rtd/file-reporter/file-report
-
-feign:
-  client:
-    config:
-      hpan-service:
-        connectTimeout: ${REST_CLIENT_CONNECT_TIMEOUT:${HPAN_REST_CLIENT_CONNECT_TIMEOUT:5000}}
-        readTimeout: ${REST_CLIENT_READ_TIMEOUT:${HPAN_REST_CLIENT_READ_TIMEOUT:5000}}
-        loggerLevel: ${REST_CLIENT_LOGGER_LEVEL:${HPAN_REST_CLIENT_LOGGER_LEVEL:BASIC}}
