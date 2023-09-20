@@ -24,7 +24,6 @@ import javax.sql.DataSource;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.Step;
@@ -34,18 +33,21 @@ import org.springframework.batch.core.job.builder.FlowJobBuilder;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
-import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.launch.support.TaskExecutorJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.batch.BatchDataSource;
+import org.springframework.boot.autoconfigure.batch.BatchDataSourceScriptDatabaseInitializer;
+import org.springframework.boot.autoconfigure.batch.BatchProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -64,7 +66,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Import({TransactionFilterStep.class,PanReaderStep.class})
 @EnableBatchProcessing
 @RequiredArgsConstructor
-@Slf4j
+@EnableConfigurationProperties(BatchProperties.class)
 public class TransactionFilterBatch {
 
     private final TransactionFilterStep transactionFilterStep;
@@ -126,14 +128,14 @@ public class TransactionFilterBatch {
     private DataSource dataSource;
 
     /**
-     *
-     * @return configured instance of TransactionManager
+     *  Create the bean responsible for initializing the database
      */
     @Bean
-    public PlatformTransactionManager transactionManager() {
-        DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
-        dataSourceTransactionManager.setDataSource(dataSource);
-        return dataSourceTransactionManager;
+    @ConditionalOnMissingBean(BatchDataSourceScriptDatabaseInitializer.class)
+    BatchDataSourceScriptDatabaseInitializer batchDataSourceInitializer(DataSource dataSource,
+        @BatchDataSource ObjectProvider<DataSource> batchDataSource, BatchProperties properties) {
+        return new BatchDataSourceScriptDatabaseInitializer(batchDataSource.getIfAvailable(() -> dataSource),
+            properties.getJdbc());
     }
 
     /**
@@ -153,18 +155,6 @@ public class TransactionFilterBatch {
                 jobRepositoryFactoryBean.setIsolationLevelForCreate(isolationForCreate);
             }
             return jobRepositoryFactoryBean.getObject();
-    }
-
-    /**
-     *
-     * @return configured instance of JobLauncher
-     *  exception description
-     */
-    @Bean
-    public JobLauncher jobLauncher(JobRepository jobRepository) {
-        TaskExecutorJobLauncher jobLauncher = new TaskExecutorJobLauncher();
-        jobLauncher.setJobRepository(jobRepository);
-        return jobLauncher;
     }
 
     /**
