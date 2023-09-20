@@ -55,7 +55,6 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.skip.SkipLimitExceededException;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.item.Chunk;
-import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.LineMapper;
@@ -78,7 +77,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.WritableResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.http.codec.multipart.Part;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
