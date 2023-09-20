@@ -51,6 +51,7 @@ error-manager:
 logging:
   level:
     it.gov.pagopa.rtd.transaction_filter: ${LOG_LEVEL_RTD_TRANSACTION_FILTER:INFO}
+    org.springframework.core.io.support.PathMatchingResourcePatternResolver: ERROR
   file:
     name: ${ACQ_BATCH_TRX_LOGS_PATH:resources/errorLogs}/${ACQ_BATCH_APP_LOG_FILE:application.log}
   pattern: ${ACQ_BATCH_APP_LOG_PATTERN:}
