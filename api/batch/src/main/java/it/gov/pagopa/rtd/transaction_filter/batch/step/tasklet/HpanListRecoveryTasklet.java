@@ -65,9 +65,8 @@ public class HpanListRecoveryTasklet implements Tasklet, InitializingBean {
         }
 
         if (Boolean.TRUE.equals(recoveryTaskletEnabled)) {
-            resources = resolver.getResources("file:/"
-                    .concat(hpanListDirectory.charAt(0) == '/' ?
-                            hpanListDirectory.replaceFirst("/","") : hpanListDirectory)
+            resources = resolver.getResources("file:"
+                    .concat(hpanListDirectory)
                     .concat("/")
                     .concat(hpanFilePattern));
             File outputFile = FileUtils.getFile(hpanListDirectory
