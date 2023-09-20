@@ -229,7 +229,7 @@ public class TransactionFilterStep {
 
     @Bean
     @StepScope
-    public ItemReader<AggregationKey> mapItemReader(StoreService storeService) {
+    public CustomIteratorItemReader<AggregationKey> mapItemReader(StoreService storeService) {
         return new CustomIteratorItemReader<>(storeService.getAggregateKeySet());
     }
 
