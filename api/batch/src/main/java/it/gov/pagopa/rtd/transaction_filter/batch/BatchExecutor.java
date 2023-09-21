@@ -54,8 +54,16 @@ public class BatchExecutor {
           resource is found, and either the remote pan list recovery is enabled, or a pan list file is available locally
           on the configured path
          */
+        if (transactionResources.length == 0) {
+            log.info("No transaction file has been found on configured path: {}", transactionFilterStep.getTransactionDirectoryPath());
+        }
+
+        if (Boolean.FALSE.equals(hpanListRecoveryEnabled) && hpanResources.length == 0) {
+            log.info("No hpan file has been found on configured path: {}", hpanPath);
+        }
+
         if (transactionResources.length > 0 &&
-                (hpanListRecoveryEnabled || hpanResources.length>0)) {
+                (hpanListRecoveryEnabled || hpanResources.length > 0)) {
 
             log.info("Found {} {}. Starting filtering process",
                     transactionResources.length, (transactionResources.length > 1 ? "resources" : "resource")
@@ -67,13 +75,6 @@ public class BatchExecutor {
                             .toJobParameters());
             clearStoreService();
 
-        } else {
-            if (transactionResources.length == 0) {
-                log.info("No transaction file has been found on configured path: {}", transactionFilterStep.getTransactionDirectoryPath());
-            }
-            if (Boolean.FALSE.equals(hpanListRecoveryEnabled) && hpanResources.length==0) {
-                log.info("No hpan file has been found on configured path: {}", hpanPath);
-            }
         }
 
         return execution;
