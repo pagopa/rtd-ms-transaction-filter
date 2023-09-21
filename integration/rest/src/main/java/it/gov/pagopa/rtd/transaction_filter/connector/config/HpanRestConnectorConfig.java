@@ -84,6 +84,13 @@ public class HpanRestConnectorConfig {
     @Value("${rest-client.user-agent.version}")
     private String userAgentVersion;
 
+    @Value("${apache.httpClient.config.socketTimeoutInSeconds:180}")
+    private Integer socketTimeoutInSeconds;
+    @Value("${apache.httpClient.config.connectTimeoutInSeconds:180}")
+    private Integer connectTimeoutInSeconds;
+    @Value("${apache.httpClient.config.timeToLiveInSeconds:600}")
+    private Integer timeToLiveInSeconds;
+
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     public String getUserAgent() {
@@ -131,21 +138,20 @@ public class HpanRestConnectorConfig {
 
     @Bean
     public PoolingHttpClientConnectionManager getConnectionManager() {
-        // todo tuning timeouts
         return PoolingHttpClientConnectionManagerBuilder.create()
             .setSSLSocketFactory(SSLConnectionSocketFactoryBuilder.create()
                 .setSslContext(getSSLContext())
                 .setTlsVersions(TLS.V_1_2)
                 .build())
             .setDefaultSocketConfig(SocketConfig.custom()
-                .setSoTimeout(Timeout.ofMinutes(1))
+                .setSoTimeout(Timeout.ofSeconds(socketTimeoutInSeconds))
                 .build())
             .setPoolConcurrencyPolicy(PoolConcurrencyPolicy.STRICT)
             .setConnPoolPolicy(PoolReusePolicy.LIFO)
             .setDefaultConnectionConfig(ConnectionConfig.custom()
-                .setSocketTimeout(Timeout.ofMinutes(1))
-                .setConnectTimeout(Timeout.ofMinutes(1))
-                .setTimeToLive(TimeValue.ofMinutes(10))
+                .setSocketTimeout(Timeout.ofSeconds(socketTimeoutInSeconds))
+                .setConnectTimeout(Timeout.ofSeconds(connectTimeoutInSeconds))
+                .setTimeToLive(TimeValue.ofSeconds(timeToLiveInSeconds))
                 .build())
             .build();
     }

@@ -178,3 +178,10 @@ rest-client:
       url: /rtd/file-register/ack-received/{id}
   file-report:
     url: /rtd/file-reporter/file-report
+
+apache:
+  httpclient:
+    config:
+      socketTimeoutInSeconds: ${APACHE_CLIENT_SOCKET_TIMEOUT_SECONDS:180}
+      connectTimeoutInSeconds: ${APACHE_CLIENT_CONNECT_TIMEOUT_SECONDS:180}
+      timeToLiveInSeconds: ${APACHE_CLIENT_TTL_SECONDS:600}
