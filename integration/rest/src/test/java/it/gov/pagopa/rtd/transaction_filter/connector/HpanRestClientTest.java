@@ -65,7 +65,6 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
                 HttpMessageConvertersAutoConfiguration.class
         }
 )
-@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 public class HpanRestClientTest {
 
     @Autowired
