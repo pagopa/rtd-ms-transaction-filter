@@ -253,6 +253,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
     HttpClientBuilder httpClientBuilder = HttpClients.custom()
         .setConnectionManager(connectionManager)
+        .setConnectionManagerShared(true)
         .setDefaultRequestConfig(RequestConfig.custom()
             .setCookieSpec(StandardCookieSpec.STRICT)
             .build())
