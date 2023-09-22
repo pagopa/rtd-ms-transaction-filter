@@ -54,7 +54,9 @@ class BatchExecutorTest {
           Arguments.of(new Resource[]{new FileSystemResource("CSTAR.12345.TRNLOG.20230230.161746.001.csv")},
               true, new Resource[]{}, 1),
           Arguments.of(new Resource[]{new FileSystemResource("CSTAR.12345.TRNLOG.20230230.161746.001.csv")},
-              false, new Resource[]{}, 0)
+              false, new Resource[]{}, 0),
+          Arguments.of(new Resource[]{new FileSystemResource("CSTAR.12345.TRNLOG.20230230.161746.001.csv"),
+                  new FileSystemResource("CSTAR.12345.TRNLOG.20230301.161746.001.csv")}, true, new Resource[]{}, 1)
       );
     }
   }
