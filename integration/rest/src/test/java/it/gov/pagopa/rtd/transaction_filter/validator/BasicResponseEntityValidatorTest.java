@@ -4,7 +4,7 @@ import static it.gov.pagopa.rtd.transaction_filter.validator.ValidatorUtility.cr
 import static it.gov.pagopa.rtd.transaction_filter.validator.ValidatorUtility.createValidResponseEntity;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import javax.validation.ValidationException;
+import jakarta.validation.ValidationException;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

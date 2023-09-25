@@ -24,17 +24,30 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.FileEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicHeader;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.cookie.StandardCookieSpec;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.core5.http.ClassicHttpRequest;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.http.io.entity.FileEntity;
+import org.apache.hc.core5.http.io.support.ClassicRequestBuilder;
+import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.http.ssl.TLS;
+import org.apache.hc.core5.pool.PoolConcurrencyPolicy;
+import org.apache.hc.core5.pool.PoolReusePolicy;
+import org.apache.hc.core5.util.TimeValue;
+import org.apache.hc.core5.util.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -110,6 +123,7 @@ class HpanRestClientImpl implements HpanRestClient {
 
   private final HpanRestConnector hpanRestConnector;
   private final HpanRestConnectorConfig hpanRestConnectorConfig;
+  private final PoolingHttpClientConnectionManager connectionManager;
 
   private LocalDateTime validationDate;
 
@@ -228,8 +242,8 @@ class HpanRestClientImpl implements HpanRestClient {
   }
 
   @Override
-  @SneakyThrows
-  public Void uploadFile(File fileToUpload, String sas, String authorizedContainer) {
+  public void uploadFile(File fileToUpload, String sas, String authorizedContainer)
+      throws IOException {
 
     List<Header> headers = new ArrayList<>();
     headers.add(new BasicHeader("Ocp-Apim-Subscription-Key", apiKey));
@@ -237,35 +251,38 @@ class HpanRestClientImpl implements HpanRestClient {
     headers.add(new BasicHeader("x-ms-blob-type", headerXMsBlobType));
     headers.add(new BasicHeader("x-ms-version", headerXMsVersion));
 
-    HpanRestConnectorConfig config = context.getBean(HpanRestConnectorConfig.class);
-    SSLContext sslContext = config.getSSLContext();
-
     HttpClientBuilder httpClientBuilder = HttpClients.custom()
-        .setSSLContext(sslContext)
+        .setConnectionManager(connectionManager)
+        .setConnectionManagerShared(true)
+        .setDefaultRequestConfig(RequestConfig.custom()
+            .setCookieSpec(StandardCookieSpec.STRICT)
+            .build())
         .setDefaultHeaders(headers);
 
     if (Boolean.TRUE.equals(proxyEnabled)) {
       httpClientBuilder.setProxy(createProxy());
     }
 
-    HttpClient httpclient = httpClientBuilder.build();
+    CloseableHttpClient httpclient = httpClientBuilder.build();
 
     String uri =
         baseUrl + "/" + storageName + "/" + authorizedContainer + "/" + fileToUpload.getName()
             + "?" + sas;
-    final HttpPut httpput = new HttpPut(uri);
+    final ClassicHttpRequest httpPut = ClassicRequestBuilder.put(uri)
+        .setEntity(new FileEntity(fileToUpload,
+            ContentType.APPLICATION_OCTET_STREAM))
+        .build();
 
-    FileEntity entity = new FileEntity(fileToUpload,
-        ContentType.create("application/octet-stream"));
-    httpput.setEntity(entity);
-    final HttpResponse response = httpclient.execute(httpput);
-    if (response.getStatusLine().getStatusCode() != HttpStatus.SC_CREATED) {
-      handleErrorStatus(response.getStatusLine().getStatusCode(), fileToUpload.getName());
+    int responseStatusCode = httpclient.execute(httpPut, HttpResponse::getCode);
+
+    if (responseStatusCode != HttpStatus.SC_CREATED) {
+      handleErrorStatus(responseStatusCode, fileToUpload.getName());
     } else {
       log.info("File {} uploaded with success (status was: {})", fileToUpload.getName(),
-          response.getStatusLine().getStatusCode());
+          responseStatusCode);
     }
-    return null;
+
+    httpclient.close();
   }
 
   private HttpHost createProxy() {

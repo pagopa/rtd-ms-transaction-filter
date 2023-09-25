@@ -38,6 +38,14 @@ spring:
     description: "@project.description@"
     version: "@project.version@"
   enabled: true
+  cloud:
+    openfeign:
+      client:
+        config:
+          hpan-service:
+            connectTimeout: ${REST_CLIENT_CONNECT_TIMEOUT:${HPAN_REST_CLIENT_CONNECT_TIMEOUT:5000}}
+            readTimeout: ${REST_CLIENT_READ_TIMEOUT:${HPAN_REST_CLIENT_READ_TIMEOUT:5000}}
+            loggerLevel: ${REST_CLIENT_LOGGER_LEVEL:${REST_CLIENT_LOGGER_LEVEL:BASIC}}
 
 logging:
   level:
@@ -115,7 +123,7 @@ batchConfiguration:
 rest-client:
   user-agent:
     prefix: BatchService
-    version: 2.0.3
+    version: 2.1.0
   hpan:
     serviceCode: hpan-service
     base-url: ${HPAN_SERVICE_URL:https://bpd-dev.azure-api.net:${HPAN_SERVICE_PORT:443}}
@@ -169,10 +177,9 @@ rest-client:
   file-report:
     url: /rtd/file-reporter/file-report
 
-feign:
-  client:
+apache:
+  httpclient:
     config:
-      hpan-service:
-        connectTimeout: ${REST_CLIENT_CONNECT_TIMEOUT:${HPAN_REST_CLIENT_CONNECT_TIMEOUT:5000}}
-        readTimeout: ${REST_CLIENT_READ_TIMEOUT:${HPAN_REST_CLIENT_READ_TIMEOUT:5000}}
-        loggerLevel: ${REST_CLIENT_LOGGER_LEVEL:${HPAN_REST_CLIENT_LOGGER_LEVEL:BASIC}}
+      socketTimeoutInSeconds: ${APACHE_CLIENT_SOCKET_TIMEOUT_SECONDS:180}
+      connectTimeoutInSeconds: ${APACHE_CLIENT_CONNECT_TIMEOUT_SECONDS:180}
+      timeToLiveInSeconds: ${APACHE_CLIENT_TTL_SECONDS:600}

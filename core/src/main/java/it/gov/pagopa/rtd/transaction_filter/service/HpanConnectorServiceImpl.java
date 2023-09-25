@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.transaction_filter.service;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SasResponse;
 import java.io.File;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
@@ -39,8 +40,9 @@ public class HpanConnectorServiceImpl implements HpanConnectorService {
     }
 
     @Override
-    public Void uploadFile(File fileToUpload, String sas, String authorizedContainer) {
-        return hpanRestClient.uploadFile(fileToUpload, sas, authorizedContainer);
+    public void uploadFile(File fileToUpload, String sas, String authorizedContainer)
+        throws IOException {
+        hpanRestClient.uploadFile(fileToUpload, sas, authorizedContainer);
     }
 
     @Override

@@ -31,11 +31,6 @@ public class TransactionItemWriterListener implements ItemWriteListener<InboundT
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
     private final TransactionMaskPolicy maskPolicy;
 
-    @Override
-    public void beforeWrite(List<? extends InboundTransaction> list) {
-        // do nothing
-    }
-
     public void afterWrite(List<? extends InboundTransaction> inboundTransactions) {
         if (Boolean.TRUE.equals(enableAfterWriteLogging)) {
             inboundTransactions.forEach(inboundTransaction -> {
