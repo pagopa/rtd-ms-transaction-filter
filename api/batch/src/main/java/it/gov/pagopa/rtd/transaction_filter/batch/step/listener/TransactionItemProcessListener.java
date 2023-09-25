@@ -39,6 +39,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
         // do nothing
     }
 
+    @Override
     public void afterProcess(@NonNull InboundTransaction item, @Nullable InboundTransaction result) {
 
         if (Boolean.TRUE.equals(enableAfterProcessLogging)) {
@@ -92,6 +93,7 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
         }
     }
 
+    @Override
     public void onProcessError(InboundTransaction item, Exception throwable) {
         maskPolicy.apply(item);
 
@@ -114,8 +116,8 @@ public class TransactionItemProcessListener implements ItemProcessListener<Inbou
     }
 
     private void logValidationErrors(InboundTransaction item, Exception throwable) {
-        if (throwable instanceof ConstraintViolationException) {
-            ((ConstraintViolationException) throwable).getConstraintViolations()
+        if (throwable instanceof ConstraintViolationException exception) {
+            exception.getConstraintViolations()
                 .forEach(violation -> log.error("Error during record validation at line: {}, on field: {}, value: {}, validation: {}, reason: {}",
                     item.getLineNumber(), violation.getPropertyPath(), violation.getInvalidValue(),
                     violation.getMessageTemplate(), violation.getMessage()));
