@@ -29,10 +29,8 @@ import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.job.builder.FlowBuilder;
 import org.springframework.batch.core.job.builder.FlowJobBuilder;
 import org.springframework.batch.core.job.builder.JobBuilder;
-import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.repository.JobRepository;
@@ -57,7 +55,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 /**
  * <p>
  * Batch responsible for the filtering and secure transmission of transaction files provided by the acquirers.
- * @see TransactionFilterBatch#transactionJobBuilder(JobRepository, Step, JobExecutionDecider, Step, Step, Step, Step, Flow, Flow, Step, JobExecutionDecider, Step, Step)  () for the actual flow definition.
+ * @see TransactionFilterBatch#transactionJobBuilder(JobRepository, Step, JobExecutionDecider, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, JobExecutionDecider, Step, Step) () for the actual flow definition.
  * </p>
  *
  */
@@ -216,8 +214,19 @@ public class TransactionFilterBatch {
         Step selectTargetInputFileTask,
         Step preventReprocessingFilenameAlreadySeenTask,
         Step transactionChecksumMasterStep,
-        Flow taeFileProcessWorkflow,
-        Flow rtdFileProcessWorkflow,
+        Step abiToFiscalCodeMapRecoveryTask,
+        Step transactionAggregationReaderMasterStep,
+        Step enforceSenderCodeUniquenessTask,
+        Step transactionAggregationWriterMasterStep,
+        Step encryptAggregateChunksMasterStep,
+        Step purgeAggregatesFromMemoryTask,
+        Step transactionSenderAdeMasterStep,
+        Step hpanListRecoveryTask,
+        Step saltRecoveryTask,
+        Step hpanRecoveryMasterStep,
+        Step transactionFilterMasterStep,
+        Step encryptTransactionChunksMasterStep,
+        Step transactionSenderRtdMasterStep,
         Step senderAdeAckFilesRecoveryTask,
         JobExecutionDecider pendingStepDecider,
         Step transactionSenderPendingMasterStep,
@@ -240,10 +249,44 @@ public class TransactionFilterBatch {
                 .on("*").to(transactionChecksumMasterStep)
                 .on(FAILED).end()
                 .from(transactionChecksumMasterStep)
-                .on("*").to(taeFileProcessWorkflow)
-                .from(taeFileProcessWorkflow)
-                .on("*").to(rtdFileProcessWorkflow)
-                .from(rtdFileProcessWorkflow)
+                .on("*").to(abiToFiscalCodeMapRecoveryTask)
+                .on(FAILED).end()
+                .from(abiToFiscalCodeMapRecoveryTask)
+                .on("*").to(transactionAggregationReaderMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionAggregationReaderMasterStep)
+                .on("*").to(enforceSenderCodeUniquenessTask)
+                .on(FAILED).end()
+                .from(enforceSenderCodeUniquenessTask)
+                .on("*").to(transactionAggregationWriterMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionAggregationWriterMasterStep)
+                .on("*").to(encryptAggregateChunksMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(encryptAggregateChunksMasterStep)
+                .on("*").to(purgeAggregatesFromMemoryTask)
+                .on(FAILED).to(fileManagementTask)
+                .from(purgeAggregatesFromMemoryTask)
+                .on("*").to(transactionSenderAdeMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionSenderAdeMasterStep)
+                .on("*").to(hpanListRecoveryTask)
+                .on(FAILED).to(fileManagementTask)
+                .from(hpanListRecoveryTask).on("*").to(saltRecoveryTask)
+                .on(FAILED).to(fileManagementTask)
+                .from(saltRecoveryTask)
+                .on("*").to(hpanRecoveryMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(hpanRecoveryMasterStep)
+                .on("*").to(transactionFilterMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionFilterMasterStep)
+                .on("*").to(encryptTransactionChunksMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(encryptTransactionChunksMasterStep)
+                .on("*").to(transactionSenderRtdMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionSenderRtdMasterStep)
                 .on("*").to(senderAdeAckFilesRecoveryTask)
                 .on("*").to(pendingStepDecider)
                 .on(TRUE).to(transactionSenderPendingMasterStep)
@@ -252,71 +295,6 @@ public class TransactionFilterBatch {
                 .from(transactionSenderPendingMasterStep)
                 .on("*").to(fileManagementTask)
                 .build();
-    }
-
-    @Bean
-    public Flow taeFileProcessWorkflow(
-        Step abiToFiscalCodeMapRecoveryTask,
-        Step transactionAggregationReaderMasterStep,
-        Step enforceSenderCodeUniquenessTask,
-        Step transactionAggregationWriterMasterStep,
-        Step encryptAggregateChunksMasterStep,
-        Step purgeAggregatesFromMemoryTask,
-        Step transactionSenderAdeMasterStep,
-        Step fileManagementTask
-    ) {
-        return new FlowBuilder<Flow>("tae-file-process-workflow")
-            .start(abiToFiscalCodeMapRecoveryTask)
-            .on(FAILED).end()
-            .from(abiToFiscalCodeMapRecoveryTask)
-            .on("*").to(transactionAggregationReaderMasterStep)
-            .on(FAILED).to(fileManagementTask)
-            .from(transactionAggregationReaderMasterStep)
-            .on("*").to(enforceSenderCodeUniquenessTask)
-            .on(FAILED).end()
-            .from(enforceSenderCodeUniquenessTask)
-            .on("*").to(transactionAggregationWriterMasterStep)
-            .on(FAILED).to(fileManagementTask)
-            .from(transactionAggregationWriterMasterStep)
-            .on("*").to(encryptAggregateChunksMasterStep)
-            .on(FAILED).to(fileManagementTask)
-            .from(encryptAggregateChunksMasterStep)
-            .on("*").to(purgeAggregatesFromMemoryTask)
-            .on(FAILED).to(fileManagementTask)
-            .from(purgeAggregatesFromMemoryTask)
-            .on("*").to(transactionSenderAdeMasterStep)
-            .on(FAILED).to(fileManagementTask)
-            .build();
-    }
-
-    @Bean
-    public Flow rtdFileProcessWorkflow(
-        Step hpanListRecoveryTask,
-        Step saltRecoveryTask,
-        Step hpanRecoveryMasterStep,
-        Step transactionFilterMasterStep,
-        Step encryptTransactionChunksMasterStep,
-        Step transactionSenderRtdMasterStep,
-        Step fileManagementTask
-    ) {
-        return new FlowBuilder<Flow>("rtd-file-process-workflow")
-            .start(hpanListRecoveryTask)
-            .on(FAILED).to(fileManagementTask)
-            .from(hpanListRecoveryTask).on("*").to(saltRecoveryTask)
-            .on(FAILED).to(fileManagementTask)
-            .from(saltRecoveryTask)
-            .on("*").to(hpanRecoveryMasterStep)
-            .on(FAILED).to(fileManagementTask)
-            .from(hpanRecoveryMasterStep)
-            .on("*").to(transactionFilterMasterStep)
-            .on(FAILED).to(fileManagementTask)
-            .from(transactionFilterMasterStep)
-            .on("*").to(encryptTransactionChunksMasterStep)
-            .on(FAILED).to(fileManagementTask)
-            .from(encryptTransactionChunksMasterStep)
-            .on("*").to(transactionSenderRtdMasterStep)
-            .on(FAILED).to(fileManagementTask)
-            .build();
     }
 
     @Bean
