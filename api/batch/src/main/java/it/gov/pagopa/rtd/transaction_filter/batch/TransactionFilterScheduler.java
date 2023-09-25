@@ -16,7 +16,7 @@ import java.util.Date;
 @ConditionalOnProperty(value = "spring.batch.job.scheduled", havingValue = "true")
 public class TransactionFilterScheduler {
 
-    private final TransactionFilterBatch transactionFilterBatch;
+    private final BatchExecutor batchExecutor;
 
     /**
      * Scheduled method used to launch the configured batch job for processing transaction from a defined directory.
@@ -30,7 +30,7 @@ public class TransactionFilterScheduler {
         Date startDate = new Date();
         log.info("CsvTransactionReader scheduled job started at {}", startDate);
 
-        transactionFilterBatch.executeBatchJob(startDate);
+        batchExecutor.execute(startDate);
 
         Date endDate = new Date();
 

@@ -1,8 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter;
 
-import it.gov.pagopa.rtd.transaction_filter.batch.TransactionFilterBatch;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
-import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
+import it.gov.pagopa.rtd.transaction_filter.batch.BatchExecutor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobExecution;
@@ -14,7 +12,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.session.SessionAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.servlet.error.ErrorMvcAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 import java.util.Date;
 
@@ -30,17 +27,14 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 	@Value("${spring.batch.job.scheduled}")
 	private String scheduledEnabled;
 
-	private final TransactionFilterStep transactionFilterStep;
-	private final PanReaderStep panReaderStep;
-	private final TransactionFilterBatch transactionFilterBatch;
-	PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+	private final BatchExecutor batchExecutor;
 
 	public static void main(String[] args) {
 		SpringApplication.run(RtdTransactionFilterApplication.class, args);
 	}
 
 	@Override
-	public void run(String... args) throws Exception {
+	public void run(String... args) {
 
 		if (scheduledEnabled.equalsIgnoreCase("false")) {
 
@@ -48,8 +42,7 @@ public class RtdTransactionFilterApplication implements CommandLineRunner {
 			if (log.isInfoEnabled()) {
 				log.info("CsvTransactionReader single-time job started at " + startDate);
 			}
-
-			JobExecution jobExecution = transactionFilterBatch.executeBatchJob(startDate);
+			JobExecution jobExecution = batchExecutor.execute(startDate);
 
 			Date endDate = new Date();
 			if (log.isInfoEnabled()) {

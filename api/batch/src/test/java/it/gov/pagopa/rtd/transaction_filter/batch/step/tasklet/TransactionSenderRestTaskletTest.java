@@ -99,8 +99,8 @@ class TransactionSenderRestTaskletTest {
         sasResponseMock.setSas("sas-token");
         sasResponseMock.setAuthorizedContainer("authorized-container");
         BDDMockito.doReturn(sasResponseMock).when(hpanConnectorServiceMock).getSasToken(HpanRestClient.SasScope.ADE);
-        BDDMockito.given(hpanConnectorServiceMock.uploadFile(any(), any(), any()))
-            .willAnswer(invocation -> { throw new IOException("Upload failed!"); });
+        BDDMockito.willThrow(new IOException("Upload failed!"))
+            .given(hpanConnectorServiceMock).uploadFile(any(), any(), any());
 
         TransactionSenderRestTasklet transactionSenderRestTasklet = new TransactionSenderRestTasklet();
         transactionSenderRestTasklet.setTaskletEnabled(true);

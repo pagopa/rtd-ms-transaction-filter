@@ -4,16 +4,18 @@ import it.gov.pagopa.rtd.transaction_filter.batch.config.BatchConfig;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.reader.PGPFlatFileItemReader;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.HpanWriter;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobScope;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.partition.support.MultiResourcePartitioner;
 import org.springframework.batch.core.partition.support.Partitioner;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.file.mapping.PassThroughLineMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,8 +24,7 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-
-import java.io.FileNotFoundException;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @DependsOn({"partitionerTaskExecutor","readerTaskExecutor"})
@@ -50,7 +51,6 @@ public class PanReaderStep {
     private Boolean applyPanListHashing;
 
     private final BatchConfig batchConfig;
-    private final StepBuilderFactory stepBuilderFactory;
 
     /**
      *
@@ -100,12 +100,15 @@ public class PanReaderStep {
      *
      * @return master step to be used as the formal main step in the reading phase of the job,
      * partitioned for scalability on multiple file reading
-     * @throws Exception
      */
     @Bean
-    public Step hpanRecoveryMasterStep(StoreService storeService) throws IOException {
-        return stepBuilderFactory.get("hpan-recovery-master-step").partitioner(hpanRecoveryWorkerStep(storeService))
-                .partitioner("partition", hpanRecoveryPartitioner())
+    public Step hpanRecoveryMasterStep(JobRepository jobRepository,
+        Step hpanRecoveryWorkerStep,
+        Partitioner hpanRecoveryPartitioner
+    ) {
+        return new StepBuilder("hpan-recovery-master-step", jobRepository)
+                .partitioner(hpanRecoveryWorkerStep)
+                .partitioner("partition", hpanRecoveryPartitioner)
                 .taskExecutor(batchConfig.partitionerTaskExecutor()).build();
     }
 
@@ -115,9 +118,12 @@ public class PanReaderStep {
      * using chunk processing for scalability
      */
     @Bean
-    public Step hpanRecoveryWorkerStep(StoreService storeService) {
-        return stepBuilderFactory.get("hpan-recovery-worker-step")
-                .<String, String>chunk(chunkSize)
+    public Step hpanRecoveryWorkerStep(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
+        return new StepBuilder("hpan-recovery-worker-step", jobRepository)
+                .<String, String>chunk(chunkSize, transactionManager)
                 .reader(hpanItemReader(null))
                 .writer(hpanItemWriter(storeService))
                 .faultTolerant()

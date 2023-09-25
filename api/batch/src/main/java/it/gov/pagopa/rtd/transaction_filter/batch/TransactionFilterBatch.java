@@ -20,36 +20,34 @@ import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
 import it.gov.pagopa.rtd.transaction_filter.service.HpanConnectorService;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import it.gov.pagopa.rtd.transaction_filter.service.TransactionWriterService;
-import java.util.Date;
 import javax.sql.DataSource;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
-import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.job.builder.FlowJobBuilder;
+import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.job.flow.FlowExecutionStatus;
 import org.springframework.batch.core.job.flow.JobExecutionDecider;
-import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.launch.support.SimpleJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.repository.support.JobRepositoryFactoryBean;
+import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.batch.BatchDataSource;
+import org.springframework.boot.autoconfigure.batch.BatchDataSourceScriptDatabaseInitializer;
+import org.springframework.boot.autoconfigure.batch.BatchProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -57,7 +55,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 /**
  * <p>
  * Batch responsible for the filtering and secure transmission of transaction files provided by the acquirers.
- * @see TransactionFilterBatch#transactionJobBuilder() for the actual flow definition.
+ * @see TransactionFilterBatch#transactionJobBuilder(JobRepository, Step, JobExecutionDecider, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, Step, JobExecutionDecider, Step, Step) () for the actual flow definition.
  * </p>
  *
  */
@@ -68,13 +66,11 @@ import org.springframework.transaction.PlatformTransactionManager;
 @Import({TransactionFilterStep.class,PanReaderStep.class})
 @EnableBatchProcessing
 @RequiredArgsConstructor
-@Slf4j
+@EnableConfigurationProperties(BatchProperties.class)
 public class TransactionFilterBatch {
 
     private final TransactionFilterStep transactionFilterStep;
     private final PanReaderStep panReaderStep;
-    private final JobBuilderFactory jobBuilderFactory;
-    private final StepBuilderFactory stepBuilderFactory;
     private final HpanConnectorService hpanConnectorService;
     private final AbiToFiscalCodeRestClient abiToFiscalCodeRestClient;
     private final SenderAdeAckRestClient senderAdeAckRestClient;
@@ -130,67 +126,16 @@ public class TransactionFilterBatch {
     private static final String FALSE = Boolean.FALSE.toString();
     private static final String TRUE = Boolean.TRUE.toString();
     private DataSource dataSource;
-    PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-
-    public void clearStoreService() {
-        storeService.clearAll();
-    }
 
     /**
-     *
-     * @return Method to start the execution of the transaction filter job
-     * @param startDate starting date for the batch job execution
-     */
-    @SneakyThrows
-    public JobExecution executeBatchJob(Date startDate) {
-        Resource[] transactionResources = resolver.getResources(transactionFilterStep.getTransactionDirectoryPath() + "/*.csv");
-        transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
-
-        String hpanPath = panReaderStep.getHpanDirectoryPath();
-        Resource[] hpanResources = resolver.getResources(hpanPath);
-
-        JobExecution execution = null;
-
-        /*
-          The jobLauncher run method is called only if, based on the configured properties, a matching transaction
-          resource is found, and either the remote pan list recovery is enabled, or a pan list file is available locally
-          on the configured path
-         */
-        if (transactionResources.length > 0 &&
-                (getHpanListRecoveryEnabled() || hpanResources.length>0)) {
-
-            log.info("Found {} {}. Starting filtering process",
-                    transactionResources.length, (transactionResources.length > 1 ? "resources" : "resource")
-            );
-
-            execution = jobLauncher().run(job(),
-                    new JobParametersBuilder()
-                            .addDate("startDateTime", startDate)
-                            .toJobParameters());
-            clearStoreService();
-
-        } else {
-            if (transactionResources.length == 0) {
-                log.info("No transaction file has been found on configured path: {}", transactionFilterStep.getTransactionDirectoryPath());
-            }
-            if (!getHpanListRecoveryEnabled() && hpanResources.length==0) {
-                log.info("No hpan file has been found on configured path: {}", hpanPath);
-            }
-        }
-
-        return execution;
-
-    }
-
-    /**
-     *
-     * @return configured instance of TransactionManager
+     *  Create the bean responsible for initializing the database
      */
     @Bean
-    public PlatformTransactionManager getTransactionManager() {
-        DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
-        dataSourceTransactionManager.setDataSource(dataSource);
-        return dataSourceTransactionManager;
+    @ConditionalOnMissingBean(BatchDataSourceScriptDatabaseInitializer.class)
+    BatchDataSourceScriptDatabaseInitializer batchDataSourceInitializer(DataSource dataSource,
+        @BatchDataSource ObjectProvider<DataSource> batchDataSource, BatchProperties properties) {
+        return new BatchDataSourceScriptDatabaseInitializer(batchDataSource.getIfAvailable(() -> dataSource),
+            properties.getJdbc());
     }
 
     /**
@@ -200,9 +145,9 @@ public class TransactionFilterBatch {
      *  exception description
      */
     @Bean
-    public JobRepository getJobRepository() throws Exception {
+    public JobRepository jobRepository(PlatformTransactionManager transactionManager) throws Exception {
             JobRepositoryFactoryBean jobRepositoryFactoryBean = new JobRepositoryFactoryBean();
-            jobRepositoryFactoryBean.setTransactionManager(getTransactionManager());
+            jobRepositoryFactoryBean.setTransactionManager(transactionManager);
             jobRepositoryFactoryBean.setTablePrefix(tablePrefix);
             jobRepositoryFactoryBean.setDataSource(dataSource);
             jobRepositoryFactoryBean.afterPropertiesSet();
@@ -214,25 +159,12 @@ public class TransactionFilterBatch {
 
     /**
      *
-     * @return configured instance of JobLauncher
-     * @throws Exception
-     *  exception description
-     */
-    @Bean
-    public JobLauncher jobLauncher() throws Exception {
-        SimpleJobLauncher simpleJobLauncher = new SimpleJobLauncher();
-        simpleJobLauncher.setJobRepository(getJobRepository());
-        return simpleJobLauncher;
-    }
-
-    /**
-     *
      * @return instance of a job for transaction processing
      */
     @SneakyThrows
     @Bean
-    public Job job() {
-        return transactionJobBuilder().build();
+    public Job job(FlowJobBuilder jobBuilder) {
+        return jobBuilder.build();
     }
 
     /**
@@ -273,72 +205,95 @@ public class TransactionFilterBatch {
      * @return Instance of {@link FlowJobBuilder}, with the configured steps executed
      * for the pan/transaction processing
      */
+    @Bean
     @SneakyThrows
-    public FlowJobBuilder transactionJobBuilder() {
+    public FlowJobBuilder transactionJobBuilder(JobRepository jobRepository,
+        Step pagopaPublicKeyRecoveryTask,
+        JobExecutionDecider fileReportStepDecider,
+        Step fileReportRecoveryStep,
+        Step selectTargetInputFileTask,
+        Step preventReprocessingFilenameAlreadySeenTask,
+        Step transactionChecksumMasterStep,
+        Step abiToFiscalCodeMapRecoveryTask,
+        Step transactionAggregationReaderMasterStep,
+        Step enforceSenderCodeUniquenessTask,
+        Step transactionAggregationWriterMasterStep,
+        Step encryptAggregateChunksMasterStep,
+        Step purgeAggregatesFromMemoryTask,
+        Step transactionSenderAdeMasterStep,
+        Step hpanListRecoveryTask,
+        Step saltRecoveryTask,
+        Step hpanRecoveryMasterStep,
+        Step transactionFilterMasterStep,
+        Step encryptTransactionChunksMasterStep,
+        Step transactionSenderRtdMasterStep,
+        Step senderAdeAckFilesRecoveryTask,
+        JobExecutionDecider pendingStepDecider,
+        Step transactionSenderPendingMasterStep,
+        Step fileManagementTask) {
 
-        return jobBuilderFactory.get("transaction-filter-job")
-                .repository(getJobRepository())
+        return new JobBuilder("transaction-filter-job", jobRepository)
                 .listener(jobListener())
-                .start(pagopaPublicKeyRecoveryTask(this.storeService))
+                .start(pagopaPublicKeyRecoveryTask)
                 .on(FAILED).end()
-                .on("*").to(fileReportStepDecider(fileReportRecoveryEnabled))
-                .on(TRUE).to(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
-                .from(fileReportStepDecider(fileReportRecoveryEnabled))
-                .on(FALSE).to(selectTargetInputFileTask(this.storeService))
-                .from(transactionFilterStep.fileReportRecoveryStep(fileReportRestClient))
-                .on("*").to(selectTargetInputFileTask(this.storeService))
+                .on("*").to(fileReportStepDecider)
+                .on(TRUE).to(fileReportRecoveryStep)
+                .from(fileReportStepDecider)
+                .on(FALSE).to(selectTargetInputFileTask)
+                .from(fileReportRecoveryStep)
+                .on("*").to(selectTargetInputFileTask)
                 .on(FAILED).end()
-                .on("*").to(preventReprocessingFilenameAlreadySeenTask(this.storeService, this.transactionWriterService))
+                .on("*").to(preventReprocessingFilenameAlreadySeenTask)
                 .on(FAILED).end()
-                .from(preventReprocessingFilenameAlreadySeenTask(this.storeService, this.transactionWriterService))
-                .on("*").to(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
+                .from(preventReprocessingFilenameAlreadySeenTask)
+                .on("*").to(transactionChecksumMasterStep)
                 .on(FAILED).end()
-                .from(transactionFilterStep.transactionChecksumMasterStep(this.storeService))
-                .on("*").to(abiToFiscalCodeMapRecoveryTask(this.storeService))
+                .from(transactionChecksumMasterStep)
+                .on("*").to(abiToFiscalCodeMapRecoveryTask)
                 .on(FAILED).end()
-                .from(abiToFiscalCodeMapRecoveryTask(this.storeService))
-                .on("*").to(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionAggregationReaderMasterStep(this.storeService, this.transactionWriterService))
-                .on("*").to(enforceSenderCodeUniquenessTask(this.storeService))
+                .from(abiToFiscalCodeMapRecoveryTask)
+                .on("*").to(transactionAggregationReaderMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionAggregationReaderMasterStep)
+                .on("*").to(enforceSenderCodeUniquenessTask)
                 .on(FAILED).end()
-                .from(enforceSenderCodeUniquenessTask(this.storeService))
-                .on("*").to(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionAggregationWriterMasterStep(this.storeService))
-                .on("*").to(transactionFilterStep.encryptAggregateChunksMasterStep(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.encryptAggregateChunksMasterStep(this.storeService))
-                .on("*").to(purgeAggregatesFromMemoryTask(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(purgeAggregatesFromMemoryTask(this.storeService))
-                .on("*").to(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService, this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionSenderAdeMasterStep(this.hpanConnectorService, this.storeService))
-                .on("*").to(hpanListRecoveryTask())
-                .on(FAILED).to(fileManagementTask())
-                .from(hpanListRecoveryTask()).on("*").to(saltRecoveryTask(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(saltRecoveryTask(this.storeService))
-                .on("*").to(panReaderStep.hpanRecoveryMasterStep(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(panReaderStep.hpanRecoveryMasterStep(this.storeService))
-                .on("*").to(transactionFilterStep.transactionFilterMasterStep(this.storeService, this.transactionWriterService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionFilterMasterStep(this.storeService, this.transactionWriterService))
-                .on("*").to(transactionFilterStep.encryptTransactionChunksMasterStep(this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.encryptTransactionChunksMasterStep(this.storeService))
-                .on("*").to(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService, this.storeService))
-                .on(FAILED).to(fileManagementTask())
-                .from(transactionFilterStep.transactionSenderRtdMasterStep(this.hpanConnectorService, this.storeService))
-                .on("*").to(senderAdeAckFilesRecoveryTask())
-                .on("*").to(pendingStepDecider(sendPendingFilesStepEnabled))
-                .on(TRUE).to(transactionFilterStep.transactionSenderPendingMasterStep(this.hpanConnectorService))
-                .from(pendingStepDecider(sendPendingFilesStepEnabled))
-                .on(FALSE).to(fileManagementTask())
-                .from(transactionFilterStep.transactionSenderPendingMasterStep(this.hpanConnectorService))
-                .on("*").to(fileManagementTask())
+                .from(enforceSenderCodeUniquenessTask)
+                .on("*").to(transactionAggregationWriterMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionAggregationWriterMasterStep)
+                .on("*").to(encryptAggregateChunksMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(encryptAggregateChunksMasterStep)
+                .on("*").to(purgeAggregatesFromMemoryTask)
+                .on(FAILED).to(fileManagementTask)
+                .from(purgeAggregatesFromMemoryTask)
+                .on("*").to(transactionSenderAdeMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionSenderAdeMasterStep)
+                .on("*").to(hpanListRecoveryTask)
+                .on(FAILED).to(fileManagementTask)
+                .from(hpanListRecoveryTask).on("*").to(saltRecoveryTask)
+                .on(FAILED).to(fileManagementTask)
+                .from(saltRecoveryTask)
+                .on("*").to(hpanRecoveryMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(hpanRecoveryMasterStep)
+                .on("*").to(transactionFilterMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionFilterMasterStep)
+                .on("*").to(encryptTransactionChunksMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(encryptTransactionChunksMasterStep)
+                .on("*").to(transactionSenderRtdMasterStep)
+                .on(FAILED).to(fileManagementTask)
+                .from(transactionSenderRtdMasterStep)
+                .on("*").to(senderAdeAckFilesRecoveryTask)
+                .on("*").to(pendingStepDecider)
+                .on(TRUE).to(transactionSenderPendingMasterStep)
+                .from(pendingStepDecider)
+                .on(FALSE).to(fileManagementTask)
+                .from(transactionSenderPendingMasterStep)
+                .on("*").to(fileManagementTask)
                 .build();
     }
 
@@ -350,17 +305,16 @@ public class TransactionFilterBatch {
     /**
      * Returns a Decider utilized to alter the job flow based on a condition. Status returned is "TRUE"
      * if the boolean parameter is true, "FALSE" otherwise.
-     * @param enabled boolean value
      * @return a job execution decider
      */
     @Bean
-    public JobExecutionDecider fileReportStepDecider(Boolean enabled) {
-        return (JobExecution jobExecution, StepExecution stepExecution) -> decider(enabled);
+    public JobExecutionDecider fileReportStepDecider() {
+        return (JobExecution jobExecution, StepExecution stepExecution) -> decider(fileReportRecoveryEnabled);
     }
 
     @Bean
-    public JobExecutionDecider pendingStepDecider(Boolean enabled) {
-        return (JobExecution jobExecution, StepExecution stepExecution) -> decider(enabled);
+    public JobExecutionDecider pendingStepDecider() {
+        return (JobExecution jobExecution, StepExecution stepExecution) -> decider(sendPendingFilesStepEnabled);
     }
 
     FlowExecutionStatus decider(Boolean enabled) {
@@ -368,7 +322,9 @@ public class TransactionFilterBatch {
     }
 
     @Bean
-    public Step hpanListRecoveryTask() {
+    public Step hpanListRecoveryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager
+    ) {
         HpanListRecoveryTasklet hpanListRecoveryTasklet = new HpanListRecoveryTasklet();
         hpanListRecoveryTasklet.setHpanListDirectory(hpanListDirectory);
         hpanListRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
@@ -376,83 +332,113 @@ public class TransactionFilterBatch {
         hpanListRecoveryTasklet.setHpanFilePattern(hpanListRecoveryFilePattern);
         hpanListRecoveryTasklet.setDailyRemovalTaskletEnabled(hpanListDailyRemovalEnabled);
         hpanListRecoveryTasklet.setRecoveryTaskletEnabled(hpanListRecoveryEnabled);
-        return stepBuilderFactory
-                .get("transaction-filter-salt-hpan-list-recovery-step")
-                .tasklet(hpanListRecoveryTasklet).build();
+        return new StepBuilder("transaction-filter-salt-hpan-list-recovery-step", jobRepository)
+                .tasklet(hpanListRecoveryTasklet, transactionManager)
+                .build();
     }
 
     @Bean
-    public Step saltRecoveryTask(StoreService storeService) {
+    public Step saltRecoveryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         SaltRecoveryTasklet saltRecoveryTasklet = new SaltRecoveryTasklet();
         saltRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
         saltRecoveryTasklet.setStoreService(storeService);
         saltRecoveryTasklet.setTaskletEnabled(saltRecoveryEnabled);
-        return stepBuilderFactory.get("transaction-filter-salt-recovery-step")
-                .tasklet(saltRecoveryTasklet).build();
+        return new StepBuilder("transaction-filter-salt-recovery-step", jobRepository)
+                .tasklet(saltRecoveryTasklet, transactionManager)
+                .build();
     }
 
     @Bean
-    public Step pagopaPublicKeyRecoveryTask(StoreService storeService) {
+    public Step pagopaPublicKeyRecoveryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         PagopaPublicKeyRecoveryTasklet pagopaPublicKeyRecoveryTasklet = new PagopaPublicKeyRecoveryTasklet();
         pagopaPublicKeyRecoveryTasklet.setHpanConnectorService(hpanConnectorService);
         pagopaPublicKeyRecoveryTasklet.setStoreService(storeService);
         pagopaPublicKeyRecoveryTasklet.setTaskletEnabled(pagopaPublicKeyRecoveryEnabled);
-        return stepBuilderFactory.get("transaction-filter-public-key-recovery-step")
-                .tasklet(pagopaPublicKeyRecoveryTasklet).build();
+        return new StepBuilder("transaction-filter-public-key-recovery-step", jobRepository)
+            .tasklet(pagopaPublicKeyRecoveryTasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step purgeAggregatesFromMemoryTask(StoreService storeService) {
+    public Step purgeAggregatesFromMemoryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         PurgeAggregatesFromMemoryTasklet tasklet = new PurgeAggregatesFromMemoryTasklet();
         tasklet.setStoreService(storeService);
-        return stepBuilderFactory.get("transaction-filter-purge-aggregates-from-memory-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("transaction-filter-purge-aggregates-from-memory-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step selectTargetInputFileTask(StoreService storeService) {
+    public Step selectTargetInputFileTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         SelectTargetInputFileTasklet tasklet = new SelectTargetInputFileTasklet();
         tasklet.setStoreService(storeService);
         tasklet.setTransactionDirectoryPath(transactionFilterStep.getTransactionDirectoryPath());
-        return stepBuilderFactory.get("transaction-filter-select-target-input-file-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("transaction-filter-select-target-input-file-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step enforceSenderCodeUniquenessTask(StoreService storeService) {
+    public Step enforceSenderCodeUniquenessTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         EnforceSenderCodeUniquenessTasklet tasklet = new EnforceSenderCodeUniquenessTasklet();
         tasklet.setStoreService(storeService);
-        return stepBuilderFactory.get("transaction-filter-enforce-uniqueness-sender-code-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("transaction-filter-enforce-uniqueness-sender-code-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step preventReprocessingFilenameAlreadySeenTask(StoreService storeService, TransactionWriterService transactionWriterService) {
+    public Step preventReprocessingFilenameAlreadySeenTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService,
+        TransactionWriterService transactionWriterService
+    ) {
         PreventReprocessingFilenameAlreadySeenTasklet tasklet = new PreventReprocessingFilenameAlreadySeenTasklet();
         tasklet.setStoreService(storeService);
         tasklet.setTransactionWriterService(transactionWriterService);
-        return stepBuilderFactory.get("prevent-reprocessing-filename-already-seen-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("prevent-reprocessing-filename-already-seen-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step abiToFiscalCodeMapRecoveryTask(StoreService storeService) {
+    public Step abiToFiscalCodeMapRecoveryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager,
+        StoreService storeService
+    ) {
         AbiToFiscalCodeMapRecoveryTasklet tasklet = new AbiToFiscalCodeMapRecoveryTasklet(abiToFiscalCodeRestClient, storeService);
         tasklet.setTaskletEnabled(abiToFiscalCodeTaskletEnabled);
-        return stepBuilderFactory
-            .get("transaction-filter-abi-to-fiscalcode-recovery-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("transaction-filter-abi-to-fiscalcode-recovery-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     @Bean
-    public Step senderAdeAckFilesRecoveryTask() {
+    public Step senderAdeAckFilesRecoveryTask(JobRepository jobRepository,
+        PlatformTransactionManager transactionManager
+    ) {
         SenderAdeAckFilesRecoveryTasklet tasklet = new SenderAdeAckFilesRecoveryTasklet(senderAdeAckRestClient);
         tasklet.setSenderAdeAckDirectory(senderAdeAckFilesDirectoryPath);
         tasklet.setTaskletEnabled(senderAdeAckFilesTaskletEnabled);
 
-        return stepBuilderFactory
-            .get("transaction-filter-sender-ade-ack-files-recovery-step")
-            .tasklet(tasklet).build();
+        return new StepBuilder("transaction-filter-sender-ade-ack-files-recovery-step", jobRepository)
+            .tasklet(tasklet, transactionManager)
+            .build();
     }
 
     /**
@@ -461,7 +447,7 @@ public class TransactionFilterBatch {
      */
     @SneakyThrows
     @Bean
-    public Step fileManagementTask() {
+    public Step fileManagementTask(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         FileManagementTasklet fileManagementTasklet = new FileManagementTasklet();
         fileManagementTasklet.setTransactionWriterService(transactionWriterService);
         fileManagementTasklet.setSuccessPath(successArchivePath);
@@ -473,8 +459,9 @@ public class TransactionFilterBatch {
         fileManagementTasklet.setDeleteOutputFiles(deleteOutputFiles);
         fileManagementTasklet.setManageHpanOnSuccess(manageHpanOnSuccess);
         fileManagementTasklet.setLogsDirectory(logsDirectoryPath);
-        return stepBuilderFactory.get("transaction-filter-file-management-step")
-                .tasklet(fileManagementTasklet).build();
+        return new StepBuilder("transaction-filter-file-management-step", jobRepository)
+                .tasklet(fileManagementTasklet, transactionManager)
+                .build();
     }
 
 }

@@ -18,6 +18,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
@@ -28,6 +29,8 @@ import org.springframework.boot.test.system.OutputCaptureRule;
 import org.springframework.cloud.openfeign.FeignAutoConfiguration;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -147,7 +150,8 @@ public class HpanRestClientTest {
     @Test
     public void uploadFile() throws IOException {
         File fileToUpload = tempFolder.newFile("testFile");
-        Assert.assertNull(hpanRestClient.uploadFile(fileToUpload, "sas-token", "authorized-container"));
+        Assertions.assertDoesNotThrow(() ->
+            hpanRestClient.uploadFile(fileToUpload, "sas-token", "authorized-container"));
     }
 
     @Test
@@ -181,7 +185,7 @@ public class HpanRestClientTest {
         public void initialize(ConfigurableApplicationContext applicationContext) {
             TestPropertySourceUtils
                     .addInlinedPropertiesToEnvironment(applicationContext,
-                            String.format("rest-client.hpan.base-url=https://localhost:%d/",
+                            String.format("rest-client.hpan.base-url=https://localhost:%d",
                                     wireMockRule.httpsPort())
                     );
         }
