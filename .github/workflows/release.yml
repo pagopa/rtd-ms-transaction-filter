@@ -48,6 +48,6 @@ jobs:
 
   uploadJar:
     needs: release
-    uses: ./.github/upload-jar.yml+
+    uses: ./.github/upload-jar.yml
     with:
       enabled: ${{ needs.release.outputs.isReleased }}
