@@ -13,10 +13,11 @@ name: Anchore Container Scan
 
 on:
   push:
-    branches: [ "master", "main", "develop" ]
+    branches: [ "master", "develop" ]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ "master", "main", "develop" ]
+    branches: [ "master", "develop" ]
+  workflow_dispatch:
   schedule:
     - cron: '00 07 * * *'
 
@@ -83,7 +84,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": " `CRITICAL` : *${{ env.CVE_CRITICAL }}*\n\n`HIGH` : *${{ env.CVE_HIGH }}*\n\n`MEDIUM` : *${{ env.CVE_MEDIUM }}*\n\n<https://github.com/${{ github.repository }}/security/code-scanning |See details on GitHub>""
+                    "text": " `CRITICAL` : *${{ env.CVE_CRITICAL }}*\n\n`HIGH` : *${{ env.CVE_HIGH }}*\n\n`MEDIUM` : *${{ env.CVE_MEDIUM }}*\n\n<https://github.com/${{ github.repository }}/security/code-scanning |See details on GitHub>"
                   }
                 }
               ]
