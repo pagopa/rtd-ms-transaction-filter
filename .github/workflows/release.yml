@@ -41,13 +41,13 @@ jobs:
 
   publishImage:
     needs: release
-    uses: ./.github/publish-image.yml
+    uses: ./.github/workflows/publish-image.yml
     with:
       tag: ${{ needs.release.outputs.tag }}
       enabled: ${{ needs.release.outputs.isReleased }}
 
   uploadJar:
     needs: release
-    uses: ./.github/upload-jar.yml
+    uses: ./.github/workflows/upload-jar.yml
     with:
       enabled: ${{ needs.release.outputs.isReleased }}
