@@ -4,19 +4,17 @@
 # documentation.
 
 # This workflow checks out code, builds an image, performs a container image
-# vulnerability scan with Anchore's Grype tool, and integrates the results with GitHub Advanced Security
-# code scanning feature.  For more information on the Anchore scan action usage
-# and parameters, see https://github.com/anchore/scan-action. For more
-# information on Anchore's container image scanning tool Grype, see
-# https://github.com/anchore/grype
-name: Anchore Container Scan
+# vulnerability scan with Trivy tool, and integrates the results with GitHub Advanced Security
+# code scanning feature.
+name: Container Scan
 
 on:
   push:
-    branches: [ "master", "main", "develop" ]
+    branches: [ "master", "develop" ]
   pull_request:
     # The branches below must be a subset of the branches above
-    branches: [ "master", "main", "develop" ]
+    branches: [ "master", "develop" ]
+  workflow_dispatch:
   schedule:
     - cron: '00 07 * * *'
 
@@ -27,7 +25,7 @@ env:
   DOCKERFILE: Dockerfile
 
 jobs:
-  Anchore-Build-Scan:
+  BuildAndScan:
     permissions:
       contents: read # for actions/checkout to fetch code
       security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
@@ -39,34 +37,32 @@ jobs:
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 #v3.6.0
       - name: Build the Docker image
         run: docker build . --file ${{ env.DOCKERFILE }} --tag localbuild/testimage:latest
-      - name: Run the Anchore scan action itself with GitHub Advanced Security code scanning integration enabled
+      - name: Run the Trivy scan action itself with GitHub Advanced Security code scanning integration enabled
         id: scan
-        uses: anchore/scan-action@24fd7c9060f3c96848dd1929fac8d796fb5ae4b4 #v3.3.6
+        uses: aquasecurity/trivy-action@fbd16365eb88e12433951383f5e99bd901fc618f #v0.12.0
         with:
-          image: "localbuild/testimage:latest"
-          fail-build: true
-          severity-cutoff: "high"
+          image-ref: "localbuild/testimage:latest"
+          format: 'sarif'
+          output: 'results.sarif'
       - name: Upload Anchore Scan Report
         uses: github/codeql-action/upload-sarif@6c089f53dd51dc3fc7e599c3cb5356453a52ca9e #v2.20.0
-        if: always()
         with:
-          sarif_file: ${{ steps.scan.outputs.sarif }}
-      - name: Inspect action SARIF report
-        if: always()
-        run: cat ${{ steps.scan.outputs.sarif }}
+          sarif_file: 'results.sarif'
       - name: CVE Description escaped extraction and print
-        if: always()
         run: |
-          SCAN_RESULTS=$(jq -r '.runs[0].tool.driver.rules | map(.shortDescription.text) | join("\\n")' ${{ steps.scan.outputs.sarif }})
-          echo "SCAN_RESULTS=$SCAN_RESULTS" >> $GITHUB_ENV
-          echo "CVE_CRITICAL=$(echo $SCAN_RESULTS | grep -o critical | wc -l)" >> $GITHUB_ENV
-          echo "CVE_HIGH=$(echo $SCAN_RESULTS | grep -o high | wc -l)" >> $GITHUB_ENV
-          echo "CVE_MEDIUM=$(echo $SCAN_RESULTS | grep -o medium | wc -l)" >> $GITHUB_ENV
+          SCAN_RESULTS=$(jq -r '.runs[0].tool.driver.rules | map(.help.text) | join("\\n")' results.sarif)
+          echo "CVE_CRITICAL=$(echo $SCAN_RESULTS | grep -o CRITICAL | wc -l)" >> $GITHUB_ENV
+          echo "CVE_HIGH=$(echo $SCAN_RESULTS | grep -o HIGH | wc -l)" >> $GITHUB_ENV
+          echo "CVE_MEDIUM=$(echo $SCAN_RESULTS | grep -o MEDIUM | wc -l)" >> $GITHUB_ENV
           
-          echo -e $SCAN_RESULTS
+          echo $SCAN_RESULTS
+      - name: Fails if CVE HIGH or CRITICAL are detected
+        id: cve-threshold
+        if: env.CVE_HIGH > 0 || env.CVE_CRITICAL > 0
+        run: exit 1
       - name: Send notification to Slack
         id: slack
-        if: always() && github.event_name == 'schedule' && steps.scan.outcome == 'failure'
+        if: always() && github.event_name == 'schedule' && steps.cve-threshold.outcome == 'failure'
         uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 #v1.24.0
         with:
           payload: |
@@ -83,7 +79,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": " `CRITICAL` : *${{ env.CVE_CRITICAL }}*\n\n`HIGH` : *${{ env.CVE_HIGH }}*\n\n`MEDIUM` : *${{ env.CVE_MEDIUM }}*\n\n<https://github.com/${{ github.repository }}/security/code-scanning |See details on GitHub>""
+                    "text": " `CRITICAL` : *${{ env.CVE_CRITICAL }}*\n\n`HIGH` : *${{ env.CVE_HIGH }}*\n\n`MEDIUM` : *${{ env.CVE_MEDIUM }}*\n\n<https://github.com/${{ github.repository }}/security/code-scanning |See details on GitHub>"
                   }
                 }
               ]
