@@ -16,7 +16,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     outputs:
-      tag: ${{ steps.sem-release.outputs.new_release_version }}
+      version_tag: ${{ steps.sem-release.outputs.new_release_version }}
       isReleased: ${{ steps.sem-release.outputs.new_release_published }}
     steps:
       - name: Checkout
@@ -43,7 +43,7 @@ jobs:
     needs: release
     uses: ./.github/workflows/publish-image.yml
     with:
-      tag: ${{ needs.release.outputs.tag }}
+      version_tag: ${{ needs.release.outputs.version_tag }}
       enabled: ${{ needs.release.outputs.isReleased }}
 
   uploadJar:
