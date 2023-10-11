@@ -11,6 +11,9 @@ on:
         required: true
         type: string
         default: false
+    secrets:
+      BOT_WRITE_PACKAGE_TOKEN:
+        required: true
 
 permissions:
   packages: write
