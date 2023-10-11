@@ -13,10 +13,10 @@ permissions:
   packages: write
 
 jobs:
-  release:
+  upload:
     name: Upload asset
     runs-on: ubuntu-latest
-    if: inputs.enabled == 'true'
+    if: inputs.enabled == 'true' || github.event_name == 'workflow_dispatch'
     environment: prod
 
     steps:
