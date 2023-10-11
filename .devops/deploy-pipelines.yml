@@ -87,7 +87,7 @@ stages:
               goals: '$(mavenGoals)'
               options: '-B -DskipTests=true'
               javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.8'
+              jdkVersionOption: '1.17'
               mavenVersionOption: 'Default'
               mavenOptions: '-Xmx3072m'
               mavenAuthenticateFeed: false
