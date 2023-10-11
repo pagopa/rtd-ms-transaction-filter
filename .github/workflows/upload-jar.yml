@@ -1,13 +1,8 @@
 name: Upload asset
 
 on:
-  workflow_dispatch:
-  workflow_call:
-    inputs:
-      enabled:
-        required: true
-        type: string
-        default: false
+  release:
+    types: [published]
 
 permissions:
   packages: write
@@ -16,8 +11,6 @@ jobs:
   upload:
     name: Upload asset
     runs-on: ubuntu-latest
-    if: inputs.enabled == 'true' || github.event_name == 'workflow_dispatch'
-    environment: prod
 
     steps:
       - name: Checkout
@@ -37,6 +30,4 @@ jobs:
         run: mvn -B package
 
       - name: Upload
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 #v0.1.15
-        with:
-          files: target/*.jar
+        run: gh release upload ${{ github.event.release.tag_name }} target/rtd-ms-transaction-filter.jar
