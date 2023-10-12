@@ -15,9 +15,6 @@ jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
-    outputs:
-      version_tag: ${{ steps.sem-release.outputs.new_release_version }}
-      isReleased: ${{ steps.sem-release.outputs.new_release_published }}
     steps:
       - name: Checkout
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 #v3.6.0
@@ -39,15 +36,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publishImage:
-    needs: release
-    uses: ./.github/workflows/publish-image.yml
-    with:
-      version_tag: ${{ needs.release.outputs.version_tag }}
-      enabled: ${{ needs.release.outputs.isReleased }}
-
-  uploadJar:
-    needs: release
-    uses: ./.github/workflows/upload-jar.yml
-    with:
-      enabled: ${{ needs.release.outputs.isReleased }}
