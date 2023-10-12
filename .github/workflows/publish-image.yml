@@ -1,25 +1,16 @@
 name: Publish image
 
 on:
-  workflow_dispatch:
-  workflow_call:
-    inputs:
-      version_tag:
-        required: true
-        type: string
-      enabled:
-        required: true
-        type: string
-        default: false
+  release:
+    types: [published]
 
 permissions:
   packages: write
 
 jobs:
-  release:
+  publish:
     name: Publish
     runs-on: ubuntu-latest
-    if: inputs.enabled == 'true'
     environment: prod
 
     steps:
@@ -50,7 +41,7 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
-            ghcr.io/${{ github.repository }}:${{ inputs.version_tag }}
+            ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
           labels: |
             maintainer=https://pagopa.it
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
