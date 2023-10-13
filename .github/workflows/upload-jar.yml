@@ -31,3 +31,5 @@ jobs:
 
       - name: Upload
         run: gh release upload ${{ github.event.release.tag_name }} target/rtd-ms-transaction-filter.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
