@@ -4,13 +4,12 @@ on:
   release:
     types: [published]
 
-permissions:
-  packages: write
-
 jobs:
   upload:
     name: Upload asset
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # to modify a github release
 
     steps:
       - name: Checkout
