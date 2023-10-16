@@ -1,8 +1,12 @@
 name: Publish image
 
+#on:
+#  release:
+#    types: [published]
+
 on:
-  release:
-    types: [published]
+  pull_request:
+    branches: [ "master", "develop" ]
 
 jobs:
   publish:
@@ -47,4 +51,4 @@ jobs:
           labels: |
             maintainer=https://pagopa.it
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-          platforms: linux/amd64,linux/arm64
+#          platforms: linux/amd64,linux/arm64
