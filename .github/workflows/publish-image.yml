@@ -10,7 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: prod
     permissions:
-      contents: read
       packages: write # to publish the docker image
 
     steps:
@@ -43,11 +42,9 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:v2.1.1
-#            ghcr.io/${{ github.repository }}:${{ github.sha }}
-#            ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
-
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:${{ github.event.release.tag_name }}
           labels: |
             maintainer=https://pagopa.it
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-#          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64
