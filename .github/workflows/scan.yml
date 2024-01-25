@@ -35,6 +35,9 @@ jobs:
       CVE_CRITICAL: ${{ env.CVE_CRITICAL }}
       CVE_HIGH: ${{env.CVE_HIGH}}
       CVE_MEDIUM: ${{env.CVE_MEDIUM}}
+#      CVE_CRITICAL: ${{ steps.cve_description.outputs.CVE_CRITICAL }}
+#      CVE_HIGH: ${{ steps.cve_description.outputs.CVE_HIGH }}
+#      CVE_MEDIUM: ${{ steps.cve_description.outputs.CVE_MEDIUM }}
     steps:
       - name: Checkout the code
         uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 #v3.6.0
@@ -52,6 +55,7 @@ jobs:
         with:
           sarif_file: 'results.sarif'
       - name: CVE Description escaped extraction and print
+#        id: cve_description
         run: |
           SCAN_RESULTS=$(jq -r 'try .runs[0].tool.driver.rules | map(.help.text) | join("\\n")' results.sarif)
           echo "CVE_CRITICAL=$(echo $SCAN_RESULTS | grep -o CRITICAL | wc -l)" >> $GITHUB_ENV
@@ -67,7 +71,7 @@ jobs:
   SendSlackNotification:
     needs: BuildAndScan
     uses: ./.github/workflows/send-slack-notification.yml
-    if: github.event_name == 'schedule' && steps.cve-threshold.outcome == 'failure'
+    if: github.event_name == 'schedule' && needs.BuildAndScan.steps.cve-threshold.outcome == 'failure'
     with:
       CVE_CRITICAL: ${{needs.BuildAndScan.outputs.CVE_CRITICAL}}
       CVE_HIGH: ${{needs.BuildAndScan.outputs.CVE_HIGH}}
