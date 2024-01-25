@@ -12,44 +12,39 @@ on:
       CVE_MEDIUM:
         required: true
         type: string
-#    secrets:
-#      CVE_SCAN_SLACK_WEBHOOK:
-#        required: true
+    secrets:
+      CVE_SCAN_SLACK_WEBHOOK:
+        required: true
 
 jobs:
   SendNotify:
     name: Notify Slack
     runs-on: ubuntu-latest
-#    environment: prod
+    environment: prod
     steps:
       - name: Send notification to Slack
         id: slack
-        run: |
-          echo "${{ inputs.CVE_CRITICAL }}"
-          echo "${{ inputs.CVE_HIGH }}"
-          echo "${{ inputs.CVE_MEDIUM }}"
-
-#        uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 #v1.24.0
-#        with:
-#          payload: |
-#            {
-#              "blocks": [
-#                {
-#                  "type": "header",
-#                  "text": {
-#                    "type": "plain_text",
-#                    "text": "[ ${{ github.event.repository.name }} ]"
-#                  }
-#                },
-#                {
-#                  "type": "section",
-#                  "text": {
-#                    "type": "mrkdwn",
-#                    "text": " `CRITICAL` : *${{ env.CVE_CRITICAL }}*\n\n`HIGH` : *${{ env.CVE_HIGH }}*\n\n`MEDIUM` : *${{ env.CVE_MEDIUM }}*\n\n<https://github.com/${{ github.repository }}/security/code-scanning |See details on GitHub>"
-#                  }
-#                }
-#              ]
-#            }
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.CVE_SCAN_SLACK_WEBHOOK }}
-#          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 #v1.24.0
+        with:
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "[ ${{ github.event.repository.name }} ]"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": " `CRITICAL` : *${{ inputs.CVE_CRITICAL }}*\n\n`HIGH` : *${{ inputs.CVE_HIGH }}*\n\n`MEDIUM` : *${{ inputs.CVE_MEDIUM }}*\n\n<https://github.com/${{ github.repository }}/security/code-scanning |See details on GitHub>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.CVE_SCAN_SLACK_WEBHOOK }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
