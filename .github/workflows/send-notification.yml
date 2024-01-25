@@ -25,9 +25,9 @@ jobs:
       - name: Send notification to Slack
         id: slack
         run: |
-          echo "CVE_CRITICAL"
-          echo "CVE_HIGH"
-          echo "CVE_MEDIUM"
+          echo "${{ inputs.CVE_CRITICAL }}"
+          echo "${{ inputs.CVE_HIGH }}"
+          echo "${{ CVE_MEDIUM }}"
 
 #        uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 #v1.24.0
 #        with:
