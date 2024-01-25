@@ -62,7 +62,7 @@ jobs:
 
   SendSlackNotification:
     needs: BuildAndScan
-    uses: ./github/workflows/send-slack-notification.yml
+    uses: ./.github/workflows/send-slack-notification.yml
     with:
       CVE_CRITICAL: ${{env.CVE_CRITICAL}}
       CVE_HIGH: ${{env.CVE_HIGH}}
