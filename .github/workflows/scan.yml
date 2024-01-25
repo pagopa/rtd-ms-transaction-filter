@@ -70,39 +70,10 @@ jobs:
 
   SendSlackNotification:
     needs: BuildAndScan
-    uses: ./.github/workflows/send-slack-notification.yml
-    if: github.event_name == 'schedule' && needs.BuildAndScan.steps.cve-threshold.outcome == 'failure'
+    uses: ./.github/workflows/send-notification.yml
+#    if: github.event_name == 'schedule' && needs.BuildAndScan.steps.cve-threshold.outcome == 'failure'
     with:
       CVE_CRITICAL: ${{needs.BuildAndScan.outputs.CVE_CRITICAL}}
       CVE_HIGH: ${{needs.BuildAndScan.outputs.CVE_HIGH}}
       CVE_MEDIUM: ${{needs.BuildAndScan.outputs.CVE_MEDIUM}}
     secrets: inherit
-
-
-#      - name: Send notification to Slack
-#        id: slack
-#        if: always() && github.event_name == 'schedule' && steps.cve-threshold.outcome == 'failure'
-#        uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 #v1.24.0
-#        with:
-#          payload: |
-#            {
-#              "blocks": [
-#                {
-#                  "type": "header",
-#                  "text": {
-#                    "type": "plain_text",
-#                    "text": "[ ${{ github.event.repository.name }} ]"
-#                  }
-#                },
-#                {
-#                  "type": "section",
-#                  "text": {
-#                    "type": "mrkdwn",
-#                    "text": " `CRITICAL` : *${{ env.CVE_CRITICAL }}*\n\n`HIGH` : *${{ env.CVE_HIGH }}*\n\n`MEDIUM` : *${{ env.CVE_MEDIUM }}*\n\n<https://github.com/${{ github.repository }}/security/code-scanning |See details on GitHub>"
-#                  }
-#                }
-#              ]
-#            }
-#        env:
-#          SLACK_WEBHOOK_URL: ${{ secrets.CVE_SCAN_SLACK_WEBHOOK }}
-#          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
