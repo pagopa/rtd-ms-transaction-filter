@@ -32,7 +32,7 @@ jobs:
       actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     runs-on: ubuntu-latest
     outputs:
-      CVE_CRITICAL: ${{ env.CVE_CRITICAL }}
+      CVE_CRITICAL: ${{env.CVE_CRITICAL}}
       CVE_HIGH: ${{env.CVE_HIGH}}
       CVE_MEDIUM: ${{env.CVE_MEDIUM}}
     steps:

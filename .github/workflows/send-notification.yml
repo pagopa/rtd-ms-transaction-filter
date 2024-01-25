@@ -17,7 +17,7 @@ on:
         required: true
 
 jobs:
-  SendNotify:
+  Notify:
     name: Notify Slack
     runs-on: ubuntu-latest
     environment: prod
