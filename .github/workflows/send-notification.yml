@@ -12,9 +12,9 @@ on:
       CVE_MEDIUM:
         required: true
         type: string
-    secrets:
-      CVE_SCAN_SLACK_WEBHOOK:
-        required: true
+#    secrets:
+#      CVE_SCAN_SLACK_WEBHOOK:
+#        required: true
 
 jobs:
   SendNotify:
