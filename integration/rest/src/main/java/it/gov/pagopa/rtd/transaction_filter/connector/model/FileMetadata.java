@@ -1,6 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.connector.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
@@ -31,5 +34,9 @@ public class FileMetadata {
   @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
   @NotNull
   private LocalDateTime transmissionDate;
+
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private AggregatesDataSummary aggregatesDataSummary;
+
 
 }
