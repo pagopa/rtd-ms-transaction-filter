@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -147,6 +146,9 @@ public class TransactionFilterBatchFileReportTest {
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
     @SneakyThrows
     @Before
     public void setUp() {
@@ -210,7 +212,8 @@ public class TransactionFilterBatchFileReportTest {
         Set<String> expectedPgpFilenames = getExpectedPgpFilenames();
         assertThat(expectedPgpFilenames).containsAll(outputPgpFilenames);
 
-        Set<String> outputCsvFilenames = getOutputCsvFiles().stream().map(File::getName).collect(Collectors.toSet());
+        Set<String> outputCsvFilenames = getOutputCsvFiles().stream().map(File::getName)
+                .collect(Collectors.toSet());
         Set<String> expectedCsvFilenames = getExpectedCsvFileNames();
         assertThat(outputCsvFilenames).containsAll(expectedCsvFilenames);
 
@@ -236,7 +239,8 @@ public class TransactionFilterBatchFileReportTest {
         FileInputStream trxEncFileIS = new FileInputStream(trxEncFile);
         FileInputStream secretFilePathIS = null;
         try {
-            String secretKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile() + "/secretKey.asc";
+            String secretKeyPath = "file:/" + this.getClass().getResource("/test-encrypt").getFile()
+                    + "/secretKey.asc";
             Resource secretKeyResource = resolver.getResource(secretKeyPath);
 
             secretFilePathIS = new FileInputStream(secretKeyResource.getFile());
@@ -255,32 +259,38 @@ public class TransactionFilterBatchFileReportTest {
 
         // Check that logs folder contains expected files
         Collection<File> outputLogsFiles = FileUtils.listFiles(
-                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), new String[] { "csv" }, false);
+                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(),
+                new String[] { "csv" }, false);
         assertThat(outputLogsFiles).hasSize(2);
 
         FileFilter fileFilter = new WildcardFileFilter(
                 "*_Rtd__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxFilteredFiles = FileUtils.listFiles(
-                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter,
+                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(),
+                (IOFileFilter) fileFilter,
                 null);
         assertThat(trxFilteredFiles).hasSize(1);
 
-        fileFilter = new WildcardFileFilter("*_Ade__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+        fileFilter = new WildcardFileFilter(
+                "*_Ade__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> adeFilteredFiles = FileUtils.listFiles(
-                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter,
+                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(),
+                (IOFileFilter) fileFilter,
                 null);
         assertThat(adeFilteredFiles).hasSize(1);
 
         // empty log files get deleted
         fileFilter = new WildcardFileFilter("*_Rtd__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> trxErrorFiles = FileUtils.listFiles(
-                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter,
+                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(),
+                (IOFileFilter) fileFilter,
                 null);
         assertThat(trxErrorFiles).isEmpty();
 
         fileFilter = new WildcardFileFilter("*_Ade__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
         Collection<File> adeErrorFiles = FileUtils.listFiles(
-                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter,
+                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(),
+                (IOFileFilter) fileFilter,
                 null);
         assertThat(adeErrorFiles).isEmpty();
 
@@ -306,11 +316,14 @@ public class TransactionFilterBatchFileReportTest {
                 .orElse(new File("")).toPath());
         assertThat(fileReportContent).isNotNull().containsExactly("[",
                 " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\"},",
+                        + currentDate.format(DATE_TIME_FORMATTER)
+                        + "\"},",
                 " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(4).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\"},",
+                        + currentDate.minusDays(4).format(DATE_TIME_FORMATTER)
+                        + "\"},",
                 " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(10).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\"}",
+                        + currentDate.minusDays(10).format(DATE_TIME_FORMATTER)
+                        + "\"}",
                 "]");
     }
 
@@ -333,11 +346,16 @@ public class TransactionFilterBatchFileReportTest {
 
         assertThat(fileReportContent).isNotNull().containsExactly("[",
                 " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\"},",
+                        + currentDate.format(DATE_TIME_FORMATTER)
+                        + "\"},",
                 " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(4).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\"},",
+                        + currentDate.minusDays(4)
+                                .format(DATE_TIME_FORMATTER)
+                        + "\"},",
                 " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(10).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\"}",
+                        + currentDate.minusDays(10)
+                                .format(DATE_TIME_FORMATTER)
+                        + "\"}",
                 "]");
     }
 
@@ -357,8 +375,8 @@ public class TransactionFilterBatchFileReportTest {
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
                 .orElse(new File("")).toPath());
 
-        System.out.println("Test report "+fileReportContent);
-        assertThat(fileReportContent).isNotNull().contains("[","]");
+        System.out.println("Test report " + fileReportContent);
+        assertThat(fileReportContent).isNotNull().contains("[", "]");
     }
 
     @SneakyThrows
@@ -378,7 +396,7 @@ public class TransactionFilterBatchFileReportTest {
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
                 .orElse(new File("")).toPath());
 
-        assertThat(fileReportContent).isNotNull().contains("[","]");
+        assertThat(fileReportContent).isNotNull().contains("[", "]");
     }
 
     @SneakyThrows
@@ -440,7 +458,8 @@ public class TransactionFilterBatchFileReportTest {
         FileOutputStream panPgpFOS = new FileOutputStream(panPgp);
 
         EncryptUtil.encryptFile(panPgpFOS,
-                Objects.requireNonNull(this.getClass().getResource("/test-encrypt/pan")).getFile() + "/pan.csv",
+                Objects.requireNonNull(this.getClass().getResource("/test-encrypt/pan")).getFile()
+                        + "/pan.csv",
                 EncryptUtil.readPublicKey(
                         this.getClass().getResourceAsStream("/test-encrypt/publicKey.asc")),
                 false, false);
@@ -469,7 +488,8 @@ public class TransactionFilterBatchFileReportTest {
     @SneakyThrows
     private Collection<File> getOutputPgpFiles() {
         return FileUtils.listFiles(
-                resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[] { "pgp" }, false);
+                resolver.getResources("classpath:/test-encrypt/output")[0].getFile(),
+                new String[] { "pgp" }, false);
     }
 
     private Set<String> getExpectedPgpFilenames() {
@@ -482,7 +502,8 @@ public class TransactionFilterBatchFileReportTest {
     @SneakyThrows
     private Collection<File> getOutputCsvFiles() {
         return FileUtils.listFiles(
-                resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[] { "csv" }, false);
+                resolver.getResources("classpath:/test-encrypt/output")[0].getFile(),
+                new String[] { "csv" }, false);
     }
 
     private Set<String> getExpectedCsvFileNames() {
@@ -495,7 +516,8 @@ public class TransactionFilterBatchFileReportTest {
 
     private Set<String> getExpectedTrnOutputFileContent() {
         Set<String> expectedOutputFileTrnContent = new HashSet<>();
-        expectedOutputFileTrnContent.add("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
+        expectedOutputFileTrnContent
+                .add("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
         expectedOutputFileTrnContent.add(
                 "99999;00;00;a261f9479522020529213c5336dec371de5b3dacca0a8165c50ac33032c631ac;03/20/2020 10:50:33;1111111111;5555;;1111;978;22222;0000;1;000002;5422;fis123;12345678901;00;");
         expectedOutputFileTrnContent.add(
@@ -509,13 +531,17 @@ public class TransactionFilterBatchFileReportTest {
         String transmissionDate = getDateFormattedAsString();
 
         Set<String> expectedOutputFileAdeContent = new HashSet<>();
-        expectedOutputFileAdeContent.add("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
         expectedOutputFileAdeContent
-                .add("99999;00;" + transmissionDate + ";03/20/2020;3;9999;978;4444;0000;1;fis123;12345678901;00");
+                .add("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
         expectedOutputFileAdeContent
-                .add("99999;01;" + transmissionDate + ";03/20/2020;1;2222;978;3333;0000;1;fis123;12345678901;00");
+                .add("99999;00;" + transmissionDate
+                        + ";03/20/2020;3;9999;978;4444;0000;1;fis123;12345678901;00");
         expectedOutputFileAdeContent
-                .add("99999;00;" + transmissionDate + ";03/20/2020;1;1111;978;22222;0000;1;fis123;12345678901;00");
+                .add("99999;01;" + transmissionDate
+                        + ";03/20/2020;1;2222;978;3333;0000;1;fis123;12345678901;00");
+        expectedOutputFileAdeContent
+                .add("99999;00;" + transmissionDate
+                        + ";03/20/2020;1;1111;978;22222;0000;1;fis123;12345678901;00");
 
         return expectedOutputFileAdeContent;
     }
