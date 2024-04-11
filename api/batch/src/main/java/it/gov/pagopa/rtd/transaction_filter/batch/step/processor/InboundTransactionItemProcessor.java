@@ -3,7 +3,6 @@ package it.gov.pagopa.rtd.transaction_filter.batch.step.processor;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.batch.item.ItemProcessor;
 
@@ -15,7 +14,6 @@ import java.util.Set;
  * to be mapped into a normalized version defined as instances of Transaction
  */
 
-@Slf4j
 @RequiredArgsConstructor
 public class InboundTransactionItemProcessor implements ItemProcessor<InboundTransaction, InboundTransaction> {
 

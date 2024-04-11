@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
