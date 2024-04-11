@@ -59,7 +59,6 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.MultiResourceItemWriter;
-import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.file.builder.MultiResourceItemWriterBuilder;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
@@ -67,6 +66,9 @@ import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.file.transform.LineAggregator;
 import org.springframework.batch.item.file.transform.LineTokenizer;
+import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
+import org.springframework.batch.item.json.JsonFileItemWriter;
+import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -515,7 +517,7 @@ public class TransactionFilterStep {
     @SneakyThrows
     @Bean
     @StepScope
-    public FlatFileItemWriter<FileMetadata> fileReportWriter() {
+    public JsonFileItemWriter<FileMetadata> fileReportWriter() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern(DATE_FORMAT_FOR_FILENAME);
         String currentDate = OffsetDateTime.now().format(fmt);
 
@@ -525,13 +527,12 @@ public class TransactionFilterStep {
             .concat(fileReportPrefixName)
             .concat("-")
             .concat(currentDate)
-            .concat(".csv"));
+            .concat(".json"));
 
-        return new FlatFileItemWriterBuilder<FileMetadata>()
-            .name("file-report-item-writer")
+        return new JsonFileItemWriterBuilder<FileMetadata>()
+            .jsonObjectMarshaller(new JacksonJsonObjectMarshaller<>())
             .resource(outputResource)
-            .headerCallback(writer -> writer.write(String.join(CSV_DELIMITER, REPORT_CSV_FIELDS)))
-            .lineAggregator(fileReportLineAggregator())
+            .name("file-report-item-writer")
             .build();
     }
 
