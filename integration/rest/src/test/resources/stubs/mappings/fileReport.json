@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPath": "/rtd/file-reporter/file-report"
+    "urlPath": "/rtd/file-reporter/v2/file-report"
   },
   "response": {
     "status": "200",

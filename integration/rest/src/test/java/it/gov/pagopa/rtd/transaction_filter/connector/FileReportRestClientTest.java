@@ -97,7 +97,7 @@ public class FileReportRestClientTest {
   @Test
   public void whenGetFileReportWithEmptyBodyThenReportIsEmpty() {
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-reporter/file-report"))
+        get(urlPathEqualTo("/rtd/file-reporter/v2/file-report"))
             .willReturn(
                 aResponse().withBody(mapper.writeValueAsString(getEmptyFileReport()))
                     .withHeader("Content-type", "application/json")));
@@ -111,7 +111,7 @@ public class FileReportRestClientTest {
   @Test
   public void givenStatus404WhenGetFileReportThenThrowException() {
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-reporter/file-report"))
+        get(urlPathEqualTo("/rtd/file-reporter/v2/file-report"))
             .willReturn(
                 aResponse().withStatus(404)
                     .withBody(mapper.writeValueAsString(getEmptyFileReport()))
@@ -124,7 +124,7 @@ public class FileReportRestClientTest {
   @Test
   public void givenMalformedBodyWhenGetFileReportThenThrowException() {
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-reporter/file-report"))
+        get(urlPathEqualTo("/rtd/file-reporter/v2/file-report"))
             .willReturn(
                 aResponse().withBody(mapper.writeValueAsString(getMalformedReport()))
                     .withHeader("Content-type", "application/json")));
