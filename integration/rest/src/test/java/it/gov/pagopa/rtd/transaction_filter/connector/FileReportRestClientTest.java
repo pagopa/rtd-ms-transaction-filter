@@ -12,6 +12,7 @@ import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemp
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import feign.FeignException;
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
+import it.gov.pagopa.rtd.transaction_filter.connector.model.AggregatesDataSummary;
 import it.gov.pagopa.rtd.transaction_filter.connector.model.FileMetadata;
 import it.gov.pagopa.rtd.transaction_filter.connector.model.FileReport;
 import it.gov.pagopa.rtd.transaction_filter.validator.BasicResponseEntityValidator;
@@ -135,15 +136,37 @@ public class FileReportRestClientTest {
 
   private List<FileMetadata> getDefaultReport() {
     FileMetadata file1 = new FileMetadata();
+    AggregatesDataSummary aggregatesDataSummary1 = new AggregatesDataSummary();
     file1.setName("ADE.file1.pgp");
     file1.setSize(200L);
     file1.setStatus("SUCCESS");
     file1.setTransmissionDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000));
+    aggregatesDataSummary1.setCountNegativeTransactions(283);
+    aggregatesDataSummary1.setCountPositiveTransactions(980);
+    aggregatesDataSummary1.setMaxAccountingDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toLocalDate());
+    aggregatesDataSummary1.setMinAccountingDate(LocalDateTime.of(2022, 10, 28, 10, 0, 0, 123000000).toLocalDate());
+    aggregatesDataSummary1.setNumberOfMerchants(123);
+    aggregatesDataSummary1.setSumAmountNegativeTransactions(3232323);
+    aggregatesDataSummary1.setSumAmountPositiveTransactions(1231232);
+    aggregatesDataSummary1.setSha256OriginFile("sha256#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d");
+    file1.setAggregatesDataSummary(aggregatesDataSummary1);
+
     FileMetadata file2 = new FileMetadata();
+    AggregatesDataSummary aggregatesDataSummary2 = new AggregatesDataSummary();
     file2.setName("ADE.file2.pgp");
     file2.setSize(500L);
     file2.setStatus("SUCCESS");
     file2.setTransmissionDate(LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000));
+    aggregatesDataSummary2.setCountNegativeTransactions(333);
+    aggregatesDataSummary2.setCountPositiveTransactions(1090);
+    aggregatesDataSummary2.setMaxAccountingDate(LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000).toLocalDate());
+    aggregatesDataSummary2.setMinAccountingDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toLocalDate());
+    aggregatesDataSummary2.setNumberOfMerchants(234);
+    aggregatesDataSummary2.setSumAmountNegativeTransactions(890900);
+    aggregatesDataSummary2.setSumAmountPositiveTransactions(988898023);
+    aggregatesDataSummary2.setSha256OriginFile("#sha256sum:615bbf196371b6f95b738dc9823yt3873dff569f7a5c1eb3b50ff52b0718f65d");
+    file2.setAggregatesDataSummary(aggregatesDataSummary2);
+
     return Lists.list(file1, file2);
   }
 
