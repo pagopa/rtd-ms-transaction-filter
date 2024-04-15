@@ -147,6 +147,9 @@ public class TransactionFilterBatchFileReportTest {
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+
     @SneakyThrows
     @Before
     public void setUp() {
@@ -156,7 +159,7 @@ public class TransactionFilterBatchFileReportTest {
         deleteFiles("classpath:/test-encrypt/output/*.pgp");
         deleteFiles("classpath:/test-encrypt/sender-ade-ack/*.csv");
         deleteFiles("classpath:/test-encrypt/output/*.csv");
-        deleteFiles("classpath:/test-encrypt/reports/*.csv");
+        deleteFiles("classpath:/test-encrypt/reports/*.json");
     }
 
     @SneakyThrows
@@ -286,11 +289,18 @@ public class TransactionFilterBatchFileReportTest {
         assertThat(fileReportSaved).isNotNull().hasSize(1);
 
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
-            .orElse(new File("")).toPath());
-        assertThat(fileReportContent).isNotNull().containsExactly("name;status;size;transmissionDate",
-            "file1;RECEIVED;200;" + currentDate,
-            "file2;RECEIVED;300;" + currentDate.minusDays(4),
-            "file3;RECEIVED;400;" + currentDate.minusDays(10));
+                .orElse(new File("")).toPath());
+        assertThat(fileReportContent).isNotNull().containsExactly("[",
+                " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                        + currentDate.format(DATE_TIME_FORMATTER)
+                        + "\"},",
+                " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                        + currentDate.minusDays(4).format(DATE_TIME_FORMATTER)
+                        + "\"},",
+                " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                        + currentDate.minusDays(10).format(DATE_TIME_FORMATTER)
+                        + "\"}",
+                "]");
     }
 
     @SneakyThrows
@@ -310,11 +320,20 @@ public class TransactionFilterBatchFileReportTest {
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
             .orElse(new File("")).toPath());
 
-        assertThat(fileReportContent).isNotNull().containsExactly("name;status;size;transmissionDate",
-            "file1;RECEIVED;200;" + currentDate,
-            "file2;RECEIVED;300;" + currentDate.minusDays(4),
-            "file3;RECEIVED;400;" + currentDate.minusDays(10));
-    }
+        assertThat(fileReportContent).isNotNull().containsExactly("[",
+            " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                    + currentDate.format(DATE_TIME_FORMATTER)
+                    + "\"},",
+            " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                    + currentDate.minusDays(4)
+                            .format(DATE_TIME_FORMATTER)
+                    + "\"},",
+            " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                    + currentDate.minusDays(10)
+                            .format(DATE_TIME_FORMATTER)
+                    + "\"}",
+            "]");
+        }
 
     @SneakyThrows
     @Test
@@ -357,7 +376,7 @@ public class TransactionFilterBatchFileReportTest {
 
     @SneakyThrows
     private Collection<File> getFileReportSaved() {
-        return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/reports")[0].getFile(), new String[]{"csv"}, false);
+        return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/reports")[0].getFile(), new String[]{"json"}, false);
     }
 
     private FileReport getStubFileReport(LocalDateTime dateTime) {

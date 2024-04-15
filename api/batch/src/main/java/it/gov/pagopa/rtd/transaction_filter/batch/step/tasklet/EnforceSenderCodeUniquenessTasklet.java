@@ -6,7 +6,6 @@ import it.gov.pagopa.rtd.transaction_filter.service.store.SenderCodeFlyweight;
 import java.io.IOException;
 import java.util.Collection;
 import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -17,7 +16,6 @@ import org.springframework.batch.repeat.RepeatStatus;
  * Tasklet responsible for Sender Code uniqueness enforcing
  */
 @Data
-@Slf4j
 public class EnforceSenderCodeUniquenessTasklet implements Tasklet {
 
     private StoreService storeService;
