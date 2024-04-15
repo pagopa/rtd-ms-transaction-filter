@@ -12,6 +12,7 @@ import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemp
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import feign.FeignException;
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
+import it.gov.pagopa.rtd.transaction_filter.connector.model.AggregatesDataSummary;
 import it.gov.pagopa.rtd.transaction_filter.connector.model.FileMetadata;
 import it.gov.pagopa.rtd.transaction_filter.connector.model.FileReport;
 import it.gov.pagopa.rtd.transaction_filter.validator.BasicResponseEntityValidator;
@@ -53,14 +54,12 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
         "rest-client.hpan.key-store.password=secret",
         "rest-client.hpan.trust-store.file=classpath:certs/client-truststore.jks",
         "rest-client.hpan.trust-store.password=secret",
-        "rest-client.file-report.url=/rtd/file-reporter/file-report",
-        "spring.application.name=rtd-ms-transaction-filter-integration-rest"}
-      )
-@ContextConfiguration(initializers = FileReportRestClientTest.RandomPortInitializer.class, classes = {
+        "spring.application.name=rtd-ms-transaction-filter-integration-rest"})
+@ContextConfiguration(initializers = FileReportV2RestClientTest.RandomPortInitializer.class, classes = {
     HpanRestConnectorConfig.class, FileReportRestClientImpl.class,
     BasicResponseEntityValidator.class, ValidatorConfig.class, HpanRestConnector.class,
     FeignAutoConfiguration.class, HttpMessageConvertersAutoConfiguration.class})
-public class FileReportRestClientTest {
+public class FileReportV2RestClientTest {
 
   @Autowired
   private FileReportRestClientImpl restClient;
@@ -88,20 +87,21 @@ public class FileReportRestClientTest {
 
   @SneakyThrows
   @Test
-  public void whenGetFileReportThenFileNameAndContentMatch() {
+  public void whenGetFileReportV2ThenFileNameAndContentMatch() {
     FileReport fileReport = restClient.getFileReport();
 
     assertThat(fileReport).isNotNull().extracting(FileReport::getFilesRecentlyUploaded).asList().hasSize(2);
-    assertThat(fileReport.getFilesRecentlyUploaded()).containsAll(getDefaultReport());
+    assertThat(fileReport.getFilesRecentlyUploaded()).containsAll(getDefaultReportV2());
   }
+
 
   @SneakyThrows
   @Test
-  public void whenGetFileReportWithEmptyBodyThenReportIsEmpty() {
+  public void whenGetFileReportV2WithEmptyBodyThenReportIsEmpty() {
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-reporter/file-report"))
+        get(urlPathEqualTo("/rtd/file-reporter/v2/file-report"))
             .willReturn(
-                aResponse().withBody(mapper.writeValueAsString(getEmptyFileReport()))
+                aResponse().withBody(mapper.writeValueAsString(getEmptyFileReportV2()))
                     .withHeader("Content-type", "application/json")));
 
     FileReport fileReport = restClient.getFileReport();
@@ -111,12 +111,12 @@ public class FileReportRestClientTest {
 
   @SneakyThrows
   @Test
-  public void givenStatus404WhenGetFileReportThenThrowException() {
+  public void givenStatus404WhenGetFileReportV2ThenThrowException() {
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-reporter/file-report"))
+        get(urlPathEqualTo("/rtd/file-reporter/v2/file-report"))
             .willReturn(
                 aResponse().withStatus(404)
-                    .withBody(mapper.writeValueAsString(getEmptyFileReport()))
+                    .withBody(mapper.writeValueAsString(getEmptyFileReportV2()))
                     .withHeader("Content-type", "application/json")));
 
     assertThatThrownBy(() -> restClient.getFileReport()).isInstanceOf(FeignException.class);
@@ -124,38 +124,60 @@ public class FileReportRestClientTest {
 
   @SneakyThrows
   @Test
-  public void givenMalformedBodyWhenGetFileReportThenThrowException() {
+  public void givenMalformedBodyWhenGetFileReportV2ThenThrowException() {
     wireMockRule.stubFor(
-        get(urlPathEqualTo("/rtd/file-reporter/file-report"))
+        get(urlPathEqualTo("/rtd/file-reporter/v2/file-report"))
             .willReturn(
-                aResponse().withBody(mapper.writeValueAsString(getMalformedReport()))
+                aResponse().withBody(mapper.writeValueAsString(getMalformedReportV2()))
                     .withHeader("Content-type", "application/json")));
 
     assertThatThrownBy(() -> restClient.getFileReport()).isInstanceOf(
         ValidationException.class);
   }
 
-  private List<FileMetadata> getDefaultReport() {
+  private List<FileMetadata> getDefaultReportV2() {
     FileMetadata file1 = new FileMetadata();
+    AggregatesDataSummary aggregatesDataSummary1 = new AggregatesDataSummary();
     file1.setName("ADE.file1.pgp");
     file1.setSize(200L);
     file1.setStatus("SUCCESS");
     file1.setTransmissionDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000));
+    aggregatesDataSummary1.setCountNegativeTransactions(283);
+    aggregatesDataSummary1.setCountPositiveTransactions(980);
+    aggregatesDataSummary1.setMaxAccountingDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toLocalDate());
+    aggregatesDataSummary1.setMinAccountingDate(LocalDateTime.of(2022, 10, 28, 10, 0, 0, 123000000).toLocalDate());
+    aggregatesDataSummary1.setNumberOfMerchants(123);
+    aggregatesDataSummary1.setSumAmountNegativeTransactions(3232323);
+    aggregatesDataSummary1.setSumAmountPositiveTransactions(1231232);
+    aggregatesDataSummary1.setSha256OriginFile("sha256#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d");
+    file1.setAggregatesDataSummary(aggregatesDataSummary1);
+
     FileMetadata file2 = new FileMetadata();
+    AggregatesDataSummary aggregatesDataSummary2 = new AggregatesDataSummary();
     file2.setName("ADE.file2.pgp");
     file2.setSize(500L);
     file2.setStatus("SUCCESS");
     file2.setTransmissionDate(LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000));
+    aggregatesDataSummary2.setCountNegativeTransactions(333);
+    aggregatesDataSummary2.setCountPositiveTransactions(1090);
+    aggregatesDataSummary2.setMaxAccountingDate(LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000).toLocalDate());
+    aggregatesDataSummary2.setMinAccountingDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toLocalDate());
+    aggregatesDataSummary2.setNumberOfMerchants(234);
+    aggregatesDataSummary2.setSumAmountNegativeTransactions(890900);
+    aggregatesDataSummary2.setSumAmountPositiveTransactions(988898023);
+    aggregatesDataSummary2.setSha256OriginFile("#sha256sum:615bbf196371b6f95b738dc9823yt3873dff569f7a5c1eb3b50ff52b0718f65d");
+    file2.setAggregatesDataSummary(aggregatesDataSummary2);
+
     return Lists.list(file1, file2);
   }
 
-  private FileReport getEmptyFileReport() {
+  private FileReport getEmptyFileReportV2() {
     FileReport fileReport = new FileReport();
     fileReport.setFilesRecentlyUploaded(Collections.emptyList());
     return fileReport;
   }
 
-  private FileReport getMalformedReport() {
+  private FileReport getMalformedReportV2() {
     FileReport fileReport = new FileReport();
     FileMetadata file = new FileMetadata();
     // missing mandatory fields like filename
