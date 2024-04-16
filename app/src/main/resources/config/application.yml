@@ -177,7 +177,7 @@ rest-client:
     received:
       url: /rtd/file-register/ack-received/{id}
   file-report:
-      url: /rtd/file-reporter/${ACQ_BATCH_FILE_REPORT_URL:v2/file-report}
+    url: /rtd/file-reporter/${ACQ_BATCH_FILE_REPORT_URL:v2/file-report}
 
 apache:
   httpclient:
