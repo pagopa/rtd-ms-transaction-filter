@@ -351,8 +351,8 @@ public class TransactionFilterBatchFileReportTest {
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
             .orElse(new File("")).toPath());
 
-        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate");
-    }
+        assertThat(fileReportContent).isNotNull().contains("[", "]");
+        }
 
     @SneakyThrows
     @Test
@@ -371,7 +371,7 @@ public class TransactionFilterBatchFileReportTest {
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
             .orElse(new File("")).toPath());
 
-        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate");
+        assertThat(fileReportContent).isNotNull().contains("[", "]");
     }
 
     @SneakyThrows
