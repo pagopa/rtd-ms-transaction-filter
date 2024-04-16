@@ -149,7 +149,7 @@ public class FileReportV2RestClientTest {
     aggregatesDataSummary1.setNumberOfMerchants(123);
     aggregatesDataSummary1.setSumAmountNegativeTransactions(3232323);
     aggregatesDataSummary1.setSumAmountPositiveTransactions(1231232);
-    aggregatesDataSummary1.setSha256OriginFile("sha256#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d");
+    aggregatesDataSummary1.setSha256OriginFile("#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d");
     file1.setAggregatesDataSummary(aggregatesDataSummary1);
 
     FileMetadata file2 = new FileMetadata();

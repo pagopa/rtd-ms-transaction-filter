@@ -20,7 +20,7 @@
             "countPositiveTransactions": 980,
             "sumAmountNegativeTransactions": 3232323,
             "sumAmountPositiveTransactions": 1231232,
-            "sha256OriginFile": "sha256#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d"
+            "sha256OriginFile": "#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d"
           }
         },
         {
