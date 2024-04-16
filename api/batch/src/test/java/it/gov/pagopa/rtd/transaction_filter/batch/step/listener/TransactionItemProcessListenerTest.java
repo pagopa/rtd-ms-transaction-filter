@@ -15,7 +15,6 @@ import java.time.format.DateTimeFormatter;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -27,7 +26,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
-@Slf4j
 public class TransactionItemProcessListenerTest {
 
     private final TransactionMaskPolicy maskPolicy = new TransactionMaskPolicyImpl();
@@ -65,7 +63,6 @@ public class TransactionItemProcessListenerTest {
     public void afterProcess_OK() {
 
         File folder = tempFolder.newFolder("testProcess");
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
@@ -95,7 +92,6 @@ public class TransactionItemProcessListenerTest {
     public void onProcessError_OK() {
 
         File folder = tempFolder.newFolder("testProcess");
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
@@ -122,7 +118,6 @@ public class TransactionItemProcessListenerTest {
     public void onProcessError_OK_NoFileWritten() {
 
         File folder = tempFolder.newFolder("testProcess");
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
         String executionDate = OffsetDateTime.now().format(fmt);
