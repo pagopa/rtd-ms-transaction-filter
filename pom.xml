@@ -31,6 +31,7 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <spring-web.version>6.1.6</spring-web.version>
         <sonar.exclusions>**/enums/**,**/model/**,**/Constants*.java,**/*Config.java,**/*Application.java
         </sonar.exclusions>
         <transaction-filter.version>2.2.0</transaction-filter.version>
@@ -54,6 +55,11 @@
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-starter-openfeign</artifactId>
                 <version>${springframework-cloud.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework</groupId>
+                <artifactId>spring-web</artifactId>
+                <version>${spring-web.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
