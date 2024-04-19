@@ -16,7 +16,7 @@
 
     <properties>
         <java.version>17</java.version>
-        <postgresql.version>42.6.0</postgresql.version>
+        <postgresql.version>42.6.1</postgresql.version>
         <springframework-cloud.version>4.1.0</springframework-cloud.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <commons-io.version>2.11.0</commons-io.version>
