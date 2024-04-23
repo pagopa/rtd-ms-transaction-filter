@@ -6,20 +6,23 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.Assert.assertEquals;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
 import com.github.tomakehurst.wiremock.junit.WireMockClassRule;
 import feign.FeignException;
 import it.gov.pagopa.rtd.transaction_filter.connector.config.HpanRestConnectorConfig;
-import it.gov.pagopa.rtd.transaction_filter.connector.model.AggregatesDataSummary;
 import it.gov.pagopa.rtd.transaction_filter.connector.model.FileMetadata;
 import it.gov.pagopa.rtd.transaction_filter.connector.model.FileReport;
 import it.gov.pagopa.rtd.transaction_filter.validator.BasicResponseEntityValidator;
 import it.gov.pagopa.rtd.transaction_filter.validator.ValidatorConfig;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+
 import jakarta.validation.ValidationException;
 import lombok.SneakyThrows;
 import org.assertj.core.util.Lists;
@@ -40,25 +43,23 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@TestPropertySource(
-    locations = "classpath:config/rest-client.properties",
-    properties = {
-        "rest-client.hpan.list.url=/rtd/payment-instrument-manager/hashed-pans",
-        "rest-client.hpan.salt.url=/rtd/payment-instrument-manager/salt",
-        "rest-client.hpan.adesas.url=/rtd/csv-transaction/ade/sas",
-        "rest-client.hpan.rtdsas.url=/rtd/csv-transaction/rtd/sas",
-        "rest-client.hpan.mtls.enabled=true", "rest-client.hpan.list.checksumHeaderName=checksum",
-        "rest-client.hpan.dateValidation.enabled=true",
-        "rest-client.hpan.list.dateValidationHeaderName=date",
-        "rest-client.hpan.key-store.file=classpath:certs/client-keystore.jks",
-        "rest-client.hpan.key-store.password=secret",
-        "rest-client.hpan.trust-store.file=classpath:certs/client-truststore.jks",
-        "rest-client.hpan.trust-store.password=secret",
-        "spring.application.name=rtd-ms-transaction-filter-integration-rest"})
+@TestPropertySource(locations = "classpath:config/rest-client.properties", properties = {
+    "rest-client.hpan.list.url=/rtd/payment-instrument-manager/hashed-pans",
+    "rest-client.hpan.salt.url=/rtd/payment-instrument-manager/salt",
+    "rest-client.hpan.adesas.url=/rtd/csv-transaction/ade/sas",
+    "rest-client.hpan.rtdsas.url=/rtd/csv-transaction/rtd/sas",
+    "rest-client.hpan.mtls.enabled=true", "rest-client.hpan.list.checksumHeaderName=checksum",
+    "rest-client.hpan.dateValidation.enabled=true",
+    "rest-client.hpan.list.dateValidationHeaderName=date",
+    "rest-client.hpan.key-store.file=classpath:certs/client-keystore.jks",
+    "rest-client.hpan.key-store.password=secret",
+    "rest-client.hpan.trust-store.file=classpath:certs/client-truststore.jks",
+    "rest-client.hpan.trust-store.password=secret",
+    "spring.application.name=rtd-ms-transaction-filter-integration-rest" })
 @ContextConfiguration(initializers = FileReportV2RestClientTest.RandomPortInitializer.class, classes = {
     HpanRestConnectorConfig.class, FileReportRestClientImpl.class,
     BasicResponseEntityValidator.class, ValidatorConfig.class, HpanRestConnector.class,
-    FeignAutoConfiguration.class, HttpMessageConvertersAutoConfiguration.class})
+    FeignAutoConfiguration.class, HttpMessageConvertersAutoConfiguration.class })
 public class FileReportV2RestClientTest {
 
   @Autowired
@@ -77,8 +78,7 @@ public class FileReportV2RestClientTest {
       .trustStorePath("src/test/resources/certs/server-truststore.jks")
       .trustStorePassword("secret")
       .usingFilesUnderClasspath("stubs")
-      .extensions(new ResponseTemplateTransformer(true))
-  );
+      .extensions(new ResponseTemplateTransformer(true)));
 
   @After
   public void cleanup() {
@@ -91,9 +91,62 @@ public class FileReportV2RestClientTest {
     FileReport fileReport = restClient.getFileReport();
 
     assertThat(fileReport).isNotNull().extracting(FileReport::getFilesRecentlyUploaded).asList().hasSize(2);
-    assertThat(fileReport.getFilesRecentlyUploaded()).containsAll(getDefaultReportV2());
-  }
 
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getName(), getDefaultReportV2().get(0).getName());
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getSize(), getDefaultReportV2().get(0).getSize());
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getStatus(), getDefaultReportV2().get(0).getStatus());
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getTransmissionDate(),
+        getDefaultReportV2().get(0).getTransmissionDate());
+
+    assertEquals(
+        fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("countNegativeTransactions"),
+        getDefaultReportV2().get(0).getAggregatesDataSummary().get("countNegativeTransactions"));
+    assertEquals(
+        fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("countPositiveTransactions"),
+        getDefaultReportV2().get(0).getAggregatesDataSummary().get("countPositiveTransactions"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("maxAccountingDate"),
+        getDefaultReportV2().get(0).getAggregatesDataSummary().get("maxAccountingDate"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("minAccountingDate"),
+        getDefaultReportV2().get(0).getAggregatesDataSummary().get("minAccountingDate"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("numberOfMerchants"),
+        getDefaultReportV2().get(0).getAggregatesDataSummary().get("numberOfMerchants"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("sha256OriginFile"),
+        getDefaultReportV2().get(0).getAggregatesDataSummary().get("sha256OriginFile"));
+    assertEquals(
+        fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("sumAmountNegativeTransactions"),
+        getDefaultReportV2().get(0).getAggregatesDataSummary().get("sumAmountNegativeTransactions"));
+    assertEquals(
+        fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("sumAmountPositiveTransactions"),
+        getDefaultReportV2().get(0).getAggregatesDataSummary().get("sumAmountPositiveTransactions"));
+
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getName(), getDefaultReportV2().get(1).getName());
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getSize(), getDefaultReportV2().get(1).getSize());
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getStatus(), getDefaultReportV2().get(1).getStatus());
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getTransmissionDate(),
+        getDefaultReportV2().get(1).getTransmissionDate());
+
+    assertEquals(
+        fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("countNegativeTransactions"),
+        getDefaultReportV2().get(1).getAggregatesDataSummary().get("countNegativeTransactions"));
+    assertEquals(
+        fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("countPositiveTransactions"),
+        getDefaultReportV2().get(1).getAggregatesDataSummary().get("countPositiveTransactions"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("maxAccountingDate"),
+        getDefaultReportV2().get(1).getAggregatesDataSummary().get("maxAccountingDate"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("minAccountingDate"),
+        getDefaultReportV2().get(1).getAggregatesDataSummary().get("minAccountingDate"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("numberOfMerchants"),
+        getDefaultReportV2().get(1).getAggregatesDataSummary().get("numberOfMerchants"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("sha256OriginFile"),
+        getDefaultReportV2().get(1).getAggregatesDataSummary().get("sha256OriginFile"));
+    assertEquals(
+        fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("sumAmountNegativeTransactions"),
+        getDefaultReportV2().get(1).getAggregatesDataSummary().get("sumAmountNegativeTransactions"));
+    assertEquals(
+        fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("sumAmountPositiveTransactions"),
+        getDefaultReportV2().get(1).getAggregatesDataSummary().get("sumAmountPositiveTransactions"));
+
+  }
 
   @SneakyThrows
   @Test
@@ -137,35 +190,38 @@ public class FileReportV2RestClientTest {
 
   private List<FileMetadata> getDefaultReportV2() {
     FileMetadata file1 = new FileMetadata();
-    AggregatesDataSummary aggregatesDataSummary1 = new AggregatesDataSummary();
+    Map<String, Object> aggregatesDataSummary1 = new LinkedHashMap<>();
     file1.setName("ADE.file1.pgp");
     file1.setSize(200L);
     file1.setStatus("SUCCESS");
     file1.setTransmissionDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000));
-    aggregatesDataSummary1.setCountNegativeTransactions(283);
-    aggregatesDataSummary1.setCountPositiveTransactions(980);
-    aggregatesDataSummary1.setMaxAccountingDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toLocalDate());
-    aggregatesDataSummary1.setMinAccountingDate(LocalDateTime.of(2022, 10, 28, 10, 0, 0, 123000000).toLocalDate());
-    aggregatesDataSummary1.setNumberOfMerchants(123);
-    aggregatesDataSummary1.setSumAmountNegativeTransactions(3232323);
-    aggregatesDataSummary1.setSumAmountPositiveTransactions(1231232);
-    aggregatesDataSummary1.setSha256OriginFile("#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d");
+    aggregatesDataSummary1.put("minAccountingDate", LocalDateTime.of(2022, 10, 28, 10, 0, 0, 123000000).toString());
+    aggregatesDataSummary1.put("maxAccountingDate", LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toString());
+    aggregatesDataSummary1.put("numberOfMerchants", 123);
+    aggregatesDataSummary1.put("countNegativeTransactions", 283);
+    aggregatesDataSummary1.put("countPositiveTransactions", 980);
+    aggregatesDataSummary1.put("sumAmountNegativeTransactions", 3232323);
+    aggregatesDataSummary1.put("sumAmountPositiveTransactions", 1231232);
+    aggregatesDataSummary1.put("sha256OriginFile",
+        "#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d");
     file1.setAggregatesDataSummary(aggregatesDataSummary1);
 
     FileMetadata file2 = new FileMetadata();
-    AggregatesDataSummary aggregatesDataSummary2 = new AggregatesDataSummary();
+    Map<String, Object> aggregatesDataSummary2 = new LinkedHashMap<>();
     file2.setName("ADE.file2.pgp");
     file2.setSize(500L);
     file2.setStatus("SUCCESS");
     file2.setTransmissionDate(LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000));
-    aggregatesDataSummary2.setCountNegativeTransactions(333);
-    aggregatesDataSummary2.setCountPositiveTransactions(1090);
-    aggregatesDataSummary2.setMaxAccountingDate(LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000).toLocalDate());
-    aggregatesDataSummary2.setMinAccountingDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toLocalDate());
-    aggregatesDataSummary2.setNumberOfMerchants(234);
-    aggregatesDataSummary2.setSumAmountNegativeTransactions(890900);
-    aggregatesDataSummary2.setSumAmountPositiveTransactions(988898023);
-    aggregatesDataSummary2.setSha256OriginFile("#sha256sum:615bbf196371b6f95b738dc9823yt3873dff569f7a5c1eb3b50ff52b0718f65d");
+    aggregatesDataSummary2.put("minAccountingDate", LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toString());
+    aggregatesDataSummary2.put("maxAccountingDate", LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000).toString());
+    aggregatesDataSummary2.put("numberOfMerchants", 234);
+    aggregatesDataSummary2.put("countNegativeTransactions", 333);
+    aggregatesDataSummary2.put("countPositiveTransactions", 1090);
+    aggregatesDataSummary2.put("sumAmountNegativeTransactions", 890900);
+    aggregatesDataSummary2.put("sumAmountPositiveTransactions", 988898023);
+    aggregatesDataSummary2.put("sha256OriginFile",
+        "#sha256sum:615bbf196371b6f95b738dc9823yt3873dff569f7a5c1eb3b50ff52b0718f65d");
+
     file2.setAggregatesDataSummary(aggregatesDataSummary2);
 
     return Lists.list(file1, file2);

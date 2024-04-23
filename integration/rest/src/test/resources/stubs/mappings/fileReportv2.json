@@ -13,8 +13,8 @@
           "size": 200,
           "status": "SUCCESS",
           "aggregatesDataSummary": {
-            "minAccountingDate": "2022-10-28T10:00:00.123Z",
-            "maxAccountingDate": "2022-10-30T10:00:00.123Z",
+            "minAccountingDate": "2022-10-28T10:00:00.123",
+            "maxAccountingDate": "2022-10-30T10:00:00.123",
             "numberOfMerchants": 123,
             "countNegativeTransactions": 283,
             "countPositiveTransactions": 980,
@@ -29,8 +29,8 @@
           "size": 500,
           "status": "SUCCESS",
           "aggregatesDataSummary": {
-            "minAccountingDate": "2022-10-30T10:00:00.123Z",
-            "maxAccountingDate": "2022-10-31T10:00:00.123Z",
+            "minAccountingDate": "2022-10-30T10:00:00.123",
+            "maxAccountingDate": "2022-10-31T10:00:00.123",
             "numberOfMerchants": 234,
             "countNegativeTransactions": 333,
             "countPositiveTransactions": 1090,
