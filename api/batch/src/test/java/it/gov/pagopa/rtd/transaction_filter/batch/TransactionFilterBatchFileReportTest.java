@@ -309,13 +309,13 @@ public class TransactionFilterBatchFileReportTest {
         assertThat(fileReportContent).isNotNull().containsExactly("[",
                 " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
                         + currentDate.format(DATE_TIME_FORMATTER)
-                        + "\",\"aggregatesDataSummary\":{}},",
+                        + "\",\"dataSummary\":{}},",
                 " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
                         + currentDate.minusDays(4).format(DATE_TIME_FORMATTER)
-                        + "\",\"aggregatesDataSummary\":{}},",
+                        + "\",\"dataSummary\":{}},",
                 " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
                         + currentDate.minusDays(10).format(DATE_TIME_FORMATTER)
-                        + "\",\"aggregatesDataSummary\":{}}",
+                        + "\",\"dataSummary\":{}}",
                 "]");
     }
 
@@ -339,16 +339,16 @@ public class TransactionFilterBatchFileReportTest {
         assertThat(fileReportContent).isNotNull().containsExactly("[",
                 " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
                         + currentDate.format(DATE_TIME_FORMATTER)
-                        + "\",\"aggregatesDataSummary\":{}},",
+                        + "\",\"dataSummary\":{}},",
                 " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
                         + currentDate.minusDays(4)
                                 .format(DATE_TIME_FORMATTER)
-                        + "\",\"aggregatesDataSummary\":{}},",
+                        + "\",\"dataSummary\":{}},",
 
                 " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
                         + currentDate.minusDays(10)
                                 .format(DATE_TIME_FORMATTER)
-                        + "\",\"aggregatesDataSummary\":{}}",
+                        + "\",\"dataSummary\":{}}",
 
                 "]");
     }

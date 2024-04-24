@@ -99,25 +99,25 @@ public class FileReportV2RestClientTest {
         getDefaultReportV2().get(0).getTransmissionDate());
 
     assertEquals(
-        fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("countNegativeTransactions"),
-        getDefaultReportV2().get(0).getAggregatesDataSummary().get("countNegativeTransactions"));
+        fileReport.getFilesRecentlyUploaded().get(0).getDataSummary().get("countNegativeTransactions"),
+        getDefaultReportV2().get(0).getDataSummary().get("countNegativeTransactions"));
     assertEquals(
-        fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("countPositiveTransactions"),
-        getDefaultReportV2().get(0).getAggregatesDataSummary().get("countPositiveTransactions"));
-    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("maxAccountingDate"),
-        getDefaultReportV2().get(0).getAggregatesDataSummary().get("maxAccountingDate"));
-    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("minAccountingDate"),
-        getDefaultReportV2().get(0).getAggregatesDataSummary().get("minAccountingDate"));
-    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("numberOfMerchants"),
-        getDefaultReportV2().get(0).getAggregatesDataSummary().get("numberOfMerchants"));
-    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("sha256OriginFile"),
-        getDefaultReportV2().get(0).getAggregatesDataSummary().get("sha256OriginFile"));
+        fileReport.getFilesRecentlyUploaded().get(0).getDataSummary().get("countPositiveTransactions"),
+        getDefaultReportV2().get(0).getDataSummary().get("countPositiveTransactions"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getDataSummary().get("maxAccountingDate"),
+        getDefaultReportV2().get(0).getDataSummary().get("maxAccountingDate"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getDataSummary().get("minAccountingDate"),
+        getDefaultReportV2().get(0).getDataSummary().get("minAccountingDate"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getDataSummary().get("numberOfMerchants"),
+        getDefaultReportV2().get(0).getDataSummary().get("numberOfMerchants"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(0).getDataSummary().get("sha256OriginFile"),
+        getDefaultReportV2().get(0).getDataSummary().get("sha256OriginFile"));
     assertEquals(
-        fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("sumAmountNegativeTransactions"),
-        getDefaultReportV2().get(0).getAggregatesDataSummary().get("sumAmountNegativeTransactions"));
+        fileReport.getFilesRecentlyUploaded().get(0).getDataSummary().get("sumAmountNegativeTransactions"),
+        getDefaultReportV2().get(0).getDataSummary().get("sumAmountNegativeTransactions"));
     assertEquals(
-        fileReport.getFilesRecentlyUploaded().get(0).getAggregatesDataSummary().get("sumAmountPositiveTransactions"),
-        getDefaultReportV2().get(0).getAggregatesDataSummary().get("sumAmountPositiveTransactions"));
+        fileReport.getFilesRecentlyUploaded().get(0).getDataSummary().get("sumAmountPositiveTransactions"),
+        getDefaultReportV2().get(0).getDataSummary().get("sumAmountPositiveTransactions"));
 
     assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getName(), getDefaultReportV2().get(1).getName());
     assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getSize(), getDefaultReportV2().get(1).getSize());
@@ -126,25 +126,25 @@ public class FileReportV2RestClientTest {
         getDefaultReportV2().get(1).getTransmissionDate());
 
     assertEquals(
-        fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("countNegativeTransactions"),
-        getDefaultReportV2().get(1).getAggregatesDataSummary().get("countNegativeTransactions"));
+        fileReport.getFilesRecentlyUploaded().get(1).getDataSummary().get("countNegativeTransactions"),
+        getDefaultReportV2().get(1).getDataSummary().get("countNegativeTransactions"));
     assertEquals(
-        fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("countPositiveTransactions"),
-        getDefaultReportV2().get(1).getAggregatesDataSummary().get("countPositiveTransactions"));
-    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("maxAccountingDate"),
-        getDefaultReportV2().get(1).getAggregatesDataSummary().get("maxAccountingDate"));
-    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("minAccountingDate"),
-        getDefaultReportV2().get(1).getAggregatesDataSummary().get("minAccountingDate"));
-    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("numberOfMerchants"),
-        getDefaultReportV2().get(1).getAggregatesDataSummary().get("numberOfMerchants"));
-    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("sha256OriginFile"),
-        getDefaultReportV2().get(1).getAggregatesDataSummary().get("sha256OriginFile"));
+        fileReport.getFilesRecentlyUploaded().get(1).getDataSummary().get("countPositiveTransactions"),
+        getDefaultReportV2().get(1).getDataSummary().get("countPositiveTransactions"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getDataSummary().get("maxAccountingDate"),
+        getDefaultReportV2().get(1).getDataSummary().get("maxAccountingDate"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getDataSummary().get("minAccountingDate"),
+        getDefaultReportV2().get(1).getDataSummary().get("minAccountingDate"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getDataSummary().get("numberOfMerchants"),
+        getDefaultReportV2().get(1).getDataSummary().get("numberOfMerchants"));
+    assertEquals(fileReport.getFilesRecentlyUploaded().get(1).getDataSummary().get("sha256OriginFile"),
+        getDefaultReportV2().get(1).getDataSummary().get("sha256OriginFile"));
     assertEquals(
-        fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("sumAmountNegativeTransactions"),
-        getDefaultReportV2().get(1).getAggregatesDataSummary().get("sumAmountNegativeTransactions"));
+        fileReport.getFilesRecentlyUploaded().get(1).getDataSummary().get("sumAmountNegativeTransactions"),
+        getDefaultReportV2().get(1).getDataSummary().get("sumAmountNegativeTransactions"));
     assertEquals(
-        fileReport.getFilesRecentlyUploaded().get(1).getAggregatesDataSummary().get("sumAmountPositiveTransactions"),
-        getDefaultReportV2().get(1).getAggregatesDataSummary().get("sumAmountPositiveTransactions"));
+        fileReport.getFilesRecentlyUploaded().get(1).getDataSummary().get("sumAmountPositiveTransactions"),
+        getDefaultReportV2().get(1).getDataSummary().get("sumAmountPositiveTransactions"));
 
   }
 
@@ -204,7 +204,7 @@ public class FileReportV2RestClientTest {
     aggregatesDataSummary1.put("sumAmountPositiveTransactions", 1231232);
     aggregatesDataSummary1.put("sha256OriginFile",
         "#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d");
-    file1.setAggregatesDataSummary(aggregatesDataSummary1);
+    file1.setDataSummary(aggregatesDataSummary1);
 
     FileMetadata file2 = new FileMetadata();
     Map<String, Object> aggregatesDataSummary2 = new LinkedHashMap<>();
@@ -222,7 +222,7 @@ public class FileReportV2RestClientTest {
     aggregatesDataSummary2.put("sha256OriginFile",
         "#sha256sum:615bbf196371b6f95b738dc9823yt3873dff569f7a5c1eb3b50ff52b0718f65d");
 
-    file2.setAggregatesDataSummary(aggregatesDataSummary2);
+    file2.setDataSummary(aggregatesDataSummary2);
 
     return Lists.list(file1, file2);
   }

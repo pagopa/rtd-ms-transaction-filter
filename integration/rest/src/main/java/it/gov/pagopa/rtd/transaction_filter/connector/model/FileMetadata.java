@@ -37,11 +37,11 @@ public class FileMetadata {
   @NotNull
   private LocalDateTime transmissionDate;
 
-  private Map<String, Object> aggregatesDataSummary = new LinkedHashMap<>();
+  private Map<String, Object> dataSummary = new LinkedHashMap<>();
 
   @JsonAnySetter
-  void setAggregatesDataSummary(String key, Object value) {
-    aggregatesDataSummary.put(key, value);
+  void setDataSummary(String key, Object value) {
+    dataSummary.put(key, value);
   }
 
 
