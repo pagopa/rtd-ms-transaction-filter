@@ -190,39 +190,39 @@ public class FileReportV2RestClientTest {
 
   private List<FileMetadata> getDefaultReportV2() {
     FileMetadata file1 = new FileMetadata();
-    Map<String, Object> aggregatesDataSummary1 = new LinkedHashMap<>();
+    Map<String, Object> dataSummary1 = new LinkedHashMap<>();
     file1.setName("ADE.file1.pgp");
     file1.setSize(200L);
     file1.setStatus("SUCCESS");
     file1.setTransmissionDate(LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000));
-    aggregatesDataSummary1.put("minAccountingDate", LocalDateTime.of(2022, 10, 28, 10, 0, 0, 123000000).toString());
-    aggregatesDataSummary1.put("maxAccountingDate", LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toString());
-    aggregatesDataSummary1.put("numberOfMerchants", 123);
-    aggregatesDataSummary1.put("countNegativeTransactions", 283);
-    aggregatesDataSummary1.put("countPositiveTransactions", 980);
-    aggregatesDataSummary1.put("sumAmountNegativeTransactions", 3232323);
-    aggregatesDataSummary1.put("sumAmountPositiveTransactions", 1231232);
-    aggregatesDataSummary1.put("sha256OriginFile",
+    dataSummary1.put("minAccountingDate", LocalDateTime.of(2022, 10, 28, 10, 0, 0, 123000000).toString());
+    dataSummary1.put("maxAccountingDate", LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toString());
+    dataSummary1.put("numberOfMerchants", 123);
+    dataSummary1.put("countNegativeTransactions", 283);
+    dataSummary1.put("countPositiveTransactions", 980);
+    dataSummary1.put("sumAmountNegativeTransactions", 3232323);
+    dataSummary1.put("sumAmountPositiveTransactions", 1231232);
+    dataSummary1.put("sha256OriginFile",
         "#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d");
-    file1.setDataSummary(aggregatesDataSummary1);
+    file1.setDataSummary(dataSummary1);
 
     FileMetadata file2 = new FileMetadata();
-    Map<String, Object> aggregatesDataSummary2 = new LinkedHashMap<>();
+    Map<String, Object> dataSummary2 = new LinkedHashMap<>();
     file2.setName("ADE.file2.pgp");
     file2.setSize(500L);
     file2.setStatus("SUCCESS");
     file2.setTransmissionDate(LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000));
-    aggregatesDataSummary2.put("minAccountingDate", LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toString());
-    aggregatesDataSummary2.put("maxAccountingDate", LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000).toString());
-    aggregatesDataSummary2.put("numberOfMerchants", 234);
-    aggregatesDataSummary2.put("countNegativeTransactions", 333);
-    aggregatesDataSummary2.put("countPositiveTransactions", 1090);
-    aggregatesDataSummary2.put("sumAmountNegativeTransactions", 890900);
-    aggregatesDataSummary2.put("sumAmountPositiveTransactions", 988898023);
-    aggregatesDataSummary2.put("sha256OriginFile",
+    dataSummary2.put("minAccountingDate", LocalDateTime.of(2022, 10, 30, 10, 0, 0, 123000000).toString());
+    dataSummary2.put("maxAccountingDate", LocalDateTime.of(2022, 10, 31, 10, 0, 0, 123000000).toString());
+    dataSummary2.put("numberOfMerchants", 234);
+    dataSummary2.put("countNegativeTransactions", 333);
+    dataSummary2.put("countPositiveTransactions", 1090);
+    dataSummary2.put("sumAmountNegativeTransactions", 890900);
+    dataSummary2.put("sumAmountPositiveTransactions", 988898023);
+    dataSummary2.put("sha256OriginFile",
         "#sha256sum:615bbf196371b6f95b738dc9823yt3873dff569f7a5c1eb3b50ff52b0718f65d");
 
-    file2.setDataSummary(aggregatesDataSummary2);
+    file2.setDataSummary(dataSummary2);
 
     return Lists.list(file1, file2);
   }

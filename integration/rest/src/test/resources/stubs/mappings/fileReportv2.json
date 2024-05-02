@@ -12,7 +12,7 @@
           "transmissionDate": "2022-10-30T10:00:00.123Z",
           "size": 200,
           "status": "SUCCESS",
-          "aggregatesDataSummary": {
+          "dataSummary": {
             "minAccountingDate": "2022-10-28T10:00:00.123",
             "maxAccountingDate": "2022-10-30T10:00:00.123",
             "numberOfMerchants": 123,
@@ -28,7 +28,7 @@
           "transmissionDate": "2022-10-31T10:00:00.123Z",
           "size": 500,
           "status": "SUCCESS",
-          "aggregatesDataSummary": {
+          "dataSummary": {
             "minAccountingDate": "2022-10-30T10:00:00.123",
             "maxAccountingDate": "2022-10-31T10:00:00.123",
             "numberOfMerchants": 234,
