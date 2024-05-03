@@ -147,7 +147,7 @@ public class TransactionFilterBatchFileReportTest {
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
-            .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+            .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     @SneakyThrows
     @Before

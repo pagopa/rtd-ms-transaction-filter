@@ -9,13 +9,13 @@
       "filesRecentlyUploaded": [
         {
           "name": "ADE.file1.pgp",
-          "transmissionDate": "2022-10-30T10:00:00.123Z",
+          "transmissionDate": "2022-10-30T10:00:00.123",
           "size": 200,
           "status": "SUCCESS"
         },
         {
           "name": "ADE.file2.pgp",
-          "transmissionDate": "2022-10-31T10:00:00.123Z",
+          "transmissionDate": "2022-10-31T10:00:00.123",
           "size": 500,
           "status": "SUCCESS"
         }

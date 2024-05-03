@@ -264,20 +264,6 @@ public class TransactionFilterStep {
     }
 
     /**
-     * Composes CSV lines from file report model.
-     * @return a line aggregator
-     */
-    @Bean
-    public LineAggregator<FileMetadata> fileReportLineAggregator() {
-        BeanWrapperFieldExtractor<FileMetadata> extractor = new BeanWrapperFieldExtractor<>();
-        extractor.setNames(REPORT_CSV_FIELDS);
-        DelimitedLineAggregator<FileMetadata> delimitedLineAggregator = new DelimitedLineAggregator<>();
-        delimitedLineAggregator.setDelimiter(CSV_DELIMITER);
-        delimitedLineAggregator.setFieldExtractor(extractor);
-        return delimitedLineAggregator;
-    }
-
-    /**
      * Builds a MultiResourceItemWriter for filtered transactions.
      * Remember MultiResourceItemWriter is not thread safe.
      *
