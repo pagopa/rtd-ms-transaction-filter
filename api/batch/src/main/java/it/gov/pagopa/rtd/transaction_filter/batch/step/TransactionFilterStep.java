@@ -167,8 +167,6 @@ public class TransactionFilterStep {
         "senderCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
         "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
         "terminalId", "bin", "mcc", "fiscalCode", "vat", "posType", "par"};
-    private static final String[] REPORT_CSV_FIELDS = new String[]{
-        "name", "status", "size", "transmissionDate"};
     private static final String CSV_DELIMITER = ";";
     private static final String DATE_FORMAT_FOR_FILENAME = "yyyyMMddHHmmssSSS";
 

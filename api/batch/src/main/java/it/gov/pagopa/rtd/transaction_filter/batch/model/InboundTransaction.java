@@ -58,7 +58,7 @@ InboundTransaction {
     @NotNull
     @NotBlank
     @Size(min = 2, max = 2)
-    @Pattern(regexp = "\\d{2}")
+    @Pattern(regexp = "00|01")
     String operationType;
 
     /**
