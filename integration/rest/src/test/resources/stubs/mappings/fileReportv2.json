@@ -1,0 +1,48 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/rtd/file-reporter/v2/file-report"
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "filesRecentlyUploaded": [
+        {
+          "name": "ADE.file1.pgp",
+          "transmissionDate": "2022-10-30T10:00:00.123",
+          "size": 200,
+          "status": "SUCCESS",
+          "dataSummary": {
+            "minAccountingDate": "2022-10-28T10:00:00.123",
+            "maxAccountingDate": "2022-10-30T10:00:00.123",
+            "numberOfMerchants": 123,
+            "countNegativeTransactions": 283,
+            "countPositiveTransactions": 980,
+            "sumAmountNegativeTransactions": 3232323,
+            "sumAmountPositiveTransactions": 1231232,
+            "sha256OriginFile": "#sha256sum:615bbf196371b6f95b738dccf4a4e3873dff569f7a5c1eb3b50ff52b0718f65d"
+          }
+        },
+        {
+          "name": "ADE.file2.pgp",
+          "transmissionDate": "2022-10-31T10:00:00.123",
+          "size": 500,
+          "status": "SUCCESS",
+          "dataSummary": {
+            "minAccountingDate": "2022-10-30T10:00:00.123",
+            "maxAccountingDate": "2022-10-31T10:00:00.123",
+            "numberOfMerchants": 234,
+            "countNegativeTransactions": 333,
+            "countPositiveTransactions": 1090,
+            "sumAmountNegativeTransactions": 890900,
+            "sumAmountPositiveTransactions": 988898023,
+            "sha256OriginFile": "#sha256sum:615bbf196371b6f95b738dc9823yt3873dff569f7a5c1eb3b50ff52b0718f65d"
+          }
+        }
+      ]
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

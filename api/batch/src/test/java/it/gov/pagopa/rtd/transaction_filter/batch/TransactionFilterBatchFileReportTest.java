@@ -73,60 +73,58 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(propagation = NOT_SUPPORTED)
 @Sql({
         "classpath:org/springframework/batch/core/schema-drop-hsqldb.sql",
-        "classpath:org/springframework/batch/core/schema-hsqldb.sql"})
+        "classpath:org/springframework/batch/core/schema-hsqldb.sql" })
 @ContextConfiguration(classes = {
         TestConfig.class,
         JacksonAutoConfiguration.class,
         TransactionFilterBatch.class,
         FeignAutoConfiguration.class
 })
-@TestPropertySource(
-        properties = {
-                "spring.main.allow-bean-definition-overriding=true",
-                "batchConfiguration.TransactionFilterBatch.panList.secretKeyPath=classpath:/test-encrypt/secretKey.asc",
-                "batchConfiguration.TransactionFilterBatch.panList.passphrase=test",
-                "batchConfiguration.TransactionFilterBatch.panList.skipLimit=0",
-                "batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath=classpath:/test-encrypt/**/hpan/*pan*.pgp",
-                "batchConfiguration.TransactionFilterBatch.panList.linesToSkip=0",
-                "batchConfiguration.TransactionFilterBatch.panList.applyDecrypt=true",
-                "batchConfiguration.TransactionFilterBatch.panList.applyHashing=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath=classpath:/test-encrypt/**/transactions/",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath=classpath:/test-encrypt/output",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath=classpath:/test-encrypt/errorLogs",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern=MM/dd/yyyy HH:mm:ss",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles=false",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles=ERROR",
-                "batchConfiguration.TransactionFilterBatch.successArchivePath=classpath:/test-encrypt/success",
-                "batchConfiguration.TransactionFilterBatch.errorArchivePath=classpath:/test-encrypt/error",
-                "batchConfiguration.TransactionFilterBatch.pendingArchivePath=classpath:/test-encrypt/output/pending",
-                "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.transactionSenderPending.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.enabled=false",
-                "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath=classpath:/test-encrypt/sender-ade-ack",
-                "batchConfiguration.TransactionFilterBatch.fileReportRecovery.directoryPath=classpath:/test-encrypt/reports",
-                "batchConfiguration.TransactionFilterBatch.fileReportRecovery.enabled=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorLogging=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorFileLogging=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnProcessErrorLogging=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnProcessErrorFileLogging=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorLogging=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorFileLogging=true",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency=100",
-                "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize=5",
-                "batchConfiguration.TransactionFilterBatch.transactionWriterAde.splitThreshold=1000"
-        }
-)
+@TestPropertySource(properties = {
+        "spring.main.allow-bean-definition-overriding=true",
+        "batchConfiguration.TransactionFilterBatch.panList.secretKeyPath=classpath:/test-encrypt/secretKey.asc",
+        "batchConfiguration.TransactionFilterBatch.panList.passphrase=test",
+        "batchConfiguration.TransactionFilterBatch.panList.skipLimit=0",
+        "batchConfiguration.TransactionFilterBatch.panList.hpanDirectoryPath=classpath:/test-encrypt/**/hpan/*pan*.pgp",
+        "batchConfiguration.TransactionFilterBatch.panList.linesToSkip=0",
+        "batchConfiguration.TransactionFilterBatch.panList.applyDecrypt=true",
+        "batchConfiguration.TransactionFilterBatch.panList.applyHashing=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.transactionDirectoryPath=classpath:/test-encrypt/**/transactions/",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.outputDirectoryPath=classpath:/test-encrypt/output",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.transactionLogsPath=classpath:/test-encrypt/errorLogs",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.applyHashing=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.timestampPattern=MM/dd/yyyy HH:mm:ss",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.applyEncrypt=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.saveHashing=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.deleteProcessedFiles=false",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.deleteOutputFiles=ERROR",
+        "batchConfiguration.TransactionFilterBatch.successArchivePath=classpath:/test-encrypt/success",
+        "batchConfiguration.TransactionFilterBatch.errorArchivePath=classpath:/test-encrypt/error",
+        "batchConfiguration.TransactionFilterBatch.pendingArchivePath=classpath:/test-encrypt/output/pending",
+        "batchConfiguration.TransactionFilterBatch.saltRecovery.enabled=false",
+        "batchConfiguration.TransactionFilterBatch.pagopaPublicKeyRecovery.enabled=false",
+        "batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled=false",
+        "batchConfiguration.TransactionFilterBatch.abiToFiscalCodeMapRecovery.enabled=false",
+        "batchConfiguration.TransactionFilterBatch.transactionSenderRtd.enabled=false",
+        "batchConfiguration.TransactionFilterBatch.transactionSenderAde.enabled=false",
+        "batchConfiguration.TransactionFilterBatch.transactionSenderPending.enabled=false",
+        "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.enabled=false",
+        "batchConfiguration.TransactionFilterBatch.senderAdeAckFilesRecovery.directoryPath=classpath:/test-encrypt/sender-ade-ack",
+        "batchConfiguration.TransactionFilterBatch.fileReportRecovery.directoryPath=classpath:/test-encrypt/reports",
+        "batchConfiguration.TransactionFilterBatch.fileReportRecovery.enabled=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessLogging=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorLogging=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnReadErrorFileLogging=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableAfterProcessFileLogging=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnProcessErrorLogging=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnProcessErrorFileLogging=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorLogging=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.enableOnWriteErrorFileLogging=true",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.loggingFrequency=100",
+        "batchConfiguration.TransactionFilterBatch.transactionFilter.readers.listener.writerPoolSize=5",
+        "batchConfiguration.TransactionFilterBatch.transactionWriterAde.splitThreshold=1000"
+})
 @DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
 public class TransactionFilterBatchFileReportTest {
 
@@ -143,9 +141,13 @@ public class TransactionFilterBatchFileReportTest {
     StoreService storeServiceSpy;
 
     @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder(new File(getClass().getResource("/test-encrypt").getFile()));
+    public TemporaryFolder tempFolder = new TemporaryFolder(
+            new File(getClass().getResource("/test-encrypt").getFile()));
 
     PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+
+    public static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
+            .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS");
 
     @SneakyThrows
     @Before
@@ -156,7 +158,7 @@ public class TransactionFilterBatchFileReportTest {
         deleteFiles("classpath:/test-encrypt/output/*.pgp");
         deleteFiles("classpath:/test-encrypt/sender-ade-ack/*.csv");
         deleteFiles("classpath:/test-encrypt/output/*.csv");
-        deleteFiles("classpath:/test-encrypt/reports/*.csv");
+        deleteFiles("classpath:/test-encrypt/reports/*.json");
     }
 
     @SneakyThrows
@@ -222,12 +224,16 @@ public class TransactionFilterBatchFileReportTest {
         Set<String> expectedOutputFileAdeContent = getExpectedAdeOutputFileContent();
 
         assertThat(expectedOutputFileTrnContent).containsAll(outputFileTrnContent);
-        assertThat(outputFileTrnContent.get(0)).isEqualTo("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
+        assertThat(outputFileTrnContent.get(0))
+                .isEqualTo("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
         assertThat(expectedOutputFileAdeContent).containsAll(outputFileAdeContent);
-        assertThat(outputFileAdeContent.get(0)).isEqualTo("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
+        assertThat(outputFileAdeContent.get(0))
+                .isEqualTo("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
 
         // Check that encrypted output files have the same content of unencrypted ones
-        File trxEncFile = outputPgpFiles.stream().filter(p -> p.getName().equals("CSTAR.99999.TRNLOG.20220204.094652.001.01.csv.pgp")).collect(Collectors.toList()).iterator().next();
+        File trxEncFile = outputPgpFiles.stream()
+                .filter(p -> p.getName().equals("CSTAR.99999.TRNLOG.20220204.094652.001.01.csv.pgp"))
+                .collect(Collectors.toList()).iterator().next();
 
         FileInputStream trxEncFileIS = new FileInputStream(trxEncFile);
         FileInputStream secretFilePathIS = null;
@@ -236,11 +242,13 @@ public class TransactionFilterBatchFileReportTest {
             Resource secretKeyResource = resolver.getResource(secretKeyPath);
 
             secretFilePathIS = new FileInputStream(secretKeyResource.getFile());
-            byte[] trxEncFileDecryptedFileData = EncryptUtil.decryptFile(trxEncFileIS, secretFilePathIS, "test".toCharArray());
+            byte[] trxEncFileDecryptedFileData = EncryptUtil.decryptFile(trxEncFileIS, secretFilePathIS,
+                    "test".toCharArray());
             File trxEncFileDecryptedFile = tempFolder.newFile("trxEncFileDecrypted.csv");
             FileUtils.writeByteArrayToFile(trxEncFileDecryptedFile, trxEncFileDecryptedFileData);
 
-            List<String> trxEncFileDecryptedFileContent = Files.readAllLines(trxEncFileDecryptedFile.toPath().toAbsolutePath());
+            List<String> trxEncFileDecryptedFileContent = Files
+                    .readAllLines(trxEncFileDecryptedFile.toPath().toAbsolutePath());
             assertThat(expectedOutputFileTrnContent).containsAll(trxEncFileDecryptedFileContent);
         } finally {
             trxEncFileIS.close();
@@ -249,48 +257,66 @@ public class TransactionFilterBatchFileReportTest {
 
         // Check that logs folder contains expected files
         Collection<File> outputLogsFiles = FileUtils.listFiles(
-                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), new String[]{"csv"}, false);
+                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), new String[] { "csv" }, false);
         assertThat(outputLogsFiles).hasSize(2);
 
-        FileFilter fileFilter = new WildcardFileFilter("*_Rtd__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
-        Collection<File> trxFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
+        FileFilter fileFilter = new WildcardFileFilter(
+                "*_Rtd__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
+        Collection<File> trxFilteredFiles = FileUtils.listFiles(
+                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter,
+                null);
         assertThat(trxFilteredFiles).hasSize(1);
 
         fileFilter = new WildcardFileFilter("*_Ade__FilteredRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
-        Collection<File> adeFilteredFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
+        Collection<File> adeFilteredFiles = FileUtils.listFiles(
+                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter,
+                null);
         assertThat(adeFilteredFiles).hasSize(1);
 
         // empty log files get deleted
         fileFilter = new WildcardFileFilter("*_Rtd__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
-        Collection<File> trxErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
+        Collection<File> trxErrorFiles = FileUtils.listFiles(
+                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter,
+                null);
         assertThat(trxErrorFiles).isEmpty();
 
         fileFilter = new WildcardFileFilter("*_Ade__ErrorRecords_CSTAR.99999.TRNLOG.20220204.094652.001.csv");
-        Collection<File> adeErrorFiles = FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter, null);
+        Collection<File> adeErrorFiles = FileUtils.listFiles(
+                resolver.getResources("classpath:/test-encrypt/errorLogs")[0].getFile(), (IOFileFilter) fileFilter,
+                null);
         assertThat(adeErrorFiles).isEmpty();
 
         // Check that logs files contains expected lines
         File trxFilteredFile = trxFilteredFiles.iterator().next();
         List<String> trxFilteredContent = Files.readAllLines(trxFilteredFile.toPath().toAbsolutePath());
         assertThat(trxFilteredContent).hasSize(3)
-            .contains("99999;00;01;pan4;03/20/2020 13:23:00;4444444444;8888;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;par4",
-                "99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;",
-                "99999;00;01;123456******3456;03/20/2020 15:23:00;666666666;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
+                .contains(
+                        "99999;00;01;pan4;03/20/2020 13:23:00;4444444444;8888;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;par4",
+                        "99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;",
+                        "99999;00;01;123456******3456;03/20/2020 15:23:00;666666666;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
 
         File adeFilteredFile = adeFilteredFiles.iterator().next();
         List<String> adeFilteredContent = Files.readAllLines(adeFilteredFile.toPath().toAbsolutePath());
         assertThat(adeFilteredContent).hasSize(1)
-            .contains("99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
+                .contains(
+                        "99999;00;01;123456******3456;2020-03-20T13:23:00;555555555;9999;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
 
         Collection<File> fileReportSaved = getFileReportSaved();
         assertThat(fileReportSaved).isNotNull().hasSize(1);
 
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
-            .orElse(new File("")).toPath());
-        assertThat(fileReportContent).isNotNull().containsExactly("name;status;size;transmissionDate",
-            "file1;RECEIVED;200;" + currentDate,
-            "file2;RECEIVED;300;" + currentDate.minusDays(4),
-            "file3;RECEIVED;400;" + currentDate.minusDays(10));
+                .orElse(new File("")).toPath());
+        assertThat(fileReportContent).isNotNull().containsExactly("[",
+                " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                        + currentDate.format(DATE_TIME_FORMATTER)
+                        + "\",\"dataSummary\":{}},",
+                " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                        + currentDate.minusDays(4).format(DATE_TIME_FORMATTER)
+                        + "\",\"dataSummary\":{}},",
+                " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                        + currentDate.minusDays(10).format(DATE_TIME_FORMATTER)
+                        + "\",\"dataSummary\":{}}",
+                "]");
     }
 
     @SneakyThrows
@@ -300,7 +326,7 @@ public class TransactionFilterBatchFileReportTest {
         BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient).getFileReport();
 
         jobLauncherTestUtils.launchStep("file-report-recovery-step",
-            new JobParameters());
+                new JobParameters());
 
         Mockito.verify(fileReportRestClient, times(1)).getFileReport();
         Collection<File> fileReportSaved = getFileReportSaved();
@@ -308,12 +334,23 @@ public class TransactionFilterBatchFileReportTest {
         assertThat(fileReportSaved).isNotNull().hasSize(1);
 
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
-            .orElse(new File("")).toPath());
+                .orElse(new File("")).toPath());
 
-        assertThat(fileReportContent).isNotNull().containsExactly("name;status;size;transmissionDate",
-            "file1;RECEIVED;200;" + currentDate,
-            "file2;RECEIVED;300;" + currentDate.minusDays(4),
-            "file3;RECEIVED;400;" + currentDate.minusDays(10));
+        assertThat(fileReportContent).isNotNull().containsExactly("[",
+                " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                        + currentDate.format(DATE_TIME_FORMATTER)
+                        + "\",\"dataSummary\":{}},",
+                " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                        + currentDate.minusDays(4)
+                                .format(DATE_TIME_FORMATTER)
+                        + "\",\"dataSummary\":{}},",
+
+                " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
+                        + currentDate.minusDays(10)
+                                .format(DATE_TIME_FORMATTER)
+                        + "\",\"dataSummary\":{}}",
+
+                "]");
     }
 
     @SneakyThrows
@@ -322,7 +359,7 @@ public class TransactionFilterBatchFileReportTest {
         BDDMockito.doReturn(getStubEmptyReport()).when(fileReportRestClient).getFileReport();
 
         jobLauncherTestUtils.launchStep("file-report-recovery-step",
-            new JobParameters());
+                new JobParameters());
 
         Mockito.verify(fileReportRestClient, times(1)).getFileReport();
         Collection<File> fileReportSaved = getFileReportSaved();
@@ -330,9 +367,9 @@ public class TransactionFilterBatchFileReportTest {
         assertThat(fileReportSaved).isNotNull().hasSize(1);
 
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
-            .orElse(new File("")).toPath());
+                .orElse(new File("")).toPath());
 
-        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate");
+        assertThat(fileReportContent).isNotNull().contains("[", "]");
     }
 
     @SneakyThrows
@@ -342,7 +379,7 @@ public class TransactionFilterBatchFileReportTest {
         BDDMockito.doReturn(new FileReport()).when(fileReportRestClient).getFileReport();
 
         jobLauncherTestUtils.launchStep("file-report-recovery-step",
-            new JobParameters());
+                new JobParameters());
 
         Mockito.verify(fileReportRestClient, times(1)).getFileReport();
         Collection<File> fileReportSaved = getFileReportSaved();
@@ -350,14 +387,15 @@ public class TransactionFilterBatchFileReportTest {
         assertThat(fileReportSaved).isNotNull().hasSize(1);
 
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
-            .orElse(new File("")).toPath());
+                .orElse(new File("")).toPath());
 
-        assertThat(fileReportContent).isNotNull().contains("name;status;size;transmissionDate");
+        assertThat(fileReportContent).isNotNull().contains("[", "]");
     }
 
     @SneakyThrows
     private Collection<File> getFileReportSaved() {
-        return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/reports")[0].getFile(), new String[]{"csv"}, false);
+        return FileUtils.listFiles(resolver.getResources("classpath:/test-encrypt/reports")[0].getFile(),
+                new String[] { "json" }, false);
     }
 
     private FileReport getStubFileReport(LocalDateTime dateTime) {
@@ -399,7 +437,7 @@ public class TransactionFilterBatchFileReportTest {
 
     private String createPublicKey() throws IOException {
         String publicKeyPath = "file:/" + Objects.requireNonNull(
-            this.getClass().getResource("/test-encrypt")).getFile() + "/publicKey.asc";
+                this.getClass().getResource("/test-encrypt")).getFile() + "/publicKey.asc";
         Resource publicKeyResource = resolver.getResource(publicKeyPath);
         FileInputStream publicKeyFilePathIS = new FileInputStream(publicKeyResource.getFile());
         return IOUtils.toString(publicKeyFilePathIS);
@@ -413,10 +451,10 @@ public class TransactionFilterBatchFileReportTest {
         FileOutputStream panPgpFOS = new FileOutputStream(panPgp);
 
         EncryptUtil.encryptFile(panPgpFOS,
-            Objects.requireNonNull(this.getClass().getResource("/test-encrypt/pan")).getFile() + "/pan.csv",
-            EncryptUtil.readPublicKey(
-                this.getClass().getResourceAsStream("/test-encrypt/publicKey.asc")),
-            false, false);
+                Objects.requireNonNull(this.getClass().getResource("/test-encrypt/pan")).getFile() + "/pan.csv",
+                EncryptUtil.readPublicKey(
+                        this.getClass().getResourceAsStream("/test-encrypt/publicKey.asc")),
+                false, false);
 
         panPgpFOS.close();
     }
@@ -424,7 +462,7 @@ public class TransactionFilterBatchFileReportTest {
     @SneakyThrows
     private File createAdeOutputFile() {
         File outputFileAde = new File(resolver.getResource("classpath:/test-encrypt/output")
-            .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.01.csv");
+                .getFile().getAbsolutePath() + "/ADE.99999.TRNLOG.20220204.094652.001.01.csv");
 
         outputFileAde.createNewFile();
         return outputFileAde;
@@ -433,7 +471,7 @@ public class TransactionFilterBatchFileReportTest {
     @SneakyThrows
     private File createTrnOutputFile() {
         File outputFileTrn = new File(resolver.getResource("classpath:/test-encrypt/output")
-            .getFile().getAbsolutePath() + "/CSTAR.99999.TRNLOG.20220204.094652.001.01.csv");
+                .getFile().getAbsolutePath() + "/CSTAR.99999.TRNLOG.20220204.094652.001.01.csv");
 
         outputFileTrn.createNewFile();
         return outputFileTrn;
@@ -442,7 +480,7 @@ public class TransactionFilterBatchFileReportTest {
     @SneakyThrows
     private Collection<File> getOutputPgpFiles() {
         return FileUtils.listFiles(
-            resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[]{"pgp"}, false);
+                resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[] { "pgp" }, false);
     }
 
     private Set<String> getExpectedPgpFilenames() {
@@ -455,7 +493,7 @@ public class TransactionFilterBatchFileReportTest {
     @SneakyThrows
     private Collection<File> getOutputCsvFiles() {
         return FileUtils.listFiles(
-            resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[]{"csv"}, false);
+                resolver.getResources("classpath:/test-encrypt/output")[0].getFile(), new String[] { "csv" }, false);
     }
 
     private Set<String> getExpectedCsvFileNames() {
@@ -469,9 +507,12 @@ public class TransactionFilterBatchFileReportTest {
     private Set<String> getExpectedTrnOutputFileContent() {
         Set<String> expectedOutputFileTrnContent = new HashSet<>();
         expectedOutputFileTrnContent.add("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
-        expectedOutputFileTrnContent.add("99999;00;00;a261f9479522020529213c5336dec371de5b3dacca0a8165c50ac33032c631ac;03/20/2020 10:50:33;1111111111;5555;;1111;978;22222;0000;1;000002;5422;fis123;12345678901;00;");
-        expectedOutputFileTrnContent.add("99999;00;01;e2df0a82ac0aa12921c398e1eba9119772db868650ebef22b8919fa0fb7642ed;03/20/2020 11:23:00;333333333;7777;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
-        expectedOutputFileTrnContent.add("99999;01;00;805f89015f85948f7d7bdd57a0a81e4cd95fc81bdd1195a69c4ab139f0ebed7b;03/20/2020 11:04:53;2222222222;6666;;2222;978;3333;0000;1;000002;5422;fis123;12345678901;00;par2");
+        expectedOutputFileTrnContent.add(
+                "99999;00;00;a261f9479522020529213c5336dec371de5b3dacca0a8165c50ac33032c631ac;03/20/2020 10:50:33;1111111111;5555;;1111;978;22222;0000;1;000002;5422;fis123;12345678901;00;");
+        expectedOutputFileTrnContent.add(
+                "99999;00;01;e2df0a82ac0aa12921c398e1eba9119772db868650ebef22b8919fa0fb7642ed;03/20/2020 11:23:00;333333333;7777;;3333;978;4444;0000;1;000002;5422;fis123;12345678901;00;");
+        expectedOutputFileTrnContent.add(
+                "99999;01;00;805f89015f85948f7d7bdd57a0a81e4cd95fc81bdd1195a69c4ab139f0ebed7b;03/20/2020 11:04:53;2222222222;6666;;2222;978;3333;0000;1;000002;5422;fis123;12345678901;00;par2");
         return expectedOutputFileTrnContent;
     }
 
@@ -480,12 +521,16 @@ public class TransactionFilterBatchFileReportTest {
 
         Set<String> expectedOutputFileAdeContent = new HashSet<>();
         expectedOutputFileAdeContent.add("#sha256sum:0632500c45de8ef75cd875f0898eaa886659519b615b968a81656e4405320a4d");
-        expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;3;9999;978;4444;0000;1;fis123;12345678901;00");
-        expectedOutputFileAdeContent.add("99999;01;" + transmissionDate + ";03/20/2020;1;2222;978;3333;0000;1;fis123;12345678901;00");
-        expectedOutputFileAdeContent.add("99999;00;" + transmissionDate + ";03/20/2020;1;1111;978;22222;0000;1;fis123;12345678901;00");
+        expectedOutputFileAdeContent
+                .add("99999;00;" + transmissionDate + ";03/20/2020;3;9999;978;4444;0000;1;fis123;12345678901;00");
+        expectedOutputFileAdeContent
+                .add("99999;01;" + transmissionDate + ";03/20/2020;1;2222;978;3333;0000;1;fis123;12345678901;00");
+        expectedOutputFileAdeContent
+                .add("99999;00;" + transmissionDate + ";03/20/2020;1;1111;978;22222;0000;1;fis123;12345678901;00");
 
         return expectedOutputFileAdeContent;
     }
+
     private String getDateFormattedAsString() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         return OffsetDateTime.now().format(fmt);

@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.4</version>
+        <version>3.2.5</version>
     </parent>
 
     <groupId>it.gov.pagopa.rtd.ms</groupId>
     <artifactId>rtd-ms-transaction-filter</artifactId>
-    <version>2.1.2</version>
+    <version>2.2.0</version>
 
     <packaging>pom</packaging>
 
@@ -33,7 +33,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <sonar.exclusions>**/enums/**,**/model/**,**/Constants*.java,**/*Config.java,**/*Application.java
         </sonar.exclusions>
-        <transaction-filter.version>2.1.2</transaction-filter.version>
+        <transaction-filter.version>2.2.0</transaction-filter.version>
     </properties>
 
     <dependencyManagement>
