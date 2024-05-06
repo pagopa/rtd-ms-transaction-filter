@@ -4,14 +4,12 @@ import it.gov.pagopa.rtd.transaction_filter.batch.model.AdeTransactionsAggregate
 import it.gov.pagopa.rtd.transaction_filter.service.store.AggregationKey;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemProcessor;
 
 /**
  * ItemProcessor responsible for creating aggregates models suited for CSV
  * writing from the previously in-memory aggregated data.
  */
-@Slf4j
 @RequiredArgsConstructor
 public class TransactionAggregationWriterProcessor implements ItemProcessor<AggregationKey, AdeTransactionsAggregate> {
 

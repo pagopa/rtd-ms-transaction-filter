@@ -5,7 +5,6 @@ import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.rtd.transaction_filter.batch.model.InboundTransaction;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import org.apache.commons.codec.digest.DigestUtils;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,7 +74,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "  ", "010", "AA"})
+    @ValueSource(strings = {"", " ", "  ", "010", "AA", "02", "03", "04"})
     void processTransactionWithInvalidOperationTypeThrowsException(String operationType) {
         InboundTransaction transaction = fakeInboundTransaction();
         transaction.setOperationType(operationType);
@@ -84,7 +83,7 @@ public class InboundTransactionItemProcessorValidatorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"00", "01", "02", "03", "04"})
+    @ValueSource(strings = {"00", "01"})
     void processTransactionWithValidOperationType(String operationType) {
         BDDMockito.doReturn(true).when(storeServiceMock).hasHpan(FAKE_ENROLLED_PAN);
         BDDMockito.doReturn(FAKE_SALT).when(storeServiceMock).getSalt();

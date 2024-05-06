@@ -53,7 +53,9 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
         "rest-client.hpan.key-store.password=secret",
         "rest-client.hpan.trust-store.file=classpath:certs/client-truststore.jks",
         "rest-client.hpan.trust-store.password=secret",
-        "spring.application.name=rtd-ms-transaction-filter-integration-rest"})
+        "rest-client.file-report.url=/rtd/file-reporter/file-report",
+        "spring.application.name=rtd-ms-transaction-filter-integration-rest"}
+      )
 @ContextConfiguration(initializers = FileReportRestClientTest.RandomPortInitializer.class, classes = {
     HpanRestConnectorConfig.class, FileReportRestClientImpl.class,
     BasicResponseEntityValidator.class, ValidatorConfig.class, HpanRestConnector.class,

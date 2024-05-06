@@ -59,7 +59,6 @@ import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemWriter;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.MultiResourceItemWriter;
-import org.springframework.batch.item.file.builder.FlatFileItemWriterBuilder;
 import org.springframework.batch.item.file.builder.MultiResourceItemWriterBuilder;
 import org.springframework.batch.item.file.mapping.FieldSetMapper;
 import org.springframework.batch.item.file.transform.BeanWrapperFieldExtractor;
@@ -67,6 +66,9 @@ import org.springframework.batch.item.file.transform.DelimitedLineAggregator;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.batch.item.file.transform.LineAggregator;
 import org.springframework.batch.item.file.transform.LineTokenizer;
+import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
+import org.springframework.batch.item.json.JsonFileItemWriter;
+import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -165,8 +167,6 @@ public class TransactionFilterStep {
         "senderCode", "operationType", "circuitType", "pan", "trxDate", "idTrxAcquirer",
         "idTrxIssuer", "correlationId", "amount", "amountCurrency", "acquirerId", "merchantId",
         "terminalId", "bin", "mcc", "fiscalCode", "vat", "posType", "par"};
-    private static final String[] REPORT_CSV_FIELDS = new String[]{
-        "name", "status", "size", "transmissionDate"};
     private static final String CSV_DELIMITER = ";";
     private static final String DATE_FORMAT_FOR_FILENAME = "yyyyMMddHHmmssSSS";
 
@@ -256,20 +256,6 @@ public class TransactionFilterStep {
         BeanWrapperFieldExtractor<AdeTransactionsAggregate> extractor = new BeanWrapperFieldExtractor<>();
         extractor.setNames(ADE_CSV_FIELDS);
         DelimitedLineAggregator<AdeTransactionsAggregate> delimitedLineAggregator = new DelimitedLineAggregator<>();
-        delimitedLineAggregator.setDelimiter(CSV_DELIMITER);
-        delimitedLineAggregator.setFieldExtractor(extractor);
-        return delimitedLineAggregator;
-    }
-
-    /**
-     * Composes CSV lines from file report model.
-     * @return a line aggregator
-     */
-    @Bean
-    public LineAggregator<FileMetadata> fileReportLineAggregator() {
-        BeanWrapperFieldExtractor<FileMetadata> extractor = new BeanWrapperFieldExtractor<>();
-        extractor.setNames(REPORT_CSV_FIELDS);
-        DelimitedLineAggregator<FileMetadata> delimitedLineAggregator = new DelimitedLineAggregator<>();
         delimitedLineAggregator.setDelimiter(CSV_DELIMITER);
         delimitedLineAggregator.setFieldExtractor(extractor);
         return delimitedLineAggregator;
@@ -515,7 +501,7 @@ public class TransactionFilterStep {
     @SneakyThrows
     @Bean
     @StepScope
-    public FlatFileItemWriter<FileMetadata> fileReportWriter() {
+    public JsonFileItemWriter<FileMetadata> fileReportWriter() {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern(DATE_FORMAT_FOR_FILENAME);
         String currentDate = OffsetDateTime.now().format(fmt);
 
@@ -525,13 +511,12 @@ public class TransactionFilterStep {
             .concat(fileReportPrefixName)
             .concat("-")
             .concat(currentDate)
-            .concat(".csv"));
+            .concat(".json"));
 
-        return new FlatFileItemWriterBuilder<FileMetadata>()
-            .name("file-report-item-writer")
+        return new JsonFileItemWriterBuilder<FileMetadata>()
+            .jsonObjectMarshaller(new JacksonJsonObjectMarshaller<>())
             .resource(outputResource)
-            .headerCallback(writer -> writer.write(String.join(CSV_DELIMITER, REPORT_CSV_FIELDS)))
-            .lineAggregator(fileReportLineAggregator())
+            .name("file-report-item-writer")
             .build();
     }
 
