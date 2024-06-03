@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -180,7 +181,7 @@ public class TransactionFilterBatchFileReportTest {
     @SneakyThrows
     @Test
     public void jobExecutionProducesExpectedFiles() {
-        LocalDateTime currentDate = LocalDateTime.now();
+        LocalDateTime currentDate = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
         String publicKey = createPublicKey();
         BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
         BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient).getFileReport();
@@ -313,13 +314,13 @@ public class TransactionFilterBatchFileReportTest {
                 .orElse(new File("")).toPath());
         assertThat(fileReportContent).isNotNull().containsExactly("[",
                 " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.toString()
+                        + currentDate
                         + "\",\"dataSummary\":{}},",
                 " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(4).toString()
+                        + currentDate.minusDays(4)
                         + "\",\"dataSummary\":{}},",
                 " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(10).toString()
+                        + currentDate.minusDays(10)
                         + "\",\"dataSummary\":{}}",
                 "]");
     }
@@ -327,7 +328,7 @@ public class TransactionFilterBatchFileReportTest {
     @Test
     @SneakyThrows
     public void givenAReportWhenLaunchFileReportStepThenSaveTheReportOnFile() {
-        LocalDateTime currentDate = LocalDateTime.now();
+        LocalDateTime currentDate = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
         BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient).getFileReport();
 
         jobLauncherTestUtils.launchStep("file-report-recovery-step",
@@ -341,16 +342,17 @@ public class TransactionFilterBatchFileReportTest {
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
                 .orElse(new File("")).toPath());
 
+
         assertThat(fileReportContent).isNotNull().containsExactly("[",
                 " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.toString()
+                        + currentDate
                         + "\",\"dataSummary\":{}},",
                 " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(4).toString()
+                        + currentDate.minusDays(4)
                         + "\",\"dataSummary\":{}},",
 
                 " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(10).toString()
+                        + currentDate.minusDays(10)
                         + "\",\"dataSummary\":{}}",
 
                 "]");
