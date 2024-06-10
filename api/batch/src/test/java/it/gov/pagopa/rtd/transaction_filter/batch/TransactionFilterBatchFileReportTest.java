@@ -20,7 +20,6 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -141,6 +140,8 @@ public class TransactionFilterBatchFileReportTest {
     @SpyBean
     StoreService storeServiceSpy;
 
+    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder(
             new File(getClass().getResource("/test-encrypt").getFile()));
@@ -181,7 +182,7 @@ public class TransactionFilterBatchFileReportTest {
     @SneakyThrows
     @Test
     public void jobExecutionProducesExpectedFiles() {
-        LocalDateTime currentDate = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime currentDate = LocalDateTime.now();
         String publicKey = createPublicKey();
         BDDMockito.doReturn(publicKey).when(storeServiceSpy).getKey("pagopa");
         BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient).getFileReport();
@@ -314,13 +315,13 @@ public class TransactionFilterBatchFileReportTest {
                 .orElse(new File("")).toPath());
         assertThat(fileReportContent).isNotNull().containsExactly("[",
                 " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate
+                        + currentDate.format(dateFormatter)
                         + "\",\"dataSummary\":{}},",
                 " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(4)
+                        + currentDate.minusDays(4).format(dateFormatter)
                         + "\",\"dataSummary\":{}},",
                 " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(10)
+                        + currentDate.minusDays(10).format(dateFormatter)
                         + "\",\"dataSummary\":{}}",
                 "]");
     }
@@ -328,7 +329,7 @@ public class TransactionFilterBatchFileReportTest {
     @Test
     @SneakyThrows
     public void givenAReportWhenLaunchFileReportStepThenSaveTheReportOnFile() {
-        LocalDateTime currentDate = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS);
+        LocalDateTime currentDate = LocalDateTime.now();
         BDDMockito.doReturn(getStubFileReport(currentDate)).when(fileReportRestClient).getFileReport();
 
         jobLauncherTestUtils.launchStep("file-report-recovery-step",
@@ -342,17 +343,16 @@ public class TransactionFilterBatchFileReportTest {
         List<String> fileReportContent = Files.readAllLines(fileReportSaved.stream().findAny()
                 .orElse(new File("")).toPath());
 
-
         assertThat(fileReportContent).isNotNull().containsExactly("[",
                 " {\"name\":\"file1\",\"size\":200,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate
+                        + currentDate.format(dateFormatter)
                         + "\",\"dataSummary\":{}},",
                 " {\"name\":\"file2\",\"size\":300,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(4)
+                        + currentDate.minusDays(4).format(dateFormatter)
                         + "\",\"dataSummary\":{}},",
 
                 " {\"name\":\"file3\",\"size\":400,\"status\":\"RECEIVED\",\"transmissionDate\":\""
-                        + currentDate.minusDays(10)
+                        + currentDate.minusDays(10).format(dateFormatter)
                         + "\",\"dataSummary\":{}}",
 
                 "]");
