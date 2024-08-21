@@ -35,19 +35,20 @@ class MaskingPatternLayoutTest {
 
   @Test
   void whenLogContainsSaltThenAnonymizeIt(CapturedOutput output) {
-    String stringWithSalt =
-        "[HpanRestConnector#getSalt] ---> GET https://api.dev.cstar.pagopa.it/rtd/payment-instrument-manager/v2/salt HTTP/1.1\n"
-            + "[HpanRestConnector#getSalt] Ocp-Apim-Subscription-Key: ciao\n"
-            + "[HpanRestConnector#getSalt] User-Agent: BatchService/2.2.1\n"
-            + "[HpanRestConnector#getSalt] ---> END HTTP (0-byte body)\n"
-            + "[HpanRestConnector#getSalt] <--- HTTP/1.1 200 OK (57ms)\n"
-            + "[HpanRestConnector#getSalt] connection: keep-alive\n"
-            + "[HpanRestConnector#getSalt] content-length: 7\n"
-            + "[HpanRestConnector#getSalt] date: Thu, 08 Sep 2022 10:35:15 GMT\n"
-            + "[HpanRestConnector#getSalt] request-context: appId=cid-v1:0236a5cc-b73b-454b-85c4-8728dd0d5963\n"
-            + "[HpanRestConnector#getSalt] \n"
-            + "[HpanRestConnector#getSalt] saltProva\n"
-            + "[HpanRestConnector#getSalt] <--- END HTTP (7-byte body)";
+    String stringWithSalt = """
+        [HpanRestConnector#getSalt] ---> GET https://api.dev.cstar.pagopa.it/rtd/payment-instrument-manager/v2/salt HTTP/1.1
+        [HpanRestConnector#getSalt] Ocp-Apim-Subscription-Key: ciao
+        [HpanRestConnector#getSalt] User-Agent: BatchService/2.2.1
+        [HpanRestConnector#getSalt] ---> END HTTP (0-byte body)
+        [HpanRestConnector#getSalt] <--- HTTP/1.1 200 OK (57ms)
+        [HpanRestConnector#getSalt] connection: keep-alive
+        [HpanRestConnector#getSalt] content-length: 7
+        [HpanRestConnector#getSalt] date: Thu, 08 Sep 2022 10:35:15 GMT
+        [HpanRestConnector#getSalt] request-context: appId=cid-v1:0236a5cc-b73b-454b-85c4-8728dd0d5963
+        [HpanRestConnector#getSalt]
+        [HpanRestConnector#getSalt] saltProva
+        [HpanRestConnector#getSalt] <--- END HTTP (7-byte body)
+        """;
 
     Arrays.stream(stringWithSalt.split("\n")).forEachOrdered(log::debug);
 
