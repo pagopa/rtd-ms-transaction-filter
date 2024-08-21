@@ -64,4 +64,14 @@ class PathResolverTest {
     assertThat(resources).isEmpty();
   }
 
+  @SneakyThrows
+  @Test
+  void givenDirectoryWithFileNotCsvWhenResolvePathThenReturnEmptyArray() {
+    Files.createFile(tempInputFolder.resolve("not-a-csv-file.txt"));
+
+    var resources = pathResolver.getCsvResources(tempInputFolder.toString());
+
+    assertThat(resources).isEmpty();
+  }
+
 }
