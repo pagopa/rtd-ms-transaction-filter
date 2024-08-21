@@ -1,6 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.config;
 
-import it.gov.pagopa.rtd.transaction_filter.batch.PathResolver;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.PathResolver;
 import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
 import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicyImpl;
 import org.springframework.context.annotation.Bean;

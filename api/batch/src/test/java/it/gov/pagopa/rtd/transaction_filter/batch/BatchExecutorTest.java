@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.PathResolver;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.util.Date;
 import java.util.stream.Stream;

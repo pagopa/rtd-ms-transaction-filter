@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.transaction_filter.batch;
+package it.gov.pagopa.rtd.transaction_filter.batch.utils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

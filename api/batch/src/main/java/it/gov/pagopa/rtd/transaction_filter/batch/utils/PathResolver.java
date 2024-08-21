@@ -1,4 +1,4 @@
-package it.gov.pagopa.rtd.transaction_filter.batch;
+package it.gov.pagopa.rtd.transaction_filter.batch.utils;
 
 import java.io.IOException;
 import java.nio.file.Path;
