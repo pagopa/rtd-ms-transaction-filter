@@ -77,8 +77,8 @@ class BatchExecutorTest {
     BDDMockito.when(transactionFilterStep.getTransactionDirectoryPath())
         .thenReturn(resourcesPath);
     BDDMockito.when(pathResolver.getCsvResources(resourcesPath)).thenReturn(transactionFilesMocked);
-    BDDMockito.when(pathResolver.getResources(hpanPath)).thenReturn(hpanFilesMocked);
     BDDMockito.when(panReaderStep.getHpanDirectoryPath()).thenReturn(hpanPath);
+    BDDMockito.when(pathResolver.getResources(hpanPath)).thenReturn(hpanFilesMocked);
     batchExecutor.setHpanListRecoveryEnabled(hpanRecoveryEnabled);
 
     batchExecutor.execute(new Date());
