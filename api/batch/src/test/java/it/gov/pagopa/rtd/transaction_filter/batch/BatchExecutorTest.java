@@ -85,6 +85,4 @@ class BatchExecutorTest {
 
     Mockito.verify(jobLauncher, Mockito.times(nTimesJobRun)).run(any(), any());
   }
-
-
 }
