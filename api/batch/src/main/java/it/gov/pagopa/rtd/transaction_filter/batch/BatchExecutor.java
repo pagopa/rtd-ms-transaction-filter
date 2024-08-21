@@ -4,6 +4,8 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Date;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +43,7 @@ public class BatchExecutor {
      */
     @SneakyThrows
     public JobExecution execute(Date startDate) {
-        Resource[] transactionResources = resolver.getResources(transactionFilterStep.getTransactionDirectoryPath() + "/*.csv");
+        Resource[] transactionResources = getCsvResources(transactionFilterStep.getTransactionDirectoryPath());
         transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
 
         String hpanPath = panReaderStep.getHpanDirectoryPath();
@@ -78,6 +80,18 @@ public class BatchExecutor {
         }
 
         return execution;
+    }
+
+    /**
+     * Resolve symlinks and retrieve all the Resources inside the target path with csv format.
+     * @return array of Resource
+     * @throws IOException if the file does not exist
+     */
+    protected Resource[] getCsvResources(String path) throws IOException {
+        //resolve symlinks
+        var targetPath = Path.of(path.replace("file:", "")).toRealPath();
+        var targetPathWithPrefix = "file:" + targetPath;
+        return resolver.getResources(targetPathWithPrefix + "/*.csv");
     }
 
     public void clearStoreService() {
