@@ -56,4 +56,12 @@ class PathResolverTest {
     assertThat(resources[0].getFile()).hasName(FILENAME_DUMMY);
   }
 
+  @SneakyThrows
+  @Test
+  void givenEmptyDirectoryWhenResolvePathThenReturnEmptyArray() {
+    var resources = pathResolver.getCsvResources(tempInputFolder.toString());
+
+    assertThat(resources).isEmpty();
+  }
+
 }
