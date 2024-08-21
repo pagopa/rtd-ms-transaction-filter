@@ -9,23 +9,29 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 @RequiredArgsConstructor
 public class PathResolver {
 
+  public static final String FILE_PREFIX = "file:";
   private final PathMatchingResourcePatternResolver resolver;
 
   /**
-   * Resolve symlinks and retrieve all the Resources inside the target path with csv format.
+   * Resolve symlinks for <code>file:</code> path and retrieve all the Resources inside the target path with csv format.
+   * Other path type e.g. <code>classpath:</code> won't resolve symlink.
    *
    * @return array of Resource
    * @throws IOException if the file does not exist
    */
   public Resource[] getCsvResources(String path) throws IOException {
-    //resolve symlinks
     var targetPathWithPrefix = resolveSymlink(path);
     return resolver.getResources(targetPathWithPrefix + "/*.csv");
   }
 
   private String resolveSymlink(String symlink) throws IOException {
-    var targetPath = Path.of(symlink.replace("file:", "")).toRealPath();
-    return "file:" + targetPath;
+
+    if (symlink.startsWith(FILE_PREFIX)) {
+      var targetPath = Path.of(symlink.replace(FILE_PREFIX, "")).toRealPath();
+      return FILE_PREFIX + targetPath;
+    }
+
+    return symlink;
   }
 
   public Resource[] getResources(String locationPattern) throws IOException {

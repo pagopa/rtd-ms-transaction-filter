@@ -1,7 +1,9 @@
 package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.FileNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import lombok.SneakyThrows;
@@ -47,19 +49,17 @@ class PathResolverTest {
 
   @SneakyThrows
   @Test
-  void givenFilenameWithoutFilePrefixWhenResolvePathThenFoundExpectedFiles() {
+  void givenFilenameWithoutFilePrefixWhenResolvePathThenRaiseException() {
     Files.createFile(tempInputFolder.resolve(FILENAME_DUMMY));
 
-    var resources = pathResolver.getCsvResources(tempInputFolder.toString());
-
-    assertThat(resources).isNotEmpty().hasSize(1);
-    assertThat(resources[0].getFile()).hasName(FILENAME_DUMMY);
+    assertThatThrownBy(() -> pathResolver.getCsvResources(tempInputFolder.toString()))
+        .isInstanceOf(FileNotFoundException.class);
   }
 
   @SneakyThrows
   @Test
   void givenEmptyDirectoryWhenResolvePathThenReturnEmptyArray() {
-    var resources = pathResolver.getCsvResources(tempInputFolder.toString());
+    var resources = pathResolver.getCsvResources("file:" + tempInputFolder);
 
     assertThat(resources).isEmpty();
   }
@@ -69,7 +69,23 @@ class PathResolverTest {
   void givenDirectoryWithFileNotCsvWhenResolvePathThenReturnEmptyArray() {
     Files.createFile(tempInputFolder.resolve("not-a-csv-file.txt"));
 
-    var resources = pathResolver.getCsvResources(tempInputFolder.toString());
+    var resources = pathResolver.getCsvResources("file:" + tempInputFolder);
+
+    assertThat(resources).isEmpty();
+  }
+
+  @SneakyThrows
+  @Test
+  void givenClassPathWhenResolvePathThenReturnFiles() {
+    var resources = pathResolver.getCsvResources("classpath:test-encrypt/transactions");
+
+    assertThat(resources).isNotEmpty().hasSize(1);
+  }
+
+  @SneakyThrows
+  @Test
+  void givenClassPathWhenResolvePathThenReturnEmptyArray() {
+    var resources = pathResolver.getCsvResources("classpath:test-encrypt");
 
     assertThat(resources).isEmpty();
   }
