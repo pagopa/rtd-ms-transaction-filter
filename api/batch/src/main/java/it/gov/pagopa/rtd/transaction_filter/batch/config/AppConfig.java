@@ -1,5 +1,6 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.config;
 
+import it.gov.pagopa.rtd.transaction_filter.batch.PathResolver;
 import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
 import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicyImpl;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +18,11 @@ public class AppConfig {
   @Bean
   public PathMatchingResourcePatternResolver resolver() {
     return new PathMatchingResourcePatternResolver();
+  }
+
+  @Bean
+  public PathResolver pathResolver(PathMatchingResourcePatternResolver resolver) {
+    return new PathResolver(resolver);
   }
 
 }
