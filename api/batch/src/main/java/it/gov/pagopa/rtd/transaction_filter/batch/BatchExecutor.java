@@ -79,8 +79,6 @@ public class BatchExecutor {
         return execution;
     }
 
-
-
     public void clearStoreService() {
         storeService.clearAll();
     }
