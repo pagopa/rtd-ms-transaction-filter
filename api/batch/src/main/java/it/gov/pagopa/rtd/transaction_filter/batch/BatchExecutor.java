@@ -4,8 +4,6 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Date;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +15,6 @@ import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -33,8 +30,7 @@ public class BatchExecutor {
     private final StoreService storeService;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled}")
     private Boolean hpanListRecoveryEnabled;
-    private final PathMatchingResourcePatternResolver resolver;
-
+    private final PathResolver pathResolver;
 
     /**
      *
@@ -43,11 +39,12 @@ public class BatchExecutor {
      */
     @SneakyThrows
     public JobExecution execute(Date startDate) {
-        Resource[] transactionResources = getCsvResources(transactionFilterStep.getTransactionDirectoryPath());
+        Resource[] transactionResources = pathResolver.getCsvResources(
+            transactionFilterStep.getTransactionDirectoryPath());
         transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
 
         String hpanPath = panReaderStep.getHpanDirectoryPath();
-        Resource[] hpanResources = resolver.getResources(hpanPath);
+        Resource[] hpanResources = pathResolver.getResources(hpanPath);
 
         JobExecution execution = null;
 
@@ -82,17 +79,7 @@ public class BatchExecutor {
         return execution;
     }
 
-    /**
-     * Resolve symlinks and retrieve all the Resources inside the target path with csv format.
-     * @return array of Resource
-     * @throws IOException if the file does not exist
-     */
-    protected Resource[] getCsvResources(String path) throws IOException {
-        //resolve symlinks
-        var targetPath = Path.of(path.replace("file:", "")).toRealPath();
-        var targetPathWithPrefix = "file:" + targetPath;
-        return resolver.getResources(targetPathWithPrefix + "/*.csv");
-    }
+
 
     public void clearStoreService() {
         storeService.clearAll();
