@@ -3,6 +3,7 @@ package it.gov.pagopa.rtd.transaction_filter.batch;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.PathResolver;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.util.Date;
 import lombok.Data;
@@ -15,7 +16,6 @@ import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -31,8 +31,7 @@ public class BatchExecutor {
     private final StoreService storeService;
     @Value("${batchConfiguration.TransactionFilterBatch.hpanListRecovery.enabled}")
     private Boolean hpanListRecoveryEnabled;
-    private final PathMatchingResourcePatternResolver resolver;
-
+    private final PathResolver pathResolver;
 
     /**
      *
@@ -41,11 +40,12 @@ public class BatchExecutor {
      */
     @SneakyThrows
     public JobExecution execute(Date startDate) {
-        Resource[] transactionResources = resolver.getResources(transactionFilterStep.getTransactionDirectoryPath() + "/*.csv");
+        Resource[] transactionResources = pathResolver.getCsvResources(
+            transactionFilterStep.getTransactionDirectoryPath());
         transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
 
         String hpanPath = panReaderStep.getHpanDirectoryPath();
-        Resource[] hpanResources = resolver.getResources(hpanPath);
+        Resource[] hpanResources = pathResolver.getResources(hpanPath);
 
         JobExecution execution = null;
 

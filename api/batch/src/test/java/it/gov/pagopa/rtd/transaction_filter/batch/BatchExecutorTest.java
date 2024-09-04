@@ -4,12 +4,13 @@ import static org.mockito.ArgumentMatchers.any;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.step.PanReaderStep;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.PathResolver;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.util.Date;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -18,12 +19,12 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
+@ExtendWith(MockitoExtension.class)
 class BatchExecutorTest {
 
   @Mock
@@ -31,14 +32,13 @@ class BatchExecutorTest {
   @Mock
   TransactionFilterStep transactionFilterStep;
   @Mock
-  PathMatchingResourcePatternResolver resolver;
-  @Mock
   PanReaderStep panReaderStep;
   @Mock
   StoreService storeService;
+  @Mock
   BatchExecutor batchExecutor;
-
-  AutoCloseable closeable;
+  @Mock
+  PathResolver pathResolver;
 
   static class JobExecutionPreconditionsProvider implements ArgumentsProvider {
     @Override
@@ -63,15 +63,7 @@ class BatchExecutorTest {
 
   @BeforeEach
   void setUp() {
-    closeable = MockitoAnnotations.openMocks(this);
-
-    batchExecutor = new BatchExecutor(null, jobLauncher, transactionFilterStep, panReaderStep, storeService, resolver);
-  }
-
-  @SneakyThrows
-  @AfterEach
-  void tearDown() {
-    closeable.close();
+    batchExecutor = new BatchExecutor(null, jobLauncher, transactionFilterStep, panReaderStep, storeService, pathResolver);
   }
 
   @SneakyThrows
@@ -85,9 +77,9 @@ class BatchExecutorTest {
     String hpanPath = "/hpan";
     BDDMockito.when(transactionFilterStep.getTransactionDirectoryPath())
         .thenReturn(resourcesPath);
-    BDDMockito.when(resolver.getResources(resourcesPath + "/*.csv")).thenReturn(transactionFilesMocked);
+    BDDMockito.when(pathResolver.getCsvResources(resourcesPath)).thenReturn(transactionFilesMocked);
     BDDMockito.when(panReaderStep.getHpanDirectoryPath()).thenReturn(hpanPath);
-    BDDMockito.when(resolver.getResources(hpanPath)).thenReturn(hpanFilesMocked);
+    BDDMockito.when(pathResolver.getResources(hpanPath)).thenReturn(hpanFilesMocked);
     batchExecutor.setHpanListRecoveryEnabled(hpanRecoveryEnabled);
 
     batchExecutor.execute(new Date());
