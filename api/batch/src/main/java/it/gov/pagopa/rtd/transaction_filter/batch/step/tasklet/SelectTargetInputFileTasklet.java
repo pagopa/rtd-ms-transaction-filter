@@ -1,6 +1,7 @@
 package it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet;
 
 import it.gov.pagopa.rtd.transaction_filter.batch.step.TransactionFilterStep;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.PathResolver;
 import it.gov.pagopa.rtd.transaction_filter.service.StoreService;
 import java.io.IOException;
 import lombok.Data;
@@ -10,7 +11,6 @@ import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 
 
 /**
@@ -22,6 +22,7 @@ public class SelectTargetInputFileTasklet implements Tasklet {
 
     private StoreService storeService;
     private String transactionDirectoryPath;
+    private PathResolver pathResolver;
 
     /**
      * Scans the input directory and select a target file for current execution.
@@ -38,8 +39,7 @@ public class SelectTargetInputFileTasklet implements Tasklet {
     @Override
     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext)
         throws IOException {
-        PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-        Resource[] transactionResources = resolver.getResources(transactionDirectoryPath + "/*.csv");
+        Resource[] transactionResources = pathResolver.getCsvResources(transactionDirectoryPath);
         transactionResources = TransactionFilterStep.filterValidFilenames(transactionResources);
 
         // The job is started only if input trx directory contains at least one valid file.

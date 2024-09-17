@@ -19,6 +19,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PGPEncrypterTaskl
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionChecksumTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.TransactionSenderRestTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.writer.ChecksumHeaderWriter;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.PathResolver;
 import it.gov.pagopa.rtd.transaction_filter.batch.utils.TransactionMaskPolicy;
 import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.HpanRestClient;
@@ -588,9 +589,9 @@ public class TransactionFilterStep {
      */
     @Bean
     @JobScope
-    public Partitioner transactionFilterPartitioner(StoreService storeService) throws IOException {
+    public Partitioner transactionFilterPartitioner(StoreService storeService, PathResolver pathResolver) throws IOException {
         MultiResourcePartitioner partitioner = new MultiResourcePartitioner();
-        Resource[] resources = resolver.getResources(transactionDirectoryPath + "/*.csv");
+        Resource[] resources = pathResolver.getCsvResources(transactionDirectoryPath);
         resources = filterValidFilenames(resources);
         resources = filterResourcesByFilename(resources, storeService.getTargetInputFile());
         partitioner.setResources(resources);
