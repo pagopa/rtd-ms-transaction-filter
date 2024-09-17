@@ -14,6 +14,7 @@ import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.PurgeAggregatesFr
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SaltRecoveryTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SelectTargetInputFileTasklet;
 import it.gov.pagopa.rtd.transaction_filter.batch.step.tasklet.SenderAdeAckFilesRecoveryTasklet;
+import it.gov.pagopa.rtd.transaction_filter.batch.utils.PathResolver;
 import it.gov.pagopa.rtd.transaction_filter.connector.AbiToFiscalCodeRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.FileReportRestClient;
 import it.gov.pagopa.rtd.transaction_filter.connector.SenderAdeAckRestClient;
@@ -380,11 +381,13 @@ public class TransactionFilterBatch {
     @Bean
     public Step selectTargetInputFileTask(JobRepository jobRepository,
         PlatformTransactionManager transactionManager,
-        StoreService storeService
+        StoreService storeService,
+        PathResolver pathResolver
     ) {
         SelectTargetInputFileTasklet tasklet = new SelectTargetInputFileTasklet();
         tasklet.setStoreService(storeService);
         tasklet.setTransactionDirectoryPath(transactionFilterStep.getTransactionDirectoryPath());
+        tasklet.setPathResolver(pathResolver);
         return new StepBuilder("transaction-filter-select-target-input-file-step", jobRepository)
             .tasklet(tasklet, transactionManager)
             .build();

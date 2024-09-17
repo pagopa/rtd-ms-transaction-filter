@@ -56,7 +56,8 @@ else
 	exit 2
 fi
 
-#rm -rf cstar-cli
-#rm -rf workdir
+rm -rf cstar-cli
+rm -rf workdir
+rm -rf symlink-input
 
 exit 0
